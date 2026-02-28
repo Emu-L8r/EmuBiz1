@@ -10,6 +10,7 @@ import com.emul8r.bizap.data.local.entities.GeneratedDocumentEntity
 import com.emul8r.bizap.data.local.entities.InvoiceEntity
 import com.emul8r.bizap.data.local.entities.LineItemEntity
 import com.emul8r.bizap.data.local.entities.PrefilledItemEntity
+import com.emul8r.bizap.data.local.entities.BusinessProfileEntity
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 
 @Database(
@@ -18,9 +19,10 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         InvoiceEntity::class, 
         LineItemEntity::class, 
         PrefilledItemEntity::class, 
-        GeneratedDocumentEntity::class
+        GeneratedDocumentEntity::class,
+        BusinessProfileEntity::class // NEW: Support for multiple business identities
     ],
-    version = 9, // INCREMENTED: Removed redundant invoiceNumber column (now computed in domain layer)
+    version = 10, // INCREMENTED: Added BusinessProfile table and linked Invoices
     exportSchema = true
 )
 @TypeConverters(DocumentStatusConverter::class)
@@ -29,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun invoiceDao(): InvoiceDao
     abstract fun prefilledItemDao(): PrefilledItemDao
     abstract fun documentDao(): DocumentDao
+    abstract fun businessProfileDao(): BusinessProfileDao
 
     companion object {
         @Volatile
@@ -48,7 +51,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_5_6,
                         MIGRATION_6_7,
                         MIGRATION_7_8,
-                        MIGRATION_8_9 // Remove redundant invoiceNumber column
+                        MIGRATION_8_9,
+                        MIGRATION_9_10 // Link Invoices to Businesses
                     )
                     .build()
                     .also { INSTANCE = it }

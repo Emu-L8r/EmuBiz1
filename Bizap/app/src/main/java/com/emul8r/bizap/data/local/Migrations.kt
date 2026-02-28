@@ -68,39 +68,21 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
 
 /**
  * Migration from version 7 to version 8
- * Adds professional numbering fields: invoiceYear and invoiceSequence
  */
 val MIGRATION_7_8 = object : Migration(7, 8) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        // Add invoiceYear column
         db.execSQL("ALTER TABLE invoices ADD COLUMN invoiceYear INTEGER NOT NULL DEFAULT 2026")
-        
-        // Add invoiceSequence column
         db.execSQL("ALTER TABLE invoices ADD COLUMN invoiceSequence INTEGER NOT NULL DEFAULT 0")
-        
-        // Create index for efficient lookup by year + sequence
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_invoice_year_sequence ON invoices(invoiceYear, invoiceSequence)")
-        
         Log.i("Migration", "✅ MIGRATION_7_8 completed: Added invoiceYear and invoiceSequence fields")
     }
 }
 
 /**
  * Migration from version 8 to version 9
- * Removes redundant invoiceNumber column
- *
- * RATIONALE: invoiceNumber is now computed in the Invoice domain model
- * from invoiceYear, invoiceSequence, and version. Storing it redundantly
- * violates database normalization and creates inconsistency risk.
- *
- * This migration removes the column since it's completely derivable
- * from the three stored fields.
  */
 val MIGRATION_8_9 = object : Migration(8, 9) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        // SQLite doesn't support DROP COLUMN directly in older versions
-        // So we use the standard workaround: create new table, copy data, drop old, rename
-
         db.execSQL("""
             CREATE TABLE invoices_new (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -130,7 +112,6 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
                 invoiceSequence INTEGER NOT NULL
             )
         """.trimIndent())
-
         db.execSQL("""
             INSERT INTO invoices_new 
             SELECT id, customerId, customerName, customerAddress, customerEmail, date,
@@ -139,15 +120,51 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
                    updatedAt, amountPaid, parentInvoiceId, version, invoiceYear, invoiceSequence
             FROM invoices
         """.trimIndent())
-
         db.execSQL("DROP TABLE invoices")
-
         db.execSQL("ALTER TABLE invoices_new RENAME TO invoices")
-
-        // Recreate the index
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_invoice_year_sequence ON invoices(invoiceYear, invoiceSequence)")
-
         Log.i("Migration", "✅ MIGRATION_8_9 completed: Removed redundant invoiceNumber column")
     }
 }
 
+/**
+ * Migration from version 9 to version 10
+ * 1. Creates business_profiles table for multi-business support.
+ * 2. Adds businessProfileId to invoices table.
+ * 3. Seeds an initial business profile to maintain data consistency.
+ */
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // 1. Create the business_profiles table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS business_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                businessName TEXT NOT NULL,
+                abn TEXT NOT NULL,
+                email TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                address TEXT NOT NULL,
+                website TEXT NOT NULL,
+                bsbNumber TEXT,
+                accountNumber TEXT,
+                accountName TEXT,
+                bankName TEXT,
+                logoBase64 TEXT,
+                signatureUri TEXT,
+                createdAt INTEGER NOT NULL DEFAULT ${System.currentTimeMillis()}
+            )
+        """.trimIndent())
+
+        // 2. Add businessProfileId to invoices
+        db.execSQL("ALTER TABLE invoices ADD COLUMN businessProfileId INTEGER NOT NULL DEFAULT 1")
+
+        // 3. Seed the first business profile
+        // RATIONALE: Existing invoices now point to ID 1, so ID 1 must exist.
+        db.execSQL("""
+            INSERT INTO business_profiles (id, businessName, abn, email, phone, address, website, createdAt)
+            VALUES (1, 'Default Business', '00 000 000 000', 'admin@bizap.com', '0000 000 000', '123 Business Way', 'www.bizap.com', ${System.currentTimeMillis()})
+        """.trimIndent())
+
+        Log.i("Migration", "✅ MIGRATION_9_10 completed: Multi-business foundation established")
+    }
+}

@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "invoices")
 data class InvoiceEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val businessProfileId: Long = 1, // PHASE 3B: Linked to a specific business identity
     val customerId: Long,
     val customerName: String = "",
     val customerAddress: String = "",
@@ -25,13 +26,9 @@ data class InvoiceEntity(
     val taxAmount: Double = 0.0,
     val companyLogoPath: String? = null,
     val updatedAt: Long = 0,
-    
-    // PHASE 3A: Management & Audit Fields
     val amountPaid: Double = 0.0,
     val parentInvoiceId: Long? = null,
     val version: Int = 1,
-
-    // NEW: Professional numbering fields
     val invoiceYear: Int = 0,
     val invoiceSequence: Int = 0
 )

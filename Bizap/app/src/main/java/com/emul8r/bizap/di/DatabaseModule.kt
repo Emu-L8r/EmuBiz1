@@ -14,7 +14,11 @@ import com.emul8r.bizap.data.local.MIGRATION_3_4
 import com.emul8r.bizap.data.local.MIGRATION_4_5
 import com.emul8r.bizap.data.local.MIGRATION_5_6
 import com.emul8r.bizap.data.local.MIGRATION_6_7
+import com.emul8r.bizap.data.local.MIGRATION_7_8
+import com.emul8r.bizap.data.local.MIGRATION_8_9
+import com.emul8r.bizap.data.local.MIGRATION_9_10
 import com.emul8r.bizap.data.local.PrefilledItemDao
+import com.emul8r.bizap.data.local.BusinessProfileDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,9 +45,12 @@ object DatabaseModule {
             MIGRATION_3_4, 
             MIGRATION_4_5, 
             MIGRATION_5_6, 
-            MIGRATION_6_7
+            MIGRATION_6_7,
+            MIGRATION_7_8,
+            MIGRATION_8_9,
+            MIGRATION_9_10
         )
-        .fallbackToDestructiveMigration() // Safety net for early development
+        .fallbackToDestructiveMigration()
         .build()
     }
 
@@ -51,6 +58,7 @@ object DatabaseModule {
     @Provides fun provideInvoiceDao(db: AppDatabase): InvoiceDao = db.invoiceDao()
     @Provides fun provideDocumentDao(db: AppDatabase): DocumentDao = db.documentDao()
     @Provides fun providePrefilledItemDao(db: AppDatabase): PrefilledItemDao = db.prefilledItemDao()
+    @Provides fun provideBusinessProfileDao(db: AppDatabase): BusinessProfileDao = db.businessProfileDao()
 
     @Provides
     @Singleton

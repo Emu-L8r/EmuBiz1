@@ -22,12 +22,16 @@ import javax.inject.Inject
 
 sealed interface InvoiceDetailUiState {
     object Loading : InvoiceDetailUiState
-    data class Success(val data: Invoice) : InvoiceDetailUiState
+    data class Success(
+        val data: Invoice,
+        val versions: List<Invoice> = emptyList() // PHASE 3A: Sibling versions for picker
+    ) : InvoiceDetailUiState
     data class Error(val message: String) : InvoiceDetailUiState
 }
 
 sealed interface UiEvent {
     data class ShowSnackbar(val message: String) : UiEvent
+    data class NavigateToInvoice(val invoiceId: Long) : UiEvent
 }
 
 sealed interface InvoiceDetailEvent {
@@ -66,15 +70,64 @@ class InvoiceDetailViewModel @Inject constructor(
     )
 
     fun loadInvoice(id: Long) {
-        invoiceRepo.getInvoiceWithItemsById(id)
-            .onEach { data ->
-                _uiState.value = if (data != null) {
-                    InvoiceDetailUiState.Success(data)
-                } else {
-                    InvoiceDetailUiState.Error("Invoice not found")
+        viewModelScope.launch {
+            _uiState.value = InvoiceDetailUiState.Loading
+            invoiceRepo.getInvoiceWithItemsById(id)
+                .flatMapLatest { invoice ->
+                    if (invoice == null) {
+                        flowOf(InvoiceDetailUiState.Error("Invoice not found"))
+                    } else {
+                        // PHASE 3A: Load all versions in this numbering group
+                        invoiceRepo.getInvoiceGroupWithVersions(invoice.invoiceYear, invoice.invoiceSequence)
+                            .map { versions ->
+                                InvoiceDetailUiState.Success(invoice, versions)
+                            }
+                    }
                 }
+                .onEach { _uiState.value = it }
+                .catch { e -> _uiState.value = InvoiceDetailUiState.Error(e.message ?: "Unknown error") }
+                .launchIn(this)
+        }
+    }
+
+    /**
+     * PHASE 3A: RECORD PAYMENT
+     */
+    fun recordPayment(amount: Double) {
+        val currentState = uiState.value as? InvoiceDetailUiState.Success ?: return
+        val invoice = currentState.data
+        
+        viewModelScope.launch {
+            try {
+                val newAmountPaid = invoice.amountPaid + amount
+                val newStatus = if (newAmountPaid >= invoice.totalAmount) InvoiceStatus.PAID else InvoiceStatus.PARTIALLY_PAID
+                
+                invoiceRepo.updateAmountPaid(invoice.id, newAmountPaid)
+                invoiceRepo.updateInvoiceStatus(invoice.id, newStatus)
+                
+                _uiEvent.emit(UiEvent.ShowSnackbar("Payment of $${String.format("%.2f", amount)} recorded."))
+            } catch (e: Exception) {
+                _uiEvent.emit(UiEvent.ShowSnackbar("Failed to record payment: ${e.message}"))
             }
-            .launchIn(viewModelScope)
+        }
+    }
+
+    /**
+     * PHASE 3A: CREATE CORRECTION (Cloning to v+1)
+     */
+    fun createCorrection() {
+        val currentState = uiState.value as? InvoiceDetailUiState.Success ?: return
+        val original = currentState.data
+        
+        viewModelScope.launch {
+            try {
+                val newId = invoiceRepo.createCorrection(original.id)
+                _uiEvent.emit(UiEvent.NavigateToInvoice(newId))
+                _uiEvent.emit(UiEvent.ShowSnackbar("New version created. Editing v${original.version + 1}."))
+            } catch (e: Exception) {
+                _uiEvent.emit(UiEvent.ShowSnackbar("Correction failed: ${e.message}"))
+            }
+        }
     }
 
     fun updateStatus(invoiceId: Long, newStatus: String) {
@@ -163,22 +216,8 @@ class InvoiceDetailViewModel @Inject constructor(
                     if (share) {
                         _exportEvent.emit(invoicePdf)
                     } else {
-                        val quoteFileName = DocumentNamingUtils.generateFileName(
-                            customerName = invoiceData.customerName,
-                            date = invoiceData.date,
-                            counter = invoiceData.id.toInt(),
-                            type = "Quote"
-                        )
-
-                        val invoiceFileName = DocumentNamingUtils.generateFileName(
-                            customerName = invoiceData.customerName,
-                            date = invoiceData.date,
-                            counter = invoiceData.id.toInt(),
-                            type = "Invoice"
-                        )
-
-                        val quotePublicUri = documentManager.saveToDownloads(quotePdf, quoteFileName)
-                        val invoicePublicUri = documentManager.saveToDownloads(invoicePdf, invoiceFileName)
+                        val quotePublicUri = documentManager.saveToDownloads(quotePdf, quotePdf.name)
+                        val invoicePublicUri = documentManager.saveToDownloads(invoicePdf, invoicePdf.name)
 
                         if (quotePublicUri != null && invoicePublicUri != null) {
                             _uiEvent.emit(UiEvent.ShowSnackbar("Success: Documents exported to Downloads/Bizap"))
@@ -213,8 +252,8 @@ class InvoiceDetailViewModel @Inject constructor(
             businessName = business.businessName,
             businessAbn = business.abn,
             businessEmail = business.email,
-            businessPhone = business.phone,    // FIXED
-            businessAddress = business.address, // FIXED
+            businessPhone = business.phone,
+            businessAddress = business.address,
             logoBase64 = business.logoBase64
         )
     }
