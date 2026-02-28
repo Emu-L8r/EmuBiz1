@@ -1,0 +1,4 @@
+<paths>
+    <external-path name="my_images" path="Android/data/com.emu.emubizwax/files/Pictures" />
+    <cache-path name="my_cache" path="." />
+</paths>
