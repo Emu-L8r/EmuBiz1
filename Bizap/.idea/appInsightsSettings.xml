@@ -9,10 +9,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.emul8r.bizap" />
+                  <option name="mobileSdkAppId" value="1:128059285670:android:6267db3099b5c50aa79467" />
+                  <option name="projectId" value="bizap-801c0" />
+                  <option name="projectNumber" value="128059285670" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

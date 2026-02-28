@@ -5,7 +5,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.*
 import com.emul8r.bizap.data.worker.ExchangeRateWorker
 import dagger.hilt.android.HiltAndroidApp
-import java.time.Duration
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -22,6 +22,13 @@ class BizapApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        
+        // 🪵 TASK 1: INITIALIZE LOGGING
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+            Timber.d("🚀 Bizap initialized in DEBUG mode. Timber logging enabled.")
+        }
+
         scheduleExchangeRateUpdates()
     }
 

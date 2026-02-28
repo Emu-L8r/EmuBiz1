@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.dagger.hilt.android)
     alias(libs.plugins.google.ksp)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -42,7 +44,7 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true // ENABLED for debug placeholders
+        buildConfig = true
     }
     packaging {
         resources {
@@ -63,6 +65,12 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
+
+    // Logging & Monitoring (TASK 1)
+    implementation("com.jakewharton.timber:timber:5.0.1")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
@@ -99,8 +107,14 @@ dependencies {
     implementation(libs.coil.compose)
     implementation("androidx.exifinterface:exifinterface:1.3.7")
 
-    // Testing
+    // Testing (TASK 2 FOUNDATION)
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.arch.core.test)
+    testImplementation(libs.robolectric)
+    testImplementation(kotlin("test"))
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

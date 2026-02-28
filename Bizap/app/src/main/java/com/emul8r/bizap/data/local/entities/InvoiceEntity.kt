@@ -1,9 +1,19 @@
 package com.emul8r.bizap.data.local.entities
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "invoices")
+@Entity(
+    tableName = "invoices",
+    indices = [
+        Index(name = "idx_invoices_business", value = ["businessProfileId"]),
+        Index(name = "idx_invoices_customer", value = ["customerId"]),
+        Index(name = "idx_invoices_status", value = ["status"]),
+        Index(name = "idx_invoices_business_status", value = ["businessProfileId", "status"]),
+        Index(name = "idx_invoices_year_sequence", value = ["invoiceYear", "invoiceSequence", "businessProfileId"])
+    ]
+)
 data class InvoiceEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val businessProfileId: Long = 1,
@@ -31,5 +41,5 @@ data class InvoiceEntity(
     val version: Int = 1,
     val invoiceYear: Int = 0,
     val invoiceSequence: Int = 0,
-    val currencyCode: String = "AUD" // NEW: Multi-currency support
+    val currencyCode: String = "AUD"
 )

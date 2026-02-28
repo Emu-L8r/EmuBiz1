@@ -32,7 +32,7 @@ data class Invoice(
     val version: Int = 1,
     val invoiceYear: Int = 0,
     val invoiceSequence: Int = 0,
-    val currencyCode: String = "AUD" // NEW: Multi-currency support
+    val currencyCode: String = "AUD"
 ) {
     val invoiceId: Long get() = id
     val total: Double get() = totalAmount
@@ -44,6 +44,15 @@ data class Invoice(
             val base = "INV-$invoiceYear-${invoiceSequence.toString().padStart(6, '0')}"
             return if (version > 1) "$base-v$version" else base
         }
+
+    fun validate() {
+        require(businessProfileId > 0) { "Business ID is required" }
+        require(customerId > 0) { "Customer ID is required" }
+        require(totalAmount > 0) { "Total amount must be greater than zero" }
+        require(currencyCode.length == 3) { "Currency code must be 3 characters" }
+        require(items.isNotEmpty()) { "Invoice must have at least one line item" }
+        items.forEach { it.validate() }
+    }
 
     fun getFormattedInvoiceNumber(): String {
         return invoiceNumber
@@ -58,6 +67,12 @@ data class LineItem(
     val transientId: String = java.util.UUID.randomUUID().toString()
 ) {
     val itemId: Long get() = id
+    
+    fun validate() {
+        require(description.isNotBlank()) { "Item description is required" }
+        require(quantity > 0) { "Quantity must be greater than zero" }
+        require(unitPrice >= 0) { "Unit price cannot be negative" }
+    }
 }
 
 enum class InvoiceStatus {

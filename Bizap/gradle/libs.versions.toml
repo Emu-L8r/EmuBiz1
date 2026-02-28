@@ -1,10 +1,7 @@
 [versions]
-# NOTE: Kotlin 2.1.0 + KSP 2.1.0-1.0.29 are incompatible with Hilt 2.52
-# Error: "Unable to read Kotlin metadata due to unsupported metadata version"
-# This was verified through two independent clean builds both failing identically.
-# Stay on 2.0.21 until Hilt 2.53+ is released with Kotlin 2.1.0 support.
+# NOTE: Stay on 2.0.21 until Hilt 2.53+ is released with Kotlin 2.1.0 support.
 kotlin = "2.0.21"
-agp = "8.8.0"
+agp = "8.13.2"
 ksp = "2.0.21-1.0.27"
 hilt = "2.52"
 hilt-androidx = "1.2.0"
@@ -21,6 +18,13 @@ kotlinx-serialization = "1.7.3"
 junit = "4.13.2"
 androidx-junit = "1.2.1"
 espresso = "3.6.1"
+mockk = "1.13.10"
+coroutines-test = "1.7.3"
+arch-core-test = "2.2.0"
+robolectric = "4.11.1"
+google-services = "4.4.4"
+crashlytics = "3.0.2"
+firebase-bom = "34.9.0"
 
 [libraries]
 # Core AndroidX
@@ -42,11 +46,9 @@ androidx-material-icons-extended = { group = "androidx.compose.material", name =
 # Navigation
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 
-# Hilt Core
+# Hilt
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
-
-# Hilt AndroidX (For Workers & Navigation)
 hilt-ext-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hilt-androidx" }
 hilt-ext-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hilt-androidx" }
 hilt-ext-navigation = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-androidx" }
@@ -63,16 +65,23 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastore" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
-# Image Loading
-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+# Firebase (FIXED: removed -ktx)
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 
-# Serialization
+# Other
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-junit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines-test" }
+arch-core-test = { group = "androidx.arch.core", name = "core-testing", version.ref = "arch-core-test" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -81,3 +90,5 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 dagger-hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }

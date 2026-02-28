@@ -36,7 +36,10 @@ object DatabaseModule {
             MIGRATION_7_8,
             MIGRATION_8_9,
             MIGRATION_9_10,
-            MIGRATION_10_11
+            MIGRATION_10_11,
+            MIGRATION_11_12,
+            MIGRATION_12_13,
+            MIGRATION_13_14
         )
         .fallbackToDestructiveMigration()
         .build()
@@ -49,6 +52,7 @@ object DatabaseModule {
     @Provides fun provideBusinessProfileDao(db: AppDatabase): BusinessProfileDao = db.businessProfileDao()
     @Provides fun provideCurrencyDao(db: AppDatabase): CurrencyDao = db.currencyDao()
     @Provides fun provideExchangeRateDao(db: AppDatabase): ExchangeRateDao = db.exchangeRateDao()
+    @Provides fun providePendingOperationDao(db: AppDatabase): PendingOperationDao = db.pendingOperationDao()
 
     @Provides
     @Singleton

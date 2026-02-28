@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "128059285670",
+    "project_id": "bizap-801c0",
+    "storage_bucket": "bizap-801c0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:128059285670:android:6267db3099b5c50aa79467",
+        "android_client_info": {
+          "package_name": "com.emul8r.bizap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkh0hB6svW2DAu-M971_HXh4n5GvLkdJ8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
