@@ -215,7 +215,6 @@ val MIGRATION_11_12 = object : Migration(11, 12) {
 
 /**
  * Migration from version 12 to version 13
- * Adds pending_operations table for offline mode support.
  */
 val MIGRATION_12_13 = object : Migration(12, 13) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -235,20 +234,16 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
                 lastError TEXT
             )
         """.trimIndent())
-        
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_pending_status ON pending_operations(status)")
-        
         Log.i("Migration", "✅ MIGRATION_12_13 completed: Offline Operation Queue established")
     }
 }
 
 /**
  * Migration from version 13 to version 14
- * Analytics foundation tables
  */
 val MIGRATION_13_14 = object : Migration(13, 14) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        // Create invoice_analytics_snapshots table
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS invoice_analytics_snapshots (
                 invoiceId INTEGER PRIMARY KEY NOT NULL,
@@ -271,13 +266,10 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
                 snapshotCreatedAtMs INTEGER NOT NULL
             )
         """.trimIndent())
-
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_analytics_business ON invoice_analytics_snapshots(businessProfileId)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_analytics_date ON invoice_analytics_snapshots(invoiceDateMs)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_analytics_status ON invoice_analytics_snapshots(status)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_analytics_currency ON invoice_analytics_snapshots(currencyCode)")
-
-        // Create daily_revenue_snapshots table
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS daily_revenue_snapshots (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -295,11 +287,8 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
                 snapshotCreatedAtMs INTEGER NOT NULL
             )
         """.trimIndent())
-
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_daily_business ON daily_revenue_snapshots(businessProfileId)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_daily_date ON daily_revenue_snapshots(dateString)")
-
-        // Create customer_analytics_snapshots table
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS customer_analytics_snapshots (
                 customerId INTEGER PRIMARY KEY NOT NULL,
@@ -322,11 +311,8 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
                 snapshotCreatedAtMs INTEGER NOT NULL
             )
         """.trimIndent())
-
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_cust_analytics_business ON customer_analytics_snapshots(businessProfileId)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_cust_analytics_ltv ON customer_analytics_snapshots(customerLifetimeValue)")
-
-        // Create business_health_metrics table
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS business_health_metrics (
                 businessProfileId INTEGER PRIMARY KEY NOT NULL,
@@ -349,10 +335,165 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
                 lastCalculatedAtMs INTEGER NOT NULL
             )
         """.trimIndent())
-
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_health_business ON business_health_metrics(businessProfileId)")
-
         Log.i("Migration", "✅ MIGRATION_13_14 completed: Analytics foundation established")
     }
 }
 
+/**
+ * Migration from version 14 to version 15
+ */
+val MIGRATION_14_15 = object : Migration(14, 15) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP TABLE IF EXISTS `customer_analytics_snapshots`")
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `customer_analytics_snapshots` (
+                `customerId` INTEGER NOT NULL PRIMARY KEY,
+                `businessProfileId` INTEGER NOT NULL,
+                `customerName` TEXT NOT NULL,
+                `customerEmail` TEXT,
+                `totalRevenue` REAL NOT NULL DEFAULT 0.0,
+                `invoiceCount` INTEGER NOT NULL DEFAULT 0,
+                `paidInvoiceCount` INTEGER NOT NULL DEFAULT 0,
+                `overdueInvoiceCount` INTEGER NOT NULL DEFAULT 0,
+                `averageInvoiceAmount` REAL NOT NULL DEFAULT 0.0,
+                `customerLifetimeValue` REAL NOT NULL DEFAULT 0.0,
+                `estimatedLTV` REAL NOT NULL DEFAULT 0.0,
+                `isTopCustomer` INTEGER NOT NULL DEFAULT 0,
+                `segment` TEXT NOT NULL DEFAULT 'NEW',
+                `purchaseVelocity` REAL NOT NULL DEFAULT 0.0,
+                `averageDaysBetweenPurchases` REAL NOT NULL DEFAULT 0.0,
+                `daysSinceLastPurchase` INTEGER NOT NULL DEFAULT 0,
+                `churnRiskScore` REAL NOT NULL DEFAULT 0.0,
+                `isPredictedToChurn` INTEGER NOT NULL DEFAULT 0,
+                `churnRiskFactors` TEXT NOT NULL DEFAULT '[]',
+                `lastInvoiceDateMs` INTEGER,
+                `lastPaymentDateMs` INTEGER,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `riskScore` INTEGER NOT NULL DEFAULT 0,
+                `snapshotCreatedAtMs` INTEGER NOT NULL,
+                `lastUpdatedMs` INTEGER NOT NULL
+            )
+        """.trimIndent())
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_cust_analytics_business` ON `customer_analytics_snapshots` (`businessProfileId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_cust_analytics_ltv` ON `customer_analytics_snapshots` (`customerLifetimeValue`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_cust_analytics_segment` ON `customer_analytics_snapshots` (`segment`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_cust_analytics_churn` ON `customer_analytics_snapshots` (`isPredictedToChurn`)")
+        Log.i("Migration", "✅ MIGRATION_14_15 completed: Advanced Customer Analytics established")
+    }
+}
+
+/**
+ * Migration from version 15 to version 16
+ * Add Invoice Payment Analytics tables
+ */
+val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Create invoice_payments table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `invoice_payments` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `invoiceId` INTEGER NOT NULL,
+                `amountPaid` REAL NOT NULL,
+                `paymentDate` INTEGER NOT NULL,
+                `paymentMethod` TEXT NOT NULL,
+                `transactionReference` TEXT NOT NULL,
+                `notes` TEXT,
+                `createdAtMs` INTEGER NOT NULL,
+                `updatedAtMs` INTEGER NOT NULL,
+                FOREIGN KEY(`invoiceId`) REFERENCES `invoices`(`id`) ON DELETE CASCADE
+            )
+        """.trimIndent())
+
+        // Create invoice_payment_snapshots table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `invoice_payment_snapshots` (
+                `invoiceId` INTEGER PRIMARY KEY NOT NULL,
+                `businessProfileId` INTEGER NOT NULL,
+                `customerId` INTEGER NOT NULL,
+                `customerName` TEXT NOT NULL,
+                `invoiceNumber` TEXT NOT NULL,
+                `invoiceDate` INTEGER NOT NULL,
+                `dueDate` INTEGER NOT NULL,
+                `totalAmount` REAL NOT NULL,
+                `paidAmount` REAL NOT NULL,
+                `outstandingAmount` REAL NOT NULL,
+                `paymentStatus` TEXT NOT NULL,
+                `ageingBucket` TEXT NOT NULL,
+                `daysOverdue` INTEGER NOT NULL,
+                `daysSinceDue` INTEGER NOT NULL,
+                `lastPaymentDate` INTEGER,
+                `lastPaymentAmount` REAL NOT NULL DEFAULT 0.0,
+                `paymentCount` INTEGER NOT NULL DEFAULT 0,
+                `isAtRisk` INTEGER NOT NULL DEFAULT 0,
+                `riskScore` REAL NOT NULL DEFAULT 0.0,
+                `riskFactors` TEXT NOT NULL DEFAULT '',
+                `lastUpdatedMs` INTEGER NOT NULL,
+                `snapshotDateMs` INTEGER NOT NULL,
+                FOREIGN KEY(`invoiceId`) REFERENCES `invoices`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY(`customerId`) REFERENCES `customers`(`id`) ON DELETE CASCADE
+            )
+        """.trimIndent())
+
+        // Create daily_payment_snapshots table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `daily_payment_snapshots` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `businessProfileId` INTEGER NOT NULL,
+                `snapshotDate` INTEGER NOT NULL,
+                `paymentsReceivedCount` INTEGER NOT NULL DEFAULT 0,
+                `paymentsReceivedAmount` REAL NOT NULL DEFAULT 0.0,
+                `invoicesDueCount` INTEGER NOT NULL DEFAULT 0,
+                `invoicesDueAmount` REAL NOT NULL DEFAULT 0.0,
+                `invoicesOverdueCount` INTEGER NOT NULL DEFAULT 0,
+                `invoicesOverdueAmount` REAL NOT NULL DEFAULT 0.0,
+                `outstandingCurrent` REAL NOT NULL DEFAULT 0.0,
+                `outstandingPast30` REAL NOT NULL DEFAULT 0.0,
+                `outstandingPast60` REAL NOT NULL DEFAULT 0.0,
+                `outstandingPast90` REAL NOT NULL DEFAULT 0.0,
+                `collectionRate` REAL NOT NULL DEFAULT 0.0,
+                `averagePaymentTime` REAL NOT NULL DEFAULT 0.0,
+                `projectedMonthlyRevenue` REAL NOT NULL DEFAULT 0.0,
+                `createdAtMs` INTEGER NOT NULL
+            )
+        """.trimIndent())
+
+        // Create collection_metrics table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `collection_metrics` (
+                `businessProfileId` INTEGER PRIMARY KEY NOT NULL,
+                `metricsDate` INTEGER NOT NULL,
+                `totalInvoicesIssued` INTEGER NOT NULL DEFAULT 0,
+                `totalInvoiceAmount` REAL NOT NULL DEFAULT 0.0,
+                `totalPaidAmount` REAL NOT NULL DEFAULT 0.0,
+                `totalOutstandingAmount` REAL NOT NULL DEFAULT 0.0,
+                `collectionRate` REAL NOT NULL DEFAULT 0.0,
+                `ageingCurrent` REAL NOT NULL DEFAULT 0.0,
+                `ageingPast30` REAL NOT NULL DEFAULT 0.0,
+                `ageingPast60` REAL NOT NULL DEFAULT 0.0,
+                `ageingPast90` REAL NOT NULL DEFAULT 0.0,
+                `averageDaysToPayment` REAL NOT NULL DEFAULT 0.0,
+                `medianDaysToPayment` REAL NOT NULL DEFAULT 0.0,
+                `overdueInvoiceCount` INTEGER NOT NULL DEFAULT 0,
+                `overdueAmount` REAL NOT NULL DEFAULT 0.0,
+                `collectionRateTrend` REAL NOT NULL DEFAULT 0.0,
+                `overdueTrend` REAL NOT NULL DEFAULT 0.0,
+                `projectedCollectionRate30Days` REAL NOT NULL DEFAULT 0.0,
+                `projectedOutstanding30Days` REAL NOT NULL DEFAULT 0.0,
+                `lastUpdatedMs` INTEGER NOT NULL
+            )
+        """.trimIndent())
+
+        // Create indexes
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_invoice_payments_invoiceId` ON `invoice_payments` (`invoiceId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_invoice_payment_snapshots_business` ON `invoice_payment_snapshots` (`businessProfileId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_invoice_payment_snapshots_customer` ON `invoice_payment_snapshots` (`customerId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_invoice_payment_snapshots_status` ON `invoice_payment_snapshots` (`paymentStatus`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_invoice_payment_snapshots_aging` ON `invoice_payment_snapshots` (`ageingBucket`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_invoice_payment_snapshots_risk` ON `invoice_payment_snapshots` (`isAtRisk`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_daily_payment_snapshots_business` ON `daily_payment_snapshots` (`businessProfileId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `idx_daily_payment_snapshots_date` ON `daily_payment_snapshots` (`snapshotDate`)")
+        
+        Log.i("Migration", "✅ MIGRATION_15_16 completed: Payment Analytics established")
+    }
+}

@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.emul8r.bizap.data.local.*
+import com.emul8r.bizap.data.local.dao.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,7 +26,7 @@ object DatabaseModule {
         return Room.databaseBuilder(
             context,
             AppDatabase::class.java,
-            "bizap-db"
+            "bizap.db"
         )
         .addMigrations(
             MIGRATION_2_3, 
@@ -39,7 +40,8 @@ object DatabaseModule {
             MIGRATION_10_11,
             MIGRATION_11_12,
             MIGRATION_12_13,
-            MIGRATION_13_14
+            MIGRATION_13_14,
+            MIGRATION_14_15
         )
         .fallbackToDestructiveMigration()
         .build()
@@ -53,6 +55,8 @@ object DatabaseModule {
     @Provides fun provideCurrencyDao(db: AppDatabase): CurrencyDao = db.currencyDao()
     @Provides fun provideExchangeRateDao(db: AppDatabase): ExchangeRateDao = db.exchangeRateDao()
     @Provides fun providePendingOperationDao(db: AppDatabase): PendingOperationDao = db.pendingOperationDao()
+    @Provides fun provideAnalyticsDao(db: AppDatabase): AnalyticsDao = db.analyticsDao()
+    @Provides fun provideCustomerAnalyticsDao(db: AppDatabase): CustomerAnalyticsDao = db.customerAnalyticsDao()
 
     @Provides
     @Singleton

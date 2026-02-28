@@ -34,6 +34,9 @@ sealed interface Screen {
     @Serializable
     object DocumentVault : Screen
 
+    @Serializable
+    object RevenueDashboard : Screen
+
     // Settings Routes
     @Serializable
     object SettingsHub : Screen

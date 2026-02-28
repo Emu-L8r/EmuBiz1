@@ -29,6 +29,7 @@ import com.emul8r.bizap.ui.documents.DocumentVaultScreen
 import com.emul8r.bizap.ui.invoices.*
 import com.emul8r.bizap.ui.components.BizapTopAppBar
 import com.emul8r.bizap.ui.navigation.Screen
+import com.emul8r.bizap.ui.revenue.RevenueDashboardScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
@@ -51,14 +52,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge() // Critical for API 35
+        enableEdgeToEdge()
         
         setContent {
-            // FIX 3: Ensure MainActivity uses lifecycle-aware collection
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val config by themeViewModel.themeConfig.collectAsStateWithLifecycle()
 
-            // LOG ANCHOR: Verifies that MainActivity is receiving the new theme data
             Log.d("MainActivity", "🎨 Theme recomposed: seedColorHex = ${config.seedColorHex}")
 
             EmuBizzzTheme(themeConfig = config) {
@@ -90,7 +89,9 @@ fun MainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val isTopLevelScreen = bottomNavItems.any { currentDestination?.hasRoute(it.screen::class) == true }
+    val isTopLevelScreen = bottomNavItems.any { item -> 
+        currentDestination?.hasRoute(item.screen::class) == true 
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -110,6 +111,7 @@ fun MainScreen() {
                 currentDestination?.hasRoute<Screen.EditInvoice>() == true -> "Edit Invoice"
                 currentDestination?.hasRoute<Screen.InvoiceDetail>() == true -> "Invoice Detail"
                 currentDestination?.hasRoute<Screen.InvoicePdf>() == true -> "PDF Preview"
+                currentDestination?.hasRoute<Screen.RevenueDashboard>() == true -> "Revenue Dashboard"
                 else -> "Bizap"
             }
 
@@ -209,6 +211,7 @@ fun MainScreen() {
                 val detail: Screen.InvoicePdf = backStackEntry.toRoute()
                 InvoicePdfScreen(invoiceId = detail.invoiceId, isQuote = detail.isQuote)
             }
+            composable<Screen.RevenueDashboard> { RevenueDashboardScreen() }
         }
 
         if (showBottomSheet) {

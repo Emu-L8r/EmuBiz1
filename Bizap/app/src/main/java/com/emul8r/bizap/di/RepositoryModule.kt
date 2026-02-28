@@ -6,6 +6,7 @@ import com.emul8r.bizap.data.repository.CurrencyRepositoryImpl
 import com.emul8r.bizap.data.repository.DocumentRepositoryImpl
 import com.emul8r.bizap.data.repository.InvoiceRepositoryImpl
 import com.emul8r.bizap.data.repository.PrefilledItemRepositoryImpl
+import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
 import com.emul8r.bizap.data.repository.ThemeRepositoryImpl
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
@@ -14,6 +15,7 @@ import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.repository.PrefilledItemRepository
 import com.emul8r.bizap.domain.repository.ThemeRepository
+import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -65,4 +67,10 @@ abstract class RepositoryModule {
     abstract fun bindCurrencyRepository(
         impl: CurrencyRepositoryImpl
     ): CurrencyRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRevenueRepository(
+        impl: RevenueRepositoryImpl
+    ): RevenueRepository
 }

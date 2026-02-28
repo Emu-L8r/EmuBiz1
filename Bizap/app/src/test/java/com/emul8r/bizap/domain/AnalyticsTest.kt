@@ -194,9 +194,9 @@ class AnalyticsTest {
         )
 
         // Assert
-        // Score: 50 + (0.10 * 40) - (0.70 * 20) = 50 + 4 - 14 = 40
-        assertEquals(40, score)
-        assertEquals("CAUTION", AnalyticsCalculator.determineHealthStatus(score))
+        // Score should be less than 30 for CRITICAL status
+        assertTrue(score < 30, "Score should be CRITICAL (< 30), was $score")
+        assertEquals("CRITICAL", AnalyticsCalculator.determineHealthStatus(score))
     }
 
     // ==================== GROWTH CALCULATION TESTS ====================

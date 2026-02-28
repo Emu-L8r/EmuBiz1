@@ -107,6 +107,11 @@ dependencies {
     implementation(libs.coil.compose)
     implementation("androidx.exifinterface:exifinterface:1.3.7")
 
+    // Charts (TASK 12 - VICO ENGINE)
+    implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")
+    implementation("com.patrykandpatrick.vico:compose:1.13.1")
+    implementation("com.patrykandpatrick.vico:core:1.13.1")
+
     // Testing (TASK 2 FOUNDATION)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
