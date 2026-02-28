@@ -6,6 +6,7 @@ import java.util.Locale
 
 data class Invoice(
     val id: Long = 0,
+    val businessProfileId: Long = 0,
     val customerId: Long,
     val customerName: String,
     val customerAddress: String = "",
@@ -26,23 +27,18 @@ data class Invoice(
     val taxAmount: Double = 0.0,
     val companyLogoPath: String? = null,
     val updatedAt: Long = 0,
-    
-    // PHASE 3A: Management & Audit Fields
     val amountPaid: Double = 0.0,
     val parentInvoiceId: Long? = null,
     val version: Int = 1,
-
-    // Professional numbering raw fields
     val invoiceYear: Int = 0,
-    val invoiceSequence: Int = 0
+    val invoiceSequence: Int = 0,
+    val currencyCode: String = "AUD" // NEW: Multi-currency support
 ) {
-    // Logic Helpers
     val invoiceId: Long get() = id
     val total: Double get() = totalAmount
     val balanceRemaining: Double get() = totalAmount - amountPaid
     val isFullyPaid: Boolean get() = balanceRemaining <= 0.0
 
-    // ✅ NEW: Computed property for display (e.g., INV-2026-000001)
     val invoiceNumber: String
         get() {
             val base = "INV-$invoiceYear-${invoiceSequence.toString().padStart(6, '0')}"

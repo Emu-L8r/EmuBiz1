@@ -2,12 +2,10 @@ package com.emul8r.bizap
 
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
-import androidx.work.Configuration
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import com.emul8r.bizap.workers.CleanupWorker
+import androidx.work.*
+import com.emul8r.bizap.data.worker.ExchangeRateWorker
 import dagger.hilt.android.HiltAndroidApp
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -24,22 +22,18 @@ class BizapApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        // TODO: Re-enable setupRecurringWork() once WorkManager HiltWorker configuration is fixed
-        // Currently disabled because CleanupWorker fails to instantiate:
-        // "java.lang.NoSuchMethodException: CleanupWorker.<init>[Context, WorkerParameters]"
-        // setupRecurringWork()
+        scheduleExchangeRateUpdates()
     }
 
-    private fun setupRecurringWork() {
-        // DISABLED: WorkManager HiltWorker integration broken
-        // val repeatingRequest = PeriodicWorkRequestBuilder<CleanupWorker>(
-        //     1, TimeUnit.DAYS
-        // ).build()
-        //
-        // WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
-        //     "cache-cleanup",
-        //     ExistingPeriodicWorkPolicy.KEEP,
-        //     repeatingRequest
-        // )
+    private fun scheduleExchangeRateUpdates() {
+        val exchangeRateWork = PeriodicWorkRequestBuilder<ExchangeRateWorker>(
+            24, TimeUnit.HOURS
+        ).build()
+        
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "exchange_rate_update",
+            ExistingPeriodicWorkPolicy.KEEP,
+            exchangeRateWork
+        )
     }
 }

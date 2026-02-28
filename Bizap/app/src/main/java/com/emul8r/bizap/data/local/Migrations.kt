@@ -129,13 +129,9 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
 
 /**
  * Migration from version 9 to version 10
- * 1. Creates business_profiles table for multi-business support.
- * 2. Adds businessProfileId to invoices table.
- * 3. Seeds an initial business profile to maintain data consistency.
  */
 val MIGRATION_9_10 = object : Migration(9, 10) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        // 1. Create the business_profiles table
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS business_profiles (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -154,17 +150,50 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
                 createdAt INTEGER NOT NULL DEFAULT ${System.currentTimeMillis()}
             )
         """.trimIndent())
-
-        // 2. Add businessProfileId to invoices
         db.execSQL("ALTER TABLE invoices ADD COLUMN businessProfileId INTEGER NOT NULL DEFAULT 1")
-
-        // 3. Seed the first business profile
-        // RATIONALE: Existing invoices now point to ID 1, so ID 1 must exist.
         db.execSQL("""
             INSERT INTO business_profiles (id, businessName, abn, email, phone, address, website, createdAt)
             VALUES (1, 'Default Business', '00 000 000 000', 'admin@bizap.com', '0000 000 000', '123 Business Way', 'www.bizap.com', ${System.currentTimeMillis()})
         """.trimIndent())
-
         Log.i("Migration", "✅ MIGRATION_9_10 completed: Multi-business foundation established")
+    }
+}
+
+/**
+ * Migration from version 10 to version 11
+ * 1. Creates currencies table for multi-currency support.
+ * 2. Creates exchange_rates table.
+ * 3. Adds currencyCode to invoices table.
+ */
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // 1. Create currencies table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS currencies (
+                code TEXT PRIMARY KEY NOT NULL,
+                symbol TEXT NOT NULL,
+                name TEXT NOT NULL,
+                isSystemDefault INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent())
+
+        // 2. Create exchange_rates table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS exchange_rates (
+                baseCurrencyCode TEXT PRIMARY KEY NOT NULL,
+                targetCurrencyCode TEXT NOT NULL,
+                rate REAL NOT NULL,
+                lastUpdated INTEGER NOT NULL
+            )
+        """.trimIndent())
+
+        // 3. Add currencyCode to invoices
+        db.execSQL("ALTER TABLE invoices ADD COLUMN currencyCode TEXT NOT NULL DEFAULT 'AUD'")
+
+        // 4. Seed initial currencies
+        db.execSQL("INSERT INTO currencies (code, symbol, name, isSystemDefault) VALUES ('AUD', '$', 'Australian Dollar', 1)")
+        db.execSQL("INSERT INTO currencies (code, symbol, name, isSystemDefault) VALUES ('USD', '$', 'US Dollar', 0)")
+
+        Log.i("Migration", "✅ MIGRATION_10_11 completed: Multi-currency foundation established")
     }
 }

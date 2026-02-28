@@ -9,6 +9,7 @@ import com.emul8r.bizap.domain.model.LineItem
 fun Invoice.toEntity(): InvoiceEntity {
     return InvoiceEntity(
         id = this.id,
+        businessProfileId = this.businessProfileId, // PHASE 3B: Preserve business scope
         customerId = this.customerId,
         customerName = this.customerName,
         customerAddress = this.customerAddress,
@@ -39,6 +40,7 @@ fun Invoice.toEntity(): InvoiceEntity {
 fun InvoiceWithItems.toDomain(): Invoice {
     return Invoice(
         id = this.invoice.id,
+        businessProfileId = this.invoice.businessProfileId, // PHASE 3B: Restore business scope
         customerId = this.invoice.customerId,
         customerName = this.invoice.customerName,
         customerAddress = this.invoice.customerAddress,

@@ -8,20 +8,25 @@ import com.emul8r.bizap.data.mapper.toEntity
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import java.util.Calendar
 import javax.inject.Inject
 
 class InvoiceRepositoryImpl @Inject constructor(
-    private val invoiceDao: InvoiceDao
+    private val invoiceDao: InvoiceDao,
+    private val businessProfileRepository: BusinessProfileRepository
 ) : InvoiceRepository {
     
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getAllInvoicesWithItems(): Flow<List<Invoice>> {
-        return invoiceDao.getAllInvoices().map { list ->
-            list.map { it.toDomain() }
+        // Scoped to active business
+        return businessProfileRepository.activeProfile.flatMapLatest { business ->
+            invoiceDao.getInvoicesByBusinessId(business.id).map { list ->
+                list.map { it.toDomain() }
+            }
         }
     }
 
@@ -29,30 +34,31 @@ class InvoiceRepositoryImpl @Inject constructor(
         return invoiceDao.getInvoiceWithItemsById(id).map { it?.toDomain() }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getInvoiceGroupWithVersions(year: Int, sequence: Int): Flow<List<Invoice>> {
-        return invoiceDao.getInvoiceGroupWithVersions(year, sequence).map { list ->
-            list.map { entity ->
-                // Note: This requires a new mapper helper for raw Entity to Domain without items
-                // For now, mapping via standard entity mapper (items will be empty in picker)
-                // In production, we'd use a specific lightweight entity for the picker
-                val placeholderWithItems = InvoiceWithItems(entity, emptyList())
-                placeholderWithItems.toDomain()
+        return businessProfileRepository.activeProfile.flatMapLatest { business ->
+            invoiceDao.getInvoiceGroupWithVersions(year, sequence, business.id).map { list ->
+                list.map { entity ->
+                    val placeholderWithItems = InvoiceWithItems(entity, emptyList())
+                    placeholderWithItems.toDomain()
+                }
             }
         }
     }
 
     override suspend fun saveInvoice(invoice: Invoice): Long {
-        var invoiceToSave = invoice
+        val activeBusinessId = businessProfileRepository.getActiveBusinessId()
+        var invoiceToSave = invoice.copy(businessProfileId = activeBusinessId)
         
         if (invoice.id == 0L) {
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-            val nextSequence = invoiceDao.getMaxSequenceForYear(currentYear) + 1
-            invoiceToSave = invoice.copy(
+            val nextSequence = invoiceDao.getMaxSequenceForYear(currentYear, activeBusinessId) + 1
+            invoiceToSave = invoiceToSave.copy(
                 invoiceYear = currentYear,
                 invoiceSequence = nextSequence,
                 version = 1
             )
-            Log.i("InvoiceRepository", "🔢 Assigning new invoice number: INV-$currentYear-${nextSequence.toString().padStart(6, '0')}")
+            Log.i("InvoiceRepository", "🔢 Assigning scoped invoice number: INV-$currentYear-${nextSequence.toString().padStart(6, '0')} for business $activeBusinessId")
         }
 
         val invoiceEntity = invoiceToSave.toEntity()
@@ -61,7 +67,6 @@ class InvoiceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateAmountPaid(invoiceId: Long, amount: Double) {
-        // This requires a specific DAO query for amountPaid. Adding logic to fetch and update.
         val invoiceWithItems = invoiceDao.getInvoiceWithItemsById(invoiceId).first()
         invoiceWithItems?.let {
             val updatedEntity = it.invoice.copy(amountPaid = amount)
@@ -73,26 +78,22 @@ class InvoiceRepositoryImpl @Inject constructor(
         val original = invoiceDao.getInvoiceWithItemsById(originalInvoiceId).first() 
             ?: throw Exception("Original invoice not found")
         
-        // 1. Prepare cloned metadata with version incremented
         val correctionEntity = original.invoice.copy(
-            id = 0, // Fresh ID
+            id = 0,
             status = InvoiceStatus.DRAFT.name,
             version = original.invoice.version + 1,
-            amountPaid = 0.0, // Fresh version has zero payments
+            amountPaid = 0.0,
             parentInvoiceId = originalInvoiceId,
             date = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
 
-        // 2. Clone line items
         val lineItemEntities = original.items.map { it.copy(id = 0) }
-
-        // 3. Persist atomically
         return invoiceDao.insert(correctionEntity, lineItemEntities)
     }
 
     override fun getBusinessProfile(): Flow<BusinessProfile> {
-        return kotlinx.coroutines.flow.flowOf(BusinessProfile())
+        return businessProfileRepository.activeProfile
     }
 
     override suspend fun updateInvoiceStatus(invoiceId: Long, status: InvoiceStatus) {

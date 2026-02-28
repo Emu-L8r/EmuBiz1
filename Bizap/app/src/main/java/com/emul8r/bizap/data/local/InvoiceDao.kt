@@ -14,12 +14,12 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface InvoiceDao {
     @Transaction
-    @Query("SELECT * FROM invoices ORDER BY date DESC")
-    fun getAllInvoices(): Flow<List<InvoiceWithItems>>
+    @Query("SELECT * FROM invoices WHERE businessProfileId = :businessId ORDER BY date DESC")
+    fun getInvoicesByBusinessId(businessId: Long): Flow<List<InvoiceWithItems>>
 
     @Transaction
-    @Query("SELECT * FROM invoices WHERE customerId = :customerId")
-    fun getInvoicesForCustomer(customerId: Long): Flow<List<InvoiceWithItems>>
+    @Query("SELECT * FROM invoices WHERE customerId = :customerId AND businessProfileId = :businessId")
+    fun getInvoicesForCustomer(customerId: Long, businessId: Long): Flow<List<InvoiceWithItems>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertInvoice(invoice: InvoiceEntity): Long
@@ -30,12 +30,9 @@ interface InvoiceDao {
     @Transaction
     suspend fun insert(invoice: InvoiceEntity, items: List<LineItemEntity>): Long {
         val id = insertInvoice(invoice)
-
-        // If this is an update (invoice has existing ID), delete old line items first
         if (invoice.id != 0L) {
             deleteLineItems(invoice.id)
         }
-
         val itemsWithId = items.map { it.copy(invoiceId = id) }
         insertLineItems(itemsWithId)
         return id
@@ -51,6 +48,9 @@ interface InvoiceDao {
     @Query("UPDATE invoices SET pdfUri = :path WHERE id = :id")
     suspend fun updatePdfPath(id: Long, path: String)
 
+    @Query("UPDATE invoices SET currencyCode = :code WHERE id = :id")
+    suspend fun updateInvoiceCurrency(id: Long, code: String)
+
     @Query("DELETE FROM line_items WHERE invoiceId = :invoiceId")
     suspend fun deleteLineItems(invoiceId: Long)
 
@@ -63,23 +63,13 @@ interface InvoiceDao {
         deleteInvoice(id)
     }
 
-    // --- PHASE 3A: Professional Numbering ---
-
-    @Query("SELECT COALESCE(MAX(invoiceSequence), 0) FROM invoices WHERE invoiceYear = :year")
-    suspend fun getMaxSequenceForYear(year: Int): Int
+    @Query("SELECT COALESCE(MAX(invoiceSequence), 0) FROM invoices WHERE invoiceYear = :year AND businessProfileId = :businessId")
+    suspend fun getMaxSequenceForYear(year: Int, businessId: Long): Int
 
     @Query("""
         SELECT * FROM invoices 
-        WHERE invoiceYear = :invoiceYear AND invoiceSequence = :invoiceSequence
+        WHERE invoiceYear = :invoiceYear AND invoiceSequence = :invoiceSequence AND businessProfileId = :businessId
         ORDER BY version ASC
     """)
-    fun getInvoiceGroupWithVersions(invoiceYear: Int, invoiceSequence: Int): Flow<List<InvoiceEntity>>
-
-    @Query("""
-        SELECT * FROM invoices 
-        WHERE invoiceYear = :invoiceYear AND invoiceSequence = :invoiceSequence
-        ORDER BY version DESC
-        LIMIT 1
-    """)
-    fun getLatestInvoiceInGroup(invoiceYear: Int, invoiceSequence: Int): Flow<InvoiceEntity?>
+    fun getInvoiceGroupWithVersions(invoiceYear: Int, invoiceSequence: Int, businessId: Long): Flow<List<InvoiceEntity>>
 }

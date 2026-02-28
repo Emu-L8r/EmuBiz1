@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.BuildConfig
 import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.model.Currency
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
@@ -26,6 +28,8 @@ data class CreateInvoiceUiState(
     val notes: String = "",
     val footer: String = "",
     val photoUris: List<String> = emptyList(),
+    val currencies: List<Currency> = emptyList(),
+    val selectedCurrencyCode: String = "AUD",
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
     val error: String? = null
@@ -36,6 +40,7 @@ class CreateInvoiceViewModel @Inject constructor(
     private val invoiceRepository: InvoiceRepository,
     private val customerRepository: CustomerRepository,
     private val businessProfileRepository: BusinessProfileRepository,
+    private val currencyRepository: CurrencyRepository,
     private val generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase
 ) : ViewModel() {
 
@@ -44,17 +49,25 @@ class CreateInvoiceViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        loadCustomers()
+        loadData()
     }
 
-    private fun loadCustomers() {
+    private fun loadData() {
         viewModelScope.launch {
-            customerRepository.getAllCustomers()
-                .onEach { customers ->
-                    _uiState.update { it.copy(customers = customers) }
-                }
-                .launchIn(this)
+            // Observe customers
+            customerRepository.getAllCustomers().onEach { customers ->
+                _uiState.update { it.copy(customers = customers) }
+            }.launchIn(this)
+
+            // Observe currencies
+            currencyRepository.getEnabledCurrencies().onEach { currencies ->
+                _uiState.update { it.copy(currencies = currencies) }
+            }.launchIn(this)
         }
+    }
+
+    fun onCurrencySelected(code: String) {
+        _uiState.update { it.copy(selectedCurrencyCode = code) }
     }
 
     /**
@@ -135,18 +148,15 @@ class CreateInvoiceViewModel @Inject constructor(
                 val state = _uiState.value
                 val customer = state.selectedCustomer ?: throw Exception("Please select a customer")
 
-                // 1. Fetch current business profile for PDF branding and tax rate
                 val businessProfile = businessProfileRepository.profile.first()
-
                 val lineItems = state.items.map { it.toDomain() }
                 val subtotal = lineItems.sumOf { it.quantity * it.unitPrice }
                 
                 val taxRate = 0.1 
                 val taxAmount = subtotal * taxRate
                 val createdAt = System.currentTimeMillis()
-                val dueDate = createdAt + (30L * 24 * 60 * 60 * 1000) // 30 days
+                val dueDate = createdAt + (30L * 24 * 60 * 60 * 1000)
 
-                // 2. Prepare Invoice with full snapshot data
                 val invoice = Invoice(
                     customerId = customer.id,
                     customerName = customer.name,
@@ -166,14 +176,13 @@ class CreateInvoiceViewModel @Inject constructor(
                     taxRate = taxRate,
                     taxAmount = taxAmount,
                     companyLogoPath = businessProfile.logoBase64,
-                    updatedAt = createdAt
+                    updatedAt = createdAt,
+                    currencyCode = state.selectedCurrencyCode
                 )
 
-                // 3. Save to database
                 val invoiceId = invoiceRepository.saveInvoice(invoice)
                 val invoiceWithId = invoice.copy(id = invoiceId)
 
-                // 4. Atomic generation using the snapshot
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceWithId,
                     snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
@@ -194,7 +203,8 @@ class CreateInvoiceViewModel @Inject constructor(
                         businessEmail = businessProfile.email,
                         businessPhone = businessProfile.phone,
                         businessAddress = businessProfile.address,
-                        logoBase64 = businessProfile.logoBase64
+                        logoBase64 = businessProfile.logoBase64,
+                        currencyCode = state.selectedCurrencyCode
                     ),
                     isQuote = false,
                     overwriteExisting = true

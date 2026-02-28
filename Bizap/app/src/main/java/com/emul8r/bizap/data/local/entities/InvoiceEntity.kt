@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "invoices")
 data class InvoiceEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val businessProfileId: Long = 1, // PHASE 3B: Linked to a specific business identity
+    val businessProfileId: Long = 1,
     val customerId: Long,
     val customerName: String = "",
     val customerAddress: String = "",
@@ -30,5 +30,6 @@ data class InvoiceEntity(
     val parentInvoiceId: Long? = null,
     val version: Int = 1,
     val invoiceYear: Int = 0,
-    val invoiceSequence: Int = 0
+    val invoiceSequence: Int = 0,
+    val currencyCode: String = "AUD" // NEW: Multi-currency support
 )

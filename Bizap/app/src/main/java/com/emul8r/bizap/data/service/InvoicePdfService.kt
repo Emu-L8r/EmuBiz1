@@ -58,35 +58,36 @@ class InvoicePdfService @Inject constructor(
         val regularTypeface = try { Typeface.createFromAsset(context.assets, "fonts/Roboto-Regular.ttf") } catch (e: Exception) { Typeface.DEFAULT }
         val italicTypeface = Typeface.create(regularTypeface, Typeface.ITALIC)
 
+        // PHASE 3B: Dynamic Currency Symbol
+        val symbol = getCurrencySymbol(snapshot.currencyCode)
+
         val titlePaint = Paint().apply { typeface = boldTypeface; textSize = 26f; color = Color.BLACK; isAntiAlias = true }
         val brandPaint = Paint().apply { typeface = boldTypeface; textSize = 18f; color = Color.parseColor("#6750A4"); isAntiAlias = true }
         val headerPaint = Paint().apply { typeface = boldTypeface; textSize = 10f; color = Color.BLACK; isAntiAlias = true }
         val bodyPaint = Paint().apply { typeface = regularTypeface; textSize = 10f; color = Color.DKGRAY; isAntiAlias = true }
         val labelPaint = Paint().apply { typeface = boldTypeface; textSize = 9f; color = Color.GRAY; isAntiAlias = true }
 
-        // 1. BUSINESS HEADER (Center Aligned Branding)
+        // 1. BUSINESS HEADER
         val centerX = 595f / 2f
         brandPaint.textAlign = Paint.Align.CENTER
         canvas.drawText(snapshot.businessName.uppercase(), centerX, 50f, brandPaint)
         
         bodyPaint.textAlign = Paint.Align.CENTER
-        // FIX 2: Added Phone and Address to header
         canvas.drawText("ABN: ${snapshot.businessAbn} | Phone: ${snapshot.businessPhone}", centerX, 65f, bodyPaint)
         canvas.drawText("Email: ${snapshot.businessEmail}", centerX, 80f, bodyPaint)
         canvas.drawText(snapshot.businessAddress, centerX, 95f, bodyPaint)
         
-        // Horizontal Line
         canvas.drawLine(40f, 110f, 555f, 110f, Paint().apply { color = Color.LTGRAY; strokeWidth = 1f })
 
         // 2. CLIENT & INVOICE DETAILS
         bodyPaint.textAlign = Paint.Align.LEFT
         canvas.drawText("BILL TO:", 40f, 140f, labelPaint)
-        canvas.drawText(snapshot.customerName, 40f, 155f, headerPaint)
-        canvas.drawText(snapshot.customerAddress, 40f, 170f, bodyPaint)
-        snapshot.customerEmail?.let { canvas.drawText(it, 40f, 185f, bodyPaint) }
+        canvas.drawText(snapshot.customerName, 40f, 145f, headerPaint)
+        canvas.drawText(snapshot.customerAddress, 40f, 160f, bodyPaint)
+        snapshot.customerEmail?.let { canvas.drawText(it, 40f, 175f, bodyPaint) }
 
         canvas.drawText(fileType.uppercase(), 400f, 140f, labelPaint)
-        canvas.drawText("# ${snapshot.invoiceNumber}", 400f, 155f, headerPaint)
+        canvas.drawText("# ${snapshot.invoiceNumber}", 400f, 145f, headerPaint)
         canvas.drawText("Date: ${formatDate(snapshot.date)}", 400f, 170f, bodyPaint)
         canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 400f, 185f, bodyPaint)
 
@@ -99,32 +100,32 @@ class InvoicePdfService @Inject constructor(
             columnWeights = listOf(0.5f, 0.1f, 0.15f, 0.25f)
         )
 
-        tableRenderer.drawRow(listOf("Description", "Qty", "Unit Price", "Total"), headerPaint, isHeader = true)
+        tableRenderer.drawRow(listOf("Description", "Qty", "Price", "Total"), headerPaint, isHeader = true)
 
         snapshot.items.forEach { item ->
             tableRenderer.drawRow(
                 listOf(
                     item.description,
                     item.quantity.toInt().toString(),
-                    String.format(Locale.getDefault(), "$%.2f", item.unitPrice),
-                    String.format(Locale.getDefault(), "$%.2f", item.total)
+                    String.format(Locale.getDefault(), "%s%.2f", symbol, item.unitPrice),
+                    String.format(Locale.getDefault(), "%s%.2f", symbol, item.total)
                 ),
                 bodyPaint
             )
         }
 
-        // 4. TOTALS
+        // 4. TOTALS (Dynamic Symbols)
         var currentY = tableRenderer.getPosition() + 30f
         val rightX = 555f
         bodyPaint.textAlign = Paint.Align.RIGHT
         headerPaint.textAlign = Paint.Align.RIGHT
         
         canvas.drawText("Subtotal:", 450f, currentY, bodyPaint)
-        canvas.drawText(String.format(Locale.getDefault(), "$%.2f", snapshot.subtotal), rightX, currentY, bodyPaint)
+        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal), rightX, currentY, bodyPaint)
         
         currentY += 15f
         canvas.drawText("Tax (${(snapshot.taxRate * 100).toInt()}%):", 450f, currentY, bodyPaint)
-        canvas.drawText(String.format(Locale.getDefault(), "$%.2f", snapshot.taxAmount), rightX, currentY, bodyPaint)
+        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount), rightX, currentY, bodyPaint)
 
         currentY += 25f
         val totalLabelPaint = Paint(headerPaint).apply { 
@@ -132,8 +133,8 @@ class InvoicePdfService @Inject constructor(
             color = Color.parseColor("#6750A4")
             textAlign = Paint.Align.RIGHT
         }
-        canvas.drawText("TOTAL AMOUNT DUE:", 450f, currentY, totalLabelPaint)
-        canvas.drawText(String.format(Locale.getDefault(), "$%.2f", snapshot.totalAmount), rightX, currentY, totalLabelPaint)
+        canvas.drawText("TOTAL AMOUNT DUE (${snapshot.currencyCode}):", 450f, currentY, totalLabelPaint)
+        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount), rightX, currentY, totalLabelPaint)
 
         // 5. PAYMENT DETAILS SECTION
         currentY += 60f
@@ -153,6 +154,17 @@ class InvoicePdfService @Inject constructor(
         pdfDocument.close()
 
         return file
+    }
+
+    private fun getCurrencySymbol(code: String): String {
+        return when (code) {
+            "USD" -> "$"
+            "EUR" -> "€"
+            "GBP" -> "£"
+            "JPY" -> "¥"
+            "AUD" -> "$"
+            else -> "$"
+        }
     }
 
     private fun formatDate(timestamp: Long): String = 
