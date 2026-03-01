@@ -3,8 +3,10 @@ package com.emul8r.bizap.di
 import com.emul8r.bizap.data.repository.BusinessProfileRepositoryImpl
 import com.emul8r.bizap.data.repository.CustomerRepositoryImpl
 import com.emul8r.bizap.data.repository.CurrencyRepositoryImpl
+import com.emul8r.bizap.data.repository.CustomerAnalyticsRepositoryImpl
 import com.emul8r.bizap.data.repository.DocumentRepositoryImpl
 import com.emul8r.bizap.data.repository.InvoiceRepositoryImpl
+import com.emul8r.bizap.data.repository.PaymentAnalyticsRepositoryImpl
 import com.emul8r.bizap.data.repository.PrefilledItemRepositoryImpl
 import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
 import com.emul8r.bizap.data.repository.ThemeRepositoryImpl
@@ -16,6 +18,8 @@ import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.repository.PrefilledItemRepository
 import com.emul8r.bizap.domain.repository.ThemeRepository
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
+import com.emul8r.bizap.domain.customer.repository.CustomerAnalyticsRepository
+import com.emul8r.bizap.domain.invoice.repository.PaymentAnalyticsRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -73,4 +77,16 @@ abstract class RepositoryModule {
     abstract fun bindRevenueRepository(
         impl: RevenueRepositoryImpl
     ): RevenueRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPaymentAnalyticsRepository(
+        impl: PaymentAnalyticsRepositoryImpl
+    ): PaymentAnalyticsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCustomerAnalyticsRepository(
+        impl: CustomerAnalyticsRepositoryImpl
+    ): CustomerAnalyticsRepository
 }
