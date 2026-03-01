@@ -41,5 +41,9 @@ data class InvoiceEntity(
     val version: Int = 1,
     val invoiceYear: Int = 0,
     val invoiceSequence: Int = 0,
-    val currencyCode: String = "AUD"
+    val currencyCode: String = "AUD",
+    // Template integration fields (Phase 5)
+    val templateId: String? = null,              // Reference to InvoiceTemplate used
+    val templateSnapshot: String? = null,        // JSON snapshot of template at creation
+    val customFieldValues: String? = null        // JSON map of custom field values {fieldId: value}
 )

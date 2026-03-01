@@ -23,9 +23,15 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         InvoiceAnalyticsSnapshot::class,
         DailyRevenueSnapshot::class,
         CustomerAnalyticsSnapshot::class,
-        BusinessHealthMetrics::class
+        BusinessHealthMetrics::class,
+        InvoicePaymentEntity::class,
+        InvoicePaymentSnapshot::class,
+        DailyPaymentSnapshot::class,
+        CollectionMetrics::class,
+        InvoiceTemplate::class,
+        InvoiceCustomField::class
     ],
-    version = 15, // INCREMENTED: Added Advanced Customer Analytics
+    version = 20,
     exportSchema = true
 )
 @TypeConverters(DocumentStatusConverter::class)
@@ -39,7 +45,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun exchangeRateDao(): ExchangeRateDao
     abstract fun pendingOperationDao(): PendingOperationDao
     abstract fun analyticsDao(): AnalyticsDao
-    abstract fun customerAnalyticsDao(): CustomerAnalyticsDao // NEW: Phase 1C
+    abstract fun customerAnalyticsDao(): CustomerAnalyticsDao
+    abstract fun invoicePaymentDao(): InvoicePaymentDao
+    abstract fun invoiceTemplateDao(): InvoiceTemplateDao
+    abstract fun invoiceCustomFieldDao(): InvoiceCustomFieldDao
 
     companion object {
         @Volatile
@@ -65,8 +74,14 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_11_12,
                         MIGRATION_12_13,
                         MIGRATION_13_14,
-                        MIGRATION_14_15 // Register the new migration
+                        MIGRATION_14_15,
+                        MIGRATION_15_16,
+                        MIGRATION_16_17,
+                        MIGRATION_17_18,
+                        MIGRATION_18_19,
+                        MIGRATION_19_20
                     )
+                    .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }
             }

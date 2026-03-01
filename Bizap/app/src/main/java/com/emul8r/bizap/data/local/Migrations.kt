@@ -497,3 +497,123 @@ val MIGRATION_15_16 = object : Migration(15, 16) {
         Log.i("Migration", "✅ MIGRATION_15_16 completed: Payment Analytics established")
     }
 }
+
+/**
+ * Migration from version 16 to version 17
+ * Add missing businessProfileId column to customers table and recreate with proper schema
+ */
+val MIGRATION_16_17 = object : Migration(16, 17) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Drop existing indices
+        db.execSQL("DROP INDEX IF EXISTS idx_customers_business")
+        db.execSQL("DROP INDEX IF EXISTS idx_customers_email")
+
+        // Add the missing column
+        db.execSQL("ALTER TABLE customers ADD COLUMN businessProfileId INTEGER NOT NULL DEFAULT 1")
+
+        // Recreate indices to match entity definition
+        db.execSQL("CREATE INDEX `idx_customers_business` ON `customers` (`businessProfileId`)")
+        db.execSQL("CREATE INDEX `idx_customers_email` ON `customers` (`email`)")
+
+        Log.i("Migration", "✅ MIGRATION_16_17 completed: Added businessProfileId to customers table")
+    }
+}
+
+/**
+ * Migration from version 17 to version 18
+ * Add Invoice Templates and Custom Fields tables
+ */
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Create invoiceTemplates table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `invoiceTemplates` (
+              `id` TEXT NOT NULL PRIMARY KEY,
+              `businessProfileId` INTEGER NOT NULL,
+              `name` TEXT NOT NULL,
+              `designType` TEXT NOT NULL,
+              `logoFileName` TEXT,
+              `primaryColor` TEXT NOT NULL DEFAULT '#FF5722',
+              `secondaryColor` TEXT NOT NULL DEFAULT '#FFF9C4',
+              `fontFamily` TEXT NOT NULL DEFAULT 'SANS_SERIF',
+              `companyName` TEXT NOT NULL DEFAULT '',
+              `companyAddress` TEXT NOT NULL DEFAULT '',
+              `companyPhone` TEXT NOT NULL DEFAULT '',
+              `companyEmail` TEXT NOT NULL DEFAULT '',
+              `taxId` TEXT,
+              `bankDetails` TEXT,
+              `hideLineItems` INTEGER NOT NULL DEFAULT 0,
+              `hidePaymentTerms` INTEGER NOT NULL DEFAULT 0,
+              `isDefault` INTEGER NOT NULL DEFAULT 0,
+              `isActive` INTEGER NOT NULL DEFAULT 1,
+              `createdAt` INTEGER NOT NULL,
+              `updatedAt` INTEGER NOT NULL,
+              FOREIGN KEY(`businessProfileId`) REFERENCES `business_profiles`(`id`) ON DELETE CASCADE
+            )
+        """.trimIndent())
+
+        // Create indices for invoiceTemplates
+        db.execSQL("CREATE INDEX `idx_invoiceTemplates_businessProfileId` ON `invoiceTemplates`(`businessProfileId`)")
+        db.execSQL("CREATE INDEX `idx_invoiceTemplates_businessProfileId_isDefault` ON `invoiceTemplates`(`businessProfileId`, `isDefault`)")
+        db.execSQL("CREATE INDEX `idx_invoiceTemplates_businessProfileId_isActive` ON `invoiceTemplates`(`businessProfileId`, `isActive`)")
+
+        // Create invoiceCustomFields table
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `invoiceCustomFields` (
+              `id` TEXT NOT NULL PRIMARY KEY,
+              `templateId` TEXT NOT NULL,
+              `label` TEXT NOT NULL,
+              `fieldType` TEXT NOT NULL,
+              `isRequired` INTEGER NOT NULL DEFAULT 0,
+              `displayOrder` INTEGER NOT NULL,
+              `isActive` INTEGER NOT NULL DEFAULT 1,
+              FOREIGN KEY(`templateId`) REFERENCES `invoiceTemplates`(`id`) ON DELETE CASCADE
+            )
+        """.trimIndent())
+
+        // Create indices for invoiceCustomFields
+        db.execSQL("CREATE INDEX `idx_invoiceCustomFields_templateId` ON `invoiceCustomFields`(`templateId`)")
+        db.execSQL("CREATE INDEX `idx_invoiceCustomFields_templateId_displayOrder` ON `invoiceCustomFields`(`templateId`, `displayOrder`)")
+
+        Log.i("Migration", "✅ MIGRATION_17_18 completed: Invoice Templates and Custom Fields established")
+    }
+}
+
+/**
+ * Migration from version 18 to version 19
+ * Adds template integration fields to invoices table
+ */
+val MIGRATION_18_19 = object : Migration(18, 19) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Add template reference field
+        db.execSQL("ALTER TABLE invoices ADD COLUMN templateId TEXT")
+
+        // Add template snapshot (JSON) field
+        db.execSQL("ALTER TABLE invoices ADD COLUMN templateSnapshot TEXT")
+
+        // Add custom field values (JSON map) field
+        db.execSQL("ALTER TABLE invoices ADD COLUMN customFieldValues TEXT")
+
+        // Create index for template lookups
+        db.execSQL("CREATE INDEX `idx_invoices_templateId` ON `invoices`(`templateId`)")
+
+        Log.i("Migration", "✅ MIGRATION_18_19 completed: Invoice template integration added")
+    }
+}
+
+/**
+ * Migration from version 19 to version 20
+ * Adds tax registration fields to business_profiles table
+ */
+val MIGRATION_19_20 = object : Migration(19, 20) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Add tax registration flag (default false - not registered)
+        db.execSQL("ALTER TABLE business_profiles ADD COLUMN isTaxRegistered INTEGER NOT NULL DEFAULT 0")
+
+        // Add default tax rate (default 0.10 = 10%)
+        db.execSQL("ALTER TABLE business_profiles ADD COLUMN defaultTaxRate REAL NOT NULL DEFAULT 0.10")
+
+        Log.i("Migration", "✅ MIGRATION_19_20 completed: Tax registration toggle added")
+    }
+}
+

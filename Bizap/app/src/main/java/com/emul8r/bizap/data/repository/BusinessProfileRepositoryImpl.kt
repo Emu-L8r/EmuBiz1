@@ -84,7 +84,9 @@ class BusinessProfileRepositoryImpl @Inject constructor(
         accountName = accountName,
         bankName = bankName,
         logoBase64 = logoBase64,
-        signatureUri = signatureUri
+        signatureUri = signatureUri,
+        isTaxRegistered = isTaxRegistered,
+        defaultTaxRate = defaultTaxRate
     )
 
     private fun BusinessProfile.toEntity() = BusinessProfileEntity(
@@ -100,6 +102,8 @@ class BusinessProfileRepositoryImpl @Inject constructor(
         accountName = accountName,
         bankName = bankName,
         logoBase64 = logoBase64,
-        signatureUri = signatureUri
+        signatureUri = signatureUri,
+        isTaxRegistered = isTaxRegistered,
+        defaultTaxRate = defaultTaxRate
     )
 }

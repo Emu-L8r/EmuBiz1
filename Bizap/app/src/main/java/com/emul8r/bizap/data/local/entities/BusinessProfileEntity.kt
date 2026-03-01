@@ -18,5 +18,8 @@ data class BusinessProfileEntity(
     val bankName: String? = null,
     val logoBase64: String? = null,
     val signatureUri: String? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    // Tax Registration (for VAT/GST/Sales Tax)
+    val isTaxRegistered: Boolean = false,        // Default: business is NOT tax registered
+    val defaultTaxRate: Float = 0.10f            // Default: 10% tax rate if registered
 )

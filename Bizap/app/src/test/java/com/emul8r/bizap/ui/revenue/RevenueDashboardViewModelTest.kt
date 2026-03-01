@@ -5,16 +5,12 @@ import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
 import com.emul8r.bizap.domain.revenue.usecase.GetRevenueMetricsUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.assertTrue
 
-// TODO: Refactor to use StandardTestDispatcher instead of delay()
-// This test class has timing issues with ViewModel init in runTest
-@Ignore("TODO: Refactor to use StandardTestDispatcher instead of delay()")
 class RevenueDashboardViewModelTest : BaseUnitTest() {
 
     private val useCase: GetRevenueMetricsUseCase = mockk()
@@ -33,7 +29,6 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
     }
 
     @Test
-    @Ignore("TODO: Fix async init timing")
     fun `when initialized should load success state`() = runTest {
         // Arrange
         val mockMetrics = RevenueMetrics(
@@ -47,8 +42,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
 
         // Act
         viewModel = RevenueDashboardViewModel(useCase)
-        // Allow coroutine in init to complete
-        kotlinx.coroutines.delay(100)
+        advanceUntilIdle() // Wait for coroutine in init to complete
         val state = viewModel.uiState.value
 
         // Assert
@@ -56,15 +50,13 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
     }
 
     @Test
-    @Ignore("TODO: Fix async init timing")
     fun `when use case fails should show error state`() = runTest {
         // Arrange
         coEvery { useCase(any()) } throws Exception("Network Error")
 
         // Act
         viewModel = RevenueDashboardViewModel(useCase)
-        // Allow coroutine in init to complete
-        kotlinx.coroutines.delay(100)
+        advanceUntilIdle() // Wait for coroutine in init to complete
         val state = viewModel.uiState.value
 
         // Assert

@@ -172,6 +172,39 @@ fun InvoiceDetailScreen(
                                 
                                 HorizontalDivider(Modifier.padding(vertical = 12.dp))
                                 
+                                // Subtotal
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Subtotal", style = MaterialTheme.typography.bodyLarge)
+                                    Text(
+                                        text = "$${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount - invoice.taxAmount)}",
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+
+                                // Tax (only if business is tax registered and tax amount > 0)
+                                if (invoice.taxAmount > 0) {
+                                    Spacer(Modifier.height(4.dp))
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("Tax (${(invoice.taxRate * 100).toInt()}%)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(
+                                            text = "$${String.format(Locale.getDefault(), "%.2f", invoice.taxAmount)}",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                } else {
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        text = "No tax applied – Business not registered for tax",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+
+                                Spacer(Modifier.height(8.dp))
+
+                                // Total
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text("Total", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                                     Text(

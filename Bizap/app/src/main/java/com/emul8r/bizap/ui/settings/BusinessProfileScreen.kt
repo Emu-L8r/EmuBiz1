@@ -288,6 +288,62 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // TAX SETTINGS SECTION
+            Text("Tax Settings", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "Configure tax collection for invoices",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            // Tax Registration Toggle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Business is tax registered", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = "Enable if your business collects VAT/GST/Sales Tax",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = profile.isTaxRegistered,
+                    onCheckedChange = { viewModel.updateProfile(profile.copy(isTaxRegistered = it)) }
+                )
+            }
+
+            // Tax Rate Input (only visible when registered)
+            if (profile.isTaxRegistered) {
+                OutlinedTextField(
+                    value = (profile.defaultTaxRate * 100).toString(),
+                    onValueChange = { value ->
+                        val rate = value.toFloatOrNull()
+                        if (rate != null && rate >= 0 && rate <= 100) {
+                            viewModel.updateProfile(profile.copy(defaultTaxRate = rate / 100f))
+                        }
+                    },
+                    label = { Text("Tax Rate (%)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    supportingText = { Text("Enter the tax rate as a percentage (e.g., 10 for 10%)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                Text(
+                    text = "When disabled, invoices will show subtotal only (no tax)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
         }
     }
 }

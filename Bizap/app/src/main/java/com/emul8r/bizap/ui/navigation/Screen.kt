@@ -37,6 +37,9 @@ sealed interface Screen {
     @Serializable
     object RevenueDashboard : Screen
 
+    @Serializable
+    object PaymentAnalytics : Screen // Added for Task 14
+
     // Settings Routes
     @Serializable
     object SettingsHub : Screen

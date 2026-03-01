@@ -152,8 +152,9 @@ class CreateInvoiceViewModel @Inject constructor(
                 val lineItems = state.items.map { it.toDomain() }
                 val subtotal = lineItems.sumOf { it.quantity * it.unitPrice }
                 
-                val taxRate = 0.1 
-                val taxAmount = subtotal * taxRate
+                // TAX REGISTRATION TOGGLE: Only apply tax if business is registered
+                val taxRate = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
+                val taxAmount = if (businessProfile.isTaxRegistered) subtotal * taxRate else 0.0
                 val createdAt = System.currentTimeMillis()
                 val dueDate = createdAt + (30L * 24 * 60 * 60 * 1000)
 

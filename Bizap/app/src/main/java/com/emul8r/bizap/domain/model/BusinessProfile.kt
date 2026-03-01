@@ -13,5 +13,8 @@ data class BusinessProfile(
     val accountName: String? = null,
     val bankName: String? = null,
     val logoBase64: String? = null,
-    val signatureUri: String? = null
+    val signatureUri: String? = null,
+    // Tax Registration
+    val isTaxRegistered: Boolean = false,        // Is business registered for VAT/GST/Sales Tax?
+    val defaultTaxRate: Float = 0.10f            // Default tax rate (10%)
 )
