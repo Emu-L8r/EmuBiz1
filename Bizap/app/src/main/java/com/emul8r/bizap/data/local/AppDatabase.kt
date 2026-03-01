@@ -1,7 +1,6 @@
 package com.emul8r.bizap.data.local
 
 import android.content.Context
-import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -33,10 +32,7 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         InvoiceCustomField::class
     ],
     version = 20,
-    autoMigrations = [
-        AutoMigration(from = 17, to = 20)
-    ],
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(DocumentStatusConverter::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -65,11 +61,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "bizap.db"
                 )
-                    .addMigrations(
-                        MIGRATION_17_18,
-                        MIGRATION_18_19,
-                        MIGRATION_19_20
-                    )
+                    
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }
@@ -77,3 +69,5 @@ abstract class AppDatabase : RoomDatabase() {
         }
     }
 }
+
+
