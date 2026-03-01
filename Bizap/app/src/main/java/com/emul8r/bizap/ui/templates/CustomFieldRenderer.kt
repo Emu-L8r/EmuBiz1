@@ -204,13 +204,3 @@ object CustomFieldValidator {
         }.filterValues { it.isNotEmpty() }
     }
 }
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-            }
-            else -> {
-                Text("Unsupported field type: ${field.fieldType}")
-            }
-        }
-    }
-}

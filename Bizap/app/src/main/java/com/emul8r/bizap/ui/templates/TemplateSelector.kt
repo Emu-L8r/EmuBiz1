@@ -245,23 +245,6 @@ private fun TemplateSelectorItem(
     }
 }
 
-                isSelected = selectedTemplateId == null,
-                name = "No Template",
-                designType = "Standard",
-                primaryColor = null,
-                isDefault = false,
-                onClick = { onTemplateSelected(null) }
-            )
-
-            localLazyList(templates, selectedTemplateId, onTemplateSelected)
-
-            OutlinedButton(onClick = onCreateNewTemplate, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Filled.Add, null)
-                Text("Create New Template")
-            }
-        }
-    }
-}
 
 @Composable
 private fun localLazyList(templates: List<InvoiceTemplate>, selectedTemplateId: String?, onTemplateSelected: (InvoiceTemplate?) -> Unit) {

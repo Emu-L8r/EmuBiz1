@@ -89,6 +89,7 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.ktx)
+    implementation("androidx.startup:startup-runtime:1.1.1")
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)

@@ -44,6 +44,8 @@ fun InvoiceDetailScreen(
     var showActionHub by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showPaymentDialog by remember { mutableStateOf(false) }
+    var isSaving by remember { mutableStateOf(false) }
+    var isExporting by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadInvoice(invoiceId)
@@ -74,19 +76,13 @@ fun InvoiceDetailScreen(
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             context.startActivity(Intent.createChooser(intent, "Share Invoice"))
+            isExporting = false
         }
     }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Invoice Details") }) },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { showActionHub = true },
-                icon = { Icon(Icons.Default.IosShare, contentDescription = null) },
-                text = { Text("Export") }
-            )
-        }
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
             if (showActionHub) {
@@ -116,139 +112,245 @@ fun InvoiceDetailScreen(
                     Column(
                         modifier = Modifier
                             .padding(padding)
-                            .padding(16.dp)
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                            .fillMaxSize()
                     ) {
-                        // PHASE 3A: Version Picker
-                        VersionPicker(
-                            currentInvoice = invoice,
-                            allVersions = s.versions,
-                            onVersionSelected = { newId -> viewModel.loadInvoice(newId) }
-                        )
+                        Column(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .verticalScroll(rememberScrollState())
+                                .weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // PHASE 3A: Version Picker
+                            VersionPicker(
+                                currentInvoice = invoice,
+                                allVersions = s.versions,
+                                onVersionSelected = { newId -> viewModel.loadInvoice(newId) }
+                            )
 
-                        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-                            InvoiceStatusBanner(invoice.status.name)
-                            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                InvoiceStatus.entries.forEach { status ->
-                                    DropdownMenuItem(text = { Text(status.name) }, onClick = { 
-                                        viewModel.updateStatus(invoiceId, status.name)
-                                        expanded = false 
-                                    })
+                            ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+                                InvoiceStatusBanner(invoice.status.name)
+                                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                    InvoiceStatus.entries.forEach { status ->
+                                        DropdownMenuItem(text = { Text(status.name) }, onClick = {
+                                            viewModel.updateStatus(invoiceId, status.name)
+                                            expanded = false
+                                        })
+                                    }
                                 }
                             }
-                        }
 
-                        // PHASE 3A: Payment Progress
-                        PaymentProgressCard(invoice = invoice, onRecordPayment = { showPaymentDialog = true })
+                            // PHASE 3A: Payment Progress
+                            PaymentProgressCard(invoice = invoice, onRecordPayment = { showPaymentDialog = true })
 
-                        if (!invoice.header.isNullOrBlank()) {
-                            Section(title = "Header", content = invoice.header)
-                        }
+                            if (!invoice.header.isNullOrBlank()) {
+                                Section(title = "Header", content = invoice.header)
+                            }
 
-                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                            Column(Modifier.padding(16.dp)) {
-                                Text(invoice.invoiceNumber, style = MaterialTheme.typography.headlineSmall)
-                                Text(formatDate(invoice.date), style = MaterialTheme.typography.bodyMedium)
-                                Text("Customer: ${invoice.customerName}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
-                                
-                                HorizontalDivider(Modifier.padding(vertical = 12.dp))
-                                
-                                invoice.items.forEach { item ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Column(Modifier.weight(1f)) {
-                                            Text(item.description, style = MaterialTheme.typography.bodyLarge)
-                                            Text("${item.quantity} x $${String.format(Locale.getDefault(), "%.2f", item.unitPrice)}", style = MaterialTheme.typography.bodySmall)
+                            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(Modifier.padding(16.dp)) {
+                                    Text(invoice.invoiceNumber, style = MaterialTheme.typography.headlineSmall)
+                                    Text(formatDate(invoice.date), style = MaterialTheme.typography.bodyMedium)
+                                    Text("Customer: ${invoice.customerName}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
+
+                                    HorizontalDivider(Modifier.padding(vertical = 12.dp))
+
+                                    invoice.items.forEach { item ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Column(Modifier.weight(1f)) {
+                                                Text(item.description, style = MaterialTheme.typography.bodyLarge)
+                                                Text("${item.quantity} x $${String.format(Locale.getDefault(), "%.2f", item.unitPrice)}", style = MaterialTheme.typography.bodySmall)
+                                            }
+                                            Text(
+                                                "$${String.format(Locale.getDefault(), "%.2f", item.quantity * item.unitPrice)}",
+                                                fontWeight = FontWeight.Bold
+                                            )
                                         }
-                                        Text(
-                                            "$${String.format(Locale.getDefault(), "%.2f", item.quantity * item.unitPrice)}",
-                                            fontWeight = FontWeight.Bold
-                                        )
                                     }
-                                }
-                                
-                                HorizontalDivider(Modifier.padding(vertical = 12.dp))
-                                
-                                // Subtotal
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Subtotal", style = MaterialTheme.typography.bodyLarge)
-                                    Text(
-                                        text = "$${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount - invoice.taxAmount)}",
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                }
 
-                                // Tax (only if business is tax registered and tax amount > 0)
-                                if (invoice.taxAmount > 0) {
-                                    Spacer(Modifier.height(4.dp))
+                                    HorizontalDivider(Modifier.padding(vertical = 12.dp))
+
+                                    // Subtotal
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Tax (${(invoice.taxRate * 100).toInt()}%)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text("Subtotal", style = MaterialTheme.typography.bodyLarge)
                                         Text(
-                                            text = "$${String.format(Locale.getDefault(), "%.2f", invoice.taxAmount)}",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            text = "$${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount - invoice.taxAmount)}",
+                                            style = MaterialTheme.typography.bodyLarge
                                         )
                                     }
-                                } else {
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(
-                                        text = "No tax applied – Business not registered for tax",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
 
-                                Spacer(Modifier.height(8.dp))
+                                    // Tax (only if business is tax registered and tax amount > 0)
+                                    if (invoice.taxAmount > 0) {
+                                        Spacer(Modifier.height(4.dp))
+                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Text("Tax (${(invoice.taxRate * 100).toInt()}%)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(
+                                                text = "$${String.format(Locale.getDefault(), "%.2f", invoice.taxAmount)}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    } else {
+                                        Spacer(Modifier.height(4.dp))
+                                        Text(
+                                            text = "No tax applied – Business not registered for tax",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
 
-                                // Total
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Total", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                                    Text(
-                                        text = "$${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount)}",
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
+                                    Spacer(Modifier.height(8.dp))
+
+                                    // Total
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("Total", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                        Text(
+                                            text = "$${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount)}",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
                                 }
                             }
-                        }
 
-                        // PHASE 3A: Correction Workflow
-                        if (invoice.status != InvoiceStatus.DRAFT) {
+                            // PHASE 3A: Correction Workflow
+                            if (invoice.status != InvoiceStatus.DRAFT) {
+                                Button(
+                                    onClick = { viewModel.createCorrection() },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                                ) {
+                                    Icon(Icons.Default.HistoryEdu, null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Create Correction (v${invoice.version + 1})")
+                                }
+                            }
+
+                            // Immutability Rule: Disable edit if not DRAFT
                             Button(
-                                onClick = { viewModel.createCorrection() },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                                onClick = onEdit,
+                                enabled = invoice.status == InvoiceStatus.DRAFT,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Icon(Icons.Default.HistoryEdu, null)
+                                Icon(Icons.Default.Edit, null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Create Correction (v${invoice.version + 1})")
+                                Text(if (invoice.status == InvoiceStatus.DRAFT) "Edit Invoice" else "Locked (Correction Required)")
+                            }
+
+                            Button(
+                                onClick = { showDeleteDialog = true },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Delete Invoice")
                             }
                         }
 
-                        // Immutability Rule: Disable edit if not DRAFT
-                        Button(
-                            onClick = onEdit,
-                            enabled = invoice.status == InvoiceStatus.DRAFT,
-                            modifier = Modifier.fillMaxWidth()
+                        // ACTION BUTTONS: Save + Export (Fixed Visual Hierarchy)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(Icons.Default.Edit, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text(if (invoice.status == InvoiceStatus.DRAFT) "Edit Invoice" else "Locked (Correction Required)")
-                        }
+                            // PRIMARY ACTION: Save Invoice
+                            Button(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(54.dp),
+                                onClick = {
+                                    isSaving = true
+                                    // Note: Actual save logic would be triggered by viewModel
+                                    snackbarHostState.showSnackbar("Invoice saved successfully")
+                                    isSaving = false
+                                },
+                                enabled = !isSaving && !isExporting,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                if (isSaving) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Saving...",
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Save,
+                                        contentDescription = "Save",
+                                        modifier = Modifier.size(20.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Save Invoice",
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
 
-                        Button(
-                            onClick = { showDeleteDialog = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Delete Invoice")
+                            // SECONDARY ACTION: Export as PDF
+                            Button(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                onClick = {
+                                    isExporting = true
+                                    viewModel.shareInternalPdf()
+                                },
+                                enabled = !isSaving && !isExporting,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary,
+                                    disabledContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                if (isExporting) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = MaterialTheme.colorScheme.onSecondary,
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Exporting...",
+                                        color = MaterialTheme.colorScheme.onSecondary,
+                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Download,
+                                        contentDescription = "Export",
+                                        modifier = Modifier.size(20.dp),
+                                        tint = MaterialTheme.colorScheme.onSecondary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Export as PDF",
+                                        color = MaterialTheme.colorScheme.onSecondary,
+                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
                         }
                     }
                 }

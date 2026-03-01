@@ -36,6 +36,17 @@
             android:exported="false"
             tools:node="remove" />
 
+        <!-- Custom WorkManager initialization with Hilt support -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="com.emul8r.bizap.di.WorkManagerInitializer"
+                android:value="androidx.startup" />
+        </provider>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.emul8r.bizap.fileprovider"
