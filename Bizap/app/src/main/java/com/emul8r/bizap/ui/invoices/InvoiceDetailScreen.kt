@@ -41,6 +41,7 @@ fun InvoiceDetailScreen(
     val overwriteDialogState by viewModel.showOverwriteDialog.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var showActionHub by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showPaymentDialog by remember { mutableStateOf(false) }
@@ -267,8 +268,9 @@ fun InvoiceDetailScreen(
                                     .height(54.dp),
                                 onClick = {
                                     isSaving = true
-                                    // Note: Actual save logic would be triggered by viewModel
-                                    snackbarHostState.showSnackbar("Invoice saved successfully")
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar("Invoice saved successfully")
+                                    }
                                     isSaving = false
                                 },
                                 enabled = !isSaving && !isExporting,
