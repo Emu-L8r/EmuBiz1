@@ -14,7 +14,7 @@ class TemplateSnapshotManager {
 
     companion object {
         private const val TAG = "TemplateSnapshotManager"
-        private val json = Json { prettyPrint = false }
+        private val json = Json { prettyPrint = false; ignoreUnknownKeys = true }
     }
 
     fun createSnapshot(template: InvoiceTemplate): String {
@@ -34,7 +34,17 @@ class TemplateSnapshotManager {
                 bankDetails = template.bankDetails,
                 hideLineItems = template.hideLineItems,
                 hidePaymentTerms = template.hidePaymentTerms,
-                logoFileName = template.logoFileName
+                logoFileName = template.logoFileName,
+                
+                // New Customization Fields
+                showPhone = template.showPhone,
+                showEmail = template.showEmail,
+                showAddress = template.showAddress,
+                showTaxId = template.showTaxId,
+                marginPreset = template.marginPreset,
+                fontSizePreset = template.fontSizePreset,
+                showZebraStripes = template.showZebraStripes,
+                footerMessage = template.footerMessage
             )
             val jsonString = json.encodeToString(TemplateSnapshot.serializer(), snapshot)
             Timber.d("✅ Snapshot created: ${template.name}")
@@ -102,7 +112,17 @@ data class TemplateSnapshot(
     val bankDetails: String?,
     val hideLineItems: Boolean,
     val hidePaymentTerms: Boolean,
-    val logoFileName: String?
+    val logoFileName: String?,
+    
+    // New Customization Fields
+    val showPhone: Boolean = true,
+    val showEmail: Boolean = true,
+    val showAddress: Boolean = true,
+    val showTaxId: Boolean = true,
+    val marginPreset: String = "NORMAL",
+    val fontSizePreset: String = "NORMAL",
+    val showZebraStripes: Boolean = true,
+    val footerMessage: String = "Thank you for your business!"
 )
 
 @Serializable

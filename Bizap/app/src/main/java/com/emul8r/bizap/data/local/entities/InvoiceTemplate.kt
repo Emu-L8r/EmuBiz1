@@ -4,7 +4,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity(
@@ -40,9 +39,21 @@ data class InvoiceTemplate(
     val bankDetails: String? = null,
     val hideLineItems: Boolean = false,  // Hide item table if true
     val hidePaymentTerms: Boolean = false,
+    
+    // Customization Toggles
+    val showPhone: Boolean = true,
+    val showEmail: Boolean = true,
+    val showAddress: Boolean = true,
+    val showTaxId: Boolean = true,
+    
+    // Layout & Style Settings
+    val marginPreset: String = "NORMAL", // NORMAL, COMPACT
+    val fontSizePreset: String = "NORMAL", // NORMAL, LARGE
+    val showZebraStripes: Boolean = true,
+    val footerMessage: String = "Thank you for your business!",
+    
     val isDefault: Boolean = false,
     val isActive: Boolean = true,        // Soft-delete flag
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
-

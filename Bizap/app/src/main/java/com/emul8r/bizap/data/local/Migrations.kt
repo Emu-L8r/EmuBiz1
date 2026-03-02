@@ -19,3 +19,19 @@ val MIGRATION_21_22 = object : Migration(21, 22) {
         Timber.i("MIGRATION_21_22: Recreated exchange_rates with composite PK")
     }
 }
+
+val MIGRATION_22_23 = object : Migration(22, 23) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Add new customization columns to invoiceTemplates
+        db.execSQL("ALTER TABLE invoiceTemplates ADD COLUMN showPhone INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE invoiceTemplates ADD COLUMN showEmail INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE invoiceTemplates ADD COLUMN showAddress INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE invoiceTemplates ADD COLUMN showTaxId INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE invoiceTemplates ADD COLUMN marginPreset TEXT NOT NULL DEFAULT 'NORMAL'")
+        db.execSQL("ALTER TABLE invoiceTemplates ADD COLUMN fontSizePreset TEXT NOT NULL DEFAULT 'NORMAL'")
+        db.execSQL("ALTER TABLE invoiceTemplates ADD COLUMN showZebraStripes INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE invoiceTemplates ADD COLUMN footerMessage TEXT NOT NULL DEFAULT 'Thank you for your business!'")
+        
+        Timber.i("MIGRATION_22_23: Added customization fields to invoiceTemplates")
+    }
+}

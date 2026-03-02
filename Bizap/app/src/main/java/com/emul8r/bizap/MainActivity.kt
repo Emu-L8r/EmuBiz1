@@ -29,12 +29,7 @@ import com.emul8r.bizap.ui.invoices.*
 import com.emul8r.bizap.ui.components.BizapTopAppBar
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.revenue.RevenueDashboardScreen
-import com.emul8r.bizap.ui.settings.BusinessProfileScreen
-import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
-import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
-import com.emul8r.bizap.ui.settings.SettingsHubScreen
-import com.emul8r.bizap.ui.settings.ThemeSettingsScreen
-import com.emul8r.bizap.ui.settings.ThemeViewModel
+import com.emul8r.bizap.ui.settings.*
 import com.emul8r.bizap.ui.theme.BizapTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -106,6 +101,7 @@ fun MainScreen() {
                 currentDestination?.hasRoute<Screen.BusinessProfile>() == true -> "Business Profile"
                 currentDestination?.hasRoute<Screen.ThemeSettings>() == true -> "Theme Settings"
                 currentDestination?.hasRoute<Screen.PrefilledItems>() == true -> "Prefilled Items"
+                currentDestination?.hasRoute<Screen.InvoiceSettings>() == true -> "Invoice PDF Settings"
                 currentDestination?.hasRoute<Screen.CreateInvoice>() == true -> "Create Invoice"
                 currentDestination?.hasRoute<Screen.EditInvoice>() == true -> "Edit Invoice"
                 currentDestination?.hasRoute<Screen.InvoiceDetail>() == true -> "Invoice Detail"
@@ -190,6 +186,7 @@ fun MainScreen() {
             composable<Screen.BusinessProfile> { BusinessProfileScreen() }
             composable<Screen.ThemeSettings> { ThemeSettingsScreen() }
             composable<Screen.PrefilledItems> { PrefilledItemsScreen() }
+            composable<Screen.InvoiceSettings> { InvoiceSettingsScreen(onBackClick = { navController.popBackStack() }) }
             composable<Screen.CreateInvoice> { CreateInvoiceScreen(onInvoiceSaved = { navController.popBackStack() }) }
             composable<Screen.EditInvoice> { backStackEntry ->
                 val detail: Screen.EditInvoice = backStackEntry.toRoute()

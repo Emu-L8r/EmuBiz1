@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -22,6 +23,12 @@ fun SettingsHubScreen(onNavigate: (Screen) -> Unit) {
             title = "Business Profile",
             subtitle = "Manage your business details for invoices",
             onClick = { onNavigate(Screen.BusinessProfile) }
+        )
+        SettingsItem(
+            icon = Icons.Default.Description,
+            title = "Invoice PDF Settings",
+            subtitle = "Customize the layout and appearance of your PDFs",
+            onClick = { onNavigate(Screen.InvoiceSettings) }
         )
         SettingsItem(
             icon = Icons.Default.Palette,

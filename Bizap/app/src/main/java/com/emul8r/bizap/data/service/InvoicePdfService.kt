@@ -9,6 +9,7 @@ import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.pdf.PdfTableRenderer
 import com.emul8r.bizap.ui.templates.TemplateSnapshotManager
+import com.emul8r.bizap.ui.templates.TemplateSnapshot
 import com.emul8r.bizap.utils.DocumentNamingUtils
 import com.emul8r.bizap.utils.CurrencyFormatter
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,6 +26,25 @@ class InvoicePdfService @Inject constructor(
 ) {
     companion object {
         private const val TAG = "InvoicePdfService"
+        
+        // Layout Constants
+        private const val PAGE_WIDTH = 595f
+        private const val PAGE_HEIGHT = 842f
+        private const val MARGIN_X = 40f
+        private const val TOP_MARGIN_NORMAL = 30f
+        private const val TOP_MARGIN_COMPACT = 15f
+        
+        // Font Sizes
+        private const val FONT_SIZE_TITLE = 22f
+        private const val FONT_SIZE_SUBTITLE = 10f
+        private const val FONT_SIZE_LABEL = 9f
+        private const val FONT_SIZE_HEADER = 10f
+        private const val FONT_SIZE_BODY = 10f
+        private const val FONT_SIZE_TOTAL = 16f
+        
+        // Large Presets
+        private const val FONT_SIZE_BODY_LARGE = 12f
+        private const val FONT_SIZE_TOTAL_LARGE = 20f
     }
 
     private val pdfStyler = PdfStyler()
@@ -60,102 +80,243 @@ class InvoicePdfService @Inject constructor(
         file.parentFile?.mkdirs()
 
         val templateSnapshot = snapshotManager.restoreSnapshot(templateSnapshotJson)
-        val customFieldValues = snapshotManager.restoreCustomFieldValues(customFieldValuesJson)
-
         val colors = pdfStyler.extractColors(templateSnapshot)
-        val hideLineItems = pdfStyler.shouldHideLineItems(templateSnapshot)
-        val hidePaymentTerms = pdfStyler.shouldHidePaymentTerms(templateSnapshot)
-
+        
         val pdfDocument = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH.toInt(), PAGE_HEIGHT.toInt(), 1).create()
         val page = pdfDocument.startPage(pageInfo)
         val canvas = page.canvas
 
         val boldTypeface = pdfStyler.getTypeface(templateSnapshot?.fontFamily, context, isBold = true)
         val regularTypeface = pdfStyler.getTypeface(templateSnapshot?.fontFamily, context, isBold = false)
-        val italicTypeface = Typeface.create(regularTypeface, Typeface.ITALIC)
 
-        val headerPaint = Paint().apply { typeface = boldTypeface; textSize = 10f; color = Color.BLACK; isAntiAlias = true }
-        val brandPaint = Paint().apply { typeface = boldTypeface; textSize = 18f; color = colors.primary; isAntiAlias = true }
-        val bodyPaint = Paint().apply { typeface = regularTypeface; textSize = 10f; color = colors.textLight; isAntiAlias = true }
-        val labelPaint = Paint().apply { typeface = boldTypeface; textSize = 9f; color = Color.GRAY; isAntiAlias = true }
+        var currentY = if (templateSnapshot?.marginPreset == "COMPACT") TOP_MARGIN_COMPACT else TOP_MARGIN_NORMAL
 
-        val centerX = 595f / 2f
-        brandPaint.textAlign = Paint.Align.CENTER
-        canvas.drawText(snapshot.businessName.uppercase(), centerX, 50f, brandPaint)
+        // 1. Draw Brand/Company Header
+        currentY = drawHeader(canvas, snapshot, templateSnapshot, colors, boldTypeface, regularTypeface, currentY)
 
-        bodyPaint.textAlign = Paint.Align.CENTER
-        canvas.drawText("ABN: ${snapshot.businessAbn} | Phone: ${snapshot.businessPhone}", centerX, 65f, bodyPaint)
-        canvas.drawText("Email: ${snapshot.businessEmail}", centerX, 80f, bodyPaint)
-        canvas.drawText(snapshot.businessAddress, centerX, 95f, bodyPaint)
+        // 2. Draw Bill To & Invoice Metadata
+        currentY = drawBillToAndMeta(canvas, snapshot, fileType, colors, boldTypeface, regularTypeface, currentY)
 
-        canvas.drawLine(40f, 110f, 555f, 110f, Paint().apply { color = colors.secondary; strokeWidth = 1f })
-
-        bodyPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText("BILL TO:", 40f, 140f, labelPaint)
-        canvas.drawText(snapshot.customerName, 40f, 145f, headerPaint)
-        canvas.drawText(snapshot.customerAddress, 40f, 160f, bodyPaint)
-        snapshot.customerEmail?.let { canvas.drawText(it, 40f, 175f, bodyPaint) }
-
-        canvas.drawText(fileType.uppercase(), 400f, 140f, labelPaint)
-        canvas.drawText("# ${snapshot.invoiceNumber}", 400f, 145f, headerPaint)
-        canvas.drawText("Date: ${formatDate(snapshot.date)}", 400f, 170f, bodyPaint)
-        canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 400f, 185f, bodyPaint)
-
-        var currentY = 220f
-
-        if (!hideLineItems) {
-            val tableRenderer = PdfTableRenderer(
-                canvas = canvas,
-                startX = 40f,
-                currentY = currentY,
-                pageWidth = 595f,
-                columnWeights = listOf(0.5f, 0.1f, 0.15f, 0.25f)
-            )
-
-            tableRenderer.drawRow(listOf("Description", "Qty", "Price", "Total"), headerPaint, isHeader = true)
-
-            snapshot.items.forEach { item ->
-                tableRenderer.drawRow(
-                    listOf(
-                        item.description,
-                        item.quantity.toInt().toString(),
-                        CurrencyFormatter.formatCents(item.unitPrice, snapshot.currencyCode),
-                        CurrencyFormatter.formatCents(item.total, snapshot.currencyCode)
-                    ),
-                    bodyPaint
-                )
-            }
-            currentY = tableRenderer.getPosition() + 30f
+        // 3. Draw Table
+        if (!pdfStyler.shouldHideLineItems(templateSnapshot)) {
+            currentY = drawTable(canvas, snapshot, templateSnapshot, colors, boldTypeface, regularTypeface, currentY)
         }
 
-        val rightX = 555f
-        bodyPaint.textAlign = Paint.Align.RIGHT
-        headerPaint.textAlign = Paint.Align.RIGHT
+        // 4. Draw Totals
+        currentY = drawTotals(canvas, snapshot, templateSnapshot, colors, boldTypeface, regularTypeface, currentY)
 
-        canvas.drawText("Subtotal:", 450f, currentY, bodyPaint)
-        canvas.drawText(CurrencyFormatter.formatCents(snapshot.subtotal, snapshot.currencyCode), rightX, currentY, bodyPaint)
-
-        currentY += 15f
-        if (snapshot.taxAmount > 0) {
-            canvas.drawText("Tax (${(snapshot.taxRate * 100).toInt()}%):", 450f, currentY, bodyPaint)
-            canvas.drawText(CurrencyFormatter.formatCents(snapshot.taxAmount, snapshot.currencyCode), rightX, currentY, bodyPaint)
-            currentY += 25f
-        }
-
-        val totalLabelPaint = Paint(headerPaint).apply {
-            textSize = 14f
-            color = colors.primary
-            textAlign = Paint.Align.RIGHT
-        }
-        canvas.drawText("TOTAL AMOUNT DUE (${snapshot.currencyCode}):", 450f, currentY, totalLabelPaint)
-        canvas.drawText(CurrencyFormatter.formatCents(snapshot.totalAmount, snapshot.currencyCode), rightX, currentY, totalLabelPaint)
+        // 5. Draw Footer
+        drawFooter(canvas, templateSnapshot, colors, regularTypeface)
 
         pdfDocument.finishPage(page)
         file.outputStream().use { pdfDocument.writeTo(it) }
         pdfDocument.close()
 
         return file
+    }
+
+    private fun drawHeader(
+        canvas: Canvas,
+        snapshot: InvoiceSnapshot,
+        template: TemplateSnapshot?,
+        colors: PdfColors,
+        boldTypeface: Typeface,
+        regularTypeface: Typeface,
+        startY: Float
+    ): Float {
+        val brandPaint = Paint().apply {
+            typeface = boldTypeface
+            textSize = FONT_SIZE_TITLE
+            color = colors.primary
+            isAntiAlias = true
+            textAlign = Paint.Align.CENTER
+        }
+        val infoPaint = Paint().apply {
+            typeface = regularTypeface
+            textSize = FONT_SIZE_SUBTITLE
+            color = colors.textLight
+            isAntiAlias = true
+            textAlign = Paint.Align.CENTER
+        }
+
+        var y = startY + 20f
+        canvas.drawText(snapshot.businessName.uppercase(), PAGE_WIDTH / 2f, y, brandPaint)
+        
+        y += 20f
+        val parts = mutableListOf<String>()
+        if (template?.showTaxId != false) parts.add("ABN: ${snapshot.businessAbn}")
+        if (template?.showPhone != false) parts.add("Phone: ${snapshot.businessPhone}")
+        
+        if (parts.isNotEmpty()) {
+            canvas.drawText(parts.joinToString(" | "), PAGE_WIDTH / 2f, y, infoPaint)
+            y += 15f
+        }
+        
+        val contactParts = mutableListOf<String>()
+        if (template?.showEmail != false) contactParts.add(snapshot.businessEmail)
+        if (template?.showAddress != false) contactParts.add(snapshot.businessAddress)
+        
+        if (contactParts.isNotEmpty()) {
+            canvas.drawText(contactParts.joinToString(" | "), PAGE_WIDTH / 2f, y, infoPaint)
+            y += 15f
+        }
+
+        y += 5f
+        canvas.drawLine(MARGIN_X, y, PAGE_WIDTH - MARGIN_X, y, Paint().apply { color = colors.secondary; strokeWidth = 1.5f })
+        
+        return y + 30f
+    }
+
+    private fun drawBillToAndMeta(
+        canvas: Canvas,
+        snapshot: InvoiceSnapshot,
+        fileType: String,
+        colors: PdfColors,
+        boldTypeface: Typeface,
+        regularTypeface: Typeface,
+        startY: Float
+    ): Float {
+        val labelPaint = Paint().apply { typeface = boldTypeface; textSize = FONT_SIZE_LABEL; color = Color.GRAY; isAntiAlias = true }
+        val headerPaint = Paint().apply { typeface = boldTypeface; textSize = FONT_SIZE_HEADER; color = Color.BLACK; isAntiAlias = true }
+        val bodyPaint = Paint().apply { typeface = regularTypeface; textSize = FONT_SIZE_BODY; color = Color.BLACK; isAntiAlias = true }
+
+        // Left Column: Bill To
+        var leftY = startY
+        canvas.drawText("BILL TO:", MARGIN_X, leftY, labelPaint)
+        leftY += 15f
+        canvas.drawText(snapshot.customerName, MARGIN_X, leftY, headerPaint)
+        leftY += 15f
+        canvas.drawText(snapshot.customerAddress, MARGIN_X, leftY, bodyPaint)
+        snapshot.customerEmail?.let {
+            leftY += 15f
+            canvas.drawText(it, MARGIN_X, leftY, bodyPaint)
+        }
+
+        // Right Column: Metadata
+        var rightY = startY
+        val rightAlignX = PAGE_WIDTH - MARGIN_X
+        labelPaint.textAlign = Paint.Align.RIGHT
+        headerPaint.textAlign = Paint.Align.RIGHT
+        bodyPaint.textAlign = Paint.Align.RIGHT
+
+        canvas.drawText("${fileType.uppercase()} #:", rightAlignX - 80f, rightY, labelPaint)
+        canvas.drawText(snapshot.invoiceNumber, rightAlignX, rightY, headerPaint)
+        
+        rightY += 20f
+        canvas.drawText("DATE:", rightAlignX - 80f, rightY, labelPaint)
+        canvas.drawText(formatDate(snapshot.date), rightAlignX, rightY, bodyPaint)
+        
+        rightY += 15f
+        canvas.drawText("DUE DATE:", rightAlignX - 80f, rightY, labelPaint)
+        canvas.drawText(formatDate(snapshot.dueDate), rightAlignX, rightY, bodyPaint)
+
+        return maxOf(leftY, rightY) + 40f
+    }
+
+    private fun drawTable(
+        canvas: Canvas,
+        snapshot: InvoiceSnapshot,
+        template: TemplateSnapshot?,
+        colors: PdfColors,
+        boldTypeface: Typeface,
+        regularTypeface: Typeface,
+        startY: Float
+    ): Float {
+        val fontSize = if (template?.fontSizePreset == "LARGE") FONT_SIZE_BODY_LARGE else FONT_SIZE_BODY
+        val headerPaint = Paint().apply { typeface = boldTypeface; textSize = fontSize; color = Color.BLACK; isAntiAlias = true }
+        val bodyPaint = Paint().apply { typeface = regularTypeface; textSize = fontSize; color = Color.BLACK; isAntiAlias = true }
+
+        val tableRenderer = PdfTableRenderer(
+            canvas = canvas,
+            startX = MARGIN_X,
+            currentY = startY,
+            pageWidth = PAGE_WIDTH,
+            columnWeights = listOf(0.5f, 0.1f, 0.18f, 0.22f),
+            accentColor = colors.primary
+        )
+
+        tableRenderer.drawRow(
+            listOf("Description", "Qty", "Unit Price", "Amount"), 
+            headerPaint, 
+            isHeader = true,
+            isZebraEnabled = template?.showZebraStripes != false
+        )
+
+        snapshot.items.forEach { item ->
+            tableRenderer.drawRow(
+                listOf(
+                    item.description,
+                    item.quantity.let { if (it % 1.0 == 0.0) it.toInt().toString() else it.toString() },
+                    CurrencyFormatter.formatCents(item.unitPrice, snapshot.currencyCode),
+                    CurrencyFormatter.formatCents(item.total, snapshot.currencyCode)
+                ),
+                bodyPaint,
+                isZebraEnabled = template?.showZebraStripes != false
+            )
+        }
+
+        return tableRenderer.getPosition() + 20f
+    }
+
+    private fun drawTotals(
+        canvas: Canvas,
+        snapshot: InvoiceSnapshot,
+        template: TemplateSnapshot?,
+        colors: PdfColors,
+        boldTypeface: Typeface,
+        regularTypeface: Typeface,
+        startY: Float
+    ): Float {
+        var y = startY
+        val rightX = PAGE_WIDTH - MARGIN_X
+        val labelX = rightX - 120f
+        
+        val fontSize = if (template?.fontSizePreset == "LARGE") FONT_SIZE_BODY_LARGE else FONT_SIZE_BODY
+        val bodyPaint = Paint().apply { typeface = regularTypeface; textSize = fontSize; color = Color.BLACK; isAntiAlias = true; textAlign = Paint.Align.RIGHT }
+        
+        // Subtotal
+        canvas.drawText("Subtotal:", labelX, y, bodyPaint)
+        canvas.drawText(CurrencyFormatter.formatCents(snapshot.subtotal, snapshot.currencyCode), rightX, y, bodyPaint)
+
+        // Tax
+        if (snapshot.taxAmount > 0) {
+            y += 18f
+            canvas.drawText("Tax (${(snapshot.taxRate * 100).toInt()}%):", labelX, y, bodyPaint)
+            canvas.drawText(CurrencyFormatter.formatCents(snapshot.taxAmount, snapshot.currencyCode), rightX, y, bodyPaint)
+        }
+
+        // Total Divider
+        y += 12f
+        canvas.drawLine(labelX - 20f, y, rightX, y, Paint().apply { color = Color.LTGRAY; strokeWidth = 1f })
+        
+        // Total Amount Due
+        y += 25f
+        val totalFontSize = if (template?.fontSizePreset == "LARGE") FONT_SIZE_TOTAL_LARGE else FONT_SIZE_TOTAL
+        val totalLabelPaint = Paint().apply {
+            typeface = boldTypeface
+            textSize = totalFontSize
+            color = colors.primary
+            isAntiAlias = true
+            textAlign = Paint.Align.RIGHT
+        }
+        
+        canvas.drawText("TOTAL (${snapshot.currencyCode}):", labelX, y, totalLabelPaint)
+        canvas.drawText(CurrencyFormatter.formatCents(snapshot.totalAmount, snapshot.currencyCode), rightX, y, totalLabelPaint)
+
+        return y + 40f
+    }
+
+    private fun drawFooter(canvas: Canvas, template: TemplateSnapshot?, colors: PdfColors, regularTypeface: Typeface) {
+        val footerPaint = Paint().apply {
+            typeface = regularTypeface
+            textSize = 9f
+            color = Color.GRAY
+            isAntiAlias = true
+            textAlign = Paint.Align.CENTER
+        }
+        val message = template?.footerMessage ?: "Thank you for your business!"
+        canvas.drawText(message, PAGE_WIDTH / 2f, PAGE_HEIGHT - 40f, footerPaint)
     }
 
     private fun formatDate(timestamp: Long): String = 

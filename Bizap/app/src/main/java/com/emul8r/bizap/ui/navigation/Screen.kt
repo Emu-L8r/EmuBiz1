@@ -48,4 +48,7 @@ sealed interface Screen {
 
     @Serializable
     object PrefilledItems : Screen
+
+    @Serializable
+    object InvoiceSettings : Screen
 }
