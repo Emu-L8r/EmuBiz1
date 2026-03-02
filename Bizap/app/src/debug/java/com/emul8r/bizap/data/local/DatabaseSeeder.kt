@@ -1,6 +1,5 @@
 package com.emul8r.bizap.data.local
 
-import com.emul8r.bizap.BuildConfig
 import com.emul8r.bizap.data.local.entities.CustomerEntity
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
@@ -12,19 +11,16 @@ class DatabaseSeeder @Inject constructor(
     private val customerDao: CustomerDao
 ) {
     /**
-     * Seeds the database with professional test customers if in DEBUG mode 
-     * and the table is currently empty.
+     * Seeds the database with professional test customers in DEBUG mode.
      */
     suspend fun seedDatabaseIfNeeded() {
-        if (!BuildConfig.DEBUG) return
-
         Timber.d("🌱 DEBUG mode: Checking for test data...")
-        
+
         try {
             val existingCustomers = customerDao.getAllCustomers().first()
             if (existingCustomers.isEmpty()) {
                 Timber.d("📥 Seeding database with test customers...")
-                
+
                 val testCustomers = listOf(
                     CustomerEntity(
                         name = "UNREALCUSTOMER1",
@@ -45,14 +41,15 @@ class DatabaseSeeder @Inject constructor(
                         address = "789 Mock Lane, Perth WA 6000"
                     )
                 )
-                
+
                 customerDao.insertAll(testCustomers)
                 Timber.d("✅ Database seeding complete! 3 customers added.")
             } else {
-                Timber.d("✓ Database already has ${existingCustomers.size} customers. Skipping seeding.")
+                Timber.d("⏭️ Database already has ${existingCustomers.size} customers. Skipping seed.")
             }
         } catch (e: Exception) {
-            Timber.e(e, "❌ Seeding failed: ${e.message}")
+            Timber.e(e, "❌ Error seeding database")
         }
     }
 }
+
