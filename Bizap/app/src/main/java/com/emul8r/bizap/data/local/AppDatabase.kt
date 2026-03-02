@@ -29,7 +29,7 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         InvoiceTemplate::class,
         InvoiceCustomField::class
     ],
-    version = 21,
+    version = 22,
     exportSchema = true
 )
 @TypeConverters(DocumentStatusConverter::class)
@@ -48,5 +48,3 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun invoiceTemplateDao(): InvoiceTemplateDao
     abstract fun invoiceCustomFieldDao(): InvoiceCustomFieldDao
 }
-
-

@@ -40,8 +40,10 @@ class CurrencyRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateExchangeRates(): Result<Unit> {
-        // Placeholder for future API integration
-        return Result.success(Unit)
+        return Result.failure(UnsupportedOperationException(
+            "Exchange rates are synced automatically by ExchangeRateWorker every 24h. " +
+            "Manual sync not yet implemented."
+        ))
     }
 
     override suspend fun convertAmount(amount: Double, fromCurrency: String, toCurrency: String): Double? {
@@ -51,7 +53,7 @@ class CurrencyRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getLastRateUpdate(): Long? {
-        return System.currentTimeMillis()
+        return exchangeRateDao.getLastUpdatedTimestamp()
     }
 
     private fun CurrencyEntity.toDomain(): Currency =

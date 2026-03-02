@@ -28,9 +28,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "bizap-db"
         )
-        // AutoMigration (v17→20) is defined in AppDatabase @Database annotation
-        // No manual migrations needed
-        .fallbackToDestructiveMigration()
+        .addMigrations(MIGRATION_21_22)
         .build()
     }
 
