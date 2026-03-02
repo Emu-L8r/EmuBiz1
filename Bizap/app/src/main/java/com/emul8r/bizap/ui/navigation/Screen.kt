@@ -51,4 +51,13 @@ sealed interface Screen {
 
     @Serializable
     object InvoiceSettings : Screen
+
+    @Serializable
+    object CurrencySettings : Screen
+
+    @Serializable
+    object DashboardSettings : Screen
+
+    @Serializable
+    object DataSettings : Screen
 }

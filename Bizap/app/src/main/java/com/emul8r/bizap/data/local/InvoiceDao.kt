@@ -21,7 +21,7 @@ interface InvoiceDao {
     @Query("SELECT * FROM invoices WHERE customerId = :customerId AND businessProfileId = :businessId")
     fun getInvoicesForCustomer(customerId: Long, businessId: Long): Flow<List<InvoiceWithItems>>
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertInvoice(invoice: InvoiceEntity): Long
 
     @Upsert
@@ -44,6 +44,9 @@ interface InvoiceDao {
 
     @Query("UPDATE invoices SET status = :status WHERE id = :id")
     suspend fun updateInvoiceStatus(id: Long, status: String)
+
+    @Query("UPDATE invoices SET amountPaid = :amount WHERE id = :id")
+    suspend fun updateAmountPaid(id: Long, amount: Long)
 
     @Query("UPDATE invoices SET pdfUri = :path WHERE id = :id")
     suspend fun updatePdfPath(id: Long, path: String)

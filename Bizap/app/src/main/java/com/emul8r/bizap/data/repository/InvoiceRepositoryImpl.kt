@@ -70,11 +70,7 @@ class InvoiceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateAmountPaid(invoiceId: Long, amount: Long): Unit = withContext(Dispatchers.IO) {
-        val invoiceWithItems = invoiceDao.getInvoiceWithItemsById(invoiceId).first()
-        invoiceWithItems?.let {
-            val updatedEntity = it.invoice.copy(amountPaid = amount)
-            invoiceDao.insertInvoice(updatedEntity)
-        }
+        invoiceDao.updateAmountPaid(invoiceId, amount)
     }
 
     override suspend fun createCorrection(originalInvoiceId: Long): Long = withContext(Dispatchers.IO) {

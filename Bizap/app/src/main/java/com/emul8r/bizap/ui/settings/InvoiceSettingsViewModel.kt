@@ -2,7 +2,7 @@ package com.emul8r.bizap.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.repository.InvoiceTemplateRepository
 import com.emul8r.bizap.data.local.entities.InvoiceTemplate
 import dagger.hilt.android.lifecycle.HiltViewModel
