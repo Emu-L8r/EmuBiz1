@@ -39,7 +39,6 @@ import com.emul8r.bizap.ui.theme.EmuBizzzTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
 data class NavigationItem(
     val screen: Screen,

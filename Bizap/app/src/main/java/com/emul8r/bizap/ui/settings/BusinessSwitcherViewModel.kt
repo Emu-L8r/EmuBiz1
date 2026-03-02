@@ -7,6 +7,7 @@ import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -45,7 +46,3 @@ class BusinessSwitcherViewModel @Inject constructor(
     }
 }
 
-private fun <T1, T2, R> kotlinx.coroutines.flow.Flow<T1>.combine(
-    flow: kotlinx.coroutines.flow.Flow<T2>,
-    transform: suspend (T1, T2) -> R
-): kotlinx.coroutines.flow.Flow<R> = kotlinx.coroutines.flow.combine(this, flow, transform)
