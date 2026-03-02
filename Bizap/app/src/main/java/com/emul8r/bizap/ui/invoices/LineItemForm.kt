@@ -9,5 +9,5 @@ data class LineItemForm(
     val transientId: UUID = UUID.randomUUID(), // Unique key for unsaved items
     val description: String = "",
     val quantity: Double = 1.0,
-    val unitPrice: Double = 0.0
+    val unitPrice: Long = 0   // Cents (e.g., 4999 = $49.99)
 )

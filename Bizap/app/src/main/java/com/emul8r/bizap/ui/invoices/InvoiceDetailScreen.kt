@@ -414,7 +414,7 @@ fun PaymentProgressCard(invoice: com.emul8r.bizap.domain.model.Invoice, onRecord
 }
 
 @Composable
-fun RecordPaymentDialog(onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
+fun RecordPaymentDialog(onDismiss: () -> Unit, onConfirm: (Long) -> Unit) {
     var amount by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -428,7 +428,12 @@ fun RecordPaymentDialog(onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
             )
         },
         confirmButton = {
-            Button(onClick = { amount.toDoubleOrNull()?.let { onConfirm(it) } }) { Text("Confirm") }
+            Button(onClick = {
+                amount.toDoubleOrNull()?.let { doubleAmount ->
+                    val centsAmount = (doubleAmount * 100).toLong()
+                    onConfirm(centsAmount)
+                }
+            }) { Text("Confirm") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }

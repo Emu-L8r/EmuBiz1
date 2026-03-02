@@ -13,10 +13,10 @@ interface CustomerDao {
     @Query("SELECT * FROM customers")
     fun getAllCustomers(): Flow<List<CustomerEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(customer: CustomerEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAll(customers: List<CustomerEntity>)
 
     @Update

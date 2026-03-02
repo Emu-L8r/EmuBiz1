@@ -125,7 +125,7 @@ class CreateInvoiceViewModel @Inject constructor(
 
     fun removeLineItem(id: Long?) = _uiState.update { state -> state.copy(items = state.items.filter { it.id != id }) }
     
-    fun updateLineItem(id: Long?, description: String, quantity: Double, unitPrice: Double) {
+    fun updateLineItem(id: Long?, description: String, quantity: Double, unitPrice: Long) {
         _uiState.update { state ->
             state.copy(items = state.items.map {
                 if (it.id == id) it.copy(description = description, quantity = quantity, unitPrice = unitPrice) else it
@@ -150,11 +150,12 @@ class CreateInvoiceViewModel @Inject constructor(
 
                 val businessProfile = businessProfileRepository.profile.first()
                 val lineItems = state.items.map { it.toDomain() }
-                val subtotal = lineItems.sumOf { it.quantity * it.unitPrice }
-                
+                // Calculate subtotal in cents: sum of (unitPrice * quantity) for each item
+                val subtotal: Long = lineItems.sumOf { (it.unitPrice * it.quantity).toLong() }
+
                 // TAX REGISTRATION TOGGLE: Only apply tax if business is registered
-                val taxRate = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
-                val taxAmount = if (businessProfile.isTaxRegistered) subtotal * taxRate else 0.0
+                val taxRate: Double = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
+                val taxAmount: Long = if (businessProfile.isTaxRegistered) (subtotal.toDouble() * taxRate).toLong() else 0
                 val createdAt = System.currentTimeMillis()
                 val dueDate = createdAt + (30L * 24 * 60 * 60 * 1000)
 
@@ -194,7 +195,15 @@ class CreateInvoiceViewModel @Inject constructor(
                         customerEmail = invoiceWithId.customerEmail,
                         date = invoiceWithId.date,
                         dueDate = invoiceWithId.dueDate,
-                        items = invoiceWithId.items.map { com.emul8r.bizap.domain.model.LineItemSnapshot(it.description, it.quantity, it.unitPrice, it.quantity * it.unitPrice) },
+                        items = invoiceWithId.items.map {
+                            val itemTotal = (it.unitPrice * it.quantity).toLong()  // Cents
+                            com.emul8r.bizap.domain.model.LineItemSnapshot(
+                                description = it.description,
+                                quantity = it.quantity,
+                                unitPrice = it.unitPrice,
+                                total = itemTotal
+                            )
+                        },
                         subtotal = subtotal,
                         taxRate = taxRate,
                         taxAmount = taxAmount,

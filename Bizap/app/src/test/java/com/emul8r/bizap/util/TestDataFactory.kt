@@ -44,7 +44,7 @@ object TestDataFactory {
         businessProfileId: Long = 1,
         customerId: Long = 1,
         currencyCode: String = "AUD",
-        total: Double = 1000.0,
+        total: Long = 100000L,  // $1000 in cents
         isQuote: Boolean = false
     ): Invoice {
         return Invoice(

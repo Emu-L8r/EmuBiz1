@@ -1,8 +1,6 @@
 package com.emul8r.bizap.data.local
 
-import android.content.Context
 import androidx.room.Database
-import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.emul8r.bizap.data.local.entities.*
@@ -31,7 +29,7 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         InvoiceTemplate::class,
         InvoiceCustomField::class
     ],
-    version = 20,
+    version = 21,
     exportSchema = true
 )
 @TypeConverters(DocumentStatusConverter::class)
@@ -49,25 +47,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun invoicePaymentDao(): InvoicePaymentDao
     abstract fun invoiceTemplateDao(): InvoiceTemplateDao
     abstract fun invoiceCustomFieldDao(): InvoiceCustomFieldDao
-
-    companion object {
-        @Volatile
-        private var INSTANCE: AppDatabase? = null
-
-        fun getInstance(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "bizap.db"
-                )
-                    
-                    .fallbackToDestructiveMigration()
-                    .build()
-                    .also { INSTANCE = it }
-            }
-        }
-    }
 }
 
 

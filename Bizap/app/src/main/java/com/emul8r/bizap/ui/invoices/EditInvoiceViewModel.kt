@@ -85,7 +85,7 @@ class EditInvoiceViewModel @Inject constructor(
                     id = 0,
                     description = "",
                     quantity = 1.0,
-                    unitPrice = 0.0
+                    unitPrice = 0L
                 )
             )
             _editState.update { updatedInvoice }
@@ -103,7 +103,7 @@ class EditInvoiceViewModel @Inject constructor(
         }
     }
 
-    fun updateLineItem(id: Long?, description: String, quantity: Double, unitPrice: Double) {
+    fun updateLineItem(id: Long?, description: String, quantity: Double, unitPrice: Long) {
         val currentState = uiState.value
         if (currentState is EditInvoiceUiState.Success) {
             val currentInvoice = currentState.invoice
@@ -163,11 +163,12 @@ class EditInvoiceViewModel @Inject constructor(
                         date = invoice.date,
                         dueDate = invoice.dueDate,
                         items = invoice.items.map {
+                            val itemTotal = (it.unitPrice * it.quantity).toLong()
                             com.emul8r.bizap.domain.model.LineItemSnapshot(
                                 it.description,
                                 it.quantity,
                                 it.unitPrice,
-                                it.quantity * it.unitPrice
+                                itemTotal
                             )
                         },
                         subtotal = invoice.totalAmount - invoice.taxAmount,

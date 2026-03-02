@@ -23,7 +23,7 @@ class PrefilledItemsViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    fun addItem(description: String, unitPrice: Double) {
+    fun addItem(description: String, unitPrice: Long) {
         viewModelScope.launch {
             repository.insertItem(PrefilledItemEntity(description = description, unitPrice = unitPrice))
         }

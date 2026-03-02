@@ -102,7 +102,8 @@ object ImageCompressor {
             val decodedBytes = Base64.decode(base64, Base64.NO_WRAP)
             BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
         } catch (e: Exception) {
-            Timber.e(e, "Error decoding Base64 to bitmap")            null
+            Timber.e(e, "Error decoding Base64 to bitmap")
+            null
         }
     }
 

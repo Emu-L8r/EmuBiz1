@@ -12,12 +12,12 @@ object AnalyticsCalculator {
     private const val TAG = "AnalyticsCalculator"
 
     /**
-     * Calculate customer lifetime value
+     * Calculate customer lifetime value (in cents)
      */
     fun calculateCustomerLifetimeValue(
         invoices: List<InvoiceAnalyticsSnapshot>,
         paidOnly: Boolean = true
-    ): Double {
+    ): Long {
         return if (paidOnly) {
             invoices.filter { it.isPaid }.sumOf { it.totalAmount }
         } else {

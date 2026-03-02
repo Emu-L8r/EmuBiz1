@@ -66,7 +66,7 @@ class InvoiceRepositoryImpl @Inject constructor(
         return invoiceDao.insert(invoiceEntity, lineItemEntities)
     }
 
-    override suspend fun updateAmountPaid(invoiceId: Long, amount: Double) {
+    override suspend fun updateAmountPaid(invoiceId: Long, amount: Long) {
         val invoiceWithItems = invoiceDao.getInvoiceWithItemsById(invoiceId).first()
         invoiceWithItems?.let {
             val updatedEntity = it.invoice.copy(amountPaid = amount)
@@ -82,7 +82,7 @@ class InvoiceRepositoryImpl @Inject constructor(
             id = 0,
             status = InvoiceStatus.DRAFT.name,
             version = original.invoice.version + 1,
-            amountPaid = 0.0,
+            amountPaid = 0L,
             parentInvoiceId = originalInvoiceId,
             date = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()

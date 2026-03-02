@@ -13,8 +13,6 @@ sealed interface Screen {
     @Serializable
     data class CustomerDetail(val customerId: Long) : Screen
 
-    @Serializable
-    data class EditCustomer(val customerId: Long) : Screen
 
     @Serializable
     object Invoices : Screen
@@ -37,8 +35,6 @@ sealed interface Screen {
     @Serializable
     object RevenueDashboard : Screen
 
-    @Serializable
-    object PaymentAnalytics : Screen // Added for Task 14
 
     // Settings Routes
     @Serializable

@@ -7,13 +7,13 @@ import java.util.Locale
 data class Invoice(
     val id: Long = 0,
     val businessProfileId: Long = 0,
-    val customerId: Long,
+    val customerId: Long?,  // Nullable when customer is deleted
     val customerName: String,
     val customerAddress: String = "",
     val customerEmail: String? = null,
     val date: Long,
     val dueDate: Long = 0,
-    val totalAmount: Double,
+    val totalAmount: Long,              // Cents (e.g., 14999 = $149.99)
     val items: List<LineItem>,
     val isQuote: Boolean,
     val status: InvoiceStatus,
@@ -23,11 +23,11 @@ data class Invoice(
     val footer: String? = null,
     val photoUris: List<String> = emptyList(),
     val pdfUri: String? = null,
-    val taxRate: Double = 0.1,
-    val taxAmount: Double = 0.0,
+    val taxRate: Double = 0.1,          // Rate only (e.g., 0.1 = 10%)
+    val taxAmount: Long = 0,            // Cents
     val companyLogoPath: String? = null,
     val updatedAt: Long = 0,
-    val amountPaid: Double = 0.0,
+    val amountPaid: Long = 0,           // Cents
     val parentInvoiceId: Long? = null,
     val version: Int = 1,
     val invoiceYear: Int = 0,
@@ -35,9 +35,9 @@ data class Invoice(
     val currencyCode: String = "AUD"
 ) {
     val invoiceId: Long get() = id
-    val total: Double get() = totalAmount
-    val balanceRemaining: Double get() = totalAmount - amountPaid
-    val isFullyPaid: Boolean get() = balanceRemaining <= 0.0
+    val total: Long get() = totalAmount
+    val balanceRemaining: Long get() = totalAmount - amountPaid
+    val isFullyPaid: Boolean get() = balanceRemaining <= 0
 
     val invoiceNumber: String
         get() {
@@ -47,7 +47,7 @@ data class Invoice(
 
     fun validate() {
         require(businessProfileId > 0) { "Business ID is required" }
-        require(customerId > 0) { "Customer ID is required" }
+        require(customerId == null || customerId > 0) { "Customer ID must be valid or null" }
         require(totalAmount > 0) { "Total amount must be greater than zero" }
         require(currencyCode.length == 3) { "Currency code must be 3 characters" }
         require(items.isNotEmpty()) { "Invoice must have at least one line item" }
@@ -63,7 +63,7 @@ data class LineItem(
     val id: Long = 0,
     val description: String,
     val quantity: Double,
-    val unitPrice: Double,
+    val unitPrice: Long,                // Cents (e.g., 4999 = $49.99)
     val transientId: String = java.util.UUID.randomUUID().toString()
 ) {
     val itemId: Long get() = id

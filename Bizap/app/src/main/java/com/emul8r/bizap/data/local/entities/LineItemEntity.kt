@@ -21,6 +21,6 @@ data class LineItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val invoiceId: Long,
     val description: String,
-    val quantity: Double,
-    val unitPrice: Double
+    val quantity: Double,               // Qty can be fractional (e.g., 1.5 widgets)
+    val unitPrice: Long                 // Store as cents (e.g., 4999 = $49.99)
 )

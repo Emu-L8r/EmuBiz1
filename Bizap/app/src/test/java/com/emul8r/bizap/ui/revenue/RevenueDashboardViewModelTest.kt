@@ -20,9 +20,9 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
     fun setupViewModel() {
         // Setup default mock behavior
         coEvery { useCase(any()) } returns RevenueMetrics(
-            mtdRevenue = 1000.0,
-            ytdRevenue = 5000.0,
-            weeklyRevenue = 500.0,
+            mtdRevenue = 100000L,      // $1000 in cents
+            ytdRevenue = 500000L,      // $5000 in cents
+            weeklyRevenue = 50000L,    // $500 in cents
             dailyTrend = emptyList(),
             topPerformers = emptyList()
         )
@@ -32,9 +32,9 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
     fun `when initialized should load success state`() = runTest {
         // Arrange
         val mockMetrics = RevenueMetrics(
-            mtdRevenue = 1000.0,
-            ytdRevenue = 5000.0,
-            weeklyRevenue = 500.0,
+            mtdRevenue = 100000L,
+            ytdRevenue = 500000L,
+            weeklyRevenue = 50000L,
             dailyTrend = emptyList(),
             topPerformers = emptyList()
         )

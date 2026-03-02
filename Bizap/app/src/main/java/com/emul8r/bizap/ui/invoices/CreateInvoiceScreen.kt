@@ -103,8 +103,10 @@ fun CreateInvoiceScreen(
             ) 
         },
         bottomBar = {
+            val total = uiState.items.sumOf { (it.unitPrice * it.quantity).toLong() }
             InvoiceBottomSummary(
-                total = uiState.items.sumOf { it.quantity * it.unitPrice },
+                total = total,
+                currencyCode = uiState.selectedCurrencyCode,
                 isSaving = uiState.isSaving,
                 onSave = { viewModel.onSaveClicked() }
             )
@@ -239,8 +241,8 @@ fun CustomerDropdown(
 fun LineItemEditor(
     description: String,
     quantity: Double,
-    unitPrice: Double,
-    onUpdate: (String, Double, Double) -> Unit,
+    unitPrice: Long,
+    onUpdate: (String, Double, Long) -> Unit,
     onRemove: () -> Unit
 ) {
     Row(
@@ -264,8 +266,8 @@ fun LineItemEditor(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
         OutlinedTextField(
-            value = if (unitPrice == 0.0) "" else unitPrice.toString(),
-            onValueChange = { it.toDoubleOrNull()?.let { valPrice -> onUpdate(description, quantity, valPrice) } },
+            value = if (unitPrice == 0L) "" else (unitPrice.toDouble() / 100.0).toString(),
+            onValueChange = { it.toDoubleOrNull()?.let { valPrice -> onUpdate(description, quantity, (valPrice * 100).toLong()) } },
             label = { Text("$") },
             modifier = Modifier.weight(0.7f),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)

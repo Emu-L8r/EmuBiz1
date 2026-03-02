@@ -58,11 +58,12 @@ class InvoicePdfViewModel @Inject constructor(
                     date = invoice.date,
                     dueDate = invoice.dueDate,
                     items = invoice.items.map {
+                        val itemTotal = (it.unitPrice * it.quantity).toLong()
                         com.emul8r.bizap.domain.model.LineItemSnapshot(
                             it.description,
                             it.quantity,
                             it.unitPrice,
-                            it.quantity * it.unitPrice
+                            itemTotal
                         )
                     },
                     subtotal = invoice.totalAmount - invoice.taxAmount,

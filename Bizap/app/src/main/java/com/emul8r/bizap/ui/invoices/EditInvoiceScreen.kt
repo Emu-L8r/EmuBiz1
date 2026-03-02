@@ -132,8 +132,10 @@ fun EditInvoiceContent(
             }
         },
         bottomBar = {
+            val total = invoice.items.sumOf { (it.unitPrice * it.quantity).toLong() }
             InvoiceBottomSummary(
-                total = invoice.items.sumOf { it.quantity * it.unitPrice },
+                total = total,
+                currencyCode = invoice.currencyCode,
                 isSaving = isSaving,
                 onSave = { viewModel.saveInvoice() }
             )

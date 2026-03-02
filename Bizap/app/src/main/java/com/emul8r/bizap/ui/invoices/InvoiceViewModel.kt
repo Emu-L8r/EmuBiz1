@@ -65,7 +65,7 @@ class InvoiceViewModel @Inject constructor(
         _uiState.update { it.copy(items = it.items + LineItemForm()) }
     }
 
-    fun updateLineItem(id: Long?, description: String, quantity: Double, unitPrice: Double) {
+    fun updateLineItem(id: Long?, description: String, quantity: Double, unitPrice: Long) {
         _uiState.update { state ->
             state.copy(items = state.items.map {
                 if (it.id == id) it.copy(description = description, quantity = quantity, unitPrice = unitPrice) else it
@@ -99,7 +99,7 @@ class InvoiceViewModel @Inject constructor(
                     customerId = customer.id,
                     customerName = customer.name,
                     date = System.currentTimeMillis(),
-                    totalAmount = 0.0, // Calculated in Use Case
+                    totalAmount = 0L,  // Calculated in Use Case (in cents)
                     items = currentState.items.map { it.toDomain() },
                     isQuote = false,
                     status = InvoiceStatus.DRAFT,

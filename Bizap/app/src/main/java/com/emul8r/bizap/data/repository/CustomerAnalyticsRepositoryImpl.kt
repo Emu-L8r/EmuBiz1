@@ -55,8 +55,8 @@ class CustomerAnalyticsRepositoryImpl @Inject constructor(
                 regularCount = snapshots.count { it.segment == "REGULAR" },
                 atRiskCount = atRiskCustomers.size,
                 dormantCount = snapshots.count { it.segment == "DORMANT" },
-                averageLTV = snapshots.map { it.customerLifetimeValue }.average(),
-                totalRevenue = snapshots.sumOf { it.totalRevenue },
+                averageLTV = snapshots.map { it.customerLifetimeValue.toDouble() / 100.0 }.average(),
+                totalRevenue = snapshots.sumOf { it.totalRevenue.toDouble() } / 100.0,
                 churnRate = (atRiskCustomers.size.toDouble() / snapshots.size) * 100.0,
                 topCustomers = topCustomers,
                 atRiskCustomers = atRiskCustomers
@@ -80,7 +80,7 @@ class CustomerAnalyticsRepositoryImpl @Inject constructor(
             frequency = snapshot.toFrequencyModel(),
             churnRisk = snapshot.toChurnModel(),
             totalInvoices = snapshot.invoiceCount,
-            totalPaid = snapshot.totalRevenue,
+            totalPaid = snapshot.totalRevenue.toDouble() / 100.0,
             totalOutstanding = 0.0
         )
     }
@@ -95,13 +95,13 @@ class CustomerAnalyticsRepositoryImpl @Inject constructor(
 
     private fun CustomerAnalyticsSnapshot.toLtvModel() = CustomerLifetimeValue(
         customerId = customerId,
-        totalRevenue = totalRevenue,
+        totalRevenue = totalRevenue.toDouble() / 100.0,
         transactionCount = invoiceCount,
-        averageOrderValue = averageInvoiceAmount,
+        averageOrderValue = averageInvoiceAmount.toDouble() / 100.0,
         firstPurchaseDate = LocalDate.now(),
         lastPurchaseDate = LocalDate.now(),
         daysSinceLastPurchase = daysSinceLastPurchase,
-        estimatedLTV = estimatedLTV
+        estimatedLTV = estimatedLTV.toDouble() / 100.0
     )
 
     private fun CustomerAnalyticsSnapshot.toChurnModel() = ChurnRiskIndicator(

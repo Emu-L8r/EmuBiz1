@@ -12,7 +12,7 @@ interface InvoiceRepository {
     
     // --- PHASE 3A: Management & Versioning ---
     fun getInvoiceGroupWithVersions(year: Int, sequence: Int): Flow<List<Invoice>>
-    suspend fun updateAmountPaid(invoiceId: Long, amount: Double)
+    suspend fun updateAmountPaid(invoiceId: Long, amount: Long)
     suspend fun createCorrection(originalInvoiceId: Long): Long
 
     fun getBusinessProfile(): Flow<BusinessProfile>

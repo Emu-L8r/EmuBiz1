@@ -7,11 +7,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import java.util.Locale
+import com.emul8r.bizap.utils.CentsFormatter
 
 @Composable
 fun InvoiceBottomSummary(
-    total: Double,
+    total: Long,                         // Now in cents (e.g., 149999 = $1,499.99)
+    currencyCode: String = "AUD",
     isSaving: Boolean,
     onSave: () -> Unit
 ) {
@@ -29,7 +30,7 @@ fun InvoiceBottomSummary(
             Column {
                 Text("Total Amount", style = MaterialTheme.typography.labelMedium)
                 Text(
-                    text = "$${String.format(Locale.getDefault(), "%.2f", total)}",
+                    text = CentsFormatter.formatCents(total, currencyCode),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
