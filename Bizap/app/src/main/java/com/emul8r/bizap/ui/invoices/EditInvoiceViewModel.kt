@@ -3,7 +3,6 @@ package com.emul8r.bizap.ui.invoices
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -18,6 +17,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 sealed class NavigationEvent {
@@ -131,12 +131,12 @@ class EditInvoiceViewModel @Inject constructor(
             if (state is EditInvoiceUiState.Success) {
                 _isSaving.value = true
                 try {
-                    Log.d("EditInvoice", "Persisting invoice ${state.invoice.id}...")
+                    Timber.d("Persisting invoice ${state.invoice.id}...")
                     invoiceRepository.saveInvoice(state.invoice)
-                    Log.d("EditInvoice", "Persist successful.")
+                    Timber.d("Persist successful.")
                     _navigationEvent.emit(NavigationEvent.BackToInvoiceDetail)
                 } catch (e: Exception) {
-                    Log.e("EditInvoice", "Save failed: ${e.message}")
+                    Timber.e(e, "Save failed: ${e.message}")
                     _navigationEvent.emit(NavigationEvent.ShowError(e.message ?: "Unknown save error"))
                 } finally {
                     _isSaving.value = false
@@ -195,7 +195,7 @@ class EditInvoiceViewModel @Inject constructor(
                     chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(chooser)
                 } catch (e: Exception) {
-                    Log.e("EditInvoice", "Share failed: ${e.message}")
+                    Timber.e(e, "Share failed: ${e.message}")
                     _navigationEvent.emit(NavigationEvent.ShowError("Share failed: ${e.message}"))
                 }
             }

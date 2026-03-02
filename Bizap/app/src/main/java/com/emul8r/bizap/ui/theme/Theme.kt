@@ -1,12 +1,12 @@
 package com.emul8r.bizap.ui.theme
 
-import android.util.Log
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.emul8r.bizap.domain.model.ThemeConfig
+import timber.log.Timber
 
 private val BrandPurple = Color(0xFF6750A4)
 
@@ -57,7 +57,7 @@ private fun parseSeedColor(hexString: String?): Color {
             Color(colorInt.toLong() and 0xFFFFFFFFL)
         }
     } catch (e: Exception) {
-        Log.e("Theme", "Failed to parse hex: $hexString", e)
+        Timber.e(e, "Failed to parse hex: $hexString")
         BrandPurple
     }
 }

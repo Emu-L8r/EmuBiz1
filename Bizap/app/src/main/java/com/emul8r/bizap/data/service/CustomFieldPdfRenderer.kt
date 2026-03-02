@@ -2,7 +2,7 @@ package com.emul8r.bizap.data.service
 
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.util.Log
+import timber.log.Timber
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.text.DecimalFormat
@@ -40,7 +40,7 @@ class CustomFieldPdfRenderer(
             return currentY
         }
 
-        Log.d(TAG, "✅ Rendering ${fieldLabels.size} custom fields")
+        Timber.d("✅ Rendering ${fieldLabels.size} custom fields")
 
         // Draw section header
         currentY += SECTION_SPACING
@@ -88,7 +88,7 @@ class CustomFieldPdfRenderer(
                 else -> value
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Error formatting field value: $value (type: $type)", e)
+            Timber.w(e, "Error formatting field value: $value (type: $type)")
             value
         }
     }
@@ -114,7 +114,7 @@ class CustomFieldPdfRenderer(
             val date = LocalDate.parse(dateString, DateTimeFormatter.ISO_LOCAL_DATE)
             date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
         } catch (e: Exception) {
-            Log.w(TAG, "Could not format date: $dateString", e)
+            Timber.w(e, "Could not format date: $dateString")
             dateString
         }
     }

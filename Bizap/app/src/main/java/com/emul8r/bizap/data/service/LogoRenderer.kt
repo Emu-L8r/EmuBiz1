@@ -5,8 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.util.Log
 import java.io.File
+import timber.log.Timber
 
 /**
  * Renders logo image in PDF invoice header
@@ -29,7 +29,7 @@ class LogoRenderer(
      */
     fun renderLogo(logoFileName: String?): Boolean {
         if (logoFileName.isNullOrBlank()) {
-            Log.d(TAG, "No logo filename provided")
+            Timber.d("No logo filename provided")
             return false
         }
 
@@ -37,14 +37,14 @@ class LogoRenderer(
             val logoFile = File(context.cacheDir, "logos/$logoFileName")
 
             if (!logoFile.exists()) {
-                Log.w(TAG, "⚠️ Logo file not found: ${logoFile.absolutePath}")
+                Timber.w("⚠️ Logo file not found: ${logoFile.absolutePath}")
                 return false
             }
 
             // Load and decode bitmap
             val bitmap = BitmapFactory.decodeFile(logoFile.absolutePath)
             if (bitmap == null) {
-                Log.w(TAG, "⚠️ Could not decode logo bitmap: $logoFileName")
+                Timber.w("⚠️ Could not decode logo bitmap: $logoFileName")
                 return false
             }
 
@@ -64,10 +64,10 @@ class LogoRenderer(
             )
             canvas.drawBitmap(scaledBitmap, logoX, logoY, null)
 
-            Log.d(TAG, "✅ Logo rendered successfully: $logoFileName")
+            Timber.d("✅ Logo rendered successfully: $logoFileName")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error rendering logo: $logoFileName", e)
+            Timber.e(e, "❌ Error rendering logo: $logoFileName")
             false
         }
     }
@@ -117,7 +117,7 @@ class LogoRenderer(
 
             Pair(options.outWidth, options.outHeight)
         } catch (e: Exception) {
-            Log.w(TAG, "Could not get logo dimensions: $logoFileName", e)
+            Timber.w(e, "Could not get logo dimensions: $logoFileName")
             null
         }
     }

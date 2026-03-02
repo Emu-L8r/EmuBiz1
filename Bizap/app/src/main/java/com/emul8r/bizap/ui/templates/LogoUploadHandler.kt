@@ -6,10 +6,10 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
-import android.util.Log
 
 /**
  * Handles logo upload, compression, and caching
@@ -34,8 +34,7 @@ class LogoUploadHandler(private val context: Context) {
             // Validate file size
             val fileSize = getFileSizeFromUri(uri)
             if (fileSize > MAX_FILE_SIZE) {
-                Log.e(TAG, "File too large: $fileSize bytes")
-                return@withContext Result.failure(
+                Timber.e("File too large: $fileSize bytes")                return@withContext Result.failure(
                     IllegalArgumentException("File size exceeds 2MB limit")
                 )
             }
@@ -60,10 +59,10 @@ class LogoUploadHandler(private val context: Context) {
                 output.flush()
             }
 
-            Log.d(TAG, "✅ Logo saved: $filename (${logoFile.length()} bytes)")
+            Timber.d("✅ Logo saved: $filename (${logoFile.length()} bytes)")
             Result.success(filename)
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error uploading logo", e)
+            Timber.e(e, "❌ Error uploading logo")
             Result.failure(e)
         }
     }
@@ -82,11 +81,11 @@ class LogoUploadHandler(private val context: Context) {
         return try {
             val file = File(getLogosDir(), filename)
             file.delete().also {
-                if (it) Log.d(TAG, "✅ Logo deleted: $filename")
-                else Log.w(TAG, "⚠️ Could not delete logo: $filename")
+                if (it) Timber.d("✅ Logo deleted: $filename")
+                else Timber.w("⚠️ Could not delete logo: $filename")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error deleting logo", e)
+            Timber.e(e, "❌ Error deleting logo")
             false
         }
     }
@@ -112,7 +111,7 @@ class LogoUploadHandler(private val context: Context) {
         val newWidth = (width * scale).toInt()
         val newHeight = (height * scale).toInt()
 
-        Log.d(TAG, "Resizing bitmap: $width x $height → $newWidth x $newHeight")
+        Timber.d("Resizing bitmap: $width x $height → $newWidth x $newHeight")
         return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
     }
 
@@ -129,7 +128,7 @@ class LogoUploadHandler(private val context: Context) {
                 cursor.getLong(sizeIndex)
             } ?: 0L
         } catch (e: Exception) {
-            Log.w(TAG, "Could not get file size from URI", e)
+            Timber.w(e, "Could not get file size from URI")
             0L
         }
     }
@@ -151,11 +150,11 @@ class LogoUploadHandler(private val context: Context) {
     fun clearAllLogos(): Boolean {
         return try {
             getLogosDir().deleteRecursively().also {
-                if (it) Log.d(TAG, "✅ All logos cleared")
-                else Log.w(TAG, "⚠️ Could not clear logos directory")
+                if (it) Timber.d("✅ All logos cleared")
+                else Timber.w("⚠️ Could not clear logos directory")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error clearing logos", e)
+            Timber.e(e, "❌ Error clearing logos")
             false
         }
     }
@@ -169,7 +168,7 @@ class LogoUploadHandler(private val context: Context) {
                 .filter { it.isFile }
                 .sumOf { it.length() }
         } catch (e: Exception) {
-            Log.e(TAG, "Error calculating cache size", e)
+            Timber.e(e, "Error calculating cache size")
             0L
         }
     }

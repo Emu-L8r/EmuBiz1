@@ -1,7 +1,6 @@
 package com.emul8r.bizap.ui.invoices
 
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -28,6 +27,7 @@ import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.components.InvoiceBottomSummary
 import kotlinx.coroutines.delay
+import timber.log.Timber
 import java.io.File
 
 @Composable
@@ -75,7 +75,7 @@ fun EditInvoiceContent(
     // FIXED: Proper SharedFlow collection for one-time events
     LaunchedEffect(Unit) {
         viewModel.navigationEvent.collect { event ->
-            Log.d("EditInvoice", "Event received in Screen: $event")
+            Timber.d("Event received in Screen: $event")
             when (event) {
                 is NavigationEvent.BackToInvoiceDetail -> {
                     snackbarHostState.showSnackbar(

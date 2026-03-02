@@ -1,6 +1,5 @@
 package com.emul8r.bizap.ui.settings
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.BuildConfig
@@ -11,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -38,7 +38,7 @@ class BusinessProfileViewModel @Inject constructor(
         if (!BuildConfig.DEBUG) return
 
         viewModelScope.launch {
-            Log.d("BusinessProfileViewModel", "🐛 DEBUG BUTTON CLICKED: Seeding test business profile...")
+            Timber.d("🐛 DEBUG BUTTON CLICKED: Seeding test business profile...")
             try {
                 val testProfile = BusinessProfile(
                     businessName = "Emu Consulting Pty Ltd",
@@ -54,9 +54,9 @@ class BusinessProfileViewModel @Inject constructor(
                 )
                 
                 repository.updateProfile(testProfile)
-                Log.d("BusinessProfileViewModel", "✅ TEST BUSINESS PROFILE LOADED")
+                Timber.d("✅ TEST BUSINESS PROFILE LOADED")
             } catch (e: Exception) {
-                Log.e("BusinessProfileViewModel", "❌ Seeding failed: ${e.message}", e)
+                Timber.e(e, "❌ Seeding failed: ${e.message}")
             }
         }
     }

@@ -8,6 +8,7 @@ import android.net.Uri
 import android.util.Base64
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import timber.log.Timber
 
 /**
  * Utility object for image compression and Base64 encoding.
@@ -35,7 +36,7 @@ object ImageCompressor {
             val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
 
             if (inputStream == null) {
-                android.util.Log.e("ImageCompressor", "Failed to open input stream for URI: $uri")
+                Timber.e("Failed to open input stream for URI: $uri")
                 return null
             }
 
@@ -60,7 +61,7 @@ object ImageCompressor {
             inputStream2?.close()
 
             if (bitmap == null) {
-                android.util.Log.e("ImageCompressor", "Failed to decode bitmap from URI: $uri")
+                Timber.e("Failed to decode bitmap from URI: $uri")
                 return null
             }
 
@@ -81,11 +82,11 @@ object ImageCompressor {
 
             // Log size for debugging
             val sizeKB = byteArray.size / 1024
-            android.util.Log.d("ImageCompressor", "Compressed image to $sizeKB KB (Base64 length: ${base64.length})")
+            Timber.d("Compressed image to $sizeKB KB (Base64 length: ${base64.length})")
 
             base64
         } catch (e: Exception) {
-            android.util.Log.e("ImageCompressor", "Error compressing image", e)
+            Timber.e(e, "Error compressing image")
             null
         }
     }
@@ -101,8 +102,7 @@ object ImageCompressor {
             val decodedBytes = Base64.decode(base64, Base64.NO_WRAP)
             BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
         } catch (e: Exception) {
-            android.util.Log.e("ImageCompressor", "Error decoding Base64 to bitmap", e)
-            null
+            Timber.e(e, "Error decoding Base64 to bitmap")            null
         }
     }
 

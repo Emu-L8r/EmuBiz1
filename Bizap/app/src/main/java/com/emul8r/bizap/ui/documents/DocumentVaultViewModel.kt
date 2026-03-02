@@ -1,6 +1,5 @@
 package com.emul8r.bizap.ui.documents
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.local.entities.DocumentStatus
@@ -14,6 +13,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
+import timber.log.Timber
 
 data class DocumentVaultItem(
     val id: Long, // ADDED: Keep the database ID
@@ -68,13 +68,13 @@ class DocumentVaultViewModel @Inject constructor(
                 val paths = items.map { it.absolutePath }
                 val duplicatePaths = paths.groupingBy { it }.eachCount().filter { it.value > 1 }
                 if (duplicatePaths.isNotEmpty()) {
-                    Log.d("DocumentVault", "Duplicate paths found: $duplicatePaths")
+                    Timber.d("Duplicate paths found: $duplicatePaths")
                 }
 
                 val ids = items.map { it.id }
                 val duplicateIds = ids.groupingBy { it }.eachCount().filter { it.value > 1 }
                 if (duplicateIds.isNotEmpty()) {
-                    Log.d("DocumentVault", "Duplicate IDs found: $duplicateIds")
+                    Timber.d("Duplicate IDs found: $duplicateIds")
                 }
                 // ----------------------------
 

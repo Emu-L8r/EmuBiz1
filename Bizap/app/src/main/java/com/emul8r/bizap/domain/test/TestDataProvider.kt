@@ -1,7 +1,7 @@
 package com.emul8r.bizap.domain.test
 
-import android.util.Log
 import com.emul8r.bizap.ui.invoices.LineItemForm
+import timber.log.Timber
 
 /**
  * FINAL VERSION v2: TEST DATA PROVIDER
@@ -10,8 +10,8 @@ import com.emul8r.bizap.ui.invoices.LineItemForm
 object TestDataProvider {
     
     fun logInitialization() {
-        Log.d("TestData", "✅ TEST DATA PROVIDER INITIALIZED")
-        Log.d("TestData", """
+        Timber.d("✅ TEST DATA PROVIDER INITIALIZED")
+        Timber.d("""
             Available Line Items:
             - LONG_DESCRIPTION: "Comprehensive consulting services..."
             - SUPPORT: "Support and maintenance package..."

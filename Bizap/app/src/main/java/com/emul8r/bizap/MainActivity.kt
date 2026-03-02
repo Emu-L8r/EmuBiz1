@@ -1,7 +1,6 @@
 package com.emul8r.bizap
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -39,6 +38,7 @@ import com.emul8r.bizap.ui.settings.ThemeViewModel
 import com.emul8r.bizap.ui.theme.EmuBizzzTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 data class NavigationItem(
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val config by themeViewModel.themeConfig.collectAsStateWithLifecycle()
 
-            Log.d("MainActivity", "🎨 Theme recomposed: seedColorHex = ${config.seedColorHex}")
+            Timber.d("🎨 Theme recomposed: seedColorHex = ${config.seedColorHex}")
 
             EmuBizzzTheme(themeConfig = config) {
                 MainScreen()

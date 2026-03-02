@@ -3,7 +3,7 @@ package com.emul8r.bizap.data.service
 import android.graphics.Color
 import android.graphics.Typeface
 import com.emul8r.bizap.ui.templates.TemplateSnapshot
-import android.util.Log
+import timber.log.Timber
 
 /**
  * Extracts and applies styling from template snapshot to PDF
@@ -36,7 +36,7 @@ class PdfStyler {
                 textLight = Color.DKGRAY
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing colors from snapshot", e)
+            Timber.e(e, "Error parsing colors from snapshot")
             // Return defaults on error
             PdfColors(
                 primary = Color.parseColor("#6750A4"),
@@ -67,7 +67,7 @@ class PdfStyler {
             val assetPath = if (isBold) boldPath else fontPath
             Typeface.createFromAsset(context.assets, assetPath)
         } catch (e: Exception) {
-            Log.w(TAG, "Could not load font: $fontFamily, using default", e)
+            Timber.w(e, "Could not load font: $fontFamily, using default")
             if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
         }
     }

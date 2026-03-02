@@ -24,6 +24,7 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        buildConfigField("String", "EXCHANGE_RATE_API_KEY", "\"${project.findProperty("EXCHANGE_RATE_API_KEY") ?: ""}\"")
     }
 
     buildTypes {

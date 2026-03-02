@@ -1,6 +1,5 @@
 package com.emul8r.bizap.ui.invoices
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.BuildConfig
@@ -17,6 +16,7 @@ import com.emul8r.bizap.domain.test.TestDataProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 data class CreateInvoiceUiState(
@@ -76,7 +76,7 @@ class CreateInvoiceViewModel @Inject constructor(
     fun loadDebugTestData() {
         if (!BuildConfig.DEBUG) return
 
-        Log.d(TAG, "🐛 DEBUG BUTTON CLICKED: Loading test data...")
+        Timber.d("🐛 DEBUG BUTTON CLICKED: Loading test data...")
         
         viewModelScope.launch {
             try {
@@ -93,9 +93,9 @@ class CreateInvoiceViewModel @Inject constructor(
                         items = TestDataProvider.getDebugLineItems()
                     )
                 }
-                Log.d(TAG, "✅ DEBUG DATA LOADED for ${targetCustomer.name}")
+                Timber.d("✅ DEBUG DATA LOADED for ${targetCustomer.name}")
             } catch (e: Exception) {
-                Log.e(TAG, "❌ Debug data load failed: ${e.message}")
+                Timber.e(e, "❌ Debug data load failed: ${e.message}")
                 _uiState.update { it.copy(error = "Debug Load Failed: ${e.message}") }
             }
         }
