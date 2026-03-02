@@ -93,7 +93,7 @@ class InvoiceDetailViewModel @Inject constructor(
     /**
      * PHASE 3A: RECORD PAYMENT
      */
-    fun recordPayment(amount: Double) {
+    fun recordPayment(amount: Long) {
         val currentState = uiState.value as? InvoiceDetailUiState.Success ?: return
         val invoice = currentState.data
         
@@ -244,7 +244,10 @@ class InvoiceDetailViewModel @Inject constructor(
             customerEmail = invoice.customerEmail,
             date = invoice.date,
             dueDate = invoice.dueDate,
-            items = invoice.items.map { LineItemSnapshot(it.description, it.quantity, it.unitPrice, it.quantity * it.unitPrice) },
+            items = invoice.items.map {
+                val itemTotal = (it.unitPrice * it.quantity).toLong()
+                LineItemSnapshot(it.description, it.quantity, it.unitPrice, itemTotal)
+            },
             subtotal = invoice.totalAmount - invoice.taxAmount,
             taxRate = invoice.taxRate,
             taxAmount = invoice.taxAmount,

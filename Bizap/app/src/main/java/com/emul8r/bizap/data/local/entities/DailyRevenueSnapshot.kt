@@ -24,11 +24,11 @@ data class DailyRevenueSnapshot(
     val dateMs: Long,
 
     // Revenue aggregates
-    val totalRevenue: Double = 0.0,
+    val totalRevenue: Long = 0,                    // Cents
     val invoiceCount: Int = 0,
     val paidInvoiceCount: Int = 0,
     val draftInvoiceCount: Int = 0,
-    val averageInvoiceAmount: Double = 0.0,
+    val averageInvoiceAmount: Long = 0,           // Cents
 
     // By currency
     val currencyBreakdown: String = "{}", // JSON: {AUD: 1000, USD: 500}

@@ -7,5 +7,5 @@ import androidx.room.PrimaryKey
 data class PrefilledItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val description: String,
-    val unitPrice: Double
+    val unitPrice: Long                 // Cents (e.g., 4999 = $49.99)
 )

@@ -29,9 +29,9 @@ class RevenueRepositoryImpl @Inject constructor(
                 if (dailySnapshots.isEmpty()) {
                     Timber.w("RevenueRepository: No data available")
                     return@withContext RevenueMetrics(
-                        mtdRevenue = 0.0,
-                        ytdRevenue = 0.0,
-                        weeklyRevenue = 0.0,
+                        mtdRevenue = 0L,
+                        ytdRevenue = 0L,
+                        weeklyRevenue = 0L,
                         dailyTrend = emptyList(),
                         topPerformers = emptyList()
                     )
@@ -59,7 +59,7 @@ class RevenueRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun calculateMTD(snapshots: List<DailyRevenueSnapshot>): Double {
+    private fun calculateMTD(snapshots: List<DailyRevenueSnapshot>): Long {
         val currentMonth = YearMonth.now()
         val mtd = snapshots
             .filter { snapshot ->
@@ -73,11 +73,11 @@ class RevenueRepositoryImpl @Inject constructor(
             }
             .sumOf { it.totalRevenue }
 
-        Timber.d("RevenueRepository: MTD = $mtd")
+        Timber.d("RevenueRepository: MTD = $mtd cents")
         return mtd
     }
 
-    private fun calculateYTD(snapshots: List<DailyRevenueSnapshot>): Double {
+    private fun calculateYTD(snapshots: List<DailyRevenueSnapshot>): Long {
         val currentYear = LocalDate.now().year
         val ytd = snapshots
             .filter { snapshot ->
@@ -91,11 +91,11 @@ class RevenueRepositoryImpl @Inject constructor(
             }
             .sumOf { it.totalRevenue }
 
-        Timber.d("RevenueRepository: YTD = $ytd")
+        Timber.d("RevenueRepository: YTD = $ytd cents")
         return ytd
     }
 
-    private fun calculateWeekly(snapshots: List<DailyRevenueSnapshot>): Double {
+    private fun calculateWeekly(snapshots: List<DailyRevenueSnapshot>): Long {
         val sevenDaysAgo = LocalDate.now().minusDays(7)
         val weekly = snapshots
             .filter { snapshot ->
@@ -109,7 +109,7 @@ class RevenueRepositoryImpl @Inject constructor(
             }
             .sumOf { it.totalRevenue }
 
-        Timber.d("RevenueRepository: Weekly = $weekly")
+        Timber.d("RevenueRepository: Weekly = $weekly cents")
         return weekly
     }
 
@@ -136,15 +136,19 @@ class RevenueRepositoryImpl @Inject constructor(
         snapshots: List<DailyRevenueSnapshot>
     ): List<RevenueByCurrency> {
         try {
-            val currencyTotals = mutableMapOf<String, Double>()
-            var grandTotal = 0.0
+            val currencyTotals = mutableMapOf<String, Long>()
+            var grandTotal = 0L
 
             snapshots.forEach { snapshot ->
                 try {
                     val jsonObject = JSONObject(snapshot.currencyBreakdown)
                     jsonObject.keys().forEach { currency ->
-                        val amount = jsonObject.getDouble(currency)
-                        currencyTotals[currency] = currencyTotals.getOrDefault(currency, 0.0) + amount
+                        val amount = try {
+                            jsonObject.getLong(currency)
+                        } catch (e: Exception) {
+                            (jsonObject.getDouble(currency) * 100).toLong()
+                        }
+                        currencyTotals[currency] = currencyTotals.getOrDefault(currency, 0L) + amount
                         grandTotal += amount
                     }
                 } catch (e: Exception) {
@@ -156,7 +160,7 @@ class RevenueRepositoryImpl @Inject constructor(
                 RevenueByCurrency(
                     currencyCode = currency,
                     totalAmount = amount,
-                    percentageOfTotal = if (grandTotal > 0) (amount / grandTotal) * 100 else 0.0
+                    percentageOfTotal = if (grandTotal > 0) (amount.toDouble() / grandTotal.toDouble()) * 100 else 0.0
                 )
             }.sortedByDescending { it.totalAmount }
         } catch (e: Exception) {

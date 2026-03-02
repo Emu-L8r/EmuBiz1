@@ -39,7 +39,7 @@ class InvoiceTemplateIntegrationTest {
             customerId = 1L,
             customerName = "Customer",
             date = System.currentTimeMillis(),
-            totalAmount = 1000.0,
+            totalAmount = 100000L,  // $1000 in cents
             isQuote = false,
             status = "DRAFT",
             templateId = template.id,
@@ -60,7 +60,7 @@ class InvoiceTemplateIntegrationTest {
             customerId = 2L,
             customerName = "Another Customer",
             date = System.currentTimeMillis(),
-            totalAmount = 500.0,
+            totalAmount = 50000L,  // $500 in cents
             isQuote = false,
             status = "DRAFT",
             templateId = null,
@@ -87,7 +87,7 @@ class InvoiceTemplateIntegrationTest {
             customerId = 3L,
             customerName = "Customer",
             date = System.currentTimeMillis(),
-            totalAmount = 750.0,
+            totalAmount = 75000L,  // $750 in cents
             isQuote = false,
             status = "DRAFT",
             templateId = "template-2",
@@ -168,7 +168,7 @@ class InvoiceTemplateIntegrationTest {
             customerId = 10L,
             customerName = "Flow Customer",
             date = System.currentTimeMillis(),
-            totalAmount = 2000.0,
+            totalAmount = 200000L,  // $2000 in cents
             isQuote = false,
             status = "DRAFT",
             templateId = template.id,
@@ -206,13 +206,13 @@ class InvoiceTemplateIntegrationTest {
 
         val invoice1 = InvoiceEntity(
             id = 20L, businessProfileId = 1L, customerId = 20L, customerName = "Customer 1",
-            date = System.currentTimeMillis(), totalAmount = 1000.0, isQuote = false, status = "DRAFT",
+            date = System.currentTimeMillis(), totalAmount = 100000L, isQuote = false, status = "DRAFT",
             templateId = "t1", templateSnapshot = snapshot1, customFieldValues = null
         )
 
         val invoice2 = InvoiceEntity(
             id = 21L, businessProfileId = 1L, customerId = 21L, customerName = "Customer 2",
-            date = System.currentTimeMillis(), totalAmount = 2000.0, isQuote = false, status = "DRAFT",
+            date = System.currentTimeMillis(), totalAmount = 200000L, isQuote = false, status = "DRAFT",
             templateId = "t2", templateSnapshot = snapshot2, customFieldValues = null
         )
 
@@ -235,7 +235,7 @@ class InvoiceTemplateIntegrationTest {
             customerId = 30L,
             customerName = "Old Invoice",
             date = System.currentTimeMillis(),
-            totalAmount = 500.0,
+            totalAmount = 50000L,  // $500 in cents
             isQuote = false,
             status = "PAID"
             // templateId, templateSnapshot, customFieldValues are NULL by default
@@ -256,7 +256,7 @@ class InvoiceTemplateIntegrationTest {
             customerId = 40L,
             customerName = "Empty Fields",
             date = System.currentTimeMillis(),
-            totalAmount = 300.0,
+            totalAmount = 30000L,  // $300 in cents
             isQuote = false,
             status = "DRAFT",
             templateId = "template-x",

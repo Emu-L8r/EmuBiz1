@@ -27,12 +27,12 @@ object TestDataProvider {
         LineItemForm(
             description = "Comprehensive consulting services including business restructuring, strategic planning, and legal compliance audit with full documentation and follow-up support",
             quantity = 1.0,
-            unitPrice = 2500.0
+            unitPrice = 250000L  // $2,500 in cents
         ),
         LineItemForm(
             description = "Support and maintenance package (includes 24/7 monitoring, incident response, and quarterly optimization reviews)",
             quantity = 1.0,
-            unitPrice = 500.0
+            unitPrice = 50000L   // $500 in cents
         )
     )
 }

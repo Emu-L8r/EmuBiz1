@@ -25,15 +25,15 @@ data class CustomerAnalyticsSnapshot(
     val customerEmail: String?,
 
     // Revenue metrics
-    val totalRevenue: Double = 0.0,
+    val totalRevenue: Long = 0,         // Cents
     val invoiceCount: Int = 0,
     val paidInvoiceCount: Int = 0,
     val overdueInvoiceCount: Int = 0,
-    val averageInvoiceAmount: Double = 0.0,
+    val averageInvoiceAmount: Long = 0, // Cents
 
     // Customer value (LTV)
-    val customerLifetimeValue: Double = 0.0,
-    val estimatedLTV: Double = 0.0, // Future-looking metric
+    val customerLifetimeValue: Long = 0, // Cents
+    val estimatedLTV: Long = 0,          // Cents, future-looking metric
     val isTopCustomer: Boolean = false,
 
     // Segmentation & Behavior

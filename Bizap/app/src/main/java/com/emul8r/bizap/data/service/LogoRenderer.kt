@@ -34,7 +34,7 @@ class LogoRenderer(
         }
 
         return try {
-            val logoFile = File(context.cacheDir, "logos/$logoFileName")
+            val logoFile = File(context.filesDir, "logos/$logoFileName")
 
             if (!logoFile.exists()) {
                 Timber.w("⚠️ Logo file not found: ${logoFile.absolutePath}")
@@ -93,7 +93,7 @@ class LogoRenderer(
         if (logoFileName.isNullOrBlank()) return false
 
         return try {
-            val logoFile = File(context.cacheDir, "logos/$logoFileName")
+            val logoFile = File(context.filesDir, "logos/$logoFileName")
             logoFile.exists() && logoFile.isFile
         } catch (e: Exception) {
             false
@@ -107,7 +107,7 @@ class LogoRenderer(
         if (logoFileName.isNullOrBlank()) return null
 
         return try {
-            val logoFile = File(context.cacheDir, "logos/$logoFileName")
+            val logoFile = File(context.filesDir, "logos/$logoFileName")
             if (!logoFile.exists()) return null
 
             val options = BitmapFactory.Options().apply {

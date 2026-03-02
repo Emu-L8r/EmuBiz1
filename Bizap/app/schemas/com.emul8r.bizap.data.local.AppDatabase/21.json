@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 20,
-    "identityHash": "11908feb560a7aeadf9eb081119f1b66",
+    "version": 21,
+    "identityHash": "56e106de0a286b081877d7dc61c93cdd",
     "entities": [
       {
         "tableName": "customers",
@@ -105,7 +105,7 @@
       },
       {
         "tableName": "invoices",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `businessProfileId` INTEGER NOT NULL, `customerId` INTEGER NOT NULL, `customerName` TEXT NOT NULL, `customerAddress` TEXT NOT NULL, `customerEmail` TEXT, `date` INTEGER NOT NULL, `totalAmount` INTEGER NOT NULL, `isQuote` INTEGER NOT NULL, `status` TEXT NOT NULL, `header` TEXT, `subheader` TEXT, `notes` TEXT, `footer` TEXT, `photoUris` TEXT, `pdfUri` TEXT, `dueDate` INTEGER NOT NULL, `taxRate` REAL NOT NULL, `taxAmount` INTEGER NOT NULL, `companyLogoPath` TEXT, `updatedAt` INTEGER NOT NULL, `amountPaid` INTEGER NOT NULL, `parentInvoiceId` INTEGER, `version` INTEGER NOT NULL, `invoiceYear` INTEGER NOT NULL, `invoiceSequence` INTEGER NOT NULL, `currencyCode` TEXT NOT NULL, `templateId` TEXT, `templateSnapshot` TEXT, `customFieldValues` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `businessProfileId` INTEGER NOT NULL, `customerId` INTEGER, `customerName` TEXT NOT NULL, `customerAddress` TEXT NOT NULL, `customerEmail` TEXT, `date` INTEGER NOT NULL, `totalAmount` INTEGER NOT NULL, `isQuote` INTEGER NOT NULL, `status` TEXT NOT NULL, `header` TEXT, `subheader` TEXT, `notes` TEXT, `footer` TEXT, `photoUris` TEXT, `pdfUri` TEXT, `dueDate` INTEGER NOT NULL, `taxRate` REAL NOT NULL, `taxAmount` INTEGER NOT NULL, `companyLogoPath` TEXT, `updatedAt` INTEGER NOT NULL, `amountPaid` INTEGER NOT NULL, `parentInvoiceId` INTEGER, `version` INTEGER NOT NULL, `invoiceYear` INTEGER NOT NULL, `invoiceSequence` INTEGER NOT NULL, `currencyCode` TEXT NOT NULL, `templateId` TEXT, `templateSnapshot` TEXT, `customFieldValues` TEXT, FOREIGN KEY(`customerId`) REFERENCES `customers`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -123,7 +123,7 @@
             "fieldPath": "customerId",
             "columnName": "customerId",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "customerName",
@@ -344,7 +344,19 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `idx_invoices_year_sequence` ON `${TABLE_NAME}` (`invoiceYear`, `invoiceSequence`, `businessProfileId`)"
           }
         ],
-        "foreignKeys": []
+        "foreignKeys": [
+          {
+            "table": "customers",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "customerId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       },
       {
         "tableName": "line_items",
@@ -2261,7 +2273,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '11908feb560a7aeadf9eb081119f1b66')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '56e106de0a286b081877d7dc61c93cdd')"
     ]
   }
 }

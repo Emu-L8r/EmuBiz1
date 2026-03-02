@@ -58,8 +58,8 @@ private fun RevenueDashboardContent(metrics: RevenueMetrics) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            RevenueSummaryCard(label = "MTD", amount = metrics.mtdRevenue, modifier = Modifier.weight(1f))
-            RevenueSummaryCard(label = "YTD", amount = metrics.ytdRevenue, modifier = Modifier.weight(1f))
+            RevenueSummaryCard(label = "MTD", amount = metrics.mtdRevenue.toDouble() / 100.0, modifier = Modifier.weight(1f))
+            RevenueSummaryCard(label = "YTD", amount = metrics.ytdRevenue.toDouble() / 100.0, modifier = Modifier.weight(1f))
         }
 
         Text(text = "Revenue by Currency", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)

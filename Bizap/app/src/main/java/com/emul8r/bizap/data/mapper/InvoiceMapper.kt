@@ -9,13 +9,13 @@ import com.emul8r.bizap.domain.model.LineItem
 fun Invoice.toEntity(): InvoiceEntity {
     return InvoiceEntity(
         id = this.id,
-        businessProfileId = this.businessProfileId, // PHASE 3B: Preserve business scope
+        businessProfileId = this.businessProfileId,
         customerId = this.customerId,
         customerName = this.customerName,
         customerAddress = this.customerAddress,
         customerEmail = this.customerEmail,
         date = this.date,
-        totalAmount = this.totalAmount,
+        totalAmount = this.totalAmount,      // Already in cents
         isQuote = this.isQuote,
         status = this.status.name,
         header = this.header,
@@ -26,10 +26,10 @@ fun Invoice.toEntity(): InvoiceEntity {
         pdfUri = this.pdfUri,
         dueDate = this.dueDate,
         taxRate = this.taxRate,
-        taxAmount = this.taxAmount,
+        taxAmount = this.taxAmount,        // Already in cents
         companyLogoPath = this.companyLogoPath,
         updatedAt = this.updatedAt,
-        amountPaid = this.amountPaid,
+        amountPaid = this.amountPaid,      // Already in cents
         parentInvoiceId = this.parentInvoiceId,
         version = this.version,
         invoiceYear = this.invoiceYear,
@@ -40,13 +40,13 @@ fun Invoice.toEntity(): InvoiceEntity {
 fun InvoiceWithItems.toDomain(): Invoice {
     return Invoice(
         id = this.invoice.id,
-        businessProfileId = this.invoice.businessProfileId, // PHASE 3B: Restore business scope
+        businessProfileId = this.invoice.businessProfileId,
         customerId = this.invoice.customerId,
         customerName = this.invoice.customerName,
         customerAddress = this.invoice.customerAddress,
         customerEmail = this.invoice.customerEmail,
         date = this.invoice.date,
-        totalAmount = this.invoice.totalAmount,
+        totalAmount = this.invoice.totalAmount,        // Already in cents
         items = this.items.map { it.toDomain() },
         isQuote = this.invoice.isQuote,
         status = com.emul8r.bizap.domain.model.InvoiceStatus.valueOf(this.invoice.status),
@@ -56,13 +56,12 @@ fun InvoiceWithItems.toDomain(): Invoice {
         footer = this.invoice.footer,
         photoUris = this.invoice.photoUris?.split(",") ?: emptyList(),
         pdfUri = this.invoice.pdfUri,
-        // Removed invoiceNumber from constructor as it's now a computed property
         dueDate = this.invoice.dueDate,
         taxRate = this.invoice.taxRate,
-        taxAmount = this.invoice.taxAmount,
+        taxAmount = this.invoice.taxAmount,            // Already in cents
         companyLogoPath = this.invoice.companyLogoPath,
         updatedAt = this.invoice.updatedAt,
-        amountPaid = this.invoice.amountPaid,
+        amountPaid = this.invoice.amountPaid,          // Already in cents
         parentInvoiceId = this.invoice.parentInvoiceId,
         version = this.invoice.version,
         invoiceYear = this.invoice.invoiceYear,
@@ -76,7 +75,7 @@ fun LineItem.toEntity(invoiceId: Long): LineItemEntity {
         invoiceId = invoiceId,
         description = this.description,
         quantity = this.quantity,
-        unitPrice = this.unitPrice
+        unitPrice = this.unitPrice          // Already in cents
     )
 }
 
@@ -85,6 +84,6 @@ fun LineItemEntity.toDomain(): LineItem {
         id = this.id,
         description = this.description,
         quantity = this.quantity,
-        unitPrice = this.unitPrice
+        unitPrice = this.unitPrice          // Already in cents
     )
 }

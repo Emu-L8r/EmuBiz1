@@ -29,9 +29,9 @@ data class InvoiceAnalyticsSnapshot(
     val currencyCode: String,
 
     // Financial data
-    val subtotal: Double,
-    val taxAmount: Double,
-    val totalAmount: Double,
+    val subtotal: Long,                 // Cents
+    val taxAmount: Long,                // Cents
+    val totalAmount: Long,              // Cents
 
     // Status tracking
     val status: String, // DRAFT, SENT, PAID, OVERDUE, PARTIALLY_PAID

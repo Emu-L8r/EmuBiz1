@@ -21,7 +21,7 @@ interface InvoiceDao {
     @Query("SELECT * FROM invoices WHERE customerId = :customerId AND businessProfileId = :businessId")
     fun getInvoicesForCustomer(customerId: Long, businessId: Long): Flow<List<InvoiceWithItems>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertInvoice(invoice: InvoiceEntity): Long
 
     @Upsert

@@ -34,7 +34,8 @@ class LogoUploadHandler(private val context: Context) {
             // Validate file size
             val fileSize = getFileSizeFromUri(uri)
             if (fileSize > MAX_FILE_SIZE) {
-                Timber.e("File too large: $fileSize bytes")                return@withContext Result.failure(
+                Timber.e("File too large: $fileSize bytes")
+                return@withContext Result.failure(
                     IllegalArgumentException("File size exceeds 2MB limit")
                 )
             }
@@ -134,10 +135,10 @@ class LogoUploadHandler(private val context: Context) {
     }
 
     /**
-     * Get logos directory in cache
+     * Get logos directory in persistent storage
      */
     private fun getLogosDir(): File {
-        return File(context.cacheDir, LOGOS_DIR).apply {
+        return File(context.filesDir, LOGOS_DIR).apply {
             if (!exists()) {
                 mkdir()
             }

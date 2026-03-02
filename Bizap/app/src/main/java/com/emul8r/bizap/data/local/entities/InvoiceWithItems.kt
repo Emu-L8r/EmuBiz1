@@ -11,6 +11,8 @@ data class InvoiceWithItems(
     )
     val items: List<LineItemEntity>
 ) {
-    val subtotal: Double
-        get() = items.sumOf { it.unitPrice * it.quantity }
+    // Subtotal in cents: sum of (unitPrice * quantity) for each item
+    // Result: Long (in cents)
+    val subtotal: Long
+        get() = items.sumOf { (it.unitPrice * it.quantity).toLong() }
 }

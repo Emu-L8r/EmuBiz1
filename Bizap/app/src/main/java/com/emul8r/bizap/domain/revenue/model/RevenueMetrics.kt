@@ -4,23 +4,24 @@ import java.time.LocalDate
 
 /**
  * HIGH-LEVEL REVENUE BUSINESS INTELLIGENCE
+ * All amounts are stored as Long (cents).
  */
 data class RevenueMetrics(
-    val mtdRevenue: Double,
-    val ytdRevenue: Double,
-    val weeklyRevenue: Double,
+    val mtdRevenue: Long,               // Month-to-date, in cents
+    val ytdRevenue: Long,               // Year-to-date, in cents
+    val weeklyRevenue: Long,            // Weekly, in cents
     val dailyTrend: List<DailyRevenuePoint>,
     val topPerformers: List<RevenueByCurrency>
 )
 
 data class DailyRevenuePoint(
     val date: LocalDate,
-    val amount: Double,
+    val amount: Long,                   // In cents
     val invoiceCount: Int
 )
 
 data class RevenueByCurrency(
     val currencyCode: String,
-    val totalAmount: Double,
+    val totalAmount: Long,              // In cents
     val percentageOfTotal: Double
 )

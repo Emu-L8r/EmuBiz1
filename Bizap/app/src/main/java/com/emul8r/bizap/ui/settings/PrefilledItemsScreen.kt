@@ -66,7 +66,8 @@ fun PrefilledItemsScreen(viewModel: PrefilledItemsViewModel = hiltViewModel()) {
             },
             confirmButton = {
                 Button(onClick = { 
-                    viewModel.addItem(description, price.toDoubleOrNull() ?: 0.0)
+                    val priceInCents = (price.toDoubleOrNull() ?: 0.0) * 100
+                    viewModel.addItem(description, priceInCents.toLong())
                     showDialog = false
                 }) {
                     Text("Save")
