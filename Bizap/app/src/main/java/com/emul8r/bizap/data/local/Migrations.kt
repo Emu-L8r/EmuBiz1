@@ -49,3 +49,22 @@ val MIGRATION_24_25 = object : Migration(24, 25) {
         Timber.i("MIGRATION_24_25: Added pendingRevenue to daily_revenue_snapshots")
     }
 }
+
+val MIGRATION_25_26 = object : Migration(25, 26) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS notes (
+                id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
+                businessProfileId INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                createdAt INTEGER NOT NULL,
+                updatedAt INTEGER NOT NULL,
+                isPinned INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY(businessProfileId) REFERENCES business_profiles(id) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+        """.trimIndent())
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_notes_businessProfileId ON notes (businessProfileId)")
+        Timber.i("MIGRATION_25_26: Created notes table")
+    }
+}

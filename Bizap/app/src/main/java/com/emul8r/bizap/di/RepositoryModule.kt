@@ -1,26 +1,9 @@
 package com.emul8r.bizap.di
 
-import com.emul8r.bizap.data.repository.BusinessProfileRepositoryImpl
-import com.emul8r.bizap.data.repository.CurrencyRepositoryImpl
-import com.emul8r.bizap.data.repository.CustomerAnalyticsRepositoryImpl
-import com.emul8r.bizap.data.repository.CustomerRepositoryImpl
-import com.emul8r.bizap.data.repository.DashboardSettingsRepositoryImpl
-import com.emul8r.bizap.data.repository.DocumentRepositoryImpl
-import com.emul8r.bizap.data.repository.InvoiceRepositoryImpl
-import com.emul8r.bizap.data.repository.PaymentAnalyticsRepositoryImpl
-import com.emul8r.bizap.data.repository.PrefilledItemRepositoryImpl
-import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
-import com.emul8r.bizap.data.repository.ThemeRepositoryImpl
+import com.emul8r.bizap.data.repository.*
 import com.emul8r.bizap.domain.customer.repository.CustomerAnalyticsRepository
 import com.emul8r.bizap.domain.invoice.repository.PaymentAnalyticsRepository
-import com.emul8r.bizap.domain.repository.BusinessProfileRepository
-import com.emul8r.bizap.domain.repository.CurrencyRepository
-import com.emul8r.bizap.domain.repository.CustomerRepository
-import com.emul8r.bizap.domain.repository.DashboardSettingsRepository
-import com.emul8r.bizap.domain.repository.DocumentRepository
-import com.emul8r.bizap.domain.repository.InvoiceRepository
-import com.emul8r.bizap.domain.repository.PrefilledItemRepository
-import com.emul8r.bizap.domain.repository.ThemeRepository
+import com.emul8r.bizap.domain.repository.*
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import dagger.Binds
 import dagger.Module
@@ -97,4 +80,10 @@ abstract class RepositoryModule {
     abstract fun bindDashboardSettingsRepository(
         impl: DashboardSettingsRepositoryImpl
     ): DashboardSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindNoteRepository(
+        impl: NoteRepositoryImpl
+    ): NoteRepository
 }

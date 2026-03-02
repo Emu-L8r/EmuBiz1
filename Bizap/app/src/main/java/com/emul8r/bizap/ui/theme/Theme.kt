@@ -26,7 +26,8 @@ fun BizapTheme(
             onPrimaryContainer = Color.White,
             secondary = seedColor, // Harmonized secondary
             surface = Color(0xFF1C1B1F),
-            onSurface = Color.White
+            onSurface = Color.White,
+            background = Color(0xFF1C1B1F) // Standard dark background
         )
     } else {
         lightColorScheme(
@@ -36,8 +37,10 @@ fun BizapTheme(
             onPrimaryContainer = seedColor,
             secondary = seedColor,
             onSecondary = Color.White,
-            surface = Color(0xFFFBFDF8),
-            onSurface = Color(0xFF191C19)
+            surface = Color(0xFFFFFFFF), // Pure white surface
+            onSurface = Color(0xFF191C19),
+            background = Color(0xFFFBFDF8), // Very light neutral background
+            surfaceVariant = Color(0xFFF0F0F0) // Light grey variant, NOT green
         )
     }
 

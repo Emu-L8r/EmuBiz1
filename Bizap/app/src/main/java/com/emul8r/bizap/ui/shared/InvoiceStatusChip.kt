@@ -1,6 +1,8 @@
 package com.emul8r.bizap.ui.shared
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,14 +22,14 @@ fun InvoiceStatusChip(status: String) {
 
     Surface(
         color = color.copy(alpha = 0.1f),
-        contentColor = color,
-        shape = MaterialTheme.shapes.small,
-        border = androidx.compose.foundation.BorderStroke(1.dp, color)
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, color)
     ) {
         Text(
             text = status,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall
+            style = MaterialTheme.typography.labelSmall,
+            color = color
         )
     }
 }

@@ -24,6 +24,8 @@ import com.emul8r.bizap.ui.revenue.RevenueSummaryCard
 import com.emul8r.bizap.ui.revenue.CurrencyBreakdownCard
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.DashboardSettingsViewModel
+import com.emul8r.bizap.ui.settings.NotesViewModel
+import com.emul8r.bizap.ui.settings.NotesUiState
 import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
 
 @Composable
@@ -32,12 +34,14 @@ fun DashboardScreen(
     customerViewModel: CustomerViewModel = hiltViewModel(),
     businessViewModel: BusinessProfileViewModel = hiltViewModel(),
     revenueViewModel: RevenueDashboardViewModel = hiltViewModel(),
-    settingsViewModel: DashboardSettingsViewModel = hiltViewModel()
+    settingsViewModel: DashboardSettingsViewModel = hiltViewModel(),
+    notesViewModel: NotesViewModel = hiltViewModel()
 ) {
     val customers by customerViewModel.uiState.collectAsStateWithLifecycle()
     val activeBusiness by businessViewModel.profileState.collectAsStateWithLifecycle()
     val revenueState by revenueViewModel.uiState.collectAsStateWithLifecycle()
     val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
+    val notesState by notesViewModel.uiState.collectAsStateWithLifecycle()
     
     var showSwitcher by remember { mutableStateOf(false) }
 
@@ -87,7 +91,7 @@ fun DashboardScreen(
                 val metrics = state.metrics
                 
                 // 1. High-Level Metrics
-                if (settings.showTotalClientsCard || settings.showMtdCard || settings.showPendingCard) {
+                if (settings.showTotalClientsCard || settings.showMtdCard || settings.showPendingCard || settings.showNotesCard) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -112,25 +116,48 @@ fun DashboardScreen(
                         }
                     }
                     
-                    if (settings.showPendingCard) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.PendingActions, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Pending Payment", style = MaterialTheme.typography.labelMedium)
-                                }
-                                com.emul8r.bizap.ui.revenue.RevenueSummaryCard(
-                                    label = "", 
-                                    amountCents = metrics.pendingRevenue,
-                                    modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (settings.showPendingCard) {
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.PendingActions, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("Pending", style = MaterialTheme.typography.labelMedium)
+                                    }
+                                    Text(
+                                        text = com.emul8r.bizap.utils.CurrencyFormatter.formatCents(metrics.pendingRevenue, activeBusiness.baseCurrencyCode),
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                        
+                        if (settings.showNotesCard) {
+                            val noteCount = (notesState as? NotesUiState.Success)?.notes?.size ?: 0
+                            ElevatedCard(
+                                modifier = Modifier.weight(1f),
+                                onClick = { navController.navigate(Screen.Notes) },
+                                colors = CardDefaults.elevatedCardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Icon(Icons.Default.Notes, contentDescription = null)
+                                    Text("Active Notes", style = MaterialTheme.typography.labelMedium)
+                                    Text("$noteCount", style = MaterialTheme.typography.headlineMedium)
+                                }
                             }
                         }
                     }

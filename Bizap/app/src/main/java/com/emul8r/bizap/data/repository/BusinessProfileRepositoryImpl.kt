@@ -5,7 +5,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import com.emul8r.bizap.data.local.BusinessProfileDao
-import com.emul8r.bizap.data.local.entities.BusinessProfileEntity
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import kotlinx.coroutines.Dispatchers
@@ -22,12 +21,8 @@ class BusinessProfileRepositoryImpl @Inject constructor(
         val ACTIVE_BUSINESS_ID = longPreferencesKey("active_business_id")
     }
 
-    /**
-     * REACTIVE IDENTITY ENGINE: 
-     * Watches DataStore for active ID -> Fetches full profile from Room.
-     */
     override val activeProfile: Flow<BusinessProfile> = dataStore.data
-        .map { it[Keys.ACTIVE_BUSINESS_ID] ?: 1L } // Default to seeded ID 1
+        .map { it[Keys.ACTIVE_BUSINESS_ID] ?: 1L }
         .flatMapLatest { id ->
             flow {
                 val entity = businessProfileDao.getProfileById(id)
@@ -43,7 +38,7 @@ class BusinessProfileRepositoryImpl @Inject constructor(
         dataStore.data.map { it[Keys.ACTIVE_BUSINESS_ID] ?: 1L }.first()
     }
 
-    override suspend fun setActiveBusinessId(id: Long): Unit {
+    override suspend fun setActiveBusinessId(id: Long) {
         withContext(Dispatchers.IO) {
             dataStore.edit { it[Keys.ACTIVE_BUSINESS_ID] = id }
         }
@@ -51,24 +46,24 @@ class BusinessProfileRepositoryImpl @Inject constructor(
 
     override suspend fun createProfile(profile: BusinessProfile): Long = withContext(Dispatchers.IO) {
         val id = businessProfileDao.insertProfile(profile.toEntity())
-        setActiveBusinessId(id) // Auto-switch to new business
+        setActiveBusinessId(id)
         id
     }
 
-    override suspend fun updateProfile(profile: BusinessProfile): Unit {
+    override suspend fun updateProfile(profile: BusinessProfile) {
         withContext(Dispatchers.IO) {
             businessProfileDao.insertProfile(profile.toEntity())
         }
     }
 
-    override suspend fun deleteProfile(id: Long): Unit {
+    override suspend fun deleteProfile(id: Long) {
         withContext(Dispatchers.IO) {
             val entity = businessProfileDao.getProfileById(id)
             entity?.let { businessProfileDao.deleteProfile(it) }
         }
     }
 
-    override suspend fun updateLogoPath(path: String): Unit {
+    override suspend fun updateLogoPath(path: String) {
         withContext(Dispatchers.IO) {
             val currentId = getActiveBusinessId()
             val entity = businessProfileDao.getProfileById(currentId)
@@ -78,9 +73,7 @@ class BusinessProfileRepositoryImpl @Inject constructor(
         }
     }
 
-    // --- Mappers ---
-
-    private fun BusinessProfileEntity.toDomain() = BusinessProfile(
+    private fun com.emul8r.bizap.data.local.entities.BusinessProfileEntity.toDomain() = BusinessProfile(
         id = id,
         businessName = businessName,
         abn = abn,
@@ -99,7 +92,7 @@ class BusinessProfileRepositoryImpl @Inject constructor(
         baseCurrencyCode = baseCurrencyCode
     )
 
-    private fun BusinessProfile.toEntity() = BusinessProfileEntity(
+    private fun BusinessProfile.toEntity() = com.emul8r.bizap.data.local.entities.BusinessProfileEntity(
         id = id,
         businessName = businessName,
         abn = abn,

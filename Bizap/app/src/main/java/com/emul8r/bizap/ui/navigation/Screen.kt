@@ -35,6 +35,8 @@ sealed interface Screen {
     @Serializable
     object RevenueDashboard : Screen
 
+    @Serializable
+    object Notes : Screen
 
     // Settings Routes
     @Serializable
