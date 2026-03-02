@@ -3,7 +3,6 @@ package com.emul8r.bizap.ui.settings
 import android.app.Application
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.ThemeRepository
@@ -13,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,11 +40,11 @@ class ThemeViewModel @Inject constructor(
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     val systemDarkMode = isSystemDarkMode(application)
-                    Log.d("ThemeViewModel", "System dark mode: $systemDarkMode")
+                    Timber.d("System dark mode: $systemDarkMode")
                     themeRepository.updateDarkMode(systemDarkMode)
                 }
             } catch (e: Exception) {
-                Log.e("ThemeViewModel", "Error detecting system dark mode: ${e.message}", e)
+                Timber.e(e, "Error detecting system dark mode: ${e.message}")
             }
         }
     }
@@ -55,12 +55,12 @@ class ThemeViewModel @Inject constructor(
     fun applyPreset(preset: ThemePreset) {
         viewModelScope.launch {
             try {
-                Log.d("ThemeViewModel", "Applying preset: ${preset.name}")
+                Timber.d("Applying preset: ${preset.name}")
                 themeRepository.updateSeedColor(preset.colorHex)
                 themeRepository.updateDarkMode(preset.isDarkModePreset)
-                Log.d("ThemeViewModel", "Preset applied successfully")
+                Timber.d("Preset applied successfully")
             } catch (e: Exception) {
-                Log.e("ThemeViewModel", "Error applying preset: ${e.message}", e)
+                Timber.e(e, "Error applying preset: ${e.message}")
             }
         }
     }
@@ -68,11 +68,11 @@ class ThemeViewModel @Inject constructor(
     fun updateSeedColor(hex: String) {
         viewModelScope.launch {
             try {
-                Log.d("ThemeViewModel", "Attempting to save color: $hex")
+                Timber.d("Attempting to save color: $hex")
                 themeRepository.updateSeedColor(hex)
-                Log.d("ThemeViewModel", "Color saved successfully to DataStore")
+                Timber.d("Color saved successfully to DataStore")
             } catch (e: Exception) {
-                Log.e("ThemeViewModel", "Error saving color: ${e.message}", e)
+                Timber.e(e, "Error saving color: ${e.message}")
             }
         }
     }
@@ -80,11 +80,11 @@ class ThemeViewModel @Inject constructor(
     fun updateDarkMode(isDark: Boolean) {
         viewModelScope.launch {
             try {
-                Log.d("ThemeViewModel", "Attempting to save dark mode: $isDark")
+                Timber.d("Attempting to save dark mode: $isDark")
                 themeRepository.updateDarkMode(isDark)
-                Log.d("ThemeViewModel", "Dark mode saved successfully to DataStore")
+                Timber.d("Dark mode saved successfully to DataStore")
             } catch (e: Exception) {
-                Log.e("ThemeViewModel", "Error saving dark mode: ${e.message}", e)
+                Timber.e(e, "Error saving dark mode: ${e.message}")
             }
         }
     }
@@ -98,7 +98,7 @@ class ThemeViewModel @Inject constructor(
             val nightMode = uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
             nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
         } catch (e: Exception) {
-            Log.e("ThemeViewModel", "Error checking system dark mode: ${e.message}")
+            Timber.e("Error checking system dark mode: ${e.message}")
             false
         }
     }

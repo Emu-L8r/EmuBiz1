@@ -1,10 +1,10 @@
 package com.emul8r.bizap.data.worker
 
 import android.content.Context
-import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.emul8r.bizap.BuildConfig
 import com.emul8r.bizap.data.local.ExchangeRateDao
 import com.emul8r.bizap.data.local.entities.ExchangeRateEntity
 import com.emul8r.bizap.data.remote.ExchangeRateService
@@ -12,6 +12,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 @HiltWorker
 class ExchangeRateWorker @AssistedInject constructor(
@@ -23,10 +24,14 @@ class ExchangeRateWorker @AssistedInject constructor(
     
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         return@withContext try {
-            Log.d("ExchangeRateWorker", "🌍 Syncing exchange rates from API...")
+            Timber.d("🌍 Syncing exchange rates from API...")
             
-            // Replace with your actual App ID from openexchangerates.org
-            val appId = "00000000000000000000000000000000" 
+            val appId = BuildConfig.EXCHANGE_RATE_API_KEY
+
+            if (appId.isBlank()) {
+                Timber.w("ExchangeRateWorker: No API key configured. Skipping rate sync.")
+                return@withContext Result.success()
+            }
             
             val response = exchangeRateService.fetchRates(
                 appId = appId,
@@ -49,11 +54,11 @@ class ExchangeRateWorker @AssistedInject constructor(
             val thirtyDaysAgo = currentTime - (30L * 24 * 60 * 60 * 1000)
             exchangeRateDao.deleteOldRates(thirtyDaysAgo)
             
-            Log.d("ExchangeRateWorker", "✅ Exchange rates synced successfully.")
+            Timber.d("✅ Exchange rates synced successfully.")
             Result.success()
         } catch (e: Exception) {
-            Log.e("ExchangeRateWorker", "❌ Failed to sync rates: ${e.message}")
-            Result.retry()
+            Timber.e(e, "❌ Failed to sync rates: ${e.message}")
+            Result.failure()
         }
     }
 }

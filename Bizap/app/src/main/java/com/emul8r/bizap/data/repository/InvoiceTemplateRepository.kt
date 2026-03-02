@@ -4,7 +4,6 @@ import com.emul8r.bizap.data.local.dao.InvoiceTemplateDao
 import com.emul8r.bizap.data.local.dao.InvoiceCustomFieldDao
 import com.emul8r.bizap.data.local.entities.InvoiceTemplate
 import com.emul8r.bizap.data.local.entities.InvoiceCustomField
-import android.util.Log
 import javax.inject.Inject
 
 /**

@@ -1,6 +1,5 @@
 package com.emul8r.bizap.data.repository
 
-import android.util.Log
 import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.mapper.toDomain
@@ -12,6 +11,7 @@ import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import timber.log.Timber
 import java.util.Calendar
 import javax.inject.Inject
 
@@ -58,7 +58,7 @@ class InvoiceRepositoryImpl @Inject constructor(
                 invoiceSequence = nextSequence,
                 version = 1
             )
-            Log.i("InvoiceRepository", "🔢 Assigning scoped invoice number: INV-$currentYear-${nextSequence.toString().padStart(6, '0')} for business $activeBusinessId")
+            Timber.i("🔢 Assigning scoped invoice number: INV-$currentYear-${nextSequence.toString().padStart(6, '0')} for business $activeBusinessId")
         }
 
         val invoiceEntity = invoiceToSave.toEntity()
