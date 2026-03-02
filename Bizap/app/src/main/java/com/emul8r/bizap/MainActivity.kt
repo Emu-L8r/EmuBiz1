@@ -35,7 +35,7 @@ import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.settings.SettingsHubScreen
 import com.emul8r.bizap.ui.settings.ThemeSettingsScreen
 import com.emul8r.bizap.ui.settings.ThemeViewModel
-import com.emul8r.bizap.ui.theme.EmuBizzzTheme
+import com.emul8r.bizap.ui.theme.BizapTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
 
             Timber.d("🎨 Theme recomposed: seedColorHex = ${config.seedColorHex}")
 
-            EmuBizzzTheme(themeConfig = config) {
+            BizapTheme(themeConfig = config) {
                 MainScreen()
             }
         }
