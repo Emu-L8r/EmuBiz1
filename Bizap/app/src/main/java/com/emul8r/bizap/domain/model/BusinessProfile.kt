@@ -1,7 +1,7 @@
 package com.emul8r.bizap.domain.model
 
 data class BusinessProfile(
-    val id: Long = 0, // NEW: Support for multiple business identities
+    val id: Long = 0,
     val businessName: String = "",
     val abn: String = "",
     val email: String = "",
@@ -15,6 +15,8 @@ data class BusinessProfile(
     val logoBase64: String? = null,
     val signatureUri: String? = null,
     // Tax Registration
-    val isTaxRegistered: Boolean = false,        // Is business registered for VAT/GST/Sales Tax?
-    val defaultTaxRate: Float = 0.10f            // Default tax rate (10%)
+    val isTaxRegistered: Boolean = false,
+    val defaultTaxRate: Float = 0.10f,
+    // Currency & Locale
+    val baseCurrencyCode: String = "AUD"
 )

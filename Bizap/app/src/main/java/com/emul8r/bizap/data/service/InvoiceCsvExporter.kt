@@ -9,10 +9,9 @@ import java.util.*
  */
 object InvoiceCsvExporter {
 
-    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-
     fun generateCsv(invoices: List<Invoice>): String {
         val sb = StringBuilder()
+        val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         
         // CSV Header
         sb.append("Invoice Number,Date,Customer,Total Amount,Currency,Status,Items Count\n")

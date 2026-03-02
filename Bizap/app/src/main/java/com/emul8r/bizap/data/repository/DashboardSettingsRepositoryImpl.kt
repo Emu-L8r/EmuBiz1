@@ -23,6 +23,7 @@ class DashboardSettingsRepositoryImpl @Inject constructor(
         val SHOW_REVENUE_TREND = booleanPreferencesKey("show_revenue_trend")
         val SHOW_MTD_CARD = booleanPreferencesKey("show_mtd_card")
         val SHOW_YTD_CARD = booleanPreferencesKey("show_ytd_card")
+        val SHOW_PENDING_CARD = booleanPreferencesKey("show_pending_card")
         val SHOW_TOTAL_CLIENTS_CARD = booleanPreferencesKey("show_total_clients_card")
         val SHOW_CURRENCY_BREAKDOWN = booleanPreferencesKey("show_currency_breakdown")
         val SHOW_RECENT_INVOICES = booleanPreferencesKey("show_recent_invoices")
@@ -41,6 +42,7 @@ class DashboardSettingsRepositoryImpl @Inject constructor(
                 showRevenueTrend = preferences[Keys.SHOW_REVENUE_TREND] ?: true,
                 showMtdCard = preferences[Keys.SHOW_MTD_CARD] ?: true,
                 showYtdCard = preferences[Keys.SHOW_YTD_CARD] ?: true,
+                showPendingCard = preferences[Keys.SHOW_PENDING_CARD] ?: true,
                 showTotalClientsCard = preferences[Keys.SHOW_TOTAL_CLIENTS_CARD] ?: true,
                 showCurrencyBreakdown = preferences[Keys.SHOW_CURRENCY_BREAKDOWN] ?: true,
                 showRecentInvoices = preferences[Keys.SHOW_RECENT_INVOICES] ?: true
@@ -52,6 +54,7 @@ class DashboardSettingsRepositoryImpl @Inject constructor(
             preferences[Keys.SHOW_REVENUE_TREND] = settings.showRevenueTrend
             preferences[Keys.SHOW_MTD_CARD] = settings.showMtdCard
             preferences[Keys.SHOW_YTD_CARD] = settings.showYtdCard
+            preferences[Keys.SHOW_PENDING_CARD] = settings.showPendingCard
             preferences[Keys.SHOW_TOTAL_CLIENTS_CARD] = settings.showTotalClientsCard
             preferences[Keys.SHOW_CURRENCY_BREAKDOWN] = settings.showCurrencyBreakdown
             preferences[Keys.SHOW_RECENT_INVOICES] = settings.showRecentInvoices

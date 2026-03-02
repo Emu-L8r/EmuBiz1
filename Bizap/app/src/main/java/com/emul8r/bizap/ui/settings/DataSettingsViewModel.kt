@@ -2,7 +2,7 @@ package com.emul8r.bizap.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.data.service.InvoiceCsvExporter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,7 +36,6 @@ class DataSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isExporting.value = true
-                val businessId = profileRepository.getActiveBusinessId()
                 val invoices = invoiceRepository.getAllInvoicesWithItems().first()
                 
                 if (invoices.isEmpty()) {
@@ -54,6 +53,24 @@ class DataSettingsViewModel @Inject constructor(
             } finally {
                 _isExporting.value = false
             }
+        }
+    }
+
+    fun onExportSuccess() {
+        viewModelScope.launch {
+            _uiEvent.emit(DataUiEvent.ShowSnackbar("Exported successfully"))
+        }
+    }
+
+    fun onExportError(message: String) {
+        viewModelScope.launch {
+            _uiEvent.emit(DataUiEvent.ShowSnackbar("Error: $message"))
+        }
+    }
+
+    fun onFactoryResetClick() {
+        viewModelScope.launch {
+            _uiEvent.emit(DataUiEvent.ShowSnackbar("Factory Reset is coming soon!"))
         }
     }
 }

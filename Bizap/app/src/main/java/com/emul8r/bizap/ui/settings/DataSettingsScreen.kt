@@ -2,7 +2,6 @@ package com.emul8r.bizap.ui.settings
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,9 +41,9 @@ fun DataSettingsScreen(
                     context.contentResolver.openOutputStream(targetUri)?.use { output ->
                         output.write(content.toByteArray())
                     }
-                    viewModel.showSuccess("Exported successfully")
+                    viewModel.onExportSuccess()
                 } catch (e: Exception) {
-                    viewModel.showError("Failed to save file: ${e.message}")
+                    viewModel.onExportError(e.message ?: "Unknown error")
                 }
             }
         }
@@ -180,7 +178,7 @@ fun DataSettingsScreen(
             )
             
             OutlinedButton(
-                onClick = { /* Implement reset logic if needed */ },
+                onClick = { viewModel.onFactoryResetClick() },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {

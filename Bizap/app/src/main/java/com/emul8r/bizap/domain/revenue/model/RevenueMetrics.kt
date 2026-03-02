@@ -10,6 +10,7 @@ data class RevenueMetrics(
     val mtdRevenue: Long,               // Month-to-date, in cents
     val ytdRevenue: Long,               // Year-to-date, in cents
     val weeklyRevenue: Long,            // Weekly, in cents
+    val pendingRevenue: Long,           // Total outstanding, in cents
     val dailyTrend: List<DailyRevenuePoint>,
     val topPerformers: List<RevenueByCurrency>
 )

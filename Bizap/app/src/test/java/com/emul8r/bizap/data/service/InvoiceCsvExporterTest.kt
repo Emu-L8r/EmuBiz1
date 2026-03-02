@@ -51,7 +51,8 @@ class InvoiceCsvExporterTest {
             date = 1709337600000L, // 2024-03-02
             status = InvoiceStatus.PAID,
             items = emptyList(),
-            customerId = 1
-        ).let { it.copy(invoiceYear = 2024, invoiceSequence = 1) } // Mocking invoice number components if needed, but the test uses number property
+            customerId = 1,
+            isQuote = false
+        ).let { it.copy(invoiceYear = 2024, invoiceSequence = 1) }
     }
 }

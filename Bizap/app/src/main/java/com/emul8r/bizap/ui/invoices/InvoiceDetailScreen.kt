@@ -1,6 +1,7 @@
 package com.emul8r.bizap.ui.invoices
 
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,7 +57,7 @@ fun InvoiceDetailScreen(
             when (event) {
                 is UiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(event.message)
                 is UiEvent.NavigateToInvoice -> {
-                    // Logic to jump to a specific version handled by the navigation controller in the parent scope
+                    // Navigation logic handled in parent
                 }
             }
         }
@@ -117,33 +118,69 @@ fun InvoiceDetailScreen(
                             .padding(padding)
                             .fillMaxSize()
                     ) {
+                        // 1. THEMED HEADER SECTION (REFOCUSED)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .padding(16.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                // Status Editor (Interactive)
+                                ExposedDropdownMenuBox(
+                                    expanded = expanded,
+                                    onExpandedChange = { expanded = !expanded }
+                                ) {
+                                    InvoiceStatusBanner(
+                                        status = invoice.status.name,
+                                        modifier = Modifier.menuAnchor()
+                                    )
+                                    
+                                    ExposedDropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false }
+                                    ) {
+                                        InvoiceStatus.entries.forEach { status ->
+                                            DropdownMenuItem(
+                                                text = { Text(status.name) },
+                                                onClick = {
+                                                    viewModel.updateStatus(invoiceId, status.name)
+                                                    expanded = false
+                                                },
+                                                leadingIcon = {
+                                                    val icon = when (status) {
+                                                        InvoiceStatus.PAID -> Icons.Default.CheckCircle
+                                                        InvoiceStatus.SENT -> Icons.AutoMirrored.Filled.Send
+                                                        InvoiceStatus.DRAFT -> Icons.Default.EditNote
+                                                        InvoiceStatus.OVERDUE -> Icons.Default.Warning
+                                                        InvoiceStatus.PARTIALLY_PAID -> Icons.Default.Payments
+                                                    }
+                                                    Icon(icon, null)
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Version Picker (Themed)
+                                VersionPicker(
+                                    currentInvoice = invoice,
+                                    allVersions = s.versions,
+                                    onVersionSelected = { newId -> viewModel.loadInvoice(newId) }
+                                )
+                            }
+                        }
+
                         Column(
                             modifier = Modifier
-                                .padding(16.dp)
+                                .padding(horizontal = 16.dp)
                                 .verticalScroll(rememberScrollState())
                                 .weight(1f),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            // PHASE 3A: Version Picker
-                            VersionPicker(
-                                currentInvoice = invoice,
-                                allVersions = s.versions,
-                                onVersionSelected = { newId -> viewModel.loadInvoice(newId) }
-                            )
+                            Spacer(Modifier.height(8.dp))
 
-                            ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-                                InvoiceStatusBanner(invoice.status.name)
-                                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                    InvoiceStatus.entries.forEach { status ->
-                                        DropdownMenuItem(text = { Text(status.name) }, onClick = {
-                                            viewModel.updateStatus(invoiceId, status.name)
-                                            expanded = false
-                                        })
-                                    }
-                                }
-                            }
-
-                            // PHASE 3A: Payment Progress
+                            // 2. PAYMENT PROGRESS
                             PaymentProgressCard(invoice = invoice, onRecordPayment = { showPaymentDialog = true })
 
                             if (!invoice.header.isNullOrBlank()) {
@@ -185,7 +222,7 @@ fun InvoiceDetailScreen(
                                         )
                                     }
 
-                                    // Tax (only if business is tax registered and tax amount > 0)
+                                    // Tax
                                     if (invoice.taxAmount > 0) {
                                         Spacer(Modifier.height(4.dp))
                                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -196,14 +233,6 @@ fun InvoiceDetailScreen(
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
-                                    } else {
-                                        Spacer(Modifier.height(4.dp))
-                                        Text(
-                                            text = "No tax applied – Business not registered for tax",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
                                     }
 
                                     Spacer(Modifier.height(8.dp))
@@ -221,7 +250,7 @@ fun InvoiceDetailScreen(
                                 }
                             }
 
-                            // PHASE 3A: Correction Workflow
+                            // 3. CORRECTION WORKFLOW
                             if (invoice.status != InvoiceStatus.DRAFT) {
                                 Button(
                                     onClick = { viewModel.createCorrection() },
@@ -234,7 +263,6 @@ fun InvoiceDetailScreen(
                                 }
                             }
 
-                            // Immutability Rule: Disable edit if not DRAFT
                             Button(
                                 onClick = onEdit,
                                 enabled = invoice.status == InvoiceStatus.DRAFT,
@@ -256,103 +284,43 @@ fun InvoiceDetailScreen(
                             }
                         }
 
-                        // ACTION BUTTONS: Save + Export (Fixed Visual Hierarchy)
+                        // ACTION BUTTONS: Save + Export
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // PRIMARY ACTION: Save Invoice
                             Button(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(54.dp),
+                                modifier = Modifier.fillMaxWidth().height(54.dp),
                                 onClick = {
                                     isSaving = true
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("Invoice saved successfully")
-                                    }
+                                    scope.launch { snackbarHostState.showSnackbar("Invoice saved successfully") }
                                     isSaving = false
                                 },
-                                enabled = !isSaving && !isExporting,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                                )
+                                enabled = !isSaving && !isExporting
                             ) {
                                 if (isSaving) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        strokeWidth = 2.dp
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Saving...",
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
                                 } else {
-                                    Icon(
-                                        imageVector = Icons.Default.Save,
-                                        contentDescription = "Save",
-                                        modifier = Modifier.size(20.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Save Invoice",
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Icon(Icons.Default.Save, null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Save Invoice", fontWeight = FontWeight.Bold)
                                 }
                             }
 
-                            // SECONDARY ACTION: Export as PDF
                             Button(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                onClick = {
-                                    isExporting = true
-                                    viewModel.shareInternalPdf()
-                                },
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                                onClick = { isExporting = true; viewModel.shareInternalPdf() },
                                 enabled = !isSaving && !isExporting,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondary,
-                                    disabledContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
-                                )
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                             ) {
                                 if (isExporting) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = MaterialTheme.colorScheme.onSecondary,
-                                        strokeWidth = 2.dp
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Exporting...",
-                                        color = MaterialTheme.colorScheme.onSecondary,
-                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onSecondary)
                                 } else {
-                                    Icon(
-                                        imageVector = Icons.Default.Download,
-                                        contentDescription = "Export",
-                                        modifier = Modifier.size(20.dp),
-                                        tint = MaterialTheme.colorScheme.onSecondary
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Export as PDF",
-                                        color = MaterialTheme.colorScheme.onSecondary,
-                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Icon(Icons.Default.Download, null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Export as PDF", fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -451,7 +419,7 @@ fun Section(title: String, content: String) {
 }
 
 @Composable
-fun InvoiceStatusBanner(status: String) {
+fun InvoiceStatusBanner(status: String, modifier: Modifier = Modifier) {
     val (backgroundColor, textColor, icon) = when (status) {
         "PAID" -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, Icons.Default.CheckCircle)
         "SENT" -> Triple(MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, Icons.AutoMirrored.Filled.Send)
@@ -461,7 +429,7 @@ fun InvoiceStatusBanner(status: String) {
     }
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         color = backgroundColor,
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -477,6 +445,8 @@ fun InvoiceStatusBanner(status: String) {
                 color = textColor,
                 fontWeight = FontWeight.Bold
             )
+            Spacer(Modifier.weight(1f))
+            Icon(Icons.Default.ArrowDropDown, null, tint = textColor)
         }
     }
 }

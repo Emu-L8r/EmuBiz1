@@ -32,6 +32,7 @@ class RevenueRepositoryImpl @Inject constructor(
                         mtdRevenue = 0L,
                         ytdRevenue = 0L,
                         weeklyRevenue = 0L,
+                        pendingRevenue = 0L,
                         dailyTrend = emptyList(),
                         topPerformers = emptyList()
                     )
@@ -42,6 +43,7 @@ class RevenueRepositoryImpl @Inject constructor(
                 val mtd = calculateMTD(dailySnapshots)
                 val ytd = calculateYTD(dailySnapshots)
                 val weekly = calculateWeekly(dailySnapshots)
+                val pending = dailySnapshots.sumOf { it.pendingRevenue }
                 val dailyTrend = transformToDailyData(dailySnapshots)
                 val currencyBreakdown = calculateByCurrency(dailySnapshots)
 
@@ -49,6 +51,7 @@ class RevenueRepositoryImpl @Inject constructor(
                     mtdRevenue = mtd,
                     ytdRevenue = ytd,
                     weeklyRevenue = weekly,
+                    pendingRevenue = pending,
                     dailyTrend = dailyTrend,
                     topPerformers = currencyBreakdown
                 )
@@ -126,7 +129,7 @@ class RevenueRepositoryImpl @Inject constructor(
                         invoiceCount = snapshot.invoiceCount
                     )
                 } catch (e: Exception) {
-                    Timber.w(e, "Failed to parse snapshot: ${snapshot.dateString}")
+                    Timber.w(e, "Failed to parse snapshot date: ${snapshot.dateString}")
                     null
                 }
             }
@@ -141,18 +144,22 @@ class RevenueRepositoryImpl @Inject constructor(
 
             snapshots.forEach { snapshot ->
                 try {
-                    val jsonObject = JSONObject(snapshot.currencyBreakdown)
+                    val breakdown = snapshot.currencyBreakdown
+                    if (breakdown.isNullOrBlank() || breakdown == "{}") return@forEach
+                    
+                    val jsonObject = JSONObject(breakdown)
                     jsonObject.keys().forEach { currency ->
                         val amount = try {
                             jsonObject.getLong(currency)
                         } catch (e: Exception) {
-                            (jsonObject.getDouble(currency) * 100).toLong()
+                            // Fallback for floating point if any legacy data exists
+                            (jsonObject.optDouble(currency, 0.0) * 100).toLong()
                         }
                         currencyTotals[currency] = currencyTotals.getOrDefault(currency, 0L) + amount
                         grandTotal += amount
                     }
                 } catch (e: Exception) {
-                    Timber.w(e, "Failed to parse currency breakdown: ${snapshot.currencyBreakdown}")
+                    Timber.w(e, "Failed to parse currency breakdown JSON: ${snapshot.currencyBreakdown}")
                 }
             }
 
@@ -160,11 +167,11 @@ class RevenueRepositoryImpl @Inject constructor(
                 RevenueByCurrency(
                     currencyCode = currency,
                     totalAmount = amount,
-                    percentageOfTotal = if (grandTotal > 0) (amount.toDouble() / grandTotal.toDouble()) * 100 else 0.0
+                    percentageOfTotal = if (grandTotal > 0) (amount.toDouble() / grandTotal.toDouble()) else 0.0
                 )
             }.sortedByDescending { it.totalAmount }
         } catch (e: Exception) {
-            Timber.e(e, "Error calculating currency breakdown")
+            Timber.e(e, "Critical error calculating currency breakdown")
             return emptyList()
         }
     }

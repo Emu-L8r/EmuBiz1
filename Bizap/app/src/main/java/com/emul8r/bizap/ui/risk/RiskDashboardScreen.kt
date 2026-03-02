@@ -64,7 +64,7 @@ fun RiskDashboardScreen(
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Error: ${uiState.message}", color = Color.Red)
+                    Text("Error: ${uiState.message}", color = MaterialTheme.colorScheme.error)
                 }
             }
             is RiskUiState.Success -> {
@@ -112,7 +112,6 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
             Text("Risk Summary", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Note: outstandingAmount here is already Double in InvoicePaymentStatus
             val totalAtRisk = riskInvoices.sumOf { it.outstandingAmount }
             val criticalCount = riskInvoices.count { it.daysOverdue > 60 }
             val medianCount = riskInvoices.count { it.daysOverdue in 30..60 }
@@ -122,16 +121,16 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Total at Risk", fontSize = 12.sp, color = Color.Gray)
+                    Text("Total at Risk", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(CurrencyFormatter.formatCents((totalAtRisk * 100).toLong()), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
                 Column {
-                    Text("Critical", fontSize = 12.sp, color = Color.Gray)
-                    Text("$criticalCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFE53935))
+                    Text("Critical", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("$criticalCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.error)
                 }
                 Column {
-                    Text("Medium", fontSize = 12.sp, color = Color.Gray)
-                    Text("$medianCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFFF9800))
+                    Text("Medium", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("$medianCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary)
                 }
             }
         }
@@ -156,12 +155,12 @@ fun RiskInvoiceCard(invoice: InvoicePaymentStatus) {
             ) {
                 Column {
                     Text(invoice.invoiceNumber, fontWeight = FontWeight.Bold)
-                    Text(invoice.customerName, fontSize = 12.sp, color = Color.Gray)
+                    Text(invoice.customerName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Icon(
                     Icons.Default.Warning,
                     "Risk",
-                    tint = if (invoice.daysOverdue > 60) Color(0xFFE53935) else Color(0xFFFF9800)
+                    tint = if (invoice.daysOverdue > 60) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
                 )
             }
 
@@ -172,11 +171,11 @@ fun RiskInvoiceCard(invoice: InvoicePaymentStatus) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Outstanding", fontSize = 12.sp, color = Color.Gray)
+                    Text("Outstanding", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(CurrencyFormatter.formatCents((invoice.outstandingAmount * 100).toLong()), fontWeight = FontWeight.Bold)
                 }
                 Column {
-                    Text("Days Overdue", fontSize = 12.sp, color = Color.Gray)
+                    Text("Days Overdue", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("${invoice.daysOverdue}", fontWeight = FontWeight.Bold)
                 }
             }

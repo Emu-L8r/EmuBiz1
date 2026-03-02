@@ -156,7 +156,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
             icon = Icons.Filled.AttachMoney,
             label = "Outstanding",
             value = "$" + String.format("%.0f", analytics.totalOutstandingAmount),
-            backgroundColor = Color(0xFFFFC107),
+            color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.weight(1f)
         )
 
@@ -164,7 +164,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
             icon = Icons.Filled.TrendingUp,
             label = "Collection Rate",
             value = String.format("%.1f", analytics.collectionRate) + "%",
-            backgroundColor = Color(0xFF4CAF50),
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.weight(1f)
         )
 
@@ -172,7 +172,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
             icon = Icons.Filled.Warning,
             label = "Overdue",
             value = analytics.overdueInvoices.toString(),
-            backgroundColor = Color(0xFFF44336),
+            color = MaterialTheme.colorScheme.error,
             modifier = Modifier.weight(1f)
         )
     }
@@ -183,15 +183,15 @@ private fun MetricCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     value: String,
-    backgroundColor: Color,
+    color: Color,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = backgroundColor.copy(alpha = 0.15f)
+            containerColor = color.copy(alpha = 0.1f)
         ),
-        border = CardDefaults.outlinedCardBorder()
+        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.2f))
     ) {
         Column(
             modifier = Modifier
@@ -203,14 +203,14 @@ private fun MetricCard(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = backgroundColor,
+                tint = color,
                 modifier = Modifier.size(24.dp)
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = backgroundColor
+                color = color
             )
             Text(
                 text = value,
@@ -255,7 +255,8 @@ private fun CollectionRateCard(analytics: PaymentAnalyticsSummary) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                color = getCollectionRateColor(analytics.collectionRate)
+                color = getCollectionRateColor(analytics.collectionRate),
+                trackColor = getCollectionRateColor(analytics.collectionRate).copy(alpha = 0.2f)
             )
 
             Text(
@@ -290,7 +291,7 @@ private fun AgingBreakdownSection(analytics: PaymentAnalyticsSummary) {
                 percentage = if (analytics.outstandingByAging.totalOutstanding > 0) {
                     (analytics.outstandingByAging.current / analytics.outstandingByAging.totalOutstanding * 100).toInt()
                 } else 0,
-                color = Color(0xFF4CAF50)
+                color = MaterialTheme.colorScheme.primary
             )
 
             AgingBracketRow(
@@ -299,7 +300,7 @@ private fun AgingBreakdownSection(analytics: PaymentAnalyticsSummary) {
                 percentage = if (analytics.outstandingByAging.totalOutstanding > 0) {
                     (analytics.outstandingByAging.past30 / analytics.outstandingByAging.totalOutstanding * 100).toInt()
                 } else 0,
-                color = Color(0xFF2196F3)
+                color = MaterialTheme.colorScheme.secondary
             )
 
             AgingBracketRow(
@@ -308,7 +309,7 @@ private fun AgingBreakdownSection(analytics: PaymentAnalyticsSummary) {
                 percentage = if (analytics.outstandingByAging.totalOutstanding > 0) {
                     (analytics.outstandingByAging.past60 / analytics.outstandingByAging.totalOutstanding * 100).toInt()
                 } else 0,
-                color = Color(0xFFFFC107)
+                color = MaterialTheme.colorScheme.tertiary
             )
 
             AgingBracketRow(
@@ -317,7 +318,7 @@ private fun AgingBreakdownSection(analytics: PaymentAnalyticsSummary) {
                 percentage = if (analytics.outstandingByAging.totalOutstanding > 0) {
                     (analytics.outstandingByAging.past90 / analytics.outstandingByAging.totalOutstanding * 100).toInt()
                 } else 0,
-                color = Color(0xFFF44336)
+                color = MaterialTheme.colorScheme.error
             )
         }
     }
@@ -352,7 +353,8 @@ private fun AgingBracketRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp),
-            color = color
+            color = color,
+            trackColor = color.copy(alpha = 0.2f)
         )
     }
 }
@@ -368,28 +370,28 @@ private fun OutstandingByAgingCards(analytics: PaymentAnalyticsSummary) {
         OutstandingCard(
             label = "0-30 days",
             amount = analytics.outstandingByAging.current,
-            backgroundColor = Color(0xFF4CAF50),
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.weight(1f)
         )
 
         OutstandingCard(
             label = "31-60 days",
             amount = analytics.outstandingByAging.past30,
-            backgroundColor = Color(0xFF2196F3),
+            color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.weight(1f)
         )
 
         OutstandingCard(
             label = "61-90 days",
             amount = analytics.outstandingByAging.past60,
-            backgroundColor = Color(0xFFFFC107),
+            color = MaterialTheme.colorScheme.tertiary,
             modifier = Modifier.weight(1f)
         )
 
         OutstandingCard(
             label = "90+ days",
             amount = analytics.outstandingByAging.past90,
-            backgroundColor = Color(0xFFF44336),
+            color = MaterialTheme.colorScheme.error,
             modifier = Modifier.weight(1f)
         )
     }
@@ -399,15 +401,15 @@ private fun OutstandingByAgingCards(analytics: PaymentAnalyticsSummary) {
 private fun OutstandingCard(
     label: String,
     amount: Double,
-    backgroundColor: Color,
+    color: Color,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = backgroundColor.copy(alpha = 0.15f)
+            containerColor = color.copy(alpha = 0.1f)
         ),
-        border = CardDefaults.outlinedCardBorder()
+        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.2f))
     ) {
         Column(
             modifier = Modifier
@@ -420,7 +422,7 @@ private fun OutstandingCard(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = backgroundColor
+                color = color
             )
             Text(
                 text = "$" + String.format("%.0f", amount),
@@ -466,7 +468,7 @@ private fun CashFlowForecastSection(analytics: PaymentAnalyticsSummary) {
                         text = "$" + String.format("%.0f", totalForecast),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (totalForecast > 0) Color(0xFF4CAF50) else Color(0xFFF44336)
+                        color = if (totalForecast > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                     )
                 }
 
@@ -494,15 +496,11 @@ private fun CashFlowForecastSection(analytics: PaymentAnalyticsSummary) {
 
 @Composable
 private fun RiskAlertsSection(analytics: PaymentAnalyticsSummary) {
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = Color(0xFFFFF3E0),
-                shape = RoundedCornerShape(12.dp)
-            ),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = Color(0xFFFFF3E0)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
         )
     ) {
         Column(
@@ -519,7 +517,6 @@ private fun RiskAlertsSection(analytics: PaymentAnalyticsSummary) {
                 Icon(
                     imageVector = Icons.Filled.Warning,
                     contentDescription = "Alert",
-                    tint = Color(0xFFFF6F00),
                     modifier = Modifier.size(28.dp)
                 )
                 Column(
@@ -528,21 +525,18 @@ private fun RiskAlertsSection(analytics: PaymentAnalyticsSummary) {
                     Text(
                         text = "⚠️ Payment Risk Alert",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFF6F00)
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "${analytics.riskInvoices.size} invoice(s) at risk",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFE65100)
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
 
             Text(
                 text = "Take immediate action to recover outstanding amounts.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFE65100)
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }
@@ -573,22 +567,22 @@ private fun InvoiceStatusSummary(analytics: PaymentAnalyticsSummary) {
             InvoiceStatusRow(
                 label = "Paid",
                 count = analytics.paidInvoices,
-                color = Color(0xFF4CAF50)
+                color = MaterialTheme.colorScheme.primary
             )
 
             InvoiceStatusRow(
                 label = "Unpaid",
                 count = analytics.unpaidInvoices,
-                color = Color(0xFF2196F3)
+                color = MaterialTheme.colorScheme.secondary
             )
 
             InvoiceStatusRow(
                 label = "Overdue",
                 count = analytics.overdueInvoices,
-                color = Color(0xFFF44336)
+                color = MaterialTheme.colorScheme.error
             )
 
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -648,19 +642,12 @@ private fun InvoiceStatusRow(
     }
 }
 
+@Composable
 private fun getCollectionRateColor(rate: Double): Color {
     return when {
-        rate >= 90 -> Color(0xFF4CAF50)
-        rate >= 70 -> Color(0xFF2196F3)
-        rate >= 50 -> Color(0xFFFFC107)
-        else -> Color(0xFFF44336)
+        rate >= 90 -> MaterialTheme.colorScheme.primary
+        rate >= 70 -> MaterialTheme.colorScheme.secondary
+        rate >= 50 -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.error
     }
 }
-
-
-
-
-
-
-
-

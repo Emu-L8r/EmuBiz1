@@ -2,6 +2,7 @@ package com.emul8r.bizap.domain.revenue.usecase
 
 import com.emul8r.bizap.data.local.dao.AnalyticsDao
 import com.emul8r.bizap.data.local.entities.DailyRevenueSnapshot
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -29,6 +30,8 @@ class RefreshAnalyticsUseCase @Inject constructor(
             val invoices = invoiceRepository.getAllInvoicesWithItems().first()
             if (invoices.isEmpty()) {
                 Timber.w("No invoices found, nothing to analyze.")
+                // Clear existing snapshots if all invoices were deleted
+                analyticsDao.clearDailyRevenueForBusiness(businessId)
                 return@withContext
             }
 
@@ -40,12 +43,22 @@ class RefreshAnalyticsUseCase @Inject constructor(
 
             // 3. Process each day and generate snapshots
             invoicesByDate.forEach { (dateString, dayInvoices) ->
-                val totalRevenue = dayInvoices.sumOf { it.totalAmount }
+                // IDEMPOTENCY FIX: Delete existing snapshot for this date before inserting new aggregation
+                analyticsDao.deleteDailyRevenueForDate(businessId, dateString)
+
+                // Total revenue only counts PAID or PARTIALLY_PAID portions
+                val totalRevenue = dayInvoices.sumOf { it.amountPaid }
+                
+                // Pending revenue is totalAmount - amountPaid for non-DRAFT invoices
+                val pendingRevenue = dayInvoices
+                    .filter { it.status != InvoiceStatus.DRAFT }
+                    .sumOf { it.totalAmount - it.amountPaid }
+
                 val invoiceCount = dayInvoices.size
                 
                 // Build currency breakdown JSON
                 val currencyMap = dayInvoices.groupBy { it.currencyCode }
-                    .mapValues { (_, invs) -> invs.sumOf { it.totalAmount } }
+                    .mapValues { (_, invs) -> invs.sumOf { it.amountPaid } }
                 
                 val breakdownJson = JSONObject().apply {
                     currencyMap.forEach { (code, amount) -> put(code, amount) }
@@ -56,11 +69,11 @@ class RefreshAnalyticsUseCase @Inject constructor(
                     dateString = dateString,
                     dateMs = Instant.ofEpochMilli(dayInvoices.first().date).toEpochMilli(),
                     totalRevenue = totalRevenue,
+                    pendingRevenue = pendingRevenue,
                     invoiceCount = invoiceCount,
-                    currencyBreakdown = breakdownJson,
-                    paidInvoiceCount = dayInvoices.count { it.status.name == "PAID" },
-                    draftInvoiceCount = dayInvoices.count { it.status.name == "DRAFT" },
-                    averageInvoiceAmount = if (invoiceCount > 0) totalRevenue / invoiceCount else 0L
+                    paidInvoiceCount = dayInvoices.count { it.status == InvoiceStatus.PAID },
+                    draftInvoiceCount = dayInvoices.count { it.status == InvoiceStatus.DRAFT },
+                    averageInvoiceAmount = if (invoiceCount > 0) dayInvoices.sumOf { it.totalAmount } / invoiceCount else 0L
                 )
 
                 analyticsDao.insertDailyRevenue(snapshot)

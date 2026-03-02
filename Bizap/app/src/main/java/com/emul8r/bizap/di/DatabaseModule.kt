@@ -28,7 +28,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "bizap-db"
         )
-        .addMigrations(MIGRATION_21_22, MIGRATION_22_23)
+        .addMigrations(MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25)
         .build()
     }
 

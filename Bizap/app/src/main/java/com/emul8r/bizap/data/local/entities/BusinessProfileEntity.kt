@@ -20,6 +20,8 @@ data class BusinessProfileEntity(
     val signatureUri: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     // Tax Registration (for VAT/GST/Sales Tax)
-    val isTaxRegistered: Boolean = false,        // Default: business is NOT tax registered
-    val defaultTaxRate: Float = 0.10f            // Default: 10% tax rate if registered
+    val isTaxRegistered: Boolean = false,
+    val defaultTaxRate: Float = 0.10f,
+    // Currency & Locale
+    val baseCurrencyCode: String = "AUD"
 )

@@ -73,6 +73,11 @@ fun DashboardSettingsScreen(
                         onCheckedChange = { viewModel.updateSettings(settings.copy(showYtdCard = it)) }
                     )
                     DashboardToggle(
+                        label = "Show Pending Payment Card",
+                        checked = settings.showPendingCard,
+                        onCheckedChange = { viewModel.updateSettings(settings.copy(showPendingCard = it)) }
+                    )
+                    DashboardToggle(
                         label = "Show Total Clients Card",
                         checked = settings.showTotalClientsCard,
                         onCheckedChange = { viewModel.updateSettings(settings.copy(showTotalClientsCard = it)) }

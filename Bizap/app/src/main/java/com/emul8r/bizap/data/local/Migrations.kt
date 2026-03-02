@@ -35,3 +35,17 @@ val MIGRATION_22_23 = object : Migration(22, 23) {
         Timber.i("MIGRATION_22_23: Added customization fields to invoiceTemplates")
     }
 }
+
+val MIGRATION_23_24 = object : Migration(23, 24) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE business_profiles ADD COLUMN baseCurrencyCode TEXT NOT NULL DEFAULT 'AUD'")
+        Timber.i("MIGRATION_23_24: Added baseCurrencyCode to business_profiles")
+    }
+}
+
+val MIGRATION_24_25 = object : Migration(24, 25) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE daily_revenue_snapshots ADD COLUMN pendingRevenue INTEGER NOT NULL DEFAULT 0")
+        Timber.i("MIGRATION_24_25: Added pendingRevenue to daily_revenue_snapshots")
+    }
+}

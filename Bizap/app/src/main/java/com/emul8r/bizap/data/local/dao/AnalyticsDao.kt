@@ -38,6 +38,12 @@ interface AnalyticsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDailyRevenue(snapshot: DailyRevenueSnapshot)
 
+    @Query("DELETE FROM daily_revenue_snapshots WHERE businessProfileId = :businessId AND dateString = :dateString")
+    suspend fun deleteDailyRevenueForDate(businessId: Long, dateString: String)
+
+    @Query("DELETE FROM daily_revenue_snapshots WHERE businessProfileId = :businessId")
+    suspend fun clearDailyRevenueForBusiness(businessId: Long)
+
     @Query("SELECT * FROM daily_revenue_snapshots WHERE businessProfileId = :businessId AND dateString >= :startDate ORDER BY dateString DESC")
     suspend fun getDailyRevenueTrend(businessId: Long, startDate: String): List<DailyRevenueSnapshot>
 
@@ -69,4 +75,3 @@ interface AnalyticsDao {
     @Query("SELECT * FROM business_health_metrics WHERE businessProfileId = :businessId")
     fun observeBusinessHealth(businessId: Long): Flow<BusinessHealthMetrics?>
 }
-

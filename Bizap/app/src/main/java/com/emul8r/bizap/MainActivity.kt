@@ -35,12 +35,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-data class NavigationItem(
-    val screen: Screen,
-    val title: String,
-    val icon: ImageVector
-)
-
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -51,8 +45,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val config by themeViewModel.themeConfig.collectAsStateWithLifecycle()
-
-            Timber.d("🎨 Theme recomposed: seedColorHex = ${config.seedColorHex}")
 
             BizapTheme(themeConfig = config) {
                 MainScreen()
@@ -102,6 +94,9 @@ fun MainScreen() {
                 currentDestination?.hasRoute<Screen.ThemeSettings>() == true -> "Theme Settings"
                 currentDestination?.hasRoute<Screen.PrefilledItems>() == true -> "Prefilled Items"
                 currentDestination?.hasRoute<Screen.InvoiceSettings>() == true -> "Invoice PDF Settings"
+                currentDestination?.hasRoute<Screen.CurrencySettings>() == true -> "Currency & Locale"
+                currentDestination?.hasRoute<Screen.DashboardSettings>() == true -> "Dashboard Settings"
+                currentDestination?.hasRoute<Screen.DataSettings>() == true -> "Data & Backup"
                 currentDestination?.hasRoute<Screen.CreateInvoice>() == true -> "Create Invoice"
                 currentDestination?.hasRoute<Screen.EditInvoice>() == true -> "Edit Invoice"
                 currentDestination?.hasRoute<Screen.InvoiceDetail>() == true -> "Invoice Detail"
@@ -187,6 +182,12 @@ fun MainScreen() {
             composable<Screen.ThemeSettings> { ThemeSettingsScreen() }
             composable<Screen.PrefilledItems> { PrefilledItemsScreen() }
             composable<Screen.InvoiceSettings> { InvoiceSettingsScreen(onBackClick = { navController.popBackStack() }) }
+            
+            // New Scaffolds for Currency, Dashboard, and Data
+            composable<Screen.CurrencySettings> { CurrencySettingsScreen(onBackClick = { navController.popBackStack() }) }
+            composable<Screen.DashboardSettings> { DashboardSettingsScreen(onBackClick = { navController.popBackStack() }) }
+            composable<Screen.DataSettings> { DataSettingsScreen(onBackClick = { navController.popBackStack() }) }
+
             composable<Screen.CreateInvoice> { CreateInvoiceScreen(onInvoiceSaved = { navController.popBackStack() }) }
             composable<Screen.EditInvoice> { backStackEntry ->
                 val detail: Screen.EditInvoice = backStackEntry.toRoute()
@@ -230,3 +231,9 @@ fun MainScreen() {
         }
     }
 }
+
+data class NavigationItem(
+    val screen: Screen,
+    val title: String,
+    val icon: ImageVector
+)

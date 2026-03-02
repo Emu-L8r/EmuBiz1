@@ -75,13 +75,11 @@ fun InvoiceListScreen(
 @Composable
 fun SyncStatusIndicator(syncState: SyncUiState) {
     val (text, color, icon) = when {
-        !syncState.isOnline -> Triple("Offline", Color(0xFFE53935), Icons.Default.CloudOff)
-        syncState.pendingCount > 0 -> Triple("${syncState.pendingCount} operations pending", Color(0xFFFFB300), Icons.Default.Sync)
-        else -> Triple("All synced", Color(0xFF43A047), Icons.Default.CloudDone)
+        !syncState.isOnline -> Triple("Offline", MaterialTheme.colorScheme.error, Icons.Default.CloudOff)
+        syncState.pendingCount > 0 -> Triple("${syncState.pendingCount} operations pending", MaterialTheme.colorScheme.secondary, Icons.Default.Sync)
+        else -> Triple("All synced", MaterialTheme.colorScheme.primary, Icons.Default.CloudDone)
     }
 
-    // Only show if offline or pending. Briefly show "All synced" when it transition to 0?
-    // For now, let's always show it if offline or pending, or if synced for a short time.
     val visible = !syncState.isOnline || syncState.pendingCount > 0
 
     AnimatedVisibility(
@@ -130,12 +128,12 @@ fun InvoiceList(
                 onClick = { onInvoiceClick(invoice.id) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
                 ListItem(
-                    colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     overlineContent = { 
                         Text(
                             "INV-${invoice.id}", 

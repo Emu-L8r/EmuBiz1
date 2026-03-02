@@ -51,6 +51,8 @@ class PdfStyler {
      * Get typeface based on font family
      */
     fun getTypeface(fontFamily: String?, context: android.content.Context, isBold: Boolean): Typeface {
+        // PRODUCTION SAFETY: Always return default system fonts if custom assets are missing
+        // This prevents RuntimeExceptions during PDF generation.
         return try {
             val fontPath = when (fontFamily) {
                 "SERIF" -> "fonts/Serif.ttf"
@@ -67,7 +69,7 @@ class PdfStyler {
             val assetPath = if (isBold) boldPath else fontPath
             Typeface.createFromAsset(context.assets, assetPath)
         } catch (e: Exception) {
-            Timber.w(e, "Could not load font: $fontFamily, using default")
+            Timber.w(e, "Custom font asset missing: $fontFamily. Falling back to system default.")
             if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
         }
     }
@@ -140,4 +142,3 @@ data class CompanyInfo(
     val taxId: String?,
     val bankDetails: String?
 )
-

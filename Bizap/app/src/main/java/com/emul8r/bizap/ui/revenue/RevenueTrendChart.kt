@@ -1,6 +1,7 @@
 package com.emul8r.bizap.ui.revenue
 
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -23,6 +24,8 @@ fun RevenueTrendChart(
     dataPoints: List<DailyRevenuePoint>,
     modifier: Modifier = Modifier
 ) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    
     val modelProducer = remember(dataPoints) {
         ChartEntryModelProducer(
             dataPoints.mapIndexed { index, point ->
@@ -40,9 +43,9 @@ fun RevenueTrendChart(
         chart = lineChart(
             lines = listOf(
                 lineSpec(
-                    lineColor = Color(0xFF6750A4),
+                    lineColor = primaryColor,
                     lineBackgroundShader = verticalGradient(
-                        arrayOf(Color(0xFF6750A4).copy(0.4f), Color(0xFF6750A4).copy(0f))
+                        arrayOf(primaryColor.copy(alpha = 0.4f), primaryColor.copy(alpha = 0f))
                     )
                 )
             )

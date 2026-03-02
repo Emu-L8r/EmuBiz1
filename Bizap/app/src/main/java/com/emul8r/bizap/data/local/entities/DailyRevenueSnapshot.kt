@@ -25,6 +25,7 @@ data class DailyRevenueSnapshot(
 
     // Revenue aggregates
     val totalRevenue: Long = 0,                    // Cents
+    val pendingRevenue: Long = 0,                  // Cents (outstanding balances)
     val invoiceCount: Int = 0,
     val paidInvoiceCount: Int = 0,
     val draftInvoiceCount: Int = 0,
@@ -39,6 +40,3 @@ data class DailyRevenueSnapshot(
 
     val snapshotCreatedAtMs: Long = System.currentTimeMillis()
 )
-
-
-

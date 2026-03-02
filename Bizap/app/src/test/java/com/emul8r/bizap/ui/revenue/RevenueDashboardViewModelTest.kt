@@ -3,6 +3,7 @@ package com.emul8r.bizap.ui.revenue
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
 import com.emul8r.bizap.domain.revenue.usecase.GetRevenueMetricsUseCase
+import com.emul8r.bizap.domain.revenue.usecase.RefreshAnalyticsUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -14,6 +15,7 @@ import kotlin.test.assertTrue
 class RevenueDashboardViewModelTest : BaseUnitTest() {
 
     private val useCase: GetRevenueMetricsUseCase = mockk()
+    private val refreshUseCase: RefreshAnalyticsUseCase = mockk()
     private lateinit var viewModel: RevenueDashboardViewModel
 
     @Before
@@ -26,6 +28,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
             dailyTrend = emptyList(),
             topPerformers = emptyList()
         )
+        coEvery { refreshUseCase(any()) } returns Unit
     }
 
     @Test
@@ -41,7 +44,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
         coEvery { useCase(any()) } returns mockMetrics
 
         // Act
-        viewModel = RevenueDashboardViewModel(useCase)
+        viewModel = RevenueDashboardViewModel(useCase, refreshUseCase)
         advanceUntilIdle() // Wait for coroutine in init to complete
         val state = viewModel.uiState.value
 
@@ -55,7 +58,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
         coEvery { useCase(any()) } throws Exception("Network Error")
 
         // Act
-        viewModel = RevenueDashboardViewModel(useCase)
+        viewModel = RevenueDashboardViewModel(useCase, refreshUseCase)
         advanceUntilIdle() // Wait for coroutine in init to complete
         val state = viewModel.uiState.value
 

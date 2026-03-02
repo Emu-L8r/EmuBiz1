@@ -4,7 +4,9 @@ import com.emul8r.bizap.data.local.entities.InvoiceEntity
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.local.entities.LineItemEntity
 import com.emul8r.bizap.domain.model.Invoice
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.model.LineItem
+import timber.log.Timber
 
 fun Invoice.toEntity(): InvoiceEntity {
     return InvoiceEntity(
@@ -43,18 +45,18 @@ fun InvoiceWithItems.toDomain(): Invoice {
         businessProfileId = this.invoice.businessProfileId,
         customerId = this.invoice.customerId,
         customerName = this.invoice.customerName,
-        customerAddress = this.invoice.customerAddress,
+        customerAddress = this.invoice.customerAddress ?: "",
         customerEmail = this.invoice.customerEmail,
         date = this.invoice.date,
         totalAmount = this.invoice.totalAmount,        // Already in cents
         items = this.items.map { it.toDomain() },
         isQuote = this.invoice.isQuote,
-        status = com.emul8r.bizap.domain.model.InvoiceStatus.valueOf(this.invoice.status),
+        status = safeParseInvoiceStatus(this.invoice.status),
         header = this.invoice.header,
         subheader = this.invoice.subheader,
         notes = this.invoice.notes,
         footer = this.invoice.footer,
-        photoUris = this.invoice.photoUris?.split(",") ?: emptyList(),
+        photoUris = this.invoice.photoUris?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
         pdfUri = this.invoice.pdfUri,
         dueDate = this.invoice.dueDate,
         taxRate = this.invoice.taxRate,
@@ -67,6 +69,16 @@ fun InvoiceWithItems.toDomain(): Invoice {
         invoiceYear = this.invoice.invoiceYear,
         invoiceSequence = this.invoice.invoiceSequence
     )
+}
+
+private fun safeParseInvoiceStatus(status: String?): InvoiceStatus {
+    if (status == null) return InvoiceStatus.DRAFT
+    return try {
+        InvoiceStatus.valueOf(status)
+    } catch (e: IllegalArgumentException) {
+        Timber.e("⚠️ Unknown invoice status found in DB: $status. Defaulting to DRAFT.")
+        InvoiceStatus.DRAFT
+    }
 }
 
 fun LineItem.toEntity(invoiceId: Long): LineItemEntity {
@@ -82,7 +94,7 @@ fun LineItem.toEntity(invoiceId: Long): LineItemEntity {
 fun LineItemEntity.toDomain(): LineItem {
     return LineItem(
         id = this.id,
-        description = this.description,
+        description = this.description ?: "",
         quantity = this.quantity,
         unitPrice = this.unitPrice          // Already in cents
     )

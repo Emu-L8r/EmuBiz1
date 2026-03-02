@@ -66,7 +66,7 @@ fun DunningNoticesScreen(
                 ) {
                     Text(
                         text = "Error: ${uiState.message}",
-                        color = Color.Red,
+                        color = MaterialTheme.colorScheme.error,
                         fontSize = 16.sp
                     )
                 }
@@ -134,23 +134,27 @@ fun DunningNoticeCard(notice: DunningNotice) {
                     Text(
                         text = "Customer ID: ${notice.customerId}",
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                
+                val statusColor = when (notice.noticeLevel) {
+                    1 -> MaterialTheme.colorScheme.tertiary
+                    2 -> MaterialTheme.colorScheme.secondary
+                    else -> MaterialTheme.colorScheme.error
+                }
+                
                 Surface(
-                    color = when (notice.noticeLevel) {
-                        1 -> Color(0xFFFFE082)
-                        2 -> Color(0xFFFF9800)
-                        else -> Color(0xFFE53935)
-                    },
-                    shape = MaterialTheme.shapes.small
+                    color = statusColor.copy(alpha = 0.1f),
+                    contentColor = statusColor,
+                    shape = MaterialTheme.shapes.small,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, statusColor)
                 ) {
                     Text(
                         text = "Notice ${notice.noticeLevel}",
                         modifier = Modifier.padding(6.dp),
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -165,20 +169,20 @@ fun DunningNoticeCard(notice: DunningNotice) {
                     Text(
                         text = "Amount Due",
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = CurrencyFormatter.formatCents((notice.totalAmountDue * 100).toLong()),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFE53935)
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
                 Column {
                     Text(
                         text = "Days Overdue",
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = "${notice.daysSinceDue}",
@@ -190,7 +194,7 @@ fun DunningNoticeCard(notice: DunningNotice) {
                     Text(
                         text = "Invoices",
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = "${notice.overdueInvoices.size}",
@@ -209,12 +213,12 @@ fun DunningNoticeCard(notice: DunningNotice) {
                 Text(
                     text = "Sent: ${notice.sentDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))}",
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "Next Action: ${notice.nextActionDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))}",
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -224,12 +228,9 @@ fun DunningNoticeCard(notice: DunningNotice) {
                 onClick = { /* Send notice action */ },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(40.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1976D2)
-                )
+                    .height(40.dp)
             ) {
-                Text("Send Notice", color = Color.White)
+                Text("Send Notice")
             }
         }
     }
