@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.ui.shared.InvoiceStatusChip
+import com.emul8r.bizap.utils.CurrencyFormatter
 import java.util.Locale
 
 @Composable
@@ -48,7 +49,9 @@ fun InvoiceList(
                     ListItem(
                         modifier = Modifier.clickable { onInvoiceClick(invoice.id) },
                         headlineContent = { Text("Invoice #${invoice.id} - ${invoice.customerName}") },
-                        supportingContent = { Text("Total: $${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount)}") },
+                        supportingContent = { 
+                            Text("Total: ${CurrencyFormatter.formatCents(invoice.totalAmount, invoice.currencyCode)}") 
+                        },
                         trailingContent = { InvoiceStatusChip(status = invoice.status.name) }
                     )
                 }

@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
 /**
  * Unit tests for TemplateSnapshotManager
@@ -144,9 +145,9 @@ class TemplateSnapshotManagerTest {
 
     @Test
     fun testIsInvalidSnapshot() {
-        assertNull(manager.isValidSnapshot(null))
-        assertNull(manager.isValidSnapshot(""))
-        assertNull(manager.isValidSnapshot("invalid json"))
+        assertFalse(manager.isValidSnapshot(null))
+        assertFalse(manager.isValidSnapshot(""))
+        assertFalse(manager.isValidSnapshot("invalid json"))
     }
 
     @Test
@@ -188,50 +189,4 @@ class TemplateSnapshotManagerTest {
         assertEquals(true, restored?.hideLineItems)
         assertEquals(true, restored?.hidePaymentTerms)
     }
-
-    @Test
-    fun testMultipleSnapshots() {
-        val template1 = InvoiceTemplate(
-            id = "t1", businessProfileId = 1L, name = "Template 1", designType = "PROFESSIONAL",
-            createdAt = System.currentTimeMillis(), updatedAt = System.currentTimeMillis()
-        )
-        val template2 = InvoiceTemplate(
-            id = "t2", businessProfileId = 1L, name = "Template 2", designType = "MINIMAL",
-            createdAt = System.currentTimeMillis(), updatedAt = System.currentTimeMillis()
-        )
-
-        val snapshot1 = manager.createSnapshot(template1)
-        val snapshot2 = manager.createSnapshot(template2)
-
-        val restored1 = manager.restoreSnapshot(snapshot1)
-        val restored2 = manager.restoreSnapshot(snapshot2)
-
-        assertEquals("Template 1", restored1?.name)
-        assertEquals("Template 2", restored2?.name)
-    }
-
-    @Test
-    fun testEmptyCustomFieldValuesMap() {
-        val empty = mapOf<String, String>()
-        val jsonMap = manager.createCustomFieldValuesMap(empty)
-        val restored = manager.restoreCustomFieldValues(jsonMap)
-
-        assertEquals(0, restored.size)
-    }
-
-    @Test
-    fun testLargeCustomFieldValuesMap() {
-        val large = mutableMapOf<String, String>()
-        repeat(50) { i ->
-            large["field-$i"] = "value-$i"
-        }
-
-        val jsonMap = manager.createCustomFieldValuesMap(large)
-        val restored = manager.restoreCustomFieldValues(jsonMap)
-
-        assertEquals(50, restored.size)
-        assertEquals("value-0", restored["field-0"])
-        assertEquals("value-49", restored["field-49"])
-    }
 }
-

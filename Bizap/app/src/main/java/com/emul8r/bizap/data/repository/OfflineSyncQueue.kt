@@ -2,6 +2,7 @@ package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.data.local.PendingOperationDao
 import com.emul8r.bizap.data.local.entities.PendingOperation
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.util.UUID
@@ -18,6 +19,11 @@ class OfflineSyncQueue @Inject constructor(
     private val json: Json
 ) {
     
+    /**
+     * Observe the number of pending operations for UI feedback.
+     */
+    val pendingCount: Flow<Int> = pendingOperationDao.observePendingCount()
+
     /**
      * Queues an operation for future synchronization.
      */
@@ -54,6 +60,6 @@ class OfflineSyncQueue @Inject constructor(
     }
 
     suspend fun clearSyncedOperations() {
-        // Logic to be implemented in DAO if needed, or iterate
+        // Implementation can be added here if needed
     }
 }

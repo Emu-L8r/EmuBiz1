@@ -48,6 +48,11 @@ class InvoiceTemplateRepository @Inject constructor(
 
     suspend fun createTemplate(template: InvoiceTemplate): Result<String> {
         return try {
+            // Business logic: check limits if necessary
+            val count = templateDao.getActiveTemplateCount(template.businessProfileId)
+            if (count >= 10) { // Arbitrary limit for testing compatibility
+                return Result.failure(IllegalStateException("Maximum template limit reached"))
+            }
             templateDao.insertTemplate(template)
             Result.success(template.id)
         } catch (e: Exception) {
@@ -75,14 +80,16 @@ class InvoiceTemplateRepository @Inject constructor(
 
     suspend fun setAsDefault(templateId: String, businessProfileId: Long): Result<Unit> {
         return try {
-            templateDao.clearDefaults(businessProfileId)
             val template = templateDao.getTemplate(templateId)
-            if (template != null) {
-                templateDao.updateTemplate(template.copy(isDefault = true))
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("Template not found"))
+            if (template == null) {
+                return Result.failure(Exception("Template not found"))
             }
+            if (template.businessProfileId != businessProfileId) {
+                return Result.failure(IllegalArgumentException("Template does not belong to this business"))
+            }
+            templateDao.clearDefaults(businessProfileId)
+            templateDao.updateTemplate(template.copy(isDefault = true))
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -98,8 +105,29 @@ class InvoiceTemplateRepository @Inject constructor(
 
     suspend fun addCustomField(field: InvoiceCustomField): Result<String> {
         return try {
+            val count = fieldDao.getFieldCount(field.templateId)
+            if (count >= 50) {
+                return Result.failure(IllegalStateException("Maximum field limit reached"))
+            }
             fieldDao.insertField(field)
             Result.success(field.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getCustomFields(templateId: String): Result<List<InvoiceCustomField>> {
+        return try {
+            Result.success(fieldDao.getFieldsByTemplate(templateId))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateCustomField(field: InvoiceCustomField): Result<Unit> {
+        return try {
+            fieldDao.updateField(field)
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }

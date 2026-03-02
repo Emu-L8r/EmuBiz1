@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.*
 import com.emul8r.bizap.data.worker.ExchangeRateWorker
+import com.emul8r.bizap.data.sync.SyncScheduler
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 import com.emul8r.bizap.utils.CrashlyticsTree
@@ -15,6 +16,9 @@ class BizapApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+    
+    @Inject
+    lateinit var syncScheduler: SyncScheduler
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -34,6 +38,9 @@ class BizapApplication : Application(), Configuration.Provider {
         }
 
         scheduleExchangeRateUpdates()
+        
+        // PERFORMANCE & OFFLINE: Schedule background sync
+        syncScheduler.schedulePeriodicSync()
     }
 
     private fun scheduleExchangeRateUpdates() {

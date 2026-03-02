@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.invoice.model.InvoicePaymentStatus
+import com.emul8r.bizap.utils.CurrencyFormatter
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -111,9 +112,10 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
             Text("Risk Summary", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Note: outstandingAmount here is already Double in InvoicePaymentStatus
             val totalAtRisk = riskInvoices.sumOf { it.outstandingAmount }
             val criticalCount = riskInvoices.count { it.daysOverdue > 60 }
-            val mediumCount = riskInvoices.count { it.daysOverdue in 30..60 }
+            val medianCount = riskInvoices.count { it.daysOverdue in 30..60 }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -121,7 +123,7 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
             ) {
                 Column {
                     Text("Total at Risk", fontSize = 12.sp, color = Color.Gray)
-                    Text("$${String.format(Locale.getDefault(), "%.2f", totalAtRisk)}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(CurrencyFormatter.formatCents((totalAtRisk * 100).toLong()), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
                 Column {
                     Text("Critical", fontSize = 12.sp, color = Color.Gray)
@@ -129,7 +131,7 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
                 }
                 Column {
                     Text("Medium", fontSize = 12.sp, color = Color.Gray)
-                    Text("$mediumCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFFF9800))
+                    Text("$medianCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFFF9800))
                 }
             }
         }
@@ -171,7 +173,7 @@ fun RiskInvoiceCard(invoice: InvoicePaymentStatus) {
             ) {
                 Column {
                     Text("Outstanding", fontSize = 12.sp, color = Color.Gray)
-                    Text("$${String.format(Locale.getDefault(), "%.2f", invoice.outstandingAmount)}", fontWeight = FontWeight.Bold)
+                    Text(CurrencyFormatter.formatCents((invoice.outstandingAmount * 100).toLong()), fontWeight = FontWeight.Bold)
                 }
                 Column {
                     Text("Days Overdue", fontSize = 12.sp, color = Color.Gray)

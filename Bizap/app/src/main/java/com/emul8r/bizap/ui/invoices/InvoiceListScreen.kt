@@ -1,29 +1,33 @@
 package com.emul8r.bizap.ui.invoices
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.shared.InvoiceStatusChip
 import com.emul8r.bizap.ui.utils.formatDate
-import java.util.Locale
+import com.emul8r.bizap.utils.CurrencyFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,16 +36,20 @@ fun InvoiceListScreen(
     viewModel: InvoiceListViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val syncState by viewModel.syncState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { 
-            TopAppBar(
-                title = { Text("Invoices & Quotes") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+        topBar = {
+            Column {
+                TopAppBar(
+                    title = { Text("Invoices & Quotes") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
-            ) 
+                SyncStatusIndicator(syncState)
+            }
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
@@ -60,6 +68,49 @@ fun InvoiceListScreen(
                     onStatusChange = viewModel::updateInvoiceStatus
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun SyncStatusIndicator(syncState: SyncUiState) {
+    val (text, color, icon) = when {
+        !syncState.isOnline -> Triple("Offline", Color(0xFFE53935), Icons.Default.CloudOff)
+        syncState.pendingCount > 0 -> Triple("${syncState.pendingCount} operations pending", Color(0xFFFFB300), Icons.Default.Sync)
+        else -> Triple("All synced", Color(0xFF43A047), Icons.Default.CloudDone)
+    }
+
+    // Only show if offline or pending. Briefly show "All synced" when it transition to 0?
+    // For now, let's always show it if offline or pending, or if synced for a short time.
+    val visible = !syncState.isOnline || syncState.pendingCount > 0
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = expandVertically(),
+        exit = shrinkVertically(),
+        modifier = Modifier.testTag("SyncStatusIndicator")
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color.copy(alpha = 0.1f))
+                .padding(vertical = 4.dp, horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                color = color,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -93,7 +144,7 @@ fun InvoiceList(
                     },
                     headlineContent = { Text(invoice.customerName) },
                     supportingContent = {
-                        Text("Total: $${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount)} | ${formatDate(invoice.date)}")
+                        Text("Total: ${CurrencyFormatter.formatCents(invoice.totalAmount, invoice.currencyCode)} | ${formatDate(invoice.date)}")
                     },
                     trailingContent = {
                         InvoiceStatusChip(invoice.status.name)

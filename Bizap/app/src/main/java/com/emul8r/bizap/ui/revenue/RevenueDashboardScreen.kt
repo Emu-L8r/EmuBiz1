@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
+import com.emul8r.bizap.utils.CurrencyFormatter
 import java.util.Locale
 
 @Composable
@@ -58,8 +59,8 @@ private fun RevenueDashboardContent(metrics: RevenueMetrics) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            RevenueSummaryCard(label = "MTD", amount = metrics.mtdRevenue.toDouble() / 100.0, modifier = Modifier.weight(1f))
-            RevenueSummaryCard(label = "YTD", amount = metrics.ytdRevenue.toDouble() / 100.0, modifier = Modifier.weight(1f))
+            RevenueSummaryCard(label = "MTD", amountCents = metrics.mtdRevenue, modifier = Modifier.weight(1f))
+            RevenueSummaryCard(label = "YTD", amountCents = metrics.ytdRevenue, modifier = Modifier.weight(1f))
         }
 
         Text(text = "Revenue by Currency", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -71,7 +72,7 @@ private fun RevenueDashboardContent(metrics: RevenueMetrics) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = performer.currencyCode, fontWeight = FontWeight.Bold)
-                    Text(text = "$${String.format(Locale.getDefault(), "%.2f", performer.totalAmount)}")
+                    Text(text = CurrencyFormatter.formatCents(performer.totalAmount, performer.currencyCode))
                 }
             }
         }
@@ -79,7 +80,7 @@ private fun RevenueDashboardContent(metrics: RevenueMetrics) {
 }
 
 @Composable
-private fun RevenueSummaryCard(label: String, amount: Double, modifier: Modifier = Modifier) {
+private fun RevenueSummaryCard(label: String, amountCents: Long, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -87,7 +88,7 @@ private fun RevenueSummaryCard(label: String, amount: Double, modifier: Modifier
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = label, style = MaterialTheme.typography.labelSmall)
             Text(
-                text = "$${String.format(Locale.getDefault(), "%.2f", amount)}",
+                text = CurrencyFormatter.formatCents(amountCents),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

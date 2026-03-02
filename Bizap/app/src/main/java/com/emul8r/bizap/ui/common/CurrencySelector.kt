@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.domain.model.Currency
+import com.emul8r.bizap.utils.CurrencyFormatter
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,12 +75,12 @@ fun CurrencySelector(
 
 @Composable
 fun CurrencyDisplayWithAmount(
-    currencySymbol: String,
-    amount: Double,
+    currencyCode: String,
+    amountCents: Long,
     modifier: Modifier = Modifier
 ) {
     Text(
-        text = "$currencySymbol ${String.format(Locale.getDefault(), "%.2f", amount)}",
+        text = CurrencyFormatter.formatCents(amountCents, currencyCode),
         style = MaterialTheme.typography.headlineSmall,
         modifier = modifier
     )

@@ -9,8 +9,10 @@ import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.Calendar
 import javax.inject.Inject
@@ -22,16 +24,17 @@ class InvoiceRepositoryImpl @Inject constructor(
     
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getAllInvoicesWithItems(): Flow<List<Invoice>> {
-        // Scoped to active business
         return businessProfileRepository.activeProfile.flatMapLatest { business ->
             invoiceDao.getInvoicesByBusinessId(business.id).map { list ->
                 list.map { it.toDomain() }
             }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getInvoiceWithItemsById(id: Long): Flow<Invoice?> {
-        return invoiceDao.getInvoiceWithItemsById(id).map { it?.toDomain() }
+        return invoiceDao.getInvoiceWithItemsById(id)
+            .map { it?.toDomain() }
+            .flowOn(Dispatchers.IO)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -43,10 +46,10 @@ class InvoiceRepositoryImpl @Inject constructor(
                     placeholderWithItems.toDomain()
                 }
             }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
-    override suspend fun saveInvoice(invoice: Invoice): Long {
+    override suspend fun saveInvoice(invoice: Invoice): Long = withContext(Dispatchers.IO) {
         val activeBusinessId = businessProfileRepository.getActiveBusinessId()
         var invoiceToSave = invoice.copy(businessProfileId = activeBusinessId)
         
@@ -63,10 +66,10 @@ class InvoiceRepositoryImpl @Inject constructor(
 
         val invoiceEntity = invoiceToSave.toEntity()
         val lineItemEntities = invoiceToSave.items.map { it.toEntity(invoiceToSave.id) }
-        return invoiceDao.insert(invoiceEntity, lineItemEntities)
+        invoiceDao.insert(invoiceEntity, lineItemEntities)
     }
 
-    override suspend fun updateAmountPaid(invoiceId: Long, amount: Long) {
+    override suspend fun updateAmountPaid(invoiceId: Long, amount: Long): Unit = withContext(Dispatchers.IO) {
         val invoiceWithItems = invoiceDao.getInvoiceWithItemsById(invoiceId).first()
         invoiceWithItems?.let {
             val updatedEntity = it.invoice.copy(amountPaid = amount)
@@ -74,7 +77,7 @@ class InvoiceRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun createCorrection(originalInvoiceId: Long): Long {
+    override suspend fun createCorrection(originalInvoiceId: Long): Long = withContext(Dispatchers.IO) {
         val original = invoiceDao.getInvoiceWithItemsById(originalInvoiceId).first() 
             ?: throw Exception("Original invoice not found")
         
@@ -89,22 +92,22 @@ class InvoiceRepositoryImpl @Inject constructor(
         )
 
         val lineItemEntities = original.items.map { it.copy(id = 0) }
-        return invoiceDao.insert(correctionEntity, lineItemEntities)
+        invoiceDao.insert(correctionEntity, lineItemEntities)
     }
 
     override fun getBusinessProfile(): Flow<BusinessProfile> {
         return businessProfileRepository.activeProfile
     }
 
-    override suspend fun updateInvoiceStatus(invoiceId: Long, status: InvoiceStatus) {
+    override suspend fun updateInvoiceStatus(invoiceId: Long, status: InvoiceStatus) = withContext(Dispatchers.IO) {
         invoiceDao.updateInvoiceStatus(invoiceId, status.name)
     }
 
-    override suspend fun updatePdfPath(invoiceId: Long, pdfPath: String) {
+    override suspend fun updatePdfPath(invoiceId: Long, pdfPath: String) = withContext(Dispatchers.IO) {
         invoiceDao.updatePdfPath(invoiceId, pdfPath)
     }
 
-    override suspend fun deleteInvoice(id: Long) {
+    override suspend fun deleteInvoice(id: Long) = withContext(Dispatchers.IO) {
         invoiceDao.deleteInvoiceWithItems(id)
     }
 }

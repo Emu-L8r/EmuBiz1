@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.invoice.model.DunningNotice
+import com.emul8r.bizap.utils.CurrencyFormatter
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -167,7 +168,7 @@ fun DunningNoticeCard(notice: DunningNotice) {
                         color = Color.Gray
                     )
                     Text(
-                        text = "$${String.format("%.2f", notice.totalAmountDue)}",
+                        text = CurrencyFormatter.formatCents((notice.totalAmountDue * 100).toLong()),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE53935)

@@ -13,6 +13,7 @@ import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
 import com.emul8r.bizap.utils.DocumentNamingUtils
+import com.emul8r.bizap.utils.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -105,7 +106,7 @@ class InvoiceDetailViewModel @Inject constructor(
                 invoiceRepo.updateAmountPaid(invoice.id, newAmountPaid)
                 invoiceRepo.updateInvoiceStatus(invoice.id, newStatus)
                 
-                _uiEvent.emit(UiEvent.ShowSnackbar("Payment of $${String.format("%.2f", amount)} recorded."))
+                _uiEvent.emit(UiEvent.ShowSnackbar("Payment of ${CurrencyFormatter.formatCents(amount, invoice.currencyCode)} recorded."))
             } catch (e: Exception) {
                 _uiEvent.emit(UiEvent.ShowSnackbar("Failed to record payment: ${e.message}"))
             }
@@ -257,7 +258,8 @@ class InvoiceDetailViewModel @Inject constructor(
             businessEmail = business.email,
             businessPhone = business.phone,
             businessAddress = business.address,
-            logoBase64 = business.logoBase64
+            logoBase64 = business.logoBase64,
+            currencyCode = invoice.currencyCode
         )
     }
 

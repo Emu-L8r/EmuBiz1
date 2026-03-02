@@ -7,9 +7,9 @@ import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Test
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 
 /**
  * Unit tests for ErrorInterceptor.
@@ -48,11 +48,14 @@ class ErrorInterceptorTest : BaseUnitTest() {
 
     private fun createMockChain(code: Int): Interceptor.Chain {
         val request = Request.Builder().url("https://test.com").build()
+        
+        // Fix: OkHttp responses need a body even if empty to be valid for some checks
         val response = Response.Builder()
             .request(request)
             .protocol(Protocol.HTTP_1_1)
             .code(code)
             .message("Error")
+            .body("".toResponseBody(null))
             .build()
             
         val chain = mockk<Interceptor.Chain>()

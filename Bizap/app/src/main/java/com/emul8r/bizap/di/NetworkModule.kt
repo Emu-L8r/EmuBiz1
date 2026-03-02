@@ -1,11 +1,14 @@
 package com.emul8r.bizap.di
 
+import android.content.Context
 import com.emul8r.bizap.data.network.ErrorInterceptor
+import com.emul8r.bizap.data.network.NetworkConnectivityManager
 import com.emul8r.bizap.data.remote.ExchangeRateService
 import com.emul8r.bizap.data.sync.SyncService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -58,5 +61,11 @@ object NetworkModule {
     @Singleton
     fun provideSyncService(retrofit: Retrofit): SyncService {
         return retrofit.create(SyncService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNetworkConnectivityManager(@ApplicationContext context: Context): NetworkConnectivityManager {
+        return NetworkConnectivityManager(context)
     }
 }

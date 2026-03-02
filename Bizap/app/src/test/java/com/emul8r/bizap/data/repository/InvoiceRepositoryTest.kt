@@ -48,20 +48,24 @@ class InvoiceRepositoryTest : BaseUnitTest() {
     @Test
     fun `test calculation of balance remaining`() {
         // Arrange
-        val invoice = TestDataFactory.createTestInvoice(total = 1000.0).copy(amountPaid = 300.0)
+        val totalCents = 100000L // $1000.00
+        val paidCents = 30000L   // $300.00
+        val invoice = TestDataFactory.createTestInvoice(total = totalCents).copy(amountPaid = paidCents)
         
         // Act & Assert
-        assertEquals(700.0, invoice.balanceRemaining)
+        assertEquals(70000L, invoice.balanceRemaining)
         assertEquals(false, invoice.isFullyPaid)
     }
 
     @Test
     fun `test fully paid status`() {
         // Arrange
-        val invoice = TestDataFactory.createTestInvoice(total = 500.0).copy(amountPaid = 500.0)
+        val totalCents = 50000L // $500.00
+        val paidCents = 50000L  // $500.00
+        val invoice = TestDataFactory.createTestInvoice(total = totalCents).copy(amountPaid = paidCents)
         
         // Act & Assert
-        assertEquals(0.0, invoice.balanceRemaining)
+        assertEquals(0L, invoice.balanceRemaining)
         assertEquals(true, invoice.isFullyPaid)
     }
 }

@@ -10,6 +10,7 @@ import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.pdf.PdfTableRenderer
 import com.emul8r.bizap.ui.templates.TemplateSnapshotManager
 import com.emul8r.bizap.utils.DocumentNamingUtils
+import com.emul8r.bizap.utils.CurrencyFormatter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.text.SimpleDateFormat
@@ -74,8 +75,6 @@ class InvoicePdfService @Inject constructor(
         val regularTypeface = pdfStyler.getTypeface(templateSnapshot?.fontFamily, context, isBold = false)
         val italicTypeface = Typeface.create(regularTypeface, Typeface.ITALIC)
 
-        val symbol = getCurrencySymbol(snapshot.currencyCode)
-
         val headerPaint = Paint().apply { typeface = boldTypeface; textSize = 10f; color = Color.BLACK; isAntiAlias = true }
         val brandPaint = Paint().apply { typeface = boldTypeface; textSize = 18f; color = colors.primary; isAntiAlias = true }
         val bodyPaint = Paint().apply { typeface = regularTypeface; textSize = 10f; color = colors.textLight; isAntiAlias = true }
@@ -121,8 +120,8 @@ class InvoicePdfService @Inject constructor(
                     listOf(
                         item.description,
                         item.quantity.toInt().toString(),
-                        String.format(Locale.getDefault(), "%s%.2f", symbol, item.unitPrice),
-                        String.format(Locale.getDefault(), "%s%.2f", symbol, item.total)
+                        CurrencyFormatter.formatCents(item.unitPrice, snapshot.currencyCode),
+                        CurrencyFormatter.formatCents(item.total, snapshot.currencyCode)
                     ),
                     bodyPaint
                 )
@@ -135,12 +134,12 @@ class InvoicePdfService @Inject constructor(
         headerPaint.textAlign = Paint.Align.RIGHT
 
         canvas.drawText("Subtotal:", 450f, currentY, bodyPaint)
-        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal), rightX, currentY, bodyPaint)
+        canvas.drawText(CurrencyFormatter.formatCents(snapshot.subtotal, snapshot.currencyCode), rightX, currentY, bodyPaint)
 
         currentY += 15f
         if (snapshot.taxAmount > 0) {
             canvas.drawText("Tax (${(snapshot.taxRate * 100).toInt()}%):", 450f, currentY, bodyPaint)
-            canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount), rightX, currentY, bodyPaint)
+            canvas.drawText(CurrencyFormatter.formatCents(snapshot.taxAmount, snapshot.currencyCode), rightX, currentY, bodyPaint)
             currentY += 25f
         }
 
@@ -150,24 +149,13 @@ class InvoicePdfService @Inject constructor(
             textAlign = Paint.Align.RIGHT
         }
         canvas.drawText("TOTAL AMOUNT DUE (${snapshot.currencyCode}):", 450f, currentY, totalLabelPaint)
-        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount), rightX, currentY, totalLabelPaint)
+        canvas.drawText(CurrencyFormatter.formatCents(snapshot.totalAmount, snapshot.currencyCode), rightX, currentY, totalLabelPaint)
 
         pdfDocument.finishPage(page)
         file.outputStream().use { pdfDocument.writeTo(it) }
         pdfDocument.close()
 
         return file
-    }
-
-    private fun getCurrencySymbol(code: String): String {
-        return when (code) {
-            "USD" -> "$"
-            "EUR" -> "€"
-            "GBP" -> "£"
-            "JPY" -> "¥"
-            "AUD" -> "$"
-            else -> "$"
-        }
     }
 
     private fun formatDate(timestamp: Long): String = 
