@@ -4,7 +4,7 @@ import com.emul8r.bizap.data.local.entities.InvoiceTemplate
 import com.emul8r.bizap.data.local.entities.InvoiceCustomField
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import android.util.Log
+import timber.log.Timber
 import java.time.LocalDateTime
 
 /**
@@ -37,10 +37,10 @@ class TemplateSnapshotManager {
                 logoFileName = template.logoFileName
             )
             val jsonString = json.encodeToString(TemplateSnapshot.serializer(), snapshot)
-            Log.d(TAG, "✅ Snapshot created: ${template.name}")
+            Timber.d("✅ Snapshot created: ${template.name}")
             jsonString
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error creating snapshot", e)
+            Timber.e(e, "❌ Error creating snapshot")
             "{}"
         }
     }
@@ -49,10 +49,10 @@ class TemplateSnapshotManager {
         if (jsonSnapshot.isNullOrBlank()) return null
         return try {
             val snapshot = json.decodeFromString(TemplateSnapshot.serializer(), jsonSnapshot)
-            Log.d(TAG, "✅ Snapshot restored: ${snapshot.name}")
+            Timber.d("✅ Snapshot restored: ${snapshot.name}")
             snapshot
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error restoring snapshot", e)
+            Timber.e(e, "❌ Error restoring snapshot")
             null
         }
     }
@@ -61,10 +61,10 @@ class TemplateSnapshotManager {
         return try {
             val map = CustomFieldValuesMap(values)
             val jsonString = json.encodeToString(CustomFieldValuesMap.serializer(), map)
-            Log.d(TAG, "✅ Custom field values map created: ${values.size} fields")
+            Timber.d("✅ Custom field values map created: ${values.size} fields")
             jsonString
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error creating custom field values map", e)
+            Timber.e(e, "❌ Error creating custom field values map")
             "{}"
         }
     }
@@ -73,10 +73,10 @@ class TemplateSnapshotManager {
         if (jsonMap.isNullOrBlank()) return emptyMap()
         return try {
             val map = json.decodeFromString(CustomFieldValuesMap.serializer(), jsonMap)
-            Log.d(TAG, "✅ Custom field values restored: ${map.values.size} fields")
+            Timber.d("✅ Custom field values restored: ${map.values.size} fields")
             map.values
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error restoring custom field values", e)
+            Timber.e(e, "❌ Error restoring custom field values")
             emptyMap()
         }
     }

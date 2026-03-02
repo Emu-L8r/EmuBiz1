@@ -1,6 +1,5 @@
 package com.emul8r.bizap.ui.customers
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -66,7 +66,7 @@ class CustomerViewModel @Inject constructor(
         if (!BuildConfig.DEBUG) return
 
         viewModelScope.launch {
-            Log.d("CustomerViewModel", "📥 Seeding database with test customers...")
+            Timber.d("📥 Seeding database with test customers...")
             try {
                 val testCustomers = listOf(
                     Customer(
@@ -90,9 +90,9 @@ class CustomerViewModel @Inject constructor(
                 )
                 
                 testCustomers.forEach { repository.insert(it) }
-                Log.d("CustomerViewModel", "✅ All test customers seeded!")
+                Timber.d("✅ All test customers seeded!")
             } catch (e: Exception) {
-                Log.e("CustomerViewModel", "❌ Seeding failed: ${e.message}", e)
+                Timber.e(e, "❌ Seeding failed: ${e.message}")
             }
         }
     }

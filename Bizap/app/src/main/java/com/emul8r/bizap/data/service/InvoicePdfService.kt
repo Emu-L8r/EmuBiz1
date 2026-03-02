@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.pdf.PdfDocument
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.repository.DocumentRepository

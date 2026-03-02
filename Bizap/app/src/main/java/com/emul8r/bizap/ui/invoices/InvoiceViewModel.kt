@@ -1,7 +1,6 @@
 package com.emul8r.bizap.ui.invoices
 
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.model.Customer
@@ -18,6 +17,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 data class InvoiceUiState(
@@ -53,7 +53,7 @@ class InvoiceViewModel @Inject constructor(
     )
 
     fun onSaveClicked() {
-        Log.d("BIZAP", "Save clicked. Customer: ${uiState.value.selectedCustomer?.name}")
+        Timber.d("Save clicked. Customer: ${uiState.value.selectedCustomer?.name}")
         saveInvoice()
     }
 
@@ -88,10 +88,10 @@ class InvoiceViewModel @Inject constructor(
     private fun saveInvoice() {
         viewModelScope.launch {
             try {
-                Log.d("BIZAP", "Attempting to save invoice...")
+                Timber.d("Attempting to save invoice...")
                 val currentState = _uiState.value
                 val customer = currentState.selectedCustomer ?: run {
-                    Log.e("BIZAP", "Save failed: Customer not selected.")
+                    Timber.e("Save failed: Customer not selected.")
                     return@launch
                 }
 
@@ -111,7 +111,7 @@ class InvoiceViewModel @Inject constructor(
                 )
 
                 saveInvoiceUseCase(domainInvoice).onSuccess {
-                    Log.d("BIZAP", "Save Successful!")
+                    Timber.d("Save Successful!")
                     _uiState.update { 
                         it.copy(
                             isSaving = false, 
@@ -122,11 +122,11 @@ class InvoiceViewModel @Inject constructor(
                         ) 
                     }
                 }.onFailure { e ->
-                    Log.e("BIZAP", "SAVE FAILED: ${e.message}", e)
+                    Timber.e(e, "SAVE FAILED: ${e.message}")
                     _uiState.update { it.copy(isSaving = false, error = e.message) }
                 }
             } catch (e: Exception) {
-                Log.e("BIZAP", "SAVE FAILED: ${e.message}", e)
+                Timber.e(e, "SAVE FAILED: ${e.message}")
             }
         }
     }
