@@ -11,7 +11,7 @@ import timber.log.Timber
 private val BrandPurple = Color(0xFF6750A4)
 
 @Composable
-fun EmuBizzzTheme(
+fun BizapTheme(
     themeConfig: ThemeConfig,
     content: @Composable () -> Unit
 ) {

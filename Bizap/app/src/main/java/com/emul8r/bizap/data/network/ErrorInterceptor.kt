@@ -21,7 +21,8 @@ class ErrorInterceptor : Interceptor {
             if (!response.isSuccessful) {
                 val code = response.code
                 Timber.e("🌐 API Error Detected: $code")
-                
+                response.close()  // Prevent OkHttp connection pool leak
+
                 throw when (code) {
                     401 -> ApiException.AuthenticationException("Session expired. Please login again.")
                     403 -> ApiException.PermissionException("Access denied.")
