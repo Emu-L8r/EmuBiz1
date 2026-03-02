@@ -47,3 +47,4 @@ sealed class RevenueDashboardUiState {
     data class Success(val metrics: RevenueMetrics) : RevenueDashboardUiState()
     data class Error(val message: String) : RevenueDashboardUiState()
 }
+

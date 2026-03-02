@@ -56,3 +56,4 @@ data class CustomerAnalyticsSnapshot(
     val snapshotCreatedAtMs: Long = System.currentTimeMillis(),
     val lastUpdatedMs: Long = System.currentTimeMillis()
 )
+

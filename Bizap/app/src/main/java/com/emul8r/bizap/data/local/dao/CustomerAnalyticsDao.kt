@@ -48,3 +48,4 @@ interface CustomerAnalyticsDao {
         val totalRevenue: Double
     )
 }
+

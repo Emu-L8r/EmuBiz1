@@ -32,3 +32,4 @@ data class LineItemSnapshot(
     val unitPrice: Long,           // Cents
     val total: Long                // Cents (unitPrice * quantity)
 )
+

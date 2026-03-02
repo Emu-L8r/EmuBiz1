@@ -11,3 +11,4 @@ data class LineItemForm(
     val quantity: Double = 1.0,
     val unitPrice: Long = 0   // Cents (e.g., 4999 = $49.99)
 )
+

@@ -82,3 +82,4 @@ enum class InvoiceStatus {
     OVERDUE,
     PARTIALLY_PAID
 }
+

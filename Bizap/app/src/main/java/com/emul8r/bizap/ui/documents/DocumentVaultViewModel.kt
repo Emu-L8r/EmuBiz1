@@ -64,19 +64,6 @@ class DocumentVaultViewModel @Inject constructor(
                         }
                     }
                 
-                // --- DEBUGGING DUPLICATES ---
-                val paths = items.map { it.absolutePath }
-                val duplicatePaths = paths.groupingBy { it }.eachCount().filter { it.value > 1 }
-                if (duplicatePaths.isNotEmpty()) {
-                    Timber.d("Duplicate paths found: $duplicatePaths")
-                }
-
-                val ids = items.map { it.id }
-                val duplicateIds = ids.groupingBy { it }.eachCount().filter { it.value > 1 }
-                if (duplicateIds.isNotEmpty()) {
-                    Timber.d("Duplicate IDs found: $duplicateIds")
-                }
-                // ----------------------------
 
                 items.groupBy { monthYearFormat.format(Date(it.invoice.date)) }
             }
@@ -98,3 +85,4 @@ class DocumentVaultViewModel @Inject constructor(
         }
     }
 }
+

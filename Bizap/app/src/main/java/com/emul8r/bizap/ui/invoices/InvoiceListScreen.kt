@@ -116,3 +116,4 @@ fun EmptyState(modifier: Modifier) {
         Text("No invoices yet", style = MaterialTheme.typography.bodyLarge)
     }
 }
+

@@ -33,3 +33,4 @@ class ThemeRepository @Inject constructor(
         dataStore.edit { it[Keys.DARK_MODE] = isDark }
     }
 }
+

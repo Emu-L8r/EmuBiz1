@@ -11,3 +11,4 @@ class IdentifyRiskInvoicesUseCase @Inject constructor(
         return repository.getRiskInvoices(businessId)
     }
 }
+

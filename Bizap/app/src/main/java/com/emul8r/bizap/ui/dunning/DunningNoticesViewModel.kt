@@ -45,3 +45,4 @@ sealed class DunningUiState {
     data class Success(val notices: List<DunningNotice>) : DunningUiState()
     data class Error(val message: String) : DunningUiState()
 }
+

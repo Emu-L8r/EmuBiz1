@@ -14,3 +14,4 @@ class GetRevenueMetricsUseCase @Inject constructor(
         return repository.getRevenueMetrics(businessId)
     }
 }
+

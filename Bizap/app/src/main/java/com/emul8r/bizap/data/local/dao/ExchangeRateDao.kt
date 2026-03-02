@@ -1,4 +1,4 @@
-package com.emul8r.bizap.data.local
+package com.emul8r.bizap.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -24,3 +24,4 @@ interface ExchangeRateDao {
     @Query("DELETE FROM exchange_rates WHERE lastUpdated < :timestamp")
     suspend fun deleteOldRates(timestamp: Long)
 }
+

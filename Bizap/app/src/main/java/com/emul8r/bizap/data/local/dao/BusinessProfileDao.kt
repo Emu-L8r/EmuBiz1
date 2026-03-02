@@ -1,4 +1,4 @@
-package com.emul8r.bizap.data.local
+package com.emul8r.bizap.data.local.dao
 
 import androidx.room.*
 import com.emul8r.bizap.data.local.entities.BusinessProfileEntity
@@ -18,3 +18,4 @@ interface BusinessProfileDao {
     @Delete
     suspend fun deleteProfile(profile: BusinessProfileEntity)
 }
+

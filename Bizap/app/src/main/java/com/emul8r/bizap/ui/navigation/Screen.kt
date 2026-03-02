@@ -49,3 +49,4 @@ sealed interface Screen {
     @Serializable
     object PrefilledItems : Screen
 }
+

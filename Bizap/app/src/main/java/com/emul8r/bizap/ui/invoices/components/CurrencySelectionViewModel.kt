@@ -25,3 +25,4 @@ class CurrencySelectionViewModel @Inject constructor(
         return currencyRepository.getCurrencyByCode(code).first()?.symbol ?: "$"
     }
 }
+

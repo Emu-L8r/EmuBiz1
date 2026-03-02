@@ -1,8 +1,8 @@
 package com.emul8r.bizap.data.repository
 
-import com.emul8r.bizap.data.local.dao.CustomerAnalyticsDao
-import com.emul8r.bizap.data.local.InvoiceDao
-import com.emul8r.bizap.data.local.CustomerDao
+import com.emul8r.bizap.data.local.dao.dao.CustomerAnalyticsDao
+import com.emul8r.bizap.data.local.dao.InvoiceDao
+import com.emul8r.bizap.data.local.dao.CustomerDao
 import com.emul8r.bizap.data.local.entities.CustomerAnalyticsSnapshot
 import com.emul8r.bizap.domain.customer.model.*
 import com.emul8r.bizap.domain.customer.repository.CustomerAnalyticsRepository
@@ -123,3 +123,4 @@ class CustomerAnalyticsRepositoryImpl @Inject constructor(
         purchaseVelocity = purchaseVelocity
     )
 }
+

@@ -104,3 +104,4 @@ fun BrandingSection(viewModel: SettingsViewModel) {
         }
     }
 }
+

@@ -49,3 +49,4 @@ data class InvoiceAnalyticsSnapshot(
     val snapshotCreatedAtMs: Long = System.currentTimeMillis()
 )
 
+

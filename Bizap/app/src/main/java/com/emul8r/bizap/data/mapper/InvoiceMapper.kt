@@ -87,3 +87,4 @@ fun LineItemEntity.toDomain(): LineItem {
         unitPrice = this.unitPrice          // Already in cents
     )
 }
+

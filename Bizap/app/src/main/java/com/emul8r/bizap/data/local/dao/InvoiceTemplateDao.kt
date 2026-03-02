@@ -36,3 +36,4 @@ interface InvoiceTemplateDao {
     suspend fun getTemplatesByBusiness(businessProfileId: Long): List<InvoiceTemplate>
 }
 
+

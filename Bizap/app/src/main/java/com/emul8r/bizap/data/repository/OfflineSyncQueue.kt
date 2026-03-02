@@ -1,6 +1,6 @@
 package com.emul8r.bizap.data.repository
 
-import com.emul8r.bizap.data.local.PendingOperationDao
+import com.emul8r.bizap.data.local.dao.PendingOperationDao
 import com.emul8r.bizap.data.local.entities.PendingOperation
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -57,3 +57,4 @@ class OfflineSyncQueue @Inject constructor(
         // Logic to be implemented in DAO if needed, or iterate
     }
 }
+

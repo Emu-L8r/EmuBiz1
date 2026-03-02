@@ -154,3 +154,4 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         Text("No documents found", style = MaterialTheme.typography.bodyLarge)
     }
 }
+

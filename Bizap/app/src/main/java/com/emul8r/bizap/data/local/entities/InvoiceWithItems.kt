@@ -16,3 +16,4 @@ data class InvoiceWithItems(
     val subtotal: Long
         get() = items.sumOf { (it.unitPrice * it.quantity).toLong() }
 }
+

@@ -65,3 +65,4 @@ class PdfPrintAdapter(private val file: File) : PrintDocumentAdapter() {
         }
     }
 }
+

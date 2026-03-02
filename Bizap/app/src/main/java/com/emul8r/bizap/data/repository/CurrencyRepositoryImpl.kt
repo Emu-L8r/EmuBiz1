@@ -1,7 +1,7 @@
 package com.emul8r.bizap.data.repository
 
-import com.emul8r.bizap.data.local.CurrencyDao
-import com.emul8r.bizap.data.local.ExchangeRateDao
+import com.emul8r.bizap.data.local.dao.CurrencyDao
+import com.emul8r.bizap.data.local.dao.ExchangeRateDao
 import com.emul8r.bizap.data.local.entities.CurrencyEntity
 import com.emul8r.bizap.data.local.entities.ExchangeRateEntity
 import com.emul8r.bizap.domain.model.Currency
@@ -62,3 +62,4 @@ class CurrencyRepositoryImpl @Inject constructor(
             isSystemDefault = this.isSystemDefault
         )
 }
+

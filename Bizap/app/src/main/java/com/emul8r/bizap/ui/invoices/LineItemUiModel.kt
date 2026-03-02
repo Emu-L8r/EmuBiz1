@@ -9,3 +9,4 @@ data class LineItemUiModel(
 ) {
     val stableId: String = "$type-$clientName-$date-${counter.toString().padStart(3, '0')}"
 }
+

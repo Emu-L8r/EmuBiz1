@@ -18,3 +18,4 @@ class ConflictResolver {
 }
 
 enum class ConflictWinner { LOCAL, SERVER }
+

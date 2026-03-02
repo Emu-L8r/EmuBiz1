@@ -15,3 +15,4 @@ interface BusinessProfileRepository {
     suspend fun updateLogoPath(path: String) // Restored for UI compatibility
     suspend fun deleteProfile(id: Long)
 }
+

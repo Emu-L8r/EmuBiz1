@@ -11,3 +11,4 @@ data class InvoiceWithLineItems(
     )
     val items: List<LineItemEntity>
 )
+

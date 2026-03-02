@@ -11,3 +11,4 @@ class GenerateDunningNoticesUseCase @Inject constructor(
         return repository.generateDunningNotices(businessId)
     }
 }
+

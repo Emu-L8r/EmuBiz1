@@ -56,3 +56,4 @@ data class InvoiceEntity(
     val templateSnapshot: String? = null,        // JSON snapshot of template at creation
     val customFieldValues: String? = null        // JSON map of custom field values {fieldId: value}
 )
+

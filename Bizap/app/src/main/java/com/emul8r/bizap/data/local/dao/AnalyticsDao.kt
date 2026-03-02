@@ -70,3 +70,4 @@ interface AnalyticsDao {
     fun observeBusinessHealth(businessId: Long): Flow<BusinessHealthMetrics?>
 }
 
+

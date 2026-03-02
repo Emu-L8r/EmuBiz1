@@ -73,3 +73,4 @@ interface InvoicePaymentDao {
         val outstanding: Double
     )
 }
+

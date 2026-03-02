@@ -45,3 +45,4 @@ sealed class RiskUiState {
     data class Success(val riskInvoices: List<InvoicePaymentStatus>) : RiskUiState()
     data class Error(val message: String) : RiskUiState()
 }
+

@@ -8,3 +8,4 @@ import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
 interface RevenueRepository {
     suspend fun getRevenueMetrics(businessProfileId: Long): RevenueMetrics
 }
+

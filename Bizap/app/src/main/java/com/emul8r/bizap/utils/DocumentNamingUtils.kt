@@ -13,3 +13,4 @@ object DocumentNamingUtils {
         return "${prefix}_${sanitizedCustomerName}_${formattedDate}_$paddedCounter.pdf"
     }
 }
+

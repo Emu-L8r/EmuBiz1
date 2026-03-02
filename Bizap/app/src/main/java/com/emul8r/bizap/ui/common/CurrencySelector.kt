@@ -84,3 +84,4 @@ fun CurrencyDisplayWithAmount(
         modifier = modifier
     )
 }
+

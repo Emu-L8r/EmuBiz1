@@ -1,4 +1,4 @@
-package com.emul8r.bizap.data.local
+package com.emul8r.bizap.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -28,3 +28,4 @@ interface CustomerDao {
     @Query("DELETE FROM customers WHERE id = :id")
     suspend fun deleteCustomer(id: Long)
 }
+

@@ -37,3 +37,4 @@ data class GeneratedDocumentEntity(
     val status: DocumentStatus = DocumentStatus.ARCHIVED,
     val statusUpdatedAt: Long = System.currentTimeMillis()
 )
+

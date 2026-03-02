@@ -69,3 +69,4 @@ class CustomerDetailViewModel @Inject constructor(
         }
     }
 }
+

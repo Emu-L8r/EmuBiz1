@@ -49,3 +49,4 @@ object NetworkModule {
         return retrofit.create(SyncService::class.java)
     }
 }
+

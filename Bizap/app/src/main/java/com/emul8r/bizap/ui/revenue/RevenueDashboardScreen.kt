@@ -94,3 +94,4 @@ private fun RevenueSummaryCard(label: String, amount: Double, modifier: Modifier
         }
     }
 }
+

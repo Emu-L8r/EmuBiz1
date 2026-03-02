@@ -111,3 +111,4 @@ data class CashFlowForecast(
     val cumulativeCashFlow: Double,
     val confidence: Double // 0.0 to 1.0
 )
+

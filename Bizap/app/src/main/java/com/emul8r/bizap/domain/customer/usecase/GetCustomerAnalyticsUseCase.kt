@@ -11,3 +11,4 @@ class GetCustomerAnalyticsUseCase @Inject constructor(
         return repository.getAnalyticsSummary(businessId)
     }
 }
+

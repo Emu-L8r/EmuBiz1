@@ -174,3 +174,4 @@ private fun InfoRow(icon: ImageVector, text: String, modifier: Modifier = Modifi
         Text(text, style = MaterialTheme.typography.bodyLarge)
     }
 }
+

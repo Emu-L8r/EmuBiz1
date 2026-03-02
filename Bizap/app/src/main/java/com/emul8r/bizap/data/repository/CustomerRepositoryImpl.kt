@@ -1,6 +1,6 @@
 package com.emul8r.bizap.data.repository
 
-import com.emul8r.bizap.data.local.CustomerDao
+import com.emul8r.bizap.data.local.dao.CustomerDao
 import com.emul8r.bizap.data.mapper.toDomain
 import com.emul8r.bizap.data.mapper.toEntity
 import com.emul8r.bizap.domain.model.Customer
@@ -33,3 +33,4 @@ class CustomerRepositoryImpl @Inject constructor(
         customerDao.deleteCustomer(id)
     }
 }
+

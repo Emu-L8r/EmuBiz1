@@ -1,4 +1,4 @@
-package com.emul8r.bizap.data.local
+package com.emul8r.bizap.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -73,3 +73,4 @@ interface InvoiceDao {
     """)
     fun getInvoiceGroupWithVersions(invoiceYear: Int, invoiceSequence: Int, businessId: Long): Flow<List<InvoiceEntity>>
 }
+

@@ -90,3 +90,4 @@ abstract class RepositoryModule {
         impl: CustomerAnalyticsRepositoryImpl
     ): CustomerAnalyticsRepository
 }
+

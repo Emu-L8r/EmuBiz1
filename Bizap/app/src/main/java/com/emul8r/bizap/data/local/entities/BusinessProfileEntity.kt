@@ -23,3 +23,4 @@ data class BusinessProfileEntity(
     val isTaxRegistered: Boolean = false,        // Default: business is NOT tax registered
     val defaultTaxRate: Float = 0.10f            // Default: 10% tax rate if registered
 )
+

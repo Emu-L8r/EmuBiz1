@@ -1,6 +1,6 @@
 package com.emul8r.bizap.data.repository
 
-import com.emul8r.bizap.data.local.InvoiceDao
+import com.emul8r.bizap.data.local.dao.InvoiceDao
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.mapper.toDomain
 import com.emul8r.bizap.data.mapper.toEntity
@@ -108,3 +108,4 @@ class InvoiceRepositoryImpl @Inject constructor(
         invoiceDao.deleteInvoiceWithItems(id)
     }
 }
+

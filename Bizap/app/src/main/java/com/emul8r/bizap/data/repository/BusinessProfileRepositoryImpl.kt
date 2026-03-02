@@ -4,7 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
-import com.emul8r.bizap.data.local.BusinessProfileDao
+import com.emul8r.bizap.data.local.dao.BusinessProfileDao
 import com.emul8r.bizap.data.local.entities.BusinessProfileEntity
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
@@ -107,3 +107,4 @@ class BusinessProfileRepositoryImpl @Inject constructor(
         defaultTaxRate = defaultTaxRate
     )
 }
+

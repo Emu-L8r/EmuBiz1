@@ -4,7 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.emul8r.bizap.data.local.entities.*
-import com.emul8r.bizap.data.local.dao.*
+import com.emul8r.bizap.data.local.dao.dao.*
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 
 @Database(
@@ -48,5 +48,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun invoiceTemplateDao(): InvoiceTemplateDao
     abstract fun invoiceCustomFieldDao(): InvoiceCustomFieldDao
 }
+
 
 

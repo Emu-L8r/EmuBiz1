@@ -1,4 +1,4 @@
-package com.emul8r.bizap.data.local
+package com.emul8r.bizap.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -35,3 +35,4 @@ interface PendingOperationDao {
     @Query("UPDATE pending_operations SET status = :status WHERE id = :id")
     suspend fun updateStatus(id: String, status: String)
 }
+

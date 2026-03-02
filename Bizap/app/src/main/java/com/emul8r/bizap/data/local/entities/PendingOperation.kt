@@ -31,3 +31,4 @@ data class PendingOperation(
     fun isFailed(): Boolean = status == "FAILED"
     fun canRetry(): Boolean = retryCount < maxRetries
 }
+

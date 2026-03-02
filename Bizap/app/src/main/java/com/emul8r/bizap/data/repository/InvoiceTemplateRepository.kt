@@ -1,7 +1,7 @@
 package com.emul8r.bizap.data.repository
 
-import com.emul8r.bizap.data.local.dao.InvoiceTemplateDao
-import com.emul8r.bizap.data.local.dao.InvoiceCustomFieldDao
+import com.emul8r.bizap.data.local.dao.dao.InvoiceTemplateDao
+import com.emul8r.bizap.data.local.dao.dao.InvoiceCustomFieldDao
 import com.emul8r.bizap.data.local.entities.InvoiceTemplate
 import com.emul8r.bizap.data.local.entities.InvoiceCustomField
 import javax.inject.Inject
@@ -114,3 +114,4 @@ class InvoiceTemplateRepository @Inject constructor(
         }
     }
 }
+

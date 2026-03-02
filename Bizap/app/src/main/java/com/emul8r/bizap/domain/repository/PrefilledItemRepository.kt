@@ -8,3 +8,4 @@ interface PrefilledItemRepository {
     suspend fun insertItem(item: PrefilledItemEntity)
     suspend fun deleteItem(itemId: Long)
 }
+

@@ -51,3 +51,4 @@ class GenerateAndSaveInvoiceUseCase @Inject constructor(
         }
     }
 }
+

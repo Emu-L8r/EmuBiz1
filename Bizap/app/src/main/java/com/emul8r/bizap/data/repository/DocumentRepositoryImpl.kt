@@ -1,6 +1,6 @@
 package com.emul8r.bizap.data.repository
 
-import com.emul8r.bizap.data.local.DocumentDao
+import com.emul8r.bizap.data.local.dao.DocumentDao
 import com.emul8r.bizap.data.local.entities.DocumentStatus
 import com.emul8r.bizap.data.local.entities.GeneratedDocumentEntity
 import com.emul8r.bizap.domain.repository.DocumentRepository
@@ -18,3 +18,4 @@ class DocumentRepositoryImpl @Inject constructor(
     override suspend fun deleteDocument(documentId: Long) = dao.deleteDocument(documentId)
     override suspend fun updateDocumentStatus(id: Long, status: DocumentStatus) = dao.updateDocumentStatus(id, status)
 }
+

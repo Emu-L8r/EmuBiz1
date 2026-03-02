@@ -9,3 +9,4 @@ data class PrefilledItemEntity(
     val description: String,
     val unitPrice: Long                 // Cents (e.g., 4999 = $49.99)
 )
+

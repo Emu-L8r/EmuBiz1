@@ -11,3 +11,4 @@ data class CurrencyEntity(
     val isSystemDefault: Boolean = false,
     val isEnabled: Boolean = true // Added for Stage 2B
 )
+

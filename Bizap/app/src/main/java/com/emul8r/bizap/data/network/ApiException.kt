@@ -13,3 +13,4 @@ sealed class ApiException(message: String) : Exception(message) {
     class NetworkException(message: String) : ApiException(message)
     class UnknownException(message: String) : ApiException(message)
 }
+

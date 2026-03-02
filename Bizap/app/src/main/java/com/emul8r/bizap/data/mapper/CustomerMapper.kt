@@ -32,3 +32,4 @@ fun CustomerEntity.toDomain(): Customer {
         updatedAt = this.updatedAt
     )
 }
+

@@ -17,3 +17,4 @@ data class SyncResponse(
     val syncedIds: List<String>,
     val serverTimestamp: Long
 )
+

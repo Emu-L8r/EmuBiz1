@@ -30,3 +30,4 @@ interface InvoiceCustomFieldDao {
     suspend fun getAllFieldsByTemplate(templateId: String): List<InvoiceCustomField>
 }
 
+

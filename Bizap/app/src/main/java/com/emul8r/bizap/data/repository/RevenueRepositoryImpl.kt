@@ -1,6 +1,6 @@
 package com.emul8r.bizap.data.repository
 
-import com.emul8r.bizap.data.local.dao.AnalyticsDao
+import com.emul8r.bizap.data.local.dao.dao.AnalyticsDao
 import com.emul8r.bizap.data.local.entities.DailyRevenueSnapshot
 import com.emul8r.bizap.data.util.DataAccessException
 import com.emul8r.bizap.domain.revenue.model.DailyRevenuePoint
@@ -169,3 +169,4 @@ class RevenueRepositoryImpl @Inject constructor(
         }
     }
 }
+

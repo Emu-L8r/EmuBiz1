@@ -11,3 +11,4 @@ class ForecastCashFlowUseCase @Inject constructor(
         return repository.forecastCashFlow(businessId, days)
     }
 }
+

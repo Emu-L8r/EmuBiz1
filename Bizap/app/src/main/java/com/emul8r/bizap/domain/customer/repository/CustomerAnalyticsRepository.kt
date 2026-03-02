@@ -11,3 +11,4 @@ interface CustomerAnalyticsRepository {
     suspend fun getCustomerProfile(customerId: Long): CustomerAnalyticsProfile
     suspend fun recalculateChurnRisks(businessProfileId: Long)
 }
+

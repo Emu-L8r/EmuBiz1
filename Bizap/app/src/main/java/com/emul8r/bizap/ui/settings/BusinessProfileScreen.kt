@@ -347,3 +347,4 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
         }
     }
 }
+

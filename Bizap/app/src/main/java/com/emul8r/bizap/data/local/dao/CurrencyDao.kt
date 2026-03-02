@@ -1,4 +1,4 @@
-package com.emul8r.bizap.data.local
+package com.emul8r.bizap.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -24,3 +24,4 @@ interface CurrencyDao {
     @Query("SELECT * FROM currencies")
     fun getAllCurrencies(): Flow<List<CurrencyEntity>>
 }
+

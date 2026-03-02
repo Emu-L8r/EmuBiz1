@@ -1,7 +1,7 @@
 package com.emul8r.bizap.data.repository
 
-import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
-import com.emul8r.bizap.data.local.InvoiceDao
+import com.emul8r.bizap.data.local.dao.dao.InvoicePaymentDao
+import com.emul8r.bizap.data.local.dao.InvoiceDao
 import com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot
 import com.emul8r.bizap.domain.invoice.model.*
 import com.emul8r.bizap.domain.invoice.repository.PaymentAnalyticsRepository
@@ -119,3 +119,4 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
         paymentHistory = emptyList()
     )
 }
+

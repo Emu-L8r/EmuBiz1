@@ -20,3 +20,4 @@ interface InvoiceRepository {
     suspend fun updatePdfPath(invoiceId: Long, pdfPath: String)
     suspend fun deleteInvoice(id: Long)
 }
+

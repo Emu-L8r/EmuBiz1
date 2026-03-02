@@ -4,3 +4,4 @@ data class ThemeConfig(
     val seedColorHex: String = "#6750A4", // Default M3 Purple
     val isDarkMode: Boolean = false
 )
+

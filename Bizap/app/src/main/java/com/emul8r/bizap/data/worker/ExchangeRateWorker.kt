@@ -5,7 +5,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.emul8r.bizap.BuildConfig
-import com.emul8r.bizap.data.local.ExchangeRateDao
+import com.emul8r.bizap.data.local.dao.ExchangeRateDao
 import com.emul8r.bizap.data.local.entities.ExchangeRateEntity
 import com.emul8r.bizap.data.remote.ExchangeRateService
 import dagger.assisted.Assisted
@@ -62,3 +62,4 @@ class ExchangeRateWorker @AssistedInject constructor(
         }
     }
 }
+

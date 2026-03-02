@@ -138,3 +138,4 @@ class InvoicePdfViewModel @Inject constructor(
         // This is a placeholder for the full implementation.
     }
 }
+

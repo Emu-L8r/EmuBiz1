@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.emul8r.bizap.data.local.PendingOperationDao
+import com.emul8r.bizap.data.local.dao.PendingOperationDao
 import com.emul8r.bizap.data.repository.OfflineSyncQueue
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -44,3 +44,4 @@ class SyncWorker @AssistedInject constructor(
         return if (failures > 0) Result.retry() else Result.success()
     }
 }
+

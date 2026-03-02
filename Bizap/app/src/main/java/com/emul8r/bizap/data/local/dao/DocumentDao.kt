@@ -1,4 +1,4 @@
-package com.emul8r.bizap.data.local
+package com.emul8r.bizap.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -28,3 +28,4 @@ interface DocumentDao {
     @Query("UPDATE generated_documents SET status = :status WHERE id = :id")
     suspend fun updateDocumentStatus(id: Long, status: DocumentStatus)
 }
+

@@ -11,3 +11,4 @@ data class CustomerWithInvoices(
     )
     val invoices: List<InvoiceEntity>
 )
+

@@ -14,3 +14,4 @@ class GetPaymentAnalyticsUseCase @Inject constructor(
         return repository.getPaymentAnalytics(businessId)
     }
 }
+

@@ -48,3 +48,4 @@ class BizapApplication : Application(), Configuration.Provider {
         )
     }
 }
+

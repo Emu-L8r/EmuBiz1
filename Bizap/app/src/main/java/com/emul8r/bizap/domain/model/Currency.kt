@@ -6,3 +6,4 @@ data class Currency(
     val name: String,        // Full name (e.g., "Australian Dollar")
     val isSystemDefault: Boolean = false
 )
+

@@ -14,3 +14,4 @@ interface CurrencyRepository {
     suspend fun convertAmount(amount: Double, fromCurrency: String, toCurrency: String): Double?
     suspend fun getLastRateUpdate(): Long?
 }
+

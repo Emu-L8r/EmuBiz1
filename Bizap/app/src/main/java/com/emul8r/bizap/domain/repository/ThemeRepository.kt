@@ -8,3 +8,4 @@ interface ThemeRepository {
     suspend fun updateSeedColor(hex: String)
     suspend fun updateDarkMode(isDark: Boolean)
 }
+

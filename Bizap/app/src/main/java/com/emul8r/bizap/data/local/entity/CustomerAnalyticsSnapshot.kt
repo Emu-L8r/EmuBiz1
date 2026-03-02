@@ -47,3 +47,4 @@ data class CustomerAnalyticsSnapshot(
     val snapshotCreatedAtMs: Long = System.currentTimeMillis()
 )
 
+

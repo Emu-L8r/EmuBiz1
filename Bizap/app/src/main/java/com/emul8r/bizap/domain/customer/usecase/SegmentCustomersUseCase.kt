@@ -10,3 +10,4 @@ class SegmentCustomersUseCase @Inject constructor(
         repository.recalculateChurnRisks(businessId)
     }
 }
+

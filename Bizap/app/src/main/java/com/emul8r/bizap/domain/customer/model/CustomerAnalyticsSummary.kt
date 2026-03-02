@@ -61,3 +61,4 @@ data class ChurnRiskIndicator(
     val isPredictedToChurn: Boolean,
     val riskFactors: List<String>
 )
+

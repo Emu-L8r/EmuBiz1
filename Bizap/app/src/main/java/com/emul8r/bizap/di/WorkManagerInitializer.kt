@@ -1,4 +1,4 @@
-﻿package com.emul8r.bizap.di
+package com.emul8r.bizap.di
 
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
@@ -50,3 +50,4 @@ class WorkManagerInitializer : Initializer<WorkManager> {
 
     override fun dependencies(): List<Class<out Initializer<*>>> = emptyList()
 }
+

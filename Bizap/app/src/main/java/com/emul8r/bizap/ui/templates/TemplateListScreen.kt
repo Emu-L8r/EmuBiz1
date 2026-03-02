@@ -123,3 +123,4 @@ private fun ErrorState(error: String?, onRetry: () -> Unit, modifier: Modifier =
         Button(onClick = onRetry) { Text("Retry") }
     }
 }
+

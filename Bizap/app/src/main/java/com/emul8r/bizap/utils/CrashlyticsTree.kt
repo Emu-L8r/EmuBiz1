@@ -18,3 +18,4 @@ class CrashlyticsTree : Timber.Tree() {
         }
     }
 }
+

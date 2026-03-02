@@ -101,3 +101,4 @@ class InvoiceTemplateViewModel @Inject constructor(
         data class NavigateToEdit(val templateId: String) : NavigationEvent()
     }
 }
+

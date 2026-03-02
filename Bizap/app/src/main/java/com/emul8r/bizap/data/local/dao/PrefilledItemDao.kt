@@ -1,4 +1,4 @@
-package com.emul8r.bizap.data.local
+package com.emul8r.bizap.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -18,3 +18,4 @@ interface PrefilledItemDao {
     @Query("DELETE FROM prefilled_items WHERE id = :itemId")
     suspend fun deleteItem(itemId: Long)
 }
+

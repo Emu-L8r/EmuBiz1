@@ -10,3 +10,4 @@ data class ExchangeRateEntity(
     val rate: Double,                         // e.g., 0.65
     val lastUpdated: Long = System.currentTimeMillis()
 )
+

@@ -25,3 +25,4 @@ data class RevenueByCurrency(
     val totalAmount: Long,              // In cents
     val percentageOfTotal: Double
 )
+

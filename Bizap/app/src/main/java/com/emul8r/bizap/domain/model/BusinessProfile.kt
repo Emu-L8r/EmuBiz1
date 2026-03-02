@@ -18,3 +18,4 @@ data class BusinessProfile(
     val isTaxRegistered: Boolean = false,        // Is business registered for VAT/GST/Sales Tax?
     val defaultTaxRate: Float = 0.10f            // Default tax rate (10%)
 )
+

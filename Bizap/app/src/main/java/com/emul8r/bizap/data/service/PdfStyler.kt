@@ -141,3 +141,4 @@ data class CompanyInfo(
     val bankDetails: String?
 )
 
+

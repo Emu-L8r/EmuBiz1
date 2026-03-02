@@ -48,3 +48,4 @@ private fun DialogOption(icon: ImageVector, text: String, onClick: () -> Unit) {
         modifier = Modifier.clickable(onClick = onClick)
     )
 }
+
