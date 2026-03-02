@@ -7,10 +7,10 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -150,7 +150,7 @@ class EditInvoiceViewModel @Inject constructor(
             val state = uiState.first()
             if (state is EditInvoiceUiState.Success) {
                 try {
-                    val businessProfile = businessProfileRepository.profile.first()
+                    val businessProfile = businessProfileRepository.activeProfile.first()
                     val invoice = state.invoice
 
                     // Build snapshot for PDF generation
@@ -178,9 +178,10 @@ class EditInvoiceViewModel @Inject constructor(
                         businessName = businessProfile.businessName,
                         businessAbn = businessProfile.abn,
                         businessEmail = businessProfile.email,
-                        businessPhone = businessProfile.phone,    // FIXED
-                        businessAddress = businessProfile.address, // FIXED
-                        logoBase64 = businessProfile.logoBase64
+                        businessPhone = businessProfile.phone,
+                        businessAddress = businessProfile.address,
+                        logoBase64 = businessProfile.logoBase64,
+                        currencyCode = invoice.currencyCode
                     )
 
                     val pdfFile = invoicePdfService.generateInvoice(snapshot, isQuote = false)

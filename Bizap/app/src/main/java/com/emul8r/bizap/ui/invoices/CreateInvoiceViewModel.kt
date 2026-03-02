@@ -3,11 +3,11 @@ package com.emul8r.bizap.ui.invoices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.BuildConfig
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.model.Currency
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
@@ -44,7 +44,6 @@ class CreateInvoiceViewModel @Inject constructor(
     private val generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase
 ) : ViewModel() {
 
-    private val TAG = "CreateInvoiceViewModel"
     private val _uiState = MutableStateFlow(CreateInvoiceUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -70,59 +69,32 @@ class CreateInvoiceViewModel @Inject constructor(
         _uiState.update { it.copy(selectedCurrencyCode = code) }
     }
 
-    /**
-     * PRAGMATIC DEBUG FIX: Explicitly load test data on demand.
-     */
     fun loadDebugTestData() {
         if (!BuildConfig.DEBUG) return
-
-        Timber.d("🐛 DEBUG BUTTON CLICKED: Loading test data...")
-        
         viewModelScope.launch {
             try {
                 val customers = customerRepository.getAllCustomers().first()
-                val targetCustomer = customers.firstOrNull() ?: throw Exception("No customers in DB. Seed first.")
+                val targetCustomer = customers.firstOrNull() ?: throw Exception("No customers in DB")
 
                 _uiState.update { state ->
                     state.copy(
                         selectedCustomer = targetCustomer,
                         header = TestDataProvider.getDebugInitialHeader(),
-                        subheader = TestDataProvider.getDebugInitialSubheader(),
-                        notes = TestDataProvider.getDebugInitialNotes(),
-                        footer = TestDataProvider.getDebugInitialFooter(),
                         items = TestDataProvider.getDebugLineItems()
                     )
                 }
-                Timber.d("✅ DEBUG DATA LOADED for ${targetCustomer.name}")
             } catch (e: Exception) {
-                Timber.e(e, "❌ Debug data load failed: ${e.message}")
-                _uiState.update { it.copy(error = "Debug Load Failed: ${e.message}") }
+                Timber.e(e, "Debug Load Failed")
             }
         }
     }
 
-    fun onHeaderChange(header: String) {
-        _uiState.update { it.copy(header = header) }
-    }
+    fun onHeaderChange(header: String) = _uiState.update { it.copy(header = header) }
+    fun onSubheaderChange(subheader: String) = _uiState.update { it.copy(subheader = subheader) }
+    fun onNotesChange(notes: String) = _uiState.update { it.copy(notes = notes) }
+    fun onFooterChange(footer: String) = _uiState.update { it.copy(footer = footer) }
 
-    fun onSubheaderChange(subheader: String) {
-        _uiState.update { it.copy(subheader = subheader) }
-    }
-
-    fun onNotesChange(notes: String) {
-        _uiState.update { it.copy(notes = notes) }
-    }
-
-    fun onFooterChange(footer: String) {
-        _uiState.update { it.copy(footer = footer) }
-    }
-
-    fun addLineItem() {
-        _uiState.update { 
-            it.copy(items = it.items + LineItemForm())
-        }
-    }
-
+    fun addLineItem() = _uiState.update { it.copy(items = it.items + LineItemForm()) }
     fun removeLineItem(id: Long?) = _uiState.update { state -> state.copy(items = state.items.filter { it.id != id }) }
     
     fun updateLineItem(id: Long?, description: String, quantity: Double, unitPrice: Long) {
@@ -133,12 +105,14 @@ class CreateInvoiceViewModel @Inject constructor(
         }
     }
 
-    fun selectCustomer(customer: Customer) {
-        _uiState.update { it.copy(selectedCustomer = customer) }
-    }
+    fun selectCustomer(customer: Customer) = _uiState.update { it.copy(selectedCustomer = customer) }
 
     fun addPhoto(uri: String) {
         _uiState.update { it.copy(photoUris = it.photoUris + uri) }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
     }
 
     fun onSaveClicked() {
@@ -147,92 +121,31 @@ class CreateInvoiceViewModel @Inject constructor(
             try {
                 val state = _uiState.value
                 val customer = state.selectedCustomer ?: throw Exception("Please select a customer")
-
-                val businessProfile = businessProfileRepository.profile.first()
+                val businessProfile = businessProfileRepository.activeProfile.first()
                 val lineItems = state.items.map { it.toDomain() }
-                // Calculate subtotal in cents: sum of (unitPrice * quantity) for each item
-                val subtotal: Long = lineItems.sumOf { (it.unitPrice * it.quantity).toLong() }
-
-                // TAX REGISTRATION TOGGLE: Only apply tax if business is registered
-                val taxRate: Double = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
-                val taxAmount: Long = if (businessProfile.isTaxRegistered) (subtotal.toDouble() * taxRate).toLong() else 0
-                val createdAt = System.currentTimeMillis()
-                val dueDate = createdAt + (30L * 24 * 60 * 60 * 1000)
+                val subtotal = lineItems.sumOf { (it.unitPrice * it.quantity).toLong() }
+                val taxRate = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
+                val taxAmount = (subtotal * taxRate).toLong()
 
                 val invoice = Invoice(
                     customerId = customer.id,
                     customerName = customer.name,
                     customerAddress = customer.address ?: "",
-                    customerEmail = customer.email,
-                    date = createdAt,
-                    dueDate = dueDate,
+                    date = System.currentTimeMillis(),
                     totalAmount = subtotal + taxAmount,
                     items = lineItems,
                     isQuote = false,
                     status = InvoiceStatus.DRAFT,
-                    header = state.header.ifBlank { null },
-                    subheader = state.subheader.ifBlank { null },
-                    notes = state.notes.ifBlank { null },
-                    footer = state.footer.ifBlank { null },
-                    photoUris = state.photoUris,
                     taxRate = taxRate,
                     taxAmount = taxAmount,
-                    companyLogoPath = businessProfile.logoBase64,
-                    updatedAt = createdAt,
                     currencyCode = state.selectedCurrencyCode
                 )
 
                 val invoiceId = invoiceRepository.saveInvoice(invoice)
-                val invoiceWithId = invoice.copy(id = invoiceId)
-
-                val result = generateAndSaveInvoiceUseCase(
-                    invoice = invoiceWithId,
-                    snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
-                        invoiceId = invoiceWithId.id,
-                        invoiceNumber = invoiceWithId.getFormattedInvoiceNumber(),
-                        customerName = invoiceWithId.customerName,
-                        customerAddress = invoiceWithId.customerAddress,
-                        customerEmail = invoiceWithId.customerEmail,
-                        date = invoiceWithId.date,
-                        dueDate = invoiceWithId.dueDate,
-                        items = invoiceWithId.items.map {
-                            val itemTotal = (it.unitPrice * it.quantity).toLong()  // Cents
-                            com.emul8r.bizap.domain.model.LineItemSnapshot(
-                                description = it.description,
-                                quantity = it.quantity,
-                                unitPrice = it.unitPrice,
-                                total = itemTotal
-                            )
-                        },
-                        subtotal = subtotal,
-                        taxRate = taxRate,
-                        taxAmount = taxAmount,
-                        totalAmount = invoiceWithId.totalAmount,
-                        businessName = businessProfile.businessName,
-                        businessAbn = businessProfile.abn,
-                        businessEmail = businessProfile.email,
-                        businessPhone = businessProfile.phone,
-                        businessAddress = businessProfile.address,
-                        logoBase64 = businessProfile.logoBase64,
-                        currencyCode = state.selectedCurrencyCode
-                    ),
-                    isQuote = false,
-                    overwriteExisting = true
-                )
-
-                if (result.isSuccess) {
-                    _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
-                } else {
-                    throw result.exceptionOrNull() ?: Exception("Failed to generate PDF")
-                }
-
+                _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message, isSaving = false) }
             }
         }
-    }
-
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
     }
 }

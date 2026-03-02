@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.model.BusinessProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +33,7 @@ class SettingsViewModel @Inject constructor(
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
 
-    val profileState: StateFlow<BusinessProfile> = repository.profile
+    val profileState: StateFlow<BusinessProfile> = repository.activeProfile
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -52,20 +52,17 @@ class SettingsViewModel @Inject constructor(
     fun saveLogo(uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // 1. Create a permanent internal destination
                 val brandingDir = File(application.filesDir, "branding")
                 if (!brandingDir.exists()) brandingDir.mkdirs()
 
                 val localFile = File(brandingDir, "logo_main.png")
 
-                // 2. Open Stream from the "Untrusted" URI and Copy
                 application.contentResolver.openInputStream(uri)?.use { input ->
                     localFile.outputStream().use { output ->
                         input.copyTo(output)
                     }
                 }
 
-                // 3. Update the Repository with the LOCAL path
                 repository.updateLogoPath(localFile.absolutePath)
 
                 _uiEvent.emit(UiEvent.ShowSnackbar("Logo updated successfully"))

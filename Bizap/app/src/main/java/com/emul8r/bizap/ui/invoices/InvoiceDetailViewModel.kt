@@ -3,13 +3,13 @@ package com.emul8r.bizap.ui.invoices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.DocumentManager
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.data.service.PrintService
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.model.LineItemSnapshot
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
 import com.emul8r.bizap.utils.DocumentNamingUtils
@@ -191,7 +191,7 @@ class InvoiceDetailViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val businessProfile = businessProfileRepository.profile.first()
+                val businessProfile = businessProfileRepository.activeProfile.first()
                 val snapshot = buildSnapshot(invoiceData, businessProfile)
 
                 val quoteResult = generateAndSaveInvoiceUseCase(
@@ -268,7 +268,7 @@ class InvoiceDetailViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val businessProfile = businessProfileRepository.profile.first()
+                val businessProfile = businessProfileRepository.activeProfile.first()
                 val snapshot = buildSnapshot(invoiceData, businessProfile)
                 
                 val result = generateAndSaveInvoiceUseCase(

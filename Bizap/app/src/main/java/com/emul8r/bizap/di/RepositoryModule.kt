@@ -18,72 +18,72 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindBusinessProfileRepository(
-        impl: BusinessProfileRepositoryImpl
-    ): BusinessProfileRepository
+        impl: com.emul8r.bizap.data.repository.BusinessProfileRepositoryImpl
+    ): com.emul8r.bizap.domain.repository.BusinessProfileRepository
 
     @Binds
     @Singleton
     abstract fun bindInvoiceRepository(
-        impl: InvoiceRepositoryImpl
-    ): InvoiceRepository
+        impl: com.emul8r.bizap.data.repository.InvoiceRepositoryImpl
+    ): com.emul8r.bizap.domain.repository.InvoiceRepository
 
     @Binds
     @Singleton
     abstract fun bindCustomerRepository(
-        impl: CustomerRepositoryImpl
-    ): CustomerRepository
+        impl: com.emul8r.bizap.data.repository.CustomerRepositoryImpl
+    ): com.emul8r.bizap.domain.repository.CustomerRepository
 
     @Binds
     @Singleton
     abstract fun bindThemeRepository(
-        impl: ThemeRepositoryImpl
-    ): ThemeRepository
+        impl: com.emul8r.bizap.data.repository.ThemeRepositoryImpl
+    ): com.emul8r.bizap.domain.repository.ThemeRepository
 
     @Binds
     @Singleton
     abstract fun bindDocumentRepository(
-        impl: DocumentRepositoryImpl
-    ): DocumentRepository
+        impl: com.emul8r.bizap.data.repository.DocumentRepositoryImpl
+    ): com.emul8r.bizap.domain.repository.DocumentRepository
 
     @Binds
     @Singleton
     abstract fun bindPrefilledItemRepository(
-        impl: PrefilledItemRepositoryImpl
-    ): PrefilledItemRepository
+        impl: com.emul8r.bizap.data.repository.PrefilledItemRepositoryImpl
+    ): com.emul8r.bizap.domain.repository.PrefilledItemRepository
 
     @Binds
     @Singleton
     abstract fun bindCurrencyRepository(
-        impl: CurrencyRepositoryImpl
-    ): CurrencyRepository
+        impl: com.emul8r.bizap.data.repository.CurrencyRepositoryImpl
+    ): com.emul8r.bizap.domain.repository.CurrencyRepository
 
     @Binds
     @Singleton
     abstract fun bindRevenueRepository(
-        impl: RevenueRepositoryImpl
-    ): RevenueRepository
+        impl: com.emul8r.bizap.data.repository.RevenueRepositoryImpl
+    ): com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 
     @Binds
     @Singleton
     abstract fun bindPaymentAnalyticsRepository(
-        impl: PaymentAnalyticsRepositoryImpl
-    ): PaymentAnalyticsRepository
+        impl: com.emul8r.bizap.data.repository.PaymentAnalyticsRepositoryImpl
+    ): com.emul8r.bizap.domain.invoice.repository.PaymentAnalyticsRepository
 
     @Binds
     @Singleton
     abstract fun bindCustomerAnalyticsRepository(
-        impl: CustomerAnalyticsRepositoryImpl
-    ): CustomerAnalyticsRepository
+        impl: com.emul8r.bizap.data.repository.CustomerAnalyticsRepositoryImpl
+    ): com.emul8r.bizap.domain.customer.repository.CustomerAnalyticsRepository
 
     @Binds
     @Singleton
     abstract fun bindDashboardSettingsRepository(
-        impl: DashboardSettingsRepositoryImpl
-    ): DashboardSettingsRepository
+        impl: com.emul8r.bizap.data.repository.DashboardSettingsRepositoryImpl
+    ): com.emul8r.bizap.domain.repository.DashboardSettingsRepository
 
     @Binds
     @Singleton
     abstract fun bindNoteRepository(
-        impl: NoteRepositoryImpl
-    ): NoteRepository
+        impl: com.emul8r.bizap.data.repository.NoteRepositoryImpl
+    ): com.emul8r.bizap.domain.repository.NoteRepository
 }

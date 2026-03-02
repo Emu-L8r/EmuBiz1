@@ -5,8 +5,8 @@ import android.content.Context
 import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.repository.ThemeRepository
 import com.emul8r.bizap.domain.model.ThemeConfig
+import com.emul8r.bizap.domain.repository.ThemeRepository
 import com.emul8r.bizap.ui.theme.ThemePreset
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted

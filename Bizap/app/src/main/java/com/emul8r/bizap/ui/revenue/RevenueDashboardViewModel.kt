@@ -48,7 +48,8 @@ class RevenueDashboardViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _uiState.value = RevenueDashboardUiState.Loading
-                val metrics = getRevenueMetricsUseCase(currentBusinessId)
+                // Collect the first value from the flow
+                val metrics = getRevenueMetricsUseCase(currentBusinessId).first()
                 
                 // Auto-refresh if no data exists and it's the initial load for this business
                 if (autoRefresh && metrics.dailyTrend.isEmpty()) {
@@ -71,7 +72,8 @@ class RevenueDashboardViewModel @Inject constructor(
             try {
                 _isRefreshing.value = true
                 refreshAnalyticsUseCase(currentBusinessId)
-                val metrics = getRevenueMetricsUseCase(currentBusinessId)
+                // Collect the updated first value from the flow
+                val metrics = getRevenueMetricsUseCase(currentBusinessId).first()
                 _uiState.value = RevenueDashboardUiState.Success(metrics)
                 Timber.d("RevenueDashboardViewModel: Analytics refreshed successfully for business $currentBusinessId")
             } catch (e: Exception) {

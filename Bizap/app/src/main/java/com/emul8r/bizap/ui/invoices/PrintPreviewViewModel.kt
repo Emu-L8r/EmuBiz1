@@ -9,7 +9,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.DocumentManager
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.repository.InvoiceRepository
@@ -46,9 +46,8 @@ class InvoicePdfViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val invoice = invoiceRepo.getInvoiceWithItemsById(invoiceId).first() ?: throw IllegalStateException("Invoice not found")
-                val profile = businessProfileRepo.profile.first()
+                val profile = businessProfileRepo.activeProfile.first()
 
-                // Build snapshot for PDF generation
                 val snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
                     invoiceId = invoice.id,
                     invoiceNumber = invoice.getFormattedInvoiceNumber(),
@@ -73,21 +72,15 @@ class InvoicePdfViewModel @Inject constructor(
                     businessName = profile.businessName,
                     businessAbn = profile.abn,
                     businessEmail = profile.email,
-                    businessPhone = profile.phone,    // FIXED
-                    businessAddress = profile.address, // FIXED
-                    logoBase64 = profile.logoBase64
+                    businessPhone = profile.phone,
+                    businessAddress = profile.address,
+                    logoBase64 = profile.logoBase64,
+                    currencyCode = invoice.currencyCode
                 )
 
-                // Generate PDF to a temporary file first
                 val tempPdfFile = pdfService.generateInvoice(snapshot, isQuote)
-
-                // 1. Move from temporary cache to permanent internal documents folder
                 val permanentFile = documentManager.archiveToInternalStorage(tempPdfFile, invoice.id)
-
-                // 2. Update Room immediately so the Vault sees it
                 invoiceRepo.updatePdfPath(invoice.id, permanentFile.absolutePath)
-
-                // Now, generate a bitmap for the UI preview from the permanent file
                 val bitmap = generateBitmapFromFile(permanentFile)
 
                 _uiState.value = PdfPreviewUiState.Ready(bitmap, permanentFile)
@@ -134,7 +127,6 @@ class InvoicePdfViewModel @Inject constructor(
     }
 
     fun launchSystemPrint() {
-        // Note: System Print is a complex operation that needs a PrintDocumentAdapter.
-        // This is a placeholder for the full implementation.
+        // Placeholder
     }
 }
