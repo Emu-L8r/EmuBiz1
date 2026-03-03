@@ -150,7 +150,8 @@ class InvoicePdfService @Inject constructor(
             textAlign = Paint.Align.RIGHT
         }
         canvas.drawText("TOTAL AMOUNT DUE (${snapshot.currencyCode}):", 450f, currentY, totalLabelPaint)
-        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount), rightX, currentY, totalLabelPaint)
+        val formattedAmount = String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount / 100.0)
+        canvas.drawText(formattedAmount, rightX, currentY, totalLabelPaint)
 
         pdfDocument.finishPage(page)
         file.outputStream().use { pdfDocument.writeTo(it) }
