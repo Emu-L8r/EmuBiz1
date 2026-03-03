@@ -60,8 +60,8 @@ class InvoiceDetailViewModel @Inject constructor(
     fun generateAndShare(invoiceWithItems: InvoiceWithItems) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val businessProfile = businessProfileRepository.profile.first()
-                val customerId = invoiceWithItems.invoice.customerId 
+                val businessProfile = businessProfileRepository.activeProfile.first()
+                val customerId = invoiceWithItems.invoice.customerId
                     ?: throw Exception("Customer ID not found for invoice")
                 val customer = customerDao.getCustomerById(customerId)
                     ?: throw Exception("Customer not found")
