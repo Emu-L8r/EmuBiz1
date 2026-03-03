@@ -32,20 +32,22 @@ fun DocumentVaultScreen(viewModel: DocumentVaultViewModel = hiltViewModel()) {
     Scaffold(
         topBar = {
             SearchBar(
-                query = searchTerm,
-                onQueryChange = viewModel::onSearchTermChange,
-                onSearch = {},
-                active = false,
-                onActiveChange = {},
-                placeholder = { Text("Search by Customer or Invoice ID") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary) },
+                inputField = {
+                    SearchBarDefaults.InputField(
+                        query = searchTerm,
+                        onQueryChange = viewModel::onSearchTermChange,
+                        onSearch = {},
+                        expanded = false,
+                        onExpandedChange = {},
+                        placeholder = { Text("Search by Customer or Invoice ID") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary) }
+                    )
+                },
+                expanded = false,
+                onExpandedChange = {},
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 colors = SearchBarDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    inputFieldColors = TextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) { }
         }
