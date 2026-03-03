@@ -1,5 +1,6 @@
 package com.emul8r.bizap.data.local.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -25,9 +26,12 @@ import androidx.room.PrimaryKey
 )
 data class InvoiceEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(defaultValue = "1")
     val businessProfileId: Long = 1,
     val customerId: Long?,  // Nullable to support SET_NULL when customer is deleted
+    @ColumnInfo(defaultValue = "")
     val customerName: String = "",
+    @ColumnInfo(defaultValue = "")
     val customerAddress: String = "",
     val customerEmail: String? = null,
     val date: Long,
@@ -40,16 +44,25 @@ data class InvoiceEntity(
     val footer: String? = null,
     val photoUris: String? = null,
     val pdfUri: String? = null,
+    @ColumnInfo(defaultValue = "0")
     val dueDate: Long = 0,
+    @ColumnInfo(defaultValue = "0.1")
     val taxRate: Double = 0.1,          // Rate stays Double (e.g., 0.1 for 10%)
+    @ColumnInfo(defaultValue = "0")
     val taxAmount: Long = 0,            // Store as cents
     val companyLogoPath: String? = null,
+    @ColumnInfo(defaultValue = "0")
     val updatedAt: Long = 0,
+    @ColumnInfo(defaultValue = "0")
     val amountPaid: Long = 0,           // Store as cents
     val parentInvoiceId: Long? = null,
+    @ColumnInfo(defaultValue = "1")
     val version: Int = 1,
+    @ColumnInfo(defaultValue = "0")
     val invoiceYear: Int = 0,
+    @ColumnInfo(defaultValue = "0")
     val invoiceSequence: Int = 0,
+    @ColumnInfo(defaultValue = "AUD")
     val currencyCode: String = "AUD",
     // Template integration fields (Phase 5)
     val templateId: String? = null,              // Reference to InvoiceTemplate used

@@ -1,14 +1,17 @@
 # Test script for Edit Invoice Save Bug Fix
 $ErrorActionPreference = "Continue"
-$adb = "C:\Users\Saucey\AppData\Local\Android\Sdk\platform-tools\adb.exe"
+$adb = if ($env:ANDROID_HOME) { "$env:ANDROID_HOME\platform-tools\adb.exe" } else { "adb" }
 
 Write-Host "===== EDIT INVOICE SAVE BUG - DEBUG TEST =====" -ForegroundColor Cyan
 Write-Host ""
 
 # Step 1: Build
 Write-Host "[1/5] Building APK..." -ForegroundColor Yellow
-$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
-cd C:\Users\Saucey\Documents\GitHub\EmuBiz\Bizap
+if (-not $env:JAVA_HOME) {
+    Write-Host "ERROR: JAVA_HOME is not set. Set it to your Android Studio JBR path." -ForegroundColor Red
+    exit 1
+}
+Set-Location $PSScriptRoot
 ./gradlew clean :app:assembleDebug
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red

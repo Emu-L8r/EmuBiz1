@@ -13,7 +13,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.emul8r.bizap.ui.customers.CustomerViewModel
-import com.emul8r.bizap.ui.invoices.InvoiceList
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
@@ -98,11 +97,15 @@ fun DashboardScreen(
         
         Text("Recent Invoices", style = MaterialTheme.typography.titleMedium)
 
-        InvoiceList(
-            modifier = Modifier.fillMaxWidth(),
-            onInvoiceClick = { invoiceId ->
-                navController.navigate(Screen.InvoiceDetail(invoiceId))
-            }
-        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = { navController.navigate(Screen.Invoices) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Receipt, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("View All Invoices")
+        }
     }
 }

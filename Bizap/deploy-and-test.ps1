@@ -8,8 +8,8 @@ Write-Host "══════════════════════�
 Write-Host ""
 
 # Set ADB path
-$adb = "C:\Users\Saucey\AppData\Local\Android\Sdk\platform-tools\adb.exe"
-$apkPath = "C:\Users\Saucey\Documents\GitHub\EmuBiz\Bizap\app\build\outputs\apk\debug\app-debug.apk"
+$adb = if ($env:ANDROID_HOME) { "$env:ANDROID_HOME\platform-tools\adb.exe" } else { "adb" }
+$apkPath = Join-Path $PSScriptRoot "app\build\outputs\apk\debug\app-debug.apk"
 
 # Check ADB exists
 if (-not (Test-Path $adb)) {

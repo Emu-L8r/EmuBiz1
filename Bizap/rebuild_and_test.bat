@@ -1,11 +1,12 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Set Java Home
-set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
-set PATH=!PATH!;C:\Users\Saucey\AppData\Local\Android\Sdk\platform-tools
+if not defined JAVA_HOME (
+    echo ERROR: JAVA_HOME is not set. Set it to your Android Studio JBR path.
+    exit /b 1
+)
 
-cd /d "C:\Users\Saucey\Documents\GitHub\EmuBiz\Bizap"
+cd /d "%~dp0"
 
 echo ===== Building APK =====
 call gradlew.bat :app:installDebug --no-daemon

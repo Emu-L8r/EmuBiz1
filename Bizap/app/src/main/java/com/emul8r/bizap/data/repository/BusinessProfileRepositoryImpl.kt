@@ -27,11 +27,11 @@ class BusinessProfileRepositoryImpl @Inject constructor(
     override val activeProfile: Flow<BusinessProfile> = dataStore.data
         .map { it[Keys.ACTIVE_BUSINESS_ID] ?: 1L } // Default to seeded ID 1
         .flatMapLatest { id ->
-            // Note: Since Dao.getProfileById is suspend, we convert to flow here
-            flow {
-                val entity = businessProfileDao.getProfileById(id)
-                emit(entity?.toDomain() ?: BusinessProfile(id = 1, businessName = "Unknown"))
-            }
+            businessProfileDao.getAllProfiles()
+                .map { profiles ->
+                    profiles.firstOrNull { it.id == id }?.toDomain()
+                        ?: BusinessProfile(id = 1, businessName = "Unknown")
+                }
         }
 
     override val allProfiles: Flow<List<BusinessProfile>> = businessProfileDao.getAllProfiles()

@@ -9,6 +9,7 @@ import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.pdf.PdfTableRenderer
 import com.emul8r.bizap.ui.templates.TemplateSnapshotManager
+import com.emul8r.bizap.utils.CurrencyFormatter
 import com.emul8r.bizap.utils.DocumentNamingUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -74,7 +75,7 @@ class InvoicePdfService @Inject constructor(
         val regularTypeface = pdfStyler.getTypeface(templateSnapshot?.fontFamily, context, isBold = false)
         val italicTypeface = Typeface.create(regularTypeface, Typeface.ITALIC)
 
-        val symbol = getCurrencySymbol(snapshot.currencyCode)
+        val symbol = CurrencyFormatter.getSymbol(snapshot.currencyCode)
 
         val headerPaint = Paint().apply { typeface = boldTypeface; textSize = 10f; color = Color.BLACK; isAntiAlias = true }
         val brandPaint = Paint().apply { typeface = boldTypeface; textSize = 18f; color = colors.primary; isAntiAlias = true }
@@ -157,17 +158,6 @@ class InvoicePdfService @Inject constructor(
         pdfDocument.close()
 
         return file
-    }
-
-    private fun getCurrencySymbol(code: String): String {
-        return when (code) {
-            "USD" -> "$"
-            "EUR" -> "€"
-            "GBP" -> "£"
-            "JPY" -> "¥"
-            "AUD" -> "$"
-            else -> "$"
-        }
     }
 
     private fun formatDate(timestamp: Long): String = 

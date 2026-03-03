@@ -1,8 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
-cd /d "C:\Users\Saucey\Documents\GitHub\EmuBiz\Bizap"
+if not defined JAVA_HOME (
+    echo ERROR: JAVA_HOME is not set. Set it to your Android Studio JBR path.
+    exit /b 1
+)
+cd /d "%~dp0"
 
 echo ===== Testing Phase 1 Implementation =====
 echo.

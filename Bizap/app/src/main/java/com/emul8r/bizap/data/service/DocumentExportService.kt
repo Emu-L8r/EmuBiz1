@@ -25,7 +25,7 @@ class DocumentExportService @Inject constructor(
             put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/EmuBiz")
             // IS_PENDING = 1 tells the OS we are still writing (prevents other apps from reading it)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Audio.Media.IS_PENDING, 1)
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
             }
         }
 
@@ -42,7 +42,7 @@ class DocumentExportService @Inject constructor(
             // 3. Signal that we are finished
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 contentValues.clear()
-                contentValues.put(MediaStore.Audio.Media.IS_PENDING, 0)
+                contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
                 resolver.update(targetUri, contentValues, null, null)
             }
         }

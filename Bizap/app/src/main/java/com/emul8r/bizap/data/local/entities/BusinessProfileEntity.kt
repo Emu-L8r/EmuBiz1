@@ -1,5 +1,6 @@
 package com.emul8r.bizap.data.local.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -20,6 +21,8 @@ data class BusinessProfileEntity(
     val signatureUri: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     // Tax Registration (for VAT/GST/Sales Tax)
+    @ColumnInfo(defaultValue = "0")
     val isTaxRegistered: Boolean = false,        // Default: business is NOT tax registered
+    @ColumnInfo(defaultValue = "0.1")
     val defaultTaxRate: Float = 0.10f            // Default: 10% tax rate if registered
 )

@@ -4,11 +4,14 @@ Write-Host "TASK 11 VERIFICATION BUILD START" -ForegroundColor Cyan
 Write-Host ""
 
 # Set Java Home
-$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+if (-not $env:JAVA_HOME) {
+    Write-Host "ERROR: JAVA_HOME is not set. Set it to your Android Studio JBR path." -ForegroundColor Red
+    exit 1
+}
 Write-Host "JAVA_HOME set to: $env:JAVA_HOME" -ForegroundColor Green
 
 # Change to project directory
-cd C:\Users\Saucey\Documents\GitHub\EmuBiz\Bizap
+Set-Location $PSScriptRoot
 Write-Host "Working directory: $(Get-Location)" -ForegroundColor Green
 Write-Host ""
 

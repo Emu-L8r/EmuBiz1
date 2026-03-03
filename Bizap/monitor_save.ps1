@@ -1,5 +1,5 @@
 # Monitor Edit Invoice Save Events
-$adb = "C:\Users\Saucey\AppData\Local\Android\Sdk\platform-tools\adb.exe"
+$adb = if ($env:ANDROID_HOME) { "$env:ANDROID_HOME\platform-tools\adb.exe" } else { "adb" }
 
 Write-Host "===== MONITORING EDIT INVOICE SAVE EVENTS =====" -ForegroundColor Cyan
 Write-Host ""

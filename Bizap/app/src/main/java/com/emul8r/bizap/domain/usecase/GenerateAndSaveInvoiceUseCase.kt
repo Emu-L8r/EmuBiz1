@@ -1,7 +1,7 @@
 package com.emul8r.bizap.domain.usecase
 
-import com.emul8r.bizap.data.local.entities.GeneratedDocumentEntity
 import com.emul8r.bizap.data.service.InvoicePdfService
+import com.emul8r.bizap.domain.model.Document
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.repository.DocumentRepository
@@ -35,7 +35,7 @@ class GenerateAndSaveInvoiceUseCase @Inject constructor(
             // 2. Record the generation in the database
             val fileType = if (isQuote) "Quote" else "Invoice"
             documentRepository.insertDocument(
-                GeneratedDocumentEntity(
+                Document(
                     relatedInvoiceId = invoice.id,
                     fileName = generatedFile.name,
                     absolutePath = generatedFile.absolutePath,

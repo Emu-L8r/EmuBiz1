@@ -37,7 +37,17 @@ EmuBiz Bizap is a local-first CRM and invoicing application built with **Clean A
   - `CustomerRepository`
   - `InvoiceRepository`
   - `DocumentRepository`
-- **UseCases**: (Reserved for future complex flows)
+  - `BusinessProfileRepository`
+  - `CurrencyRepository`
+  - `PrefilledItemRepository`
+  - `ThemeRepository`
+- **UseCases**:
+  - `SaveInvoiceUseCase`
+  - `GenerateAndSaveInvoiceUseCase`
+  - `SegmentCustomersUseCase`
+  - `GetCustomerAnalyticsUseCase`
+  - `ForecastCashFlowUseCase`
+  - `GenerateDunningNoticesUseCase`
 
 **Key Properties**:
 - Pure Kotlin data classes
@@ -53,6 +63,20 @@ EmuBiz Bizap is a local-first CRM and invoicing application built with **Clean A
 - `LineItemEntity` - Invoice line items (1:N relation)
 - `GeneratedDocumentEntity` - Archive of generated PDFs
 - `PrefilledItemEntity` - Template line items
+- `BusinessProfileEntity` - Business identity and settings
+- `CurrencyEntity` - Supported currencies
+- `ExchangeRateEntity` - Currency exchange rates
+- `PendingOperation` - Offline sync queue
+- `InvoiceAnalyticsSnapshot` - Invoice analytics data
+- `DailyRevenueSnapshot` - Daily revenue tracking
+- `CustomerAnalyticsSnapshot` - Customer analytics data
+- `BusinessHealthMetrics` - Overall business health KPIs
+- `InvoicePaymentEntity` - Invoice payment records
+- `InvoicePaymentSnapshot` - Payment analytics snapshots
+- `DailyPaymentSnapshot` - Daily payment tracking
+- `CollectionMetrics` - Debt collection metrics
+- `InvoiceTemplate` - Invoice design templates
+- `InvoiceCustomField` - Custom fields for invoices
 
 #### DAOs
 - `CustomerDao` - CRUD for customers
@@ -67,12 +91,12 @@ EmuBiz Bizap is a local-first CRM and invoicing application built with **Clean A
 #### Services
 - `InvoicePdfService` - PDF generation from invoices
 - `PrintService` - Android print framework integration
-- `DocumentExportService` - (Removed - unused)
+- `DocumentExportService` - Export PDFs to public Downloads folder
 - `BusinessProfileRepository` - DataStore-backed profile
 
 #### Database
 - `AppDatabase` - Room database (Kotlin Serialization codec)
-- Version: 8
+- Version: 21
 - Foreign key constraints enabled
 - Migration support ready
 
@@ -163,7 +187,7 @@ menuAnchor() in CreateInvoiceScreen - Add MenuAnchorType parameter
 
 ### Testing
 - Unit test framework integrated (JUnit, Espresso)
-- No tests written yet (ready for implementation)
+- 17+ unit tests written and passing
 - Room DAO tests recommended
 - ViewModel state tests recommended
 

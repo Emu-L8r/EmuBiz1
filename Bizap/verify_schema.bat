@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set PATH=%PATH%;C:\Users\Saucey\AppData\Local\Android\Sdk\platform-tools
+set PATH=%PATH%;%ANDROID_HOME%\platform-tools
 set DB_PATH=/data/data/com.emul8r.bizap/databases/bizap.db
 
 echo ===== PHASE 2: DATABASE MIGRATION VALIDATION =====
