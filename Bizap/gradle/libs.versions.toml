@@ -1,7 +1,6 @@
 [versions]
-# NOTE: Stay on 2.0.21 until Hilt 2.53+ is released with Kotlin 2.1.0 support.
 kotlin = "2.0.21"
-agp = "8.13.2"
+agp = "8.7.3"
 ksp = "2.0.21-1.0.27"
 hilt = "2.52"
 hilt-androidx = "1.2.0"
