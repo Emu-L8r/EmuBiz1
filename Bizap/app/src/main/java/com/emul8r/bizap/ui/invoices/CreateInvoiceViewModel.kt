@@ -8,6 +8,7 @@ import com.emul8r.bizap.domain.model.Currency
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.model.calculateTotal
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
@@ -151,7 +152,7 @@ class CreateInvoiceViewModel @Inject constructor(
                 val businessProfile = businessProfileRepository.profile.first()
                 val lineItems = state.items.map { it.toDomain() }
                 // Calculate subtotal in cents: sum of (unitPrice * quantity) for each item
-                val subtotal: Long = lineItems.sumOf { (it.unitPrice * it.quantity).toLong() }
+                val subtotal: Long = lineItems.sumOf { it.calculateTotal() }
 
                 // TAX REGISTRATION TOGGLE: Only apply tax if business is registered
                 val taxRate: Double = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
