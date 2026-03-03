@@ -66,7 +66,7 @@ object CentsFormatter {
      * @return Amount in cents (e.g., 14999L)
      */
     fun dollarsToCents(dollars: Double): Long {
-        return (dollars * 100).toLong()
+        return (dollars * 100).roundToLong()
     }
 
     /**

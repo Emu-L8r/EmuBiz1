@@ -55,7 +55,11 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
                 totalInvoiceAmount = metricsRow.totalAmount,
                 totalPaidAmount = metricsRow.paidAmount,
                 totalOutstandingAmount = metricsRow.outstanding,
-                collectionRate = (metricsRow.paidAmount / metricsRow.totalAmount) * 100.0,
+                collectionRate = if (metricsRow.totalAmount > 0.0) {
+                    ((metricsRow.paidAmount / metricsRow.totalAmount) * 100.0).coerceIn(0.0, 100.0)
+                } else {
+                    0.0
+                },
                 averagePaymentTime = 0.0,
                 outstandingByAging = OutstandingByAging(
                     current = agingRow.current,
