@@ -31,7 +31,6 @@ object DatabaseModule {
             "bizap-db"
         )
         .addMigrations(MIGRATION_21_22, MIGRATION_22_23)
-        .fallbackToDestructiveMigration()
         .build()
     }
 
@@ -42,7 +41,6 @@ object DatabaseModule {
     @Provides fun provideBusinessProfileDao(db: AppDatabase): BusinessProfileDao = db.businessProfileDao()
     @Provides fun provideCurrencyDao(db: AppDatabase): CurrencyDao = db.currencyDao()
     @Provides fun provideExchangeRateDao(db: AppDatabase): ExchangeRateDao = db.exchangeRateDao()
-    @Provides fun providePendingOperationDao(db: AppDatabase): PendingOperationDao = db.pendingOperationDao()
     @Provides fun provideAnalyticsDao(db: AppDatabase): AnalyticsDao = db.analyticsDao()
     @Provides fun provideCustomerAnalyticsDao(db: AppDatabase): CustomerAnalyticsDao = db.customerAnalyticsDao()
     @Provides fun provideInvoicePaymentDao(db: AppDatabase): InvoicePaymentDao = db.invoicePaymentDao()
