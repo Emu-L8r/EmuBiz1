@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.invoice.model.DunningNotice
 import com.emul8r.bizap.domain.invoice.usecase.GenerateDunningNoticesUseCase
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,13 +15,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DunningNoticesViewModel @Inject constructor(
-    private val generateDunningNoticesUseCase: GenerateDunningNoticesUseCase
+    private val generateDunningNoticesUseCase: GenerateDunningNoticesUseCase,
+    private val businessProfileRepository: BusinessProfileRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<DunningUiState>(DunningUiState.Loading)
     val uiState: StateFlow<DunningUiState> = _uiState.asStateFlow()
-
-    private val businessId = 1L // Placeholder for active business
 
     init {
         refreshDunningNotices()
@@ -30,6 +30,7 @@ class DunningNoticesViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _uiState.value = DunningUiState.Loading
+                val businessId = businessProfileRepository.getActiveBusinessId()
                 val notices = generateDunningNoticesUseCase.execute(businessId)
                 _uiState.value = DunningUiState.Success(notices)
             } catch (e: Exception) {

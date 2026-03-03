@@ -24,9 +24,12 @@ class InvoiceRepositoryImpl @Inject constructor(
     override fun getAllInvoicesWithItems(): Flow<List<Invoice>> {
         // Scoped to active business
         return businessProfileRepository.activeProfile.flatMapLatest { business ->
-            invoiceDao.getInvoicesByBusinessId(business.id).map { list ->
-                list.map { it.toDomain() }
-            }
+            invoiceDao.getInvoicesByBusinessId(business.id)
+                .map { list -> list.map { it.toDomain() } }
+                .catch { e ->
+                    Timber.e(e, "Error fetching invoices for business ${business.id}")
+                    emit(emptyList())
+                }
         }
     }
 

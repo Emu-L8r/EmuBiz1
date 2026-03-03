@@ -134,4 +134,9 @@ class InvoiceViewModel @Inject constructor(
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        _uiState.update { it.copy(isSaving = false, error = null) }
+    }
 }

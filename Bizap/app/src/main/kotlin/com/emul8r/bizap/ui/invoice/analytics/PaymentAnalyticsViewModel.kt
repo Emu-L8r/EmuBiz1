@@ -3,7 +3,8 @@ package com.emul8r.bizap.ui.invoice.analytics
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.invoice.model.PaymentAnalyticsSummary
-import com.emul8r.bizap.domain.invoice.model.OutstandingByAging
+import com.emul8r.bizap.domain.invoice.usecase.GetPaymentAnalyticsUseCase
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +18,10 @@ import javax.inject.Inject
  * Manages payment metrics, aging analysis, cash flow forecasts, and dunning notices.
  */
 @HiltViewModel
-class PaymentAnalyticsViewModel @Inject constructor() : ViewModel() {
+class PaymentAnalyticsViewModel @Inject constructor(
+    private val getPaymentAnalyticsUseCase: GetPaymentAnalyticsUseCase,
+    private val businessProfileRepository: BusinessProfileRepository
+) : ViewModel() {
 
     private val _state = MutableStateFlow<PaymentAnalyticsUiState>(
         PaymentAnalyticsUiState.Loading
@@ -34,35 +38,15 @@ class PaymentAnalyticsViewModel @Inject constructor() : ViewModel() {
                 Timber.d("PaymentAnalyticsViewModel: Loading analytics")
                 _state.value = PaymentAnalyticsUiState.Loading
 
-                // Mock analytics data for demo purposes
-                val mockAnalytics = PaymentAnalyticsSummary(
-                    businessProfileId = 1L,
-                    totalInvoices = 42,
-                    paidInvoices = 38,
-                    unpaidInvoices = 4,
-                    overdueInvoices = 2,
-                    totalInvoiceAmount = 145230.50,
-                    totalPaidAmount = 132780.00,
-                    totalOutstandingAmount = 12450.75,
-                    collectionRate = 90.5,
-                    averagePaymentTime = 15.0,
-                    outstandingByAging = OutstandingByAging(
-                        current = 5000.0,
-                        past30 = 4200.0,
-                        past60 = 2100.0,
-                        past90 = 1150.75,
-                        totalOutstanding = 12450.75
-                    ),
-                    cashFlowForecast = emptyList(),
-                    riskInvoices = emptyList()
-                )
+                val businessId = businessProfileRepository.getActiveBusinessId()
+                val analytics = getPaymentAnalyticsUseCase(businessId)
 
-                Timber.d("PaymentAnalyticsViewModel: Loaded analytics - Total: ${mockAnalytics.totalInvoices}")
-                _state.value = PaymentAnalyticsUiState.Success(mockAnalytics)
+                Timber.d("PaymentAnalyticsViewModel: Loaded analytics - Total: ${analytics.totalInvoices}")
+                _state.value = PaymentAnalyticsUiState.Success(analytics)
             } catch (e: Exception) {
-                Timber.e(e, "PaymentAnalyticsViewModel: Unexpected error")
+                Timber.e(e, "PaymentAnalyticsViewModel: Error loading analytics")
                 _state.value = PaymentAnalyticsUiState.Error(
-                    "An unexpected error occurred: ${e.message}"
+                    "Failed to load analytics: ${e.message}"
                 )
             }
         }
