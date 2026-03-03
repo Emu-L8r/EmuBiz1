@@ -103,7 +103,7 @@ fun CreateInvoiceScreen(
             ) 
         },
         bottomBar = {
-            val total = uiState.items.sumOf { (it.unitPrice * it.quantity).toLong() }
+            val total = uiState.items.sumOf { it.calculateTotal() }
             InvoiceBottomSummary(
                 total = total,
                 currencyCode = uiState.selectedCurrencyCode,
