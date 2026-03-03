@@ -11,6 +11,7 @@ import com.emul8r.bizap.data.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
+import com.emul8r.bizap.domain.model.calculateTotal
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -163,7 +164,7 @@ class EditInvoiceViewModel @Inject constructor(
                         date = invoice.date,
                         dueDate = invoice.dueDate,
                         items = invoice.items.map {
-                            val itemTotal = (it.unitPrice * it.quantity).toLong()
+                            val itemTotal = it.calculateTotal()
                             com.emul8r.bizap.domain.model.LineItemSnapshot(
                                 it.description,
                                 it.quantity,

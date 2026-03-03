@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.invoice.model.DunningNotice
+import com.emul8r.bizap.ui.theme.riskHigh
+import com.emul8r.bizap.ui.theme.riskLow
+import com.emul8r.bizap.ui.theme.riskMedium
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -138,9 +141,9 @@ fun DunningNoticeCard(notice: DunningNotice) {
                 }
                 Surface(
                     color = when (notice.noticeLevel) {
-                        1 -> Color(0xFFFFE082)
-                        2 -> Color(0xFFFF9800)
-                        else -> Color(0xFFE53935)
+                        1 -> MaterialTheme.colorScheme.riskLow
+                        2 -> MaterialTheme.colorScheme.riskMedium
+                        else -> MaterialTheme.colorScheme.riskHigh
                     },
                     shape = MaterialTheme.shapes.small
                 ) {
@@ -170,7 +173,7 @@ fun DunningNoticeCard(notice: DunningNotice) {
                         text = "$${String.format("%.2f", notice.totalAmountDue)}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFE53935)
+                        color = MaterialTheme.colorScheme.riskHigh
                     )
                 }
                 Column {
@@ -225,7 +228,7 @@ fun DunningNoticeCard(notice: DunningNotice) {
                     .fillMaxWidth()
                     .height(40.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1976D2)
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
                 Text("Send Notice", color = Color.White)
