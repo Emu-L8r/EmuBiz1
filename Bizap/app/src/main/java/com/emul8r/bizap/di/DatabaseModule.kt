@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
+import com.emul8r.bizap.data.backup.DatabaseBackupService
+import com.emul8r.bizap.data.backup.DatabaseRestoreService
 import com.emul8r.bizap.data.local.*
 import com.emul8r.bizap.data.local.dao.*
 import com.emul8r.bizap.data.local.migrations.MIGRATION_21_22
@@ -51,5 +53,23 @@ object DatabaseModule {
     @Singleton
     fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
         return context.dataStore
+    }
+
+    @Provides
+    @Singleton
+    fun provideDatabaseBackupService(
+        @ApplicationContext context: Context,
+        appDatabase: AppDatabase
+    ): DatabaseBackupService {
+        return DatabaseBackupService(context, appDatabase)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDatabaseRestoreService(
+        @ApplicationContext context: Context,
+        appDatabase: AppDatabase
+    ): DatabaseRestoreService {
+        return DatabaseRestoreService(context, appDatabase)
     }
 }
