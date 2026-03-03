@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
+import com.emul8r.bizap.utils.CentsFormatter
 import java.util.Locale
 
 @Composable
@@ -71,7 +72,7 @@ private fun RevenueDashboardContent(metrics: RevenueMetrics) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = performer.currencyCode, fontWeight = FontWeight.Bold)
-                    Text(text = "$${String.format(Locale.getDefault(), "%.2f", performer.totalAmount)}")
+                    Text(text = CentsFormatter.formatCents(performer.totalAmount, performer.currencyCode))
                 }
             }
         }

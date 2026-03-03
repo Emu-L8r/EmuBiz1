@@ -146,13 +146,17 @@ class CreateInvoiceViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
             try {
+                Timber.d("🔵 INVOICE SAVE STARTED")
                 val state = _uiState.value
                 val customer = state.selectedCustomer ?: throw Exception("Please select a customer")
+                Timber.d("✅ Customer selected: ${customer.name}")
 
                 val businessProfile = businessProfileRepository.profile.first()
                 val lineItems = state.items.map { it.toDomain() }
+                Timber.d("✅ Line items mapped: ${lineItems.size} items")
                 // Calculate subtotal in cents: sum of (unitPrice * quantity) for each item
                 val subtotal: Long = lineItems.sumOf { it.calculateTotal() }
+                Timber.d("✅ Subtotal calculated: $subtotal cents")
 
                 // TAX REGISTRATION TOGGLE: Only apply tax if business is registered
                 val taxRate: Double = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
@@ -184,8 +188,10 @@ class CreateInvoiceViewModel @Inject constructor(
                 )
 
                 val invoiceId = invoiceRepository.saveInvoice(invoice)
+                Timber.d("✅ Invoice saved to database: ID=$invoiceId")
                 val invoiceWithId = invoice.copy(id = invoiceId)
 
+                Timber.d("🔵 Starting PDF generation...")
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceWithId,
                     snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
@@ -222,12 +228,17 @@ class CreateInvoiceViewModel @Inject constructor(
                 )
 
                 if (result.isSuccess) {
+                    Timber.d("✅ PDF generation successful")
                     _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
+                    Timber.d("✅ INVOICE SAVE COMPLETE - SUCCESS")
                 } else {
-                    throw result.exceptionOrNull() ?: Exception("Failed to generate PDF")
+                    val error = result.exceptionOrNull() ?: Exception("Failed to generate PDF")
+                    Timber.e(error, "❌ PDF generation failed")
+                    throw error
                 }
 
             } catch (e: Exception) {
+                Timber.e(e, "❌ INVOICE SAVE FAILED: ${e.message}")
                 _uiState.update { it.copy(error = e.message, isSaving = false) }
             }
         }

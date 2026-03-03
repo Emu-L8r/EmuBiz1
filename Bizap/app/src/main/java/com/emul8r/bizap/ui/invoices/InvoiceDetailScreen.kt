@@ -23,9 +23,9 @@ import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.ui.components.OverwritePdfDialog
 import com.emul8r.bizap.ui.invoices.components.InvoiceActionHub
 import com.emul8r.bizap.ui.invoices.components.VersionPicker
+import com.emul8r.bizap.utils.CentsFormatter
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.utils.formatDate
-import com.emul8r.bizap.utils.CentsFormatter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
@@ -180,7 +180,7 @@ fun InvoiceDetailScreen(
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text("Subtotal", style = MaterialTheme.typography.bodyLarge)
                                         Text(
-                                            text = "$${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount - invoice.taxAmount)}",
+                                            text = CentsFormatter.formatCents(invoice.totalAmount - invoice.taxAmount, invoice.currencyCode),
                                             style = MaterialTheme.typography.bodyLarge
                                         )
                                     }
@@ -191,7 +191,7 @@ fun InvoiceDetailScreen(
                                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                             Text("Tax (${(invoice.taxRate * 100).toInt()}%)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                             Text(
-                                                text = "$${String.format(Locale.getDefault(), "%.2f", invoice.taxAmount)}",
+                                                text = CentsFormatter.formatCents(invoice.taxAmount, invoice.currencyCode),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -212,7 +212,7 @@ fun InvoiceDetailScreen(
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text("Total", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                                         Text(
-                                            text = "$${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount)}",
+                                            text = CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode),
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
