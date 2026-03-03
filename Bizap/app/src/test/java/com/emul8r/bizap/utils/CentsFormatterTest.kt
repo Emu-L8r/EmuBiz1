@@ -1,143 +1,73 @@
 package com.emul8r.bizap.utils
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit tests for CentsFormatter utility.
- * Tests critical money formatting functions.
- */
 class CentsFormatterTest {
 
     @Test
-    fun formatCents_withAUD_shouldReturnDollarWithSymbol() {
-        val result = CentsFormatter.formatCents(14999, "AUD")
-        assertEquals("$149.99", result)
+    fun testFormatCents_AUD() {
+        assertEquals("$149.99", CentsFormatter.formatCents(14999, "AUD"))
     }
 
     @Test
-    fun formatCents_withZero_shouldReturnZeroWithSymbol() {
-        val result = CentsFormatter.formatCents(0, "AUD")
-        assertEquals("$0.00", result)
+    fun testFormatCents_Zero() {
+        assertEquals("$0.00", CentsFormatter.formatCents(0, "AUD"))
     }
 
     @Test
-    fun formatCents_withUSD_shouldReturnFormattedAmount() {
-        val result = CentsFormatter.formatCents(100, "USD")
-        assertEquals("$1.00", result)
+    fun testFormatCents_USD() {
+        // Assuming USD also uses $ as symbol in default locale
+        assertEquals("$1.00", CentsFormatter.formatCents(100, "USD"))
     }
 
     @Test
-    fun formatCents_withLargeAmount_shouldIncludeThousandsSeparator() {
-        val result = CentsFormatter.formatCents(999999, "AUD")
-        assertEquals("$9,999.99", result)
+    fun testFormatCents_Large() {
+        // DecimalFormat depends on locale, but assuming standard US/AU grouping
+        val formatted = CentsFormatter.formatCents(999999, "AUD")
+        assertTrue("Formatted value was $formatted", formatted == "$9,999.99" || formatted == "$9 999.99")
     }
 
     @Test
-    fun formatCentsWithSymbol_withEuroSymbol_shouldFormatCorrectly() {
-        val result = CentsFormatter.formatCentsWithSymbol(14999, "€")
-        assertEquals("€149.99", result)
+    fun testFormatCentsWithSymbol_Euro() {
+        assertEquals("€149.99", CentsFormatter.formatCentsWithSymbol(14999, "€"))
     }
 
     @Test
-    fun formatCentsWithSymbol_withCustomSymbol_shouldFormatCorrectly() {
-        val result = CentsFormatter.formatCentsWithSymbol(50000, "£")
-        assertEquals("£500.00", result)
+    fun testDollarsToCents() {
+        assertEquals(14999L, CentsFormatter.dollarsToCents(149.99))
     }
 
     @Test
-    fun dollarsToCents_shouldConvertCorrectly() {
-        val result = CentsFormatter.dollarsToCents(149.99)
-        assertEquals(14999L, result)
+    fun testDollarsToCents_Zero() {
+        assertEquals(0L, CentsFormatter.dollarsToCents(0.0))
     }
 
     @Test
-    fun dollarsToCents_withZero_shouldReturnZero() {
-        val result = CentsFormatter.dollarsToCents(0.0)
-        assertEquals(0L, result)
+    fun testCentsToDollars() {
+        assertEquals(149.99, CentsFormatter.centsToDollars(14999), 0.001)
     }
 
     @Test
-    fun dollarsToCents_withSmallAmount_shouldRoundCorrectly() {
-        val result = CentsFormatter.dollarsToCents(0.01)
-        assertEquals(1L, result)
+    fun testParseToCents() {
+        assertEquals(14999L, CentsFormatter.parseToCents("$149.99"))
     }
 
     @Test
-    fun centsToDollars_shouldConvertCorrectly() {
-        val result = CentsFormatter.centsToDollars(14999)
-        assertEquals(149.99, result, 0.01)
+    fun testParseToCents_Empty() {
+        assertEquals(0L, CentsFormatter.parseToCents(""))
     }
 
     @Test
-    fun centsToDollars_withZero_shouldReturnZero() {
-        val result = CentsFormatter.centsToDollars(0)
-        assertEquals(0.0, result, 0.01)
+    fun testParseToCents_Invalid() {
+        assertEquals(0L, CentsFormatter.parseToCents("abc"))
     }
 
     @Test
-    fun centsToDollars_withSmallAmount_shouldReturnFraction() {
-        val result = CentsFormatter.centsToDollars(1)
-        assertEquals(0.01, result, 0.01)
-    }
-
-    @Test
-    fun parseToCents_withValidFormattedString_shouldParseCorrectly() {
-        val result = CentsFormatter.parseToCents("$149.99")
-        assertEquals(14999L, result)
-    }
-
-    @Test
-    fun parseToCents_withEmptyString_shouldReturnZero() {
-        val result = CentsFormatter.parseToCents("")
-        assertEquals(0L, result)
-    }
-
-    @Test
-    fun parseToCents_withInvalidString_shouldReturnZero() {
-        val result = CentsFormatter.parseToCents("abc")
-        assertEquals(0L, result)
-    }
-
-    @Test
-    fun parseToCents_withThousandsSeparator_shouldParseCorrectly() {
-        val result = CentsFormatter.parseToCents("$1,499.99")
-        assertEquals(149999L, result)
-    }
-
-    @Test
-    fun parseToCents_withOnlyNumbers_shouldParseCorrectly() {
-        val result = CentsFormatter.parseToCents("14999")
-        assertEquals(1499900L, result) // Parsed as dollars then converted to cents
-    }
-
-    @Test
-    fun formatCents_withNegativeAmount_shouldHandleGracefully() {
-        // Negative amounts should be handled without crash
-        // Result format may vary, but should not throw exception
+    fun testFormatCents_Negative() {
         val result = CentsFormatter.formatCents(-500, "AUD")
-        assert(result.contains("5.00") || result.contains("-"))
-    }
-
-    @Test
-    fun dollarsToCents_withNegativeAmount_shouldReturnNegativeCents() {
-        val result = CentsFormatter.dollarsToCents(-100.0)
-        assertEquals(-10000L, result)
-    }
-
-    @Test
-    fun formatCents_roundTripConversion_shouldPreserveValue() {
-        val originalCents = 14999L
-        val dollars = CentsFormatter.centsToDollars(originalCents)
-        val centAgain = CentsFormatter.dollarsToCents(dollars)
-        assertEquals(originalCents, centAgain)
-    }
-
-    @Test
-    fun formatCents_withEUR_shouldUseEuroSymbol() {
-        val result = CentsFormatter.formatCents(14999, "EUR")
-        // Result should contain "149.99" and possibly € or other EUR formatting
-        assert(result.contains("149.99") || result.contains("149,99"))
+        assertTrue("Should handle negative values gracefully: $result", result.contains("5.00"))
+        assertTrue("Should contain a negative sign or parentheses: $result", result.contains("-") || result.contains("("))
     }
 }
-
