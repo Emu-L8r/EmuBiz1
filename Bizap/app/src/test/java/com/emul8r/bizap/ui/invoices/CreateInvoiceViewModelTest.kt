@@ -1,0 +1,210 @@
+package com.emul8r.bizap.ui.invoices
+
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.emul8r.bizap.BaseUnitTest
+import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.model.Customer
+import com.emul8r.bizap.domain.repository.CustomerRepository
+import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.Assert.*
+
+/**
+ * Unit tests for CreateInvoiceViewModel.
+ * Tests critical business logic for invoice creation.
+ */
+class CreateInvoiceViewModelTest : BaseUnitTest() {
+
+    @get:Rule
+    val instantTaskExecutor = InstantTaskExecutorRule()
+
+    private lateinit var viewModel: CreateInvoiceViewModel
+    private lateinit var invoiceRepository: InvoiceRepository
+    private lateinit var customerRepository: CustomerRepository
+    private lateinit var businessProfileRepository: BusinessProfileRepository
+    private lateinit var generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase
+
+    @Before
+    override fun setupBase() {
+        super.setupBase()
+
+        // Mock repositories
+        invoiceRepository = mockk()
+        customerRepository = mockk()
+        businessProfileRepository = mockk()
+        generateAndSaveInvoiceUseCase = mockk()
+
+        // Setup default mock responses
+        every { customerRepository.getAllCustomers() } returns flowOf(
+            listOf(
+                Customer(id = 1, name = "John Doe", email = "john@example.com"),
+                Customer(id = 2, name = "Jane Smith", email = "jane@example.com")
+            )
+        )
+
+        viewModel = CreateInvoiceViewModel(
+            invoiceRepository,
+            customerRepository,
+            businessProfileRepository,
+            mockk(), // CurrencyRepository
+            generateAndSaveInvoiceUseCase
+        )
+    }
+
+    @Test
+    fun addLineItem_shouldIncreaseItemsListSize() {
+        val initialSize = viewModel.uiState.value.items.size
+
+        viewModel.addLineItem()
+
+        val newSize = viewModel.uiState.value.items.size
+        assertEquals(initialSize + 1, newSize)
+    }
+
+    @Test
+    fun addLineItem_multipleTimesShouldIncreaseSizeEachTime() {
+        val initialSize = viewModel.uiState.value.items.size
+
+        viewModel.addLineItem()
+        viewModel.addLineItem()
+        viewModel.addLineItem()
+
+        val finalSize = viewModel.uiState.value.items.size
+        assertEquals(initialSize + 3, finalSize)
+    }
+
+    @Test
+    fun removeLineItem_shouldDecreaseItemsListSize() {
+        // First add an item with a known ID
+        viewModel.addLineItem()
+        val itemToRemove = viewModel.uiState.value.items.lastOrNull()
+        val sizeBeforeRemove = viewModel.uiState.value.items.size
+
+        // Remove the item
+        viewModel.removeLineItem(itemToRemove?.id)
+
+        val sizeAfterRemove = viewModel.uiState.value.items.size
+        assertEquals(sizeBeforeRemove - 1, sizeAfterRemove)
+    }
+
+    @Test
+    fun selectCustomer_shouldUpdateSelectedCustomerInState() {
+        val customer = Customer(id = 1, name = "John Doe", email = "john@example.com")
+
+        viewModel.selectCustomer(customer)
+
+        val selectedCustomer = viewModel.uiState.value.selectedCustomer
+        assertEquals(customer, selectedCustomer)
+    }
+
+    @Test
+    fun selectCustomer_shouldReplaceWithNewCustomer() {
+        val customer1 = Customer(id = 1, name = "John Doe", email = "john@example.com")
+        val customer2 = Customer(id = 2, name = "Jane Smith", email = "jane@example.com")
+
+        viewModel.selectCustomer(customer1)
+        assertEquals(customer1, viewModel.uiState.value.selectedCustomer)
+
+        viewModel.selectCustomer(customer2)
+        assertEquals(customer2, viewModel.uiState.value.selectedCustomer)
+    }
+
+    @Test
+    fun updateLineItem_shouldModifyExistingItem() {
+        viewModel.addLineItem()
+        val itemId = viewModel.uiState.value.items.firstOrNull()?.id
+
+        viewModel.updateLineItem(
+            id = itemId,
+            description = "Updated Item",
+            quantity = 5.0,
+            unitPrice = 10000L // $100.00
+        )
+
+        val updatedItem = viewModel.uiState.value.items.find { it.id == itemId }
+        assertEquals("Updated Item", updatedItem?.description)
+        assertEquals(5.0, updatedItem?.quantity, 0.01)
+        assertEquals(10000L, updatedItem?.unitPrice)
+    }
+
+    @Test
+    fun onHeaderChange_shouldUpdateHeaderInState() {
+        val header = "Invoice #2026-001"
+
+        viewModel.onHeaderChange(header)
+
+        assertEquals(header, viewModel.uiState.value.header)
+    }
+
+    @Test
+    fun onSubheaderChange_shouldUpdateSubheaderInState() {
+        val subheader = "Service Invoice"
+
+        viewModel.onSubheaderChange(subheader)
+
+        assertEquals(subheader, viewModel.uiState.value.subheader)
+    }
+
+    @Test
+    fun onNotesChange_shouldUpdateNotesInState() {
+        val notes = "Please pay by end of month"
+
+        viewModel.onNotesChange(notes)
+
+        assertEquals(notes, viewModel.uiState.value.notes)
+    }
+
+    @Test
+    fun isSaving_shouldBeInitiallyFalse() {
+        assertFalse(viewModel.uiState.value.isSaving)
+    }
+
+    @Test
+    fun error_shouldBeNullInitially() {
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun itemsListShouldStartWithOneEmptyLineItem() {
+        val items = viewModel.uiState.value.items
+        assertEquals(1, items.size)
+        assertTrue(items[0].description.isEmpty())
+        assertEquals(0L, items[0].unitPrice)
+    }
+
+    @Test
+    fun currencyCodeShouldDefaultToAUD() {
+        assertEquals("AUD", viewModel.uiState.value.selectedCurrencyCode)
+    }
+
+    @Test
+    fun removeLineItem_withNullId_shouldNotCrash() {
+        val initialSize = viewModel.uiState.value.items.size
+
+        // This should not crash
+        viewModel.removeLineItem(null)
+
+        // Size might change or stay same, but no crash
+        val finalSize = viewModel.uiState.value.items.size
+        assertTrue(finalSize >= 0)
+    }
+
+    @Test
+    fun addLineItem_newItemShouldHaveEmptyDefaults() {
+        viewModel.addLineItem()
+        val newItem = viewModel.uiState.value.items.lastOrNull()
+
+        assertNotNull(newItem)
+        assertEquals("", newItem?.description)
+        assertEquals(0L, newItem?.unitPrice)
+        assertEquals(0.0, newItem?.quantity, 0.01)
+    }
+}
+

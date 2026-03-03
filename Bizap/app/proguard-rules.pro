@@ -1,21 +1,150 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ProGuard configuration for Bizap v1.0 release build
+# Minification enabled: R8/ProGuard will shrink unused code
+# Resource shrinking enabled: Unused resources removed
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve line numbers for crash reporting (Firebase Crashlytics)
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep Bizap application code (do NOT obfuscate user-facing classes)
+-keep class com.emul8r.bizap.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ===== ROOM DATABASE =====
+# Keep all Room entities, DAOs, and databases
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep @androidx.room.Entity class * { *; }
+-keep @androidx.room.Dao class * { *; }
+-keepclassmembers class * extends androidx.room.RoomDatabase {
+    public abstract *** get*();
+}
+-keepclassmembers class * extends androidx.room.RoomDatabase {
+    public abstract *** *Dao();
+}
+
+# Keep constructor of all Room entities (used for reflection)
+-keepclasseswithmembers class * {
+    @androidx.room.PrimaryKey <fields>;
+}
+
+# Keep ColumnInfo, Embedded, and other Room annotations
+-keepclassmembers class * {
+    @androidx.room.ColumnInfo <fields>;
+    @androidx.room.Embedded <fields>;
+    @androidx.room.Relation <fields>;
+}
+
+# ===== HILT DEPENDENCY INJECTION =====
+# Hilt generates code that needs reflection - keep all Entry points and Components
+-keep class * extends dagger.android.AndroidInjector
+-keepclasseswithmembers class * {
+    @dagger.hilt.* <methods>;
+}
+-keep @dagger.hilt.android.HiltAndroidApp class *
+-keep @dagger.hilt.android.lifecycle.HiltViewModel class *
+-keep class * implements dagger.internal.Factory
+-keep class * implements dagger.Lazy
+-keep class dagger.Lazy
+-keep interface dagger.internal.Factory
+
+# Keep Hilt generated module classes
+-keep class * extends dagger.Module
+-keepclassmembers class * {
+    @dagger.Provides <methods>;
+    @dagger.hilt.InstallIn <methods>;
+}
+
+# ===== RETROFIT & OkHttp =====
+# Keep Retrofit API service interfaces
+-keep interface * {
+    @retrofit2.http.* <methods>;
+}
+-keep class * {
+    @retrofit2.* <fields>;
+}
+-keepattributes Signature
+-keepattributes *Annotation*
+
+# Keep OkHttp
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+
+# ===== KOTLIN SERIALIZATION =====
+# Keep serializable classes used with @Serializable
+-keepclassmembers class * {
+    *** Companion;
+}
+-keepclasseswithmembers class * {
+    @kotlinx.serialization.Serializable <methods>;
+}
+-keep class kotlinx.serialization.** { *; }
+-keep class kotlin.reflect.** { *; }
+-keepattributes RuntimeVisibleAnnotations
+
+# ===== DATA CLASSES =====
+# Keep all data classes (often used for Room models and API responses)
+-keepclasseswithmembers class * {
+    public synthetic <init>(...);
+}
+-keep class * {
+    @androidx.room.Entity <fields>;
+}
+
+# ===== TIMBER LOGGING =====
+# Remove Timber debug/verbose logs in release build
+-assumenosideeffects class timber.log.Timber {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+}
+
+# ===== FIREBASE CRASHLYTICS =====
+# Keep Firebase/Crashlytics
+-keep class com.google.firebase.** { *; }
+-keep interface com.google.firebase.** { *; }
+-keepattributes SourceFile,LineNumberTable
+
+# ===== GSON (used for Retrofit) =====
+-keep class com.google.gson.** { *; }
+-keep interface com.google.gson.** { *; }
+-keep class * extends com.google.gson.TypeAdapter
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# ===== ANDROIDX DATASTORE =====
+-keep class androidx.datastore.** { *; }
+-keep interface androidx.datastore.** { *; }
+
+# ===== STANDARD ANDROID RULES =====
+# Preserve enums
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# Keep native methods
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Keep custom application classes
+-keep class * extends android.app.Application
+-keep class * extends android.app.Activity
+-keep class * extends android.app.Service
+-keep class * extends android.content.BroadcastReceiver
+-keep class * extends android.content.ContentProvider
+-keep class * extends androidx.fragment.app.Fragment
+
+# Keep R class (resources)
+-keepclassmembers class **.R$* {
+    public static <fields>;
+}
+
+# ===== OPTIMIZATION =====
+# Optimization: remove logging calls (already handled above for Timber)
+-optimizationpasses 5
+-verbose
+
+# Don't optimize if there are any issues
+-dontoptimize
