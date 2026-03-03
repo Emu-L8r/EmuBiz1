@@ -62,9 +62,12 @@ class CustomerViewModel @Inject constructor(
     /**
      * PRAGMATIC SEEDING FIX: Manual trigger for test data.
      */
-    fun seedTestCustomers() {
-        if (!BuildConfig.DEBUG) return
-
+    @androidx.annotation.VisibleForTesting
+    internal fun seedTestCustomers() {
+        if (!BuildConfig.DEBUG) {
+            Timber.w("seedTestCustomers called in non-debug build, ignoring")
+            return
+        }
         viewModelScope.launch {
             Timber.d("📥 Seeding database with test customers...")
             try {

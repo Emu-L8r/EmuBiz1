@@ -36,7 +36,8 @@ object AnalyticsCalculator {
         if (paidInvoices.isEmpty()) return 0
 
         val totalDays = paidInvoices.sumOf { invoice ->
-            ((invoice.paidAtMs!! - invoice.invoiceDateMs) / (1000 * 60 * 60 * 24)).toInt()
+            val daysDiff = ((invoice.paidAtMs!! - invoice.invoiceDateMs) / (1000 * 60 * 60 * 24)).toInt()
+            daysDiff.coerceIn(-10000, 10000)
         }
 
         return totalDays / paidInvoices.size
@@ -62,13 +63,20 @@ object AnalyticsCalculator {
         monthOverMonthGrowth: Double,
         activeCustomerCount: Int
     ): Int {
+        if (paidRate.isNaN() || paidRate.isInfinite() ||
+            overduePercentage.isNaN() || overduePercentage.isInfinite() ||
+            monthOverMonthGrowth.isNaN() || monthOverMonthGrowth.isInfinite()) {
+            Timber.w("AnalyticsCalculator: Invalid input detected, returning default score")
+            return 50
+        }
+
         var score = 50 // Start at 50
 
-        // Payment health (40 points max)
-        score += (paidRate * 40).toInt()
+        // Payment health (40 points max) - ensure paidRate is between 0-1
+        score += (paidRate.coerceIn(0.0, 1.0) * 40).toInt()
 
-        // Overdue penalty (20 points)
-        score -= (overduePercentage * 20).toInt()
+        // Overdue penalty (20 points) - ensure overduePercentage is between 0-1
+        score -= (overduePercentage.coerceIn(0.0, 1.0) * 20).toInt()
 
         // Growth bonus (10 points)
         if (monthOverMonthGrowth > 0.05) score += 10

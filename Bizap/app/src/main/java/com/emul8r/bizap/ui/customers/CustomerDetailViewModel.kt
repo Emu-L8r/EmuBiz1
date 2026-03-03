@@ -9,8 +9,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 sealed interface CustomerDetailUiState {
@@ -38,12 +39,18 @@ class CustomerDetailViewModel @Inject constructor(
     fun loadCustomer(id: Long) {
         viewModelScope.launch {
             _uiState.value = CustomerDetailUiState.Loading
-            val customer = repository.getCustomerById(id).firstOrNull()
-            _uiState.value = if (customer != null) {
-                CustomerDetailUiState.Success(customer)
-            } else {
-                CustomerDetailUiState.Error("Customer not found")
-            }
+            repository.getCustomerById(id)
+                .catch { e ->
+                    Timber.e(e, "Error loading customer")
+                    _uiState.value = CustomerDetailUiState.Error("Failed to load customer: ${e.message}")
+                }
+                .collect { customer ->
+                    _uiState.value = if (customer != null) {
+                        CustomerDetailUiState.Success(customer)
+                    } else {
+                        CustomerDetailUiState.Error("Customer not found")
+                    }
+                }
         }
     }
 

@@ -10,6 +10,7 @@ import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import timber.log.Timber
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -29,10 +30,19 @@ class BusinessProfileRepositoryImpl @Inject constructor(
     override val activeProfile: Flow<BusinessProfile> = dataStore.data
         .map { it[Keys.ACTIVE_BUSINESS_ID] ?: 1L } // Default to seeded ID 1
         .flatMapLatest { id ->
-            // Note: Since Dao.getProfileById is suspend, we convert to flow here
             flow {
-                val entity = businessProfileDao.getProfileById(id)
-                emit(entity?.toDomain() ?: BusinessProfile(id = 1, businessName = "Unknown"))
+                try {
+                    val entity = businessProfileDao.getProfileById(id)
+                    if (entity != null) {
+                        emit(entity.toDomain())
+                    } else {
+                        Timber.w("BusinessProfile $id not found, using default")
+                        emit(BusinessProfile(id = 1, businessName = "Default Business"))
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error loading business profile $id")
+                    emit(BusinessProfile(id = 1, businessName = "Error Loading Profile"))
+                }
             }
         }
 
