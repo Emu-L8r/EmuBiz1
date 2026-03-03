@@ -7,6 +7,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.emul8r.bizap.data.local.*
 import com.emul8r.bizap.data.local.dao.*
+import com.emul8r.bizap.data.local.migrations.MIGRATION_21_22
+import com.emul8r.bizap.data.local.migrations.MIGRATION_22_23
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,8 +30,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "bizap-db"
         )
-        // AutoMigration (v17→20) is defined in AppDatabase @Database annotation
-        // No manual migrations needed
+        .addMigrations(MIGRATION_21_22, MIGRATION_22_23)
         .fallbackToDestructiveMigration()
         .build()
     }
