@@ -3,6 +3,7 @@ package com.emul8r.bizap.utils
 import java.text.DecimalFormat
 import java.util.Currency
 import java.util.Locale
+import kotlin.math.roundToLong
 
 /**
  * Formats monetary values stored as Long (cents) to user-readable strings.
@@ -85,14 +86,17 @@ object CentsFormatter {
      * @param formatted Formatted string (e.g., "$1,499.99")
      * @return Amount in cents (e.g., 149999L)
      */
-    fun parseTocents(formatted: String): Long {
+    fun parseToCents(formatted: String): Long {
         val cleaned = formatted
             .replace(Regex("[^0-9.]"), "")  // Keep only digits and decimal
             .trim()
 
         return if (cleaned.isEmpty()) 0L
-        else (cleaned.toDoubleOrNull() ?: 0.0 * 100).toLong()
+        else ((cleaned.toDoubleOrNull() ?: 0.0) * 100).roundToLong()
     }
+
+    @Deprecated("Use parseToCents instead", ReplaceWith("parseToCents(formatted)"))
+    fun parseTocents(formatted: String): Long = parseToCents(formatted)
 }
 
 
