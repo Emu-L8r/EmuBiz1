@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.emul8r.bizap.utils.CentsFormatter
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.Invoice
@@ -93,7 +94,7 @@ fun InvoiceList(
                     },
                     headlineContent = { Text(invoice.customerName) },
                     supportingContent = {
-                        Text("Total: $${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount)} | ${formatDate(invoice.date)}")
+                        Text("Total: ${CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode)} | ${formatDate(invoice.date)}")
                     },
                     trailingContent = {
                         InvoiceStatusChip(invoice.status.name)
