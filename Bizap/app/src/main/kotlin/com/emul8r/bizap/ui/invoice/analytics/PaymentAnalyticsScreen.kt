@@ -6,8 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -161,7 +161,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
         )
 
         MetricCard(
-            icon = Icons.Filled.TrendingUp,
+            icon = Icons.AutoMirrored.Filled.TrendingUp,
             label = "Collection Rate",
             value = String.format("%.1f", analytics.collectionRate) + "%",
             backgroundColor = Color(0xFF4CAF50),
@@ -588,7 +588,7 @@ private fun InvoiceStatusSummary(analytics: PaymentAnalyticsSummary) {
                 color = Color(0xFFF44336)
             )
 
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

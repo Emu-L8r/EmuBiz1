@@ -15,6 +15,7 @@ import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
 import com.emul8r.bizap.utils.DocumentNamingUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.File
@@ -38,6 +39,7 @@ sealed interface InvoiceDetailEvent {
     object InvoiceDeleted : InvoiceDetailEvent
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class InvoiceDetailViewModel @Inject constructor(
     private val invoiceRepo: InvoiceRepository,
