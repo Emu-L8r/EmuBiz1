@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.invoice.model.InvoicePaymentStatus
+import com.emul8r.bizap.ui.theme.riskHigh
+import com.emul8r.bizap.ui.theme.riskMedium
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,11 +127,11 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
                 }
                 Column {
                     Text("Critical", fontSize = 12.sp, color = Color.Gray)
-                    Text("$criticalCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFE53935))
+                    Text("$criticalCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.riskHigh)
                 }
                 Column {
                     Text("Medium", fontSize = 12.sp, color = Color.Gray)
-                    Text("$mediumCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFFFF9800))
+                    Text("$mediumCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.riskMedium)
                 }
             }
         }
@@ -159,7 +161,7 @@ fun RiskInvoiceCard(invoice: InvoicePaymentStatus) {
                 Icon(
                     Icons.Default.Warning,
                     "Risk",
-                    tint = if (invoice.daysOverdue > 60) Color(0xFFE53935) else Color(0xFFFF9800)
+                    tint = if (invoice.daysOverdue > 60) MaterialTheme.colorScheme.riskHigh else MaterialTheme.colorScheme.riskMedium
                 )
             }
 

@@ -8,16 +8,20 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.emul8r.bizap.ui.theme.invoiceStatusDraft
+import com.emul8r.bizap.ui.theme.invoiceStatusOverdue
+import com.emul8r.bizap.ui.theme.invoiceStatusPaid
+import com.emul8r.bizap.ui.theme.invoiceStatusSent
 
 @Composable
 fun InvoiceStatusChip(status: String) {
+    val colorScheme = MaterialTheme.colorScheme
     val color = when (status) {
-        "PAID" -> Color(0xFF4CAF50) // Material Green
-        "SENT" -> MaterialTheme.colorScheme.primary
-        "DRAFT" -> MaterialTheme.colorScheme.outline
-        else -> MaterialTheme.colorScheme.error
+        "PAID" -> colorScheme.invoiceStatusPaid
+        "SENT" -> colorScheme.invoiceStatusSent
+        "DRAFT" -> colorScheme.invoiceStatusDraft
+        else -> colorScheme.invoiceStatusOverdue
     }
 
     Surface(

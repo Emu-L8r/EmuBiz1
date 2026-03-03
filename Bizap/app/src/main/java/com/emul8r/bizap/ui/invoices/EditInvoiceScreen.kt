@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
+import com.emul8r.bizap.domain.model.calculateTotal
 import com.emul8r.bizap.ui.components.InvoiceBottomSummary
 import kotlinx.coroutines.delay
 import timber.log.Timber
@@ -132,7 +133,7 @@ fun EditInvoiceContent(
             }
         },
         bottomBar = {
-            val total = invoice.items.sumOf { (it.unitPrice * it.quantity).toLong() }
+            val total = invoice.items.sumOf { it.calculateTotal() }
             InvoiceBottomSummary(
                 total = total,
                 currencyCode = invoice.currencyCode,
