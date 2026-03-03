@@ -2,7 +2,6 @@ package com.emul8r.bizap.di
 
 import com.emul8r.bizap.data.network.ErrorInterceptor
 import com.emul8r.bizap.data.remote.ExchangeRateService
-import com.emul8r.bizap.data.sync.SyncService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -48,11 +47,5 @@ object NetworkModule {
     @Singleton
     fun provideExchangeRateService(retrofit: Retrofit): ExchangeRateService {
         return retrofit.create(ExchangeRateService::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideSyncService(retrofit: Retrofit): SyncService {
-        return retrofit.create(SyncService::class.java)
     }
 }
