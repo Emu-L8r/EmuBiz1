@@ -17,7 +17,6 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         BusinessProfileEntity::class,
         CurrencyEntity::class,
         ExchangeRateEntity::class,
-        PendingOperation::class,
         InvoiceAnalyticsSnapshot::class,
         DailyRevenueSnapshot::class,
         CustomerAnalyticsSnapshot::class,
@@ -41,7 +40,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun businessProfileDao(): BusinessProfileDao
     abstract fun currencyDao(): CurrencyDao
     abstract fun exchangeRateDao(): ExchangeRateDao
-    abstract fun pendingOperationDao(): PendingOperationDao
     abstract fun analyticsDao(): AnalyticsDao
     abstract fun customerAnalyticsDao(): CustomerAnalyticsDao
     abstract fun invoicePaymentDao(): InvoicePaymentDao
