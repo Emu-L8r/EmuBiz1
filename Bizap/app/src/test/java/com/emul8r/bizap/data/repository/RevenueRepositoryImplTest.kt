@@ -31,14 +31,14 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
                 businessProfileId = businessId,
                 dateString = today.toString(),
                 dateMs = System.currentTimeMillis(),
-                totalRevenue = 1000.0,
+                totalRevenue = 100000L,  // $1000.00 in cents
                 invoiceCount = 1
             ),
             DailyRevenueSnapshot(
                 businessProfileId = businessId,
                 dateString = today.minusMonths(1).toString(),
                 dateMs = System.currentTimeMillis() - 2592000000,
-                totalRevenue = 500.0,
+                totalRevenue = 50000L,   // $500.00 in cents
                 invoiceCount = 1
             )
         )
@@ -49,7 +49,7 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
         val metrics = repository.getRevenueMetrics(businessId)
 
         // Assert
-        assertEquals(1000.0, metrics.mtdRevenue)
-        assertEquals(1500.0, metrics.ytdRevenue) // Assumes both in same year
+        assertEquals(100000L, metrics.mtdRevenue)
+        assertEquals(150000L, metrics.ytdRevenue) // Assumes both in same year
     }
 }
