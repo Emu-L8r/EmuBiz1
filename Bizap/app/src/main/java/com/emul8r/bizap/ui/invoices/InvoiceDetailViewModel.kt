@@ -3,7 +3,7 @@ package com.emul8r.bizap.ui.invoices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.DocumentManager
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.data.service.PrintService
 import com.emul8r.bizap.domain.model.Invoice
@@ -12,7 +12,7 @@ import com.emul8r.bizap.domain.model.LineItemSnapshot
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
-import com.emul8r.bizap.utils.DocumentNamingUtils
+import com.emul8r.bizap.utils.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -105,7 +105,7 @@ class InvoiceDetailViewModel @Inject constructor(
                 invoiceRepo.updateAmountPaid(invoice.id, newAmountPaid)
                 invoiceRepo.updateInvoiceStatus(invoice.id, newStatus)
                 
-                _uiEvent.emit(UiEvent.ShowSnackbar("Payment of $${String.format("%.2f", amount)} recorded."))
+                _uiEvent.emit(UiEvent.ShowSnackbar("Payment of ${CurrencyFormatter.formatCents(amount)} recorded."))
             } catch (e: Exception) {
                 _uiEvent.emit(UiEvent.ShowSnackbar("Failed to record payment: ${e.message}"))
             }
@@ -190,7 +190,7 @@ class InvoiceDetailViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val businessProfile = businessProfileRepository.profile.first()
+                val businessProfile = businessProfileRepository.activeProfile.first()
                 val snapshot = buildSnapshot(invoiceData, businessProfile)
 
                 val quoteResult = generateAndSaveInvoiceUseCase(
@@ -266,7 +266,7 @@ class InvoiceDetailViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val businessProfile = businessProfileRepository.profile.first()
+                val businessProfile = businessProfileRepository.activeProfile.first()
                 val snapshot = buildSnapshot(invoiceData, businessProfile)
                 
                 val result = generateAndSaveInvoiceUseCase(

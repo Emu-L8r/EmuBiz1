@@ -25,6 +25,7 @@ import com.emul8r.bizap.ui.invoices.components.InvoiceActionHub
 import com.emul8r.bizap.ui.invoices.components.VersionPicker
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.utils.formatDate
+import com.emul8r.bizap.utils.CurrencyFormatter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
@@ -164,10 +165,10 @@ fun InvoiceDetailScreen(
                                         ) {
                                             Column(Modifier.weight(1f)) {
                                                 Text(item.description, style = MaterialTheme.typography.bodyLarge)
-                                                Text("${item.quantity} x $${String.format(Locale.getDefault(), "%.2f", item.unitPrice)}", style = MaterialTheme.typography.bodySmall)
+                                                Text("${item.quantity} x ${CurrencyFormatter.formatCents(item.unitPrice, invoice.currencyCode)}", style = MaterialTheme.typography.bodySmall)
                                             }
                                             Text(
-                                                "$${String.format(Locale.getDefault(), "%.2f", item.quantity * item.unitPrice)}",
+                                                CurrencyFormatter.formatCents((item.quantity * item.unitPrice).toLong(), invoice.currencyCode),
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
@@ -179,7 +180,7 @@ fun InvoiceDetailScreen(
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text("Subtotal", style = MaterialTheme.typography.bodyLarge)
                                         Text(
-                                            text = "$${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount - invoice.taxAmount)}",
+                                            text = CurrencyFormatter.formatCents(invoice.totalAmount - invoice.taxAmount, invoice.currencyCode),
                                             style = MaterialTheme.typography.bodyLarge
                                         )
                                     }
@@ -190,7 +191,7 @@ fun InvoiceDetailScreen(
                                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                             Text("Tax (${(invoice.taxRate * 100).toInt()}%)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                             Text(
-                                                text = "$${String.format(Locale.getDefault(), "%.2f", invoice.taxAmount)}",
+                                                text = CurrencyFormatter.formatCents(invoice.taxAmount, invoice.currencyCode),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -211,7 +212,7 @@ fun InvoiceDetailScreen(
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text("Total", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                                         Text(
-                                            text = "$${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount)}",
+                                            text = CurrencyFormatter.formatCents(invoice.totalAmount, invoice.currencyCode),
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
@@ -391,13 +392,13 @@ fun PaymentProgressCard(invoice: com.emul8r.bizap.domain.model.Invoice, onRecord
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Payment Progress", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = "$${String.format("%.2f", invoice.amountPaid)} / $${String.format("%.2f", invoice.totalAmount)}",
+                    text = "${CurrencyFormatter.formatCents(invoice.amountPaid, invoice.currencyCode)} / ${CurrencyFormatter.formatCents(invoice.totalAmount, invoice.currencyCode)}",
                     fontWeight = FontWeight.Bold
                 )
             }
             Spacer(Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { (invoice.amountPaid / invoice.totalAmount).toFloat().coerceIn(0f, 1f) },
+                progress = { (invoice.amountPaid.toFloat() / invoice.totalAmount.toFloat()).coerceIn(0f, 1f) },
                 modifier = Modifier.fillMaxWidth().height(8.dp),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.outlineVariant,
@@ -423,7 +424,7 @@ fun RecordPaymentDialog(onDismiss: () -> Unit, onConfirm: (Long) -> Unit) {
             OutlinedTextField(
                 value = amount,
                 onValueChange = { amount = it },
-                label = { Text("Amount Received ($)") },
+                label = { Text("Amount Received") },
                 modifier = Modifier.fillMaxWidth()
             )
         },

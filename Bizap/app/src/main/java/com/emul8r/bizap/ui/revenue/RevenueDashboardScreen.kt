@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
-import java.util.Locale
+import com.emul8r.bizap.utils.CurrencyFormatter
 
 @Composable
 fun RevenueDashboardScreen(
@@ -71,7 +71,7 @@ private fun RevenueDashboardContent(metrics: RevenueMetrics) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = performer.currencyCode, fontWeight = FontWeight.Bold)
-                    Text(text = "$${String.format(Locale.getDefault(), "%.2f", performer.totalAmount)}")
+                    Text(text = CurrencyFormatter.formatCents(performer.totalAmount, performer.currencyCode))
                 }
             }
         }
@@ -87,7 +87,7 @@ private fun RevenueSummaryCard(label: String, amount: Double, modifier: Modifier
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = label, style = MaterialTheme.typography.labelSmall)
             Text(
-                text = "$${String.format(Locale.getDefault(), "%.2f", amount)}",
+                text = CurrencyFormatter.formatAmount(amount),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

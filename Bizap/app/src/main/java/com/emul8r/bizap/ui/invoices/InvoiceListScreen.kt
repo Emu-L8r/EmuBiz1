@@ -23,7 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.shared.InvoiceStatusChip
 import com.emul8r.bizap.ui.utils.formatDate
-import java.util.Locale
+import com.emul8r.bizap.utils.CurrencyFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +93,7 @@ fun InvoiceList(
                     },
                     headlineContent = { Text(invoice.customerName) },
                     supportingContent = {
-                        Text("Total: $${String.format(Locale.getDefault(), "%.2f", invoice.totalAmount)} | ${formatDate(invoice.date)}")
+                        Text("Total: ${CurrencyFormatter.formatCents(invoice.totalAmount, invoice.currencyCode)} | ${formatDate(invoice.date)}")
                     },
                     trailingContent = {
                         InvoiceStatusChip(invoice.status.name)

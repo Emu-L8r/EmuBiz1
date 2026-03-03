@@ -3,7 +3,7 @@ package com.emul8r.bizap.ui.invoices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.BuildConfig
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.model.Currency
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
@@ -148,7 +148,7 @@ class CreateInvoiceViewModel @Inject constructor(
                 val state = _uiState.value
                 val customer = state.selectedCustomer ?: throw Exception("Please select a customer")
 
-                val businessProfile = businessProfileRepository.profile.first()
+                val businessProfile = businessProfileRepository.activeProfile.first()
                 val lineItems = state.items.map { it.toDomain() }
                 // Calculate subtotal in cents: sum of (unitPrice * quantity) for each item
                 val subtotal: Long = lineItems.sumOf { (it.unitPrice * it.quantity).toLong() }

@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.invoice.model.InvoicePaymentStatus
-import java.util.Locale
+import com.emul8r.bizap.utils.CurrencyFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,7 +121,7 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
             ) {
                 Column {
                     Text("Total at Risk", fontSize = 12.sp, color = Color.Gray)
-                    Text("$${String.format(Locale.getDefault(), "%.2f", totalAtRisk)}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(CurrencyFormatter.formatAmount(totalAtRisk), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
                 Column {
                     Text("Critical", fontSize = 12.sp, color = Color.Gray)
@@ -171,7 +171,7 @@ fun RiskInvoiceCard(invoice: InvoicePaymentStatus) {
             ) {
                 Column {
                     Text("Outstanding", fontSize = 12.sp, color = Color.Gray)
-                    Text("$${String.format(Locale.getDefault(), "%.2f", invoice.outstandingAmount)}", fontWeight = FontWeight.Bold)
+                    Text(CurrencyFormatter.formatAmount(invoice.outstandingAmount), fontWeight = FontWeight.Bold)
                 }
                 Column {
                     Text("Days Overdue", fontSize = 12.sp, color = Color.Gray)

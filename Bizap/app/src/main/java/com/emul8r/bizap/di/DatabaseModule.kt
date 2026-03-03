@@ -30,7 +30,6 @@ object DatabaseModule {
         )
         // AutoMigration (v17→20) is defined in AppDatabase @Database annotation
         // No manual migrations needed
-        .fallbackToDestructiveMigration()
         .build()
     }
 

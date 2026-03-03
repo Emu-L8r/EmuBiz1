@@ -3,7 +3,7 @@ package com.emul8r.bizap.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.BuildConfig
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.model.BusinessProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,7 +18,7 @@ class BusinessProfileViewModel @Inject constructor(
     private val repository: BusinessProfileRepository
 ) : ViewModel() {
 
-    val profileState: StateFlow<BusinessProfile> = repository.profile
+    val profileState: StateFlow<BusinessProfile> = repository.activeProfile
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
