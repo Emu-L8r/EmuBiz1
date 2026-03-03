@@ -53,11 +53,13 @@ class EditInvoiceViewModel @Inject constructor(
     private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
     val navigationEvent = _navigationEvent.asSharedFlow()
 
+    @Suppress("UNCHECKED_CAST")
     val uiState: StateFlow<EditInvoiceUiState> = combine(
         invoiceRepository.getInvoiceWithItemsById(invoiceId),
         customerRepository.getAllCustomers(),
         _editState
     ) { params ->
+        // Type cast is safe: params[0] is Invoice from flow, params[1] is List<Customer>, params[2] is Invoice
         val invoice = params[0] as? Invoice
         val customers = params[1] as List<Customer>
         val editingInvoice = params[2] as? Invoice

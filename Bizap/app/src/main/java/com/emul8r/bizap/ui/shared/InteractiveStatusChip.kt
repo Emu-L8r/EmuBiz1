@@ -26,7 +26,7 @@ fun InteractiveStatusChip(
         modifier = modifier
     ) {
         AssistChip(
-            modifier = Modifier.menuAnchor(),
+            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
             onClick = { expanded = true },
             label = { Text(status) },
             colors = AssistChipDefaults.assistChipColors(containerColor = backgroundColor, labelColor = textColor),

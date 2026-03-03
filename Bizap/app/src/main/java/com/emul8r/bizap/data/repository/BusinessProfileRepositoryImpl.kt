@@ -8,9 +8,11 @@ import com.emul8r.bizap.data.local.BusinessProfileDao
 import com.emul8r.bizap.data.local.entities.BusinessProfileEntity
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class BusinessProfileRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>,
     private val businessProfileDao: BusinessProfileDao
