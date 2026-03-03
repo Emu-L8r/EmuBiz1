@@ -25,6 +25,7 @@ import com.emul8r.bizap.ui.invoices.components.InvoiceActionHub
 import com.emul8r.bizap.ui.invoices.components.VersionPicker
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.utils.formatDate
+import com.emul8r.bizap.utils.CentsFormatter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
@@ -164,10 +165,10 @@ fun InvoiceDetailScreen(
                                         ) {
                                             Column(Modifier.weight(1f)) {
                                                 Text(item.description, style = MaterialTheme.typography.bodyLarge)
-                                                Text("${item.quantity} x $${String.format(Locale.getDefault(), "%.2f", item.unitPrice)}", style = MaterialTheme.typography.bodySmall)
+                                                Text("${item.quantity} x ${CentsFormatter.formatCents(item.unitPrice)}", style = MaterialTheme.typography.bodySmall)
                                             }
                                             Text(
-                                                "$${String.format(Locale.getDefault(), "%.2f", item.quantity * item.unitPrice)}",
+                                                CentsFormatter.formatCents((item.unitPrice * item.quantity).toLong()),
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
