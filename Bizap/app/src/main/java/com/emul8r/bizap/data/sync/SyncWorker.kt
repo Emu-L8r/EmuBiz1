@@ -8,8 +8,10 @@ import com.emul8r.bizap.data.local.PendingOperationDao
 import com.emul8r.bizap.data.repository.OfflineSyncQueue
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import dagger.hilt.migration.DisableInstallInCheck
 import timber.log.Timber
 
+@DisableInstallInCheck
 @HiltWorker
 class SyncWorker @AssistedInject constructor(
     @Assisted context: Context,

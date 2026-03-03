@@ -22,5 +22,6 @@ data class LineItemEntity(
     val invoiceId: Long,
     val description: String,
     val quantity: Double,               // Qty can be fractional (e.g., 1.5 widgets)
-    val unitPrice: Long                 // Store as cents (e.g., 4999 = $49.99)
+    val unitPrice: Long,                // Store as cents (e.g., 4999 = $49.99)
+    val currencyCode: String = "AUD"    // Currency code (AUD, USD, EUR, etc.) - defaults to AUD
 )
