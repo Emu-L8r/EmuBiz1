@@ -392,13 +392,13 @@ fun PaymentProgressCard(invoice: com.emul8r.bizap.domain.model.Invoice, onRecord
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Payment Progress", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = "$${String.format("%.2f", invoice.amountPaid)} / $${String.format("%.2f", invoice.totalAmount)}",
+                    text = "${CentsFormatter.formatCents(invoice.amountPaid)} / ${CentsFormatter.formatCents(invoice.totalAmount)}",
                     fontWeight = FontWeight.Bold
                 )
             }
             Spacer(Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { (invoice.amountPaid / invoice.totalAmount).toFloat().coerceIn(0f, 1f) },
+                progress = { if (invoice.totalAmount > 0) (invoice.amountPaid.toFloat() / invoice.totalAmount.toFloat()).coerceIn(0f, 1f) else 0f },
                 modifier = Modifier.fillMaxWidth().height(8.dp),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.outlineVariant,
