@@ -4,7 +4,9 @@ import com.emul8r.bizap.data.local.entities.InvoiceEntity
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.local.entities.LineItemEntity
 import com.emul8r.bizap.domain.model.Invoice
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.model.LineItem
+import timber.log.Timber
 
 fun Invoice.toEntity(): InvoiceEntity {
     return InvoiceEntity(
@@ -49,12 +51,17 @@ fun InvoiceWithItems.toDomain(): Invoice {
         totalAmount = this.invoice.totalAmount,        // Already in cents
         items = this.items.map { it.toDomain() },
         isQuote = this.invoice.isQuote,
-        status = com.emul8r.bizap.domain.model.InvoiceStatus.valueOf(this.invoice.status),
+        status = try {
+            InvoiceStatus.valueOf(this.invoice.status)
+        } catch (e: IllegalArgumentException) {
+            Timber.e(e, "Invalid invoice status: ${this.invoice.status}, defaulting to DRAFT")
+            InvoiceStatus.DRAFT
+        },
         header = this.invoice.header,
         subheader = this.invoice.subheader,
         notes = this.invoice.notes,
         footer = this.invoice.footer,
-        photoUris = this.invoice.photoUris?.split(",") ?: emptyList(),
+        photoUris = this.invoice.photoUris?.split(",")?.filter { it.isNotBlank() } ?: emptyList(),
         pdfUri = this.invoice.pdfUri,
         dueDate = this.invoice.dueDate,
         taxRate = this.invoice.taxRate,

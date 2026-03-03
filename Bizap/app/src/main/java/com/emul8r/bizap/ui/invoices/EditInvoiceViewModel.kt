@@ -50,20 +50,18 @@ class EditInvoiceViewModel @Inject constructor(
     private val _isSaving = MutableStateFlow(false)
     val isSaving = _isSaving.asStateFlow()
 
-    private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
+    private val _navigationEvent = MutableSharedFlow<NavigationEvent>(
+        replay = 0,
+        extraBufferCapacity = 1,
+        onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
+    )
     val navigationEvent = _navigationEvent.asSharedFlow()
 
-    @Suppress("UNCHECKED_CAST")
     val uiState: StateFlow<EditInvoiceUiState> = combine(
         invoiceRepository.getInvoiceWithItemsById(invoiceId),
         customerRepository.getAllCustomers(),
         _editState
-    ) { params ->
-        // Type cast is safe: params[0] is Invoice from flow, params[1] is List<Customer>, params[2] is Invoice
-        val invoice = params[0] as? Invoice
-        val customers = params[1] as List<Customer>
-        val editingInvoice = params[2] as? Invoice
-
+    ) { invoice, customers, editingInvoice ->
         if (invoice == null && editingInvoice == null) {
             EditInvoiceUiState.Error("Invoice not found")
         } else {
