@@ -28,6 +28,7 @@ import java.util.Locale
  */
 @Composable
 fun PaymentAnalyticsScreen(
+    onBack: () -> Unit = {},
     viewModel: PaymentAnalyticsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
