@@ -143,9 +143,9 @@ fun CreateInvoiceScreen(
                     quantity = item.quantity,
                     unitPrice = item.unitPrice,
                     onUpdate = { desc, qty, price ->
-                        viewModel.updateLineItem(item.id, desc, qty, price)
+                        viewModel.updateLineItem(item.transientId, desc, qty, price)
                     },
-                    onRemove = { viewModel.removeLineItem(item.id) }
+                    onRemove = { viewModel.removeLineItem(item.transientId) }
                 )
             }
 
