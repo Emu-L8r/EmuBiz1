@@ -9,9 +9,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.InvoicePdfService
+import com.emul8r.bizap.domain.model.Currency
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.calculateTotal
+import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,6 +43,7 @@ class EditInvoiceViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val invoiceRepository: InvoiceRepository,
     private val customerRepository: CustomerRepository,
+    private val currencyRepository: CurrencyRepository,
     private val invoicePdfService: InvoicePdfService,
     private val businessProfileRepository: BusinessProfileRepository,
     private val savedStateHandle: SavedStateHandle
@@ -52,6 +55,9 @@ class EditInvoiceViewModel @Inject constructor(
     private val _editState = MutableStateFlow<Invoice?>(null)
     private val _isSaving = MutableStateFlow(false)
     val isSaving = _isSaving.asStateFlow()
+
+    val currencies: StateFlow<List<Currency>> = currencyRepository.getEnabledCurrencies()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _navigationEvent = MutableSharedFlow<NavigationEvent>(
         replay = 0,
@@ -127,6 +133,12 @@ class EditInvoiceViewModel @Inject constructor(
     fun onSubheaderChange(subheader: String) = _editState.update { it?.copy(subheader = subheader) }
     fun onNotesChange(notes: String) = _editState.update { it?.copy(notes = notes) }
     fun onFooterChange(footer: String) = _editState.update { it?.copy(footer = footer) }
+    fun onCurrencyChange(code: String) {
+        val currentState = uiState.value
+        if (currentState is EditInvoiceUiState.Success) {
+            _editState.update { currentState.invoice.copy(currencyCode = code) }
+        }
+    }
 
     fun saveInvoice() {
         viewModelScope.launch {

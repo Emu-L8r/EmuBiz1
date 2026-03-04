@@ -1,5 +1,6 @@
 package com.emul8r.bizap.ui.dashboard
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,17 +16,22 @@ import androidx.navigation.NavController
 import com.emul8r.bizap.ui.customers.CustomerViewModel
 import com.emul8r.bizap.ui.invoices.InvoiceList
 import com.emul8r.bizap.ui.navigation.Screen
+import com.emul8r.bizap.ui.revenue.RevenueDashboardUiState
+import com.emul8r.bizap.ui.revenue.RevenueDashboardViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
+import com.emul8r.bizap.utils.CentsFormatter
 
 @Composable
 fun DashboardScreen(
     navController: NavController,
     customerViewModel: CustomerViewModel = hiltViewModel(),
-    businessViewModel: BusinessProfileViewModel = hiltViewModel()
+    businessViewModel: BusinessProfileViewModel = hiltViewModel(),
+    revenueViewModel: RevenueDashboardViewModel = hiltViewModel()
 ) {
     val customers by customerViewModel.uiState.collectAsStateWithLifecycle()
     val activeBusiness by businessViewModel.profileState.collectAsStateWithLifecycle()
+    val revenueState by revenueViewModel.uiState.collectAsStateWithLifecycle()
     var showSwitcher by remember { mutableStateOf(false) }
 
     if (showSwitcher) {
@@ -80,7 +86,9 @@ fun DashboardScreen(
             }
 
             ElevatedCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { navController.navigate(Screen.RevenueDashboard) },
                 colors = CardDefaults.elevatedCardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -89,7 +97,11 @@ fun DashboardScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Icon(Icons.Default.AttachMoney, contentDescription = null)
                     Text("Revenue", style = MaterialTheme.typography.labelMedium)
-                    Text("$0.00", style = MaterialTheme.typography.headlineMedium)
+                    val mtdText = when (val s = revenueState) {
+                        is RevenueDashboardUiState.Success -> CentsFormatter.formatCents(s.metrics.mtdRevenue)
+                        else -> "$0.00"
+                    }
+                    Text(mtdText, style = MaterialTheme.typography.headlineMedium)
                 }
             }
         }

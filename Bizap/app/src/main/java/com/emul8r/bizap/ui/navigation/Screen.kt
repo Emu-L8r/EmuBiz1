@@ -48,4 +48,13 @@ sealed interface Screen {
 
     @Serializable
     object PrefilledItems : Screen
+
+    @Serializable
+    object RiskDashboard : Screen
+
+    @Serializable
+    object PaymentAnalytics : Screen
+
+    @Serializable
+    object BackupRestore : Screen
 }
