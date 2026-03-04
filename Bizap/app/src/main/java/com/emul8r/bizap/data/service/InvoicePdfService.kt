@@ -121,8 +121,8 @@ class InvoicePdfService @Inject constructor(
                     listOf(
                         item.description,
                         item.quantity.toInt().toString(),
-                        String.format(Locale.getDefault(), "%s%.2f", symbol, item.unitPrice),
-                        String.format(Locale.getDefault(), "%s%.2f", symbol, item.total)
+                        String.format(Locale.getDefault(), "%s%.2f", symbol, item.unitPrice / 100.0),
+                        String.format(Locale.getDefault(), "%s%.2f", symbol, item.total / 100.0)
                     ),
                     bodyPaint
                 )
@@ -135,12 +135,12 @@ class InvoicePdfService @Inject constructor(
         headerPaint.textAlign = Paint.Align.RIGHT
 
         canvas.drawText("Subtotal:", 450f, currentY, bodyPaint)
-        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal), rightX, currentY, bodyPaint)
+        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal / 100.0), rightX, currentY, bodyPaint)
 
         currentY += 15f
         if (snapshot.taxAmount > 0) {
             canvas.drawText("Tax (${(snapshot.taxRate * 100).toInt()}%):", 450f, currentY, bodyPaint)
-            canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount), rightX, currentY, bodyPaint)
+            canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount / 100.0), rightX, currentY, bodyPaint)
             currentY += 25f
         }
 

@@ -107,7 +107,7 @@ class InvoiceDetailViewModel @Inject constructor(
                 invoiceRepo.updateAmountPaid(invoice.id, newAmountPaid)
                 invoiceRepo.updateInvoiceStatus(invoice.id, newStatus)
                 
-                _uiEvent.emit(UiEvent.ShowSnackbar("Payment of $${String.format("%.2f", amount)} recorded."))
+                _uiEvent.emit(UiEvent.ShowSnackbar("Payment of $${String.format("%.2f", amount / 100.0)} recorded."))
             } catch (e: Exception) {
                 _uiEvent.emit(UiEvent.ShowSnackbar("Failed to record payment: ${e.message}"))
             }
