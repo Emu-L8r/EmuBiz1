@@ -12,6 +12,7 @@ import com.emul8r.bizap.domain.model.LineItemSnapshot
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
+import com.emul8r.bizap.utils.CentsFormatter
 import com.emul8r.bizap.utils.DocumentNamingUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -107,7 +108,7 @@ class InvoiceDetailViewModel @Inject constructor(
                 invoiceRepo.updateAmountPaid(invoice.id, newAmountPaid)
                 invoiceRepo.updateInvoiceStatus(invoice.id, newStatus)
                 
-                _uiEvent.emit(UiEvent.ShowSnackbar("Payment of $${String.format("%.2f", amount / 100.0)} recorded."))
+                _uiEvent.emit(UiEvent.ShowSnackbar("Payment of ${CentsFormatter.formatCents(amount)} recorded."))
             } catch (e: Exception) {
                 _uiEvent.emit(UiEvent.ShowSnackbar("Failed to record payment: ${e.message}"))
             }
