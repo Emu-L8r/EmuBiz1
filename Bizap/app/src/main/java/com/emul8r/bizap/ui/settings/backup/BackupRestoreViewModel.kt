@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
+import java.util.Locale
 import javax.inject.Inject
 
 sealed interface BackupRestoreUiState {
@@ -130,8 +131,8 @@ class BackupRestoreViewModel @Inject constructor(
      */
     private fun formatBytes(bytes: Long): String {
         return when {
-            bytes >= 1024 * 1024 -> String.format("%.2f MB", bytes / (1024.0 * 1024.0))
-            bytes >= 1024 -> String.format("%.2f KB", bytes / 1024.0)
+            bytes >= 1024 * 1024 -> String.format(Locale.getDefault(), "%.2f MB", bytes / (1024.0 * 1024.0))
+            bytes >= 1024 -> String.format(Locale.getDefault(), "%.2f KB", bytes / 1024.0)
             else -> "$bytes B"
         }
     }

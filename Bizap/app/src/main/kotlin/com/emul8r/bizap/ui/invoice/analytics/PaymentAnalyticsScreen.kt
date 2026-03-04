@@ -477,7 +477,7 @@ private fun CashFlowForecastSection(analytics: PaymentAnalyticsSummary) {
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
-                        text = String.format("%.0f", avgConfidence * 100) + "%",
+                        text = String.format(Locale.getDefault(), "%.0f", avgConfidence * 100) + "%",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
