@@ -390,5 +390,52 @@ object TestDataFactory {
     fun createCustomerWithoutPhone(): Customer {
         return createValidCustomer().copy(phone = null)
     }
-}
 
+    // ===============================
+    // BUSINESS PROFILE FACTORIES
+    // ===============================
+
+    /**
+     * Create a VALID business profile
+     *
+     * FIELDS:
+     *   id: 1 (auto-generated usually)
+     *   businessName: "Tech Solutions Pty Ltd" (1-100 chars)
+     *   abn: "12345678901" (11 digits for Australian Business Number)
+     *   email: "info@techsolutions.com.au" (valid format)
+     *   phone: "+61298765432" (valid international format)
+     *   website: "www.techsolutions.com.au" (optional)
+     *   address: "123 Business St, Sydney NSW 2000" (optional)
+     *   taxRate: 10L (10% GST in cents, 1000 = 10%)
+     */
+    fun createValidBusinessProfile(): com.emul8r.bizap.domain.model.BusinessProfile {
+        return com.emul8r.bizap.domain.model.BusinessProfile(
+            id = 1,
+            businessName = "Tech Solutions Pty Ltd",
+            email = "info@techsolutions.com.au",
+            phone = "+61298765432",
+            website = "www.techsolutions.com.au",
+            address = "123 Business St, Sydney NSW 2000",
+            abn = "12345678901",
+            taxRate = 1000  // 10% in basis points
+        )
+    }
+
+    /**
+     * Create a business profile with BLANK NAME
+     *
+     * Use when testing: "business name is required"
+     */
+    fun createBusinessProfileWithBlankName(): com.emul8r.bizap.domain.model.BusinessProfile {
+        return createValidBusinessProfile().copy(businessName = "")
+    }
+
+    /**
+     * Create a business profile with INVALID EMAIL
+     *
+     * Use when testing: "email must be valid if provided"
+     */
+    fun createBusinessProfileWithInvalidEmail(): com.emul8r.bizap.domain.model.BusinessProfile {
+        return createValidBusinessProfile().copy(email = "not-an-email")
+    }
+}
