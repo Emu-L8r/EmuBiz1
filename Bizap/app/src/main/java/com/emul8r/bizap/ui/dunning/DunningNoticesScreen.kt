@@ -22,6 +22,7 @@ import com.emul8r.bizap.ui.theme.riskHigh
 import com.emul8r.bizap.ui.theme.riskLow
 import com.emul8r.bizap.ui.theme.riskMedium
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -170,7 +171,7 @@ fun DunningNoticeCard(notice: DunningNotice) {
                         color = Color.Gray
                     )
                     Text(
-                        text = "$${String.format("%.2f", notice.totalAmountDue)}",
+                        text = "$${String.format(Locale.getDefault(), "%.2f", notice.totalAmountDue)}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.riskHigh

@@ -93,24 +93,24 @@ class EditInvoiceViewModel @Inject constructor(
         }
     }
 
-    fun removeLineItem(itemId: Long?) {
+    fun removeLineItem(transientId: String) {
         val currentState = uiState.value
         if (currentState is EditInvoiceUiState.Success) {
             val currentInvoice = currentState.invoice
             val updatedInvoice = currentInvoice.copy(
-                items = currentInvoice.items.filter { it.id != itemId }
+                items = currentInvoice.items.filter { it.transientId != transientId }
             )
             _editState.update { updatedInvoice }
         }
     }
 
-    fun updateLineItem(id: Long?, description: String, quantity: Double, unitPrice: Long) {
+    fun updateLineItem(transientId: String, description: String, quantity: Double, unitPrice: Long) {
         val currentState = uiState.value
         if (currentState is EditInvoiceUiState.Success) {
             val currentInvoice = currentState.invoice
             val updatedInvoice = currentInvoice.copy(
                 items = currentInvoice.items.map { item ->
-                    if (item.id == id) {
+                    if (item.transientId == transientId) {
                         item.copy(description = description, quantity = quantity, unitPrice = unitPrice)
                     } else {
                         item

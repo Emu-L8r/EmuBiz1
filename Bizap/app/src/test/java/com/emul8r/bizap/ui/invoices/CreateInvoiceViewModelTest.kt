@@ -82,13 +82,13 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
 
     @Test
     fun removeLineItem_shouldDecreaseItemsListSize() {
-        // First add an item with a known ID
+        // First add an item with a known transientId
         viewModel.addLineItem()
         val itemToRemove = viewModel.uiState.value.items.lastOrNull()
         val sizeBeforeRemove = viewModel.uiState.value.items.size
 
         // Remove the item
-        viewModel.removeLineItem(itemToRemove?.id)
+        viewModel.removeLineItem(itemToRemove!!.transientId)
 
         val sizeAfterRemove = viewModel.uiState.value.items.size
         assertEquals(sizeBeforeRemove - 1, sizeAfterRemove)
@@ -119,16 +119,16 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
     @Test
     fun updateLineItem_shouldModifyExistingItem() {
         viewModel.addLineItem()
-        val itemId = viewModel.uiState.value.items.firstOrNull()?.id
+        val transientId = viewModel.uiState.value.items.firstOrNull()!!.transientId
 
         viewModel.updateLineItem(
-            id = itemId,
+            transientId = transientId,
             description = "Updated Item",
             quantity = 5.0,
             unitPrice = 10000L // $100.00
         )
 
-        val updatedItem = viewModel.uiState.value.items.find { it.id == itemId }
+        val updatedItem = viewModel.uiState.value.items.find { it.transientId == transientId }
         assertEquals("Updated Item", updatedItem?.description)
         assertEquals(5.0, updatedItem?.quantity, 0.01)
         assertEquals(10000L, updatedItem?.unitPrice)
@@ -185,15 +185,14 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
     }
 
     @Test
-    fun removeLineItem_withNullId_shouldNotCrash() {
+    fun removeLineItem_withUnknownId_shouldNotCrash() {
         val initialSize = viewModel.uiState.value.items.size
 
-        // This should not crash
-        viewModel.removeLineItem(null)
+        // Remove with a UUID that doesn't match any item — should not crash or change size
+        viewModel.removeLineItem(java.util.UUID.randomUUID())
 
-        // Size might change or stay same, but no crash
         val finalSize = viewModel.uiState.value.items.size
-        assertTrue(finalSize >= 0)
+        assertEquals(initialSize, finalSize)
     }
 
     @Test
