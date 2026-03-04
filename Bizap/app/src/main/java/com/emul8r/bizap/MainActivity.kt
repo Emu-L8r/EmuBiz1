@@ -219,7 +219,7 @@ fun MainScreen() {
             composable<Screen.RevenueDashboard> { RevenueDashboardScreen() }
             composable<Screen.RiskDashboard> { RiskDashboardScreen(onBackClick = {}) }
             composable<Screen.PaymentAnalytics> { PaymentAnalyticsScreen(onBack = {}) }
-            composable<Screen.BackupRestore> { BackupRestoreScreen() }
+            composable<Screen.BackupRestore> { BackupRestoreScreen(onBack = {}) }
         }
 
         if (showBottomSheet) {
