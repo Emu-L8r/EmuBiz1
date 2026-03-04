@@ -156,13 +156,13 @@ fun EditInvoiceContent(
 
             item { Text("Line Items (changes save automatically)", style = MaterialTheme.typography.titleMedium) }
 
-            items(invoice.items, key = { item -> item.id }) { item -> // Use real ID for key
+            items(invoice.items, key = { item -> item.transientId }) { item -> // Use transientId for key
                 LineItemEditor(
                     description = item.description,
                     quantity = item.quantity,
                     unitPrice = item.unitPrice,
-                    onUpdate = { desc, qty, price -> viewModel.updateLineItem(item.id, desc, qty, price) },
-                    onRemove = { viewModel.removeLineItem(item.id) }
+                    onUpdate = { desc, qty, price -> viewModel.updateLineItem(item.transientId, desc, qty, price) },
+                    onRemove = { viewModel.removeLineItem(item.transientId) }
                 )
             }
 
