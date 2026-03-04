@@ -11,7 +11,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.BuildConfig
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerListScreen(
     onCustomerClick: (Long) -> Unit,
@@ -19,26 +18,6 @@ fun CustomerListScreen(
 ) {
     val customers by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Customers") },
-                actions = {
-                    if (BuildConfig.DEBUG) {
-                        IconButton(onClick = { viewModel.seedTestCustomers() }) {
-                            Icon(
-                                imageVector = Icons.Default.BugReport,
-                                contentDescription = "Seed Test Data",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Surface(modifier = Modifier.padding(padding)) {
-            CustomerList(customers = customers, onCustomerClick = onCustomerClick)
-        }
-    }
+    // MainActivity's Scaffold provides the TopAppBar, so just show content
+    CustomerList(customers = customers, onCustomerClick = onCustomerClick)
 }

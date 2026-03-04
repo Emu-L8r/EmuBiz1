@@ -85,23 +85,8 @@ fun CreateInvoiceScreen(
     }
 
     Scaffold(
+        topBar = {},  // MainActivity provides the header
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = { 
-            TopAppBar(
-                title = { Text("Create Tax Invoice") },
-                actions = {
-                    if (BuildConfig.DEBUG) {
-                        IconButton(onClick = { viewModel.loadDebugTestData() }) {
-                            Icon(
-                                imageVector = Icons.Default.BugReport,
-                                contentDescription = "Load Debug Data",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-            ) 
-        },
         bottomBar = {
             val total = uiState.items.sumOf { it.calculateTotal() }
             InvoiceBottomSummary(

@@ -26,7 +26,6 @@ import com.emul8r.bizap.ui.shared.InvoiceStatusChip
 import com.emul8r.bizap.ui.utils.formatDate
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvoiceListScreen(
     onInvoiceClick: (Long) -> Unit,
@@ -34,20 +33,11 @@ fun InvoiceListScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = { 
-            TopAppBar(
-                title = { Text("Invoices & Quotes") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) 
+    // MainActivity's Scaffold provides the TopAppBar
+    when (val currentState = state) {
+        is InvoiceListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
+            CircularProgressIndicator(Modifier.align(Alignment.Center))
         }
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            when (val currentState = state) {
-                is InvoiceListUiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                 is InvoiceListUiState.Empty -> EmptyState(Modifier.align(Alignment.Center))
                 is InvoiceListUiState.Error -> Text(
                     currentState.message,
@@ -60,6 +50,20 @@ fun InvoiceListScreen(
                     onInvoiceClick = onInvoiceClick,
                     onStatusChange = viewModel::updateInvoiceStatus
                 )
+            }
+        is InvoiceListUiState.Empty -> Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    Icons.Default.Receipt,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.outline
+                )
+                Text("No invoices yet", style = MaterialTheme.typography.bodyLarge)
             }
         }
     }

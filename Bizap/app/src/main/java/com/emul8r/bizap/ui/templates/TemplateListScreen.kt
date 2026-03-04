@@ -51,7 +51,7 @@ fun TemplateListScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Invoice Templates") }) },
+        topBar = {},  // MainActivity provides the header
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.navigateToCreate(businessProfileId) }

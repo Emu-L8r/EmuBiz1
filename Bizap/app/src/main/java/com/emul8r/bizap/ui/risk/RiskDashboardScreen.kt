@@ -31,21 +31,7 @@ fun RiskDashboardScreen(
     val uiState = viewModel.uiState.collectAsState().value
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Risk Dashboard") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.refreshRiskInvoices() }) {
-                        Icon(Icons.Default.Refresh, "Refresh")
-                    }
-                }
-            )
-        }
+        topBar = {}  // MainActivity provides the header
     ) { paddingValues ->
         when (uiState) {
             is RiskUiState.Loading -> {
@@ -65,7 +51,7 @@ fun RiskDashboardScreen(
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Error: ${uiState.message}", color = Color.Red)
+                    Text("Error: ${uiState.message}", color = MaterialTheme.colorScheme.error)
                 }
             }
             is RiskUiState.Success -> {

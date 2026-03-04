@@ -69,7 +69,7 @@ fun EditCustomerScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Edit Customer") }) },
+        topBar = {},  // MainActivity provides the header
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         when (val state = uiState) {

@@ -84,7 +84,7 @@ fun InvoiceDetailScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Invoice Details") }) },
+        topBar = {},  // MainActivity provides the header
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize()) {

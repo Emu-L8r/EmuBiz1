@@ -125,8 +125,8 @@ fun EditInvoiceContent(
     }
 
     Scaffold(
+        topBar = {},  // MainActivity provides the header
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = { TopAppBar(title = { Text("Edit Invoice") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = { viewModel.shareInvoice() }) {
                 Icon(Icons.Default.Share, contentDescription = "Share Invoice")

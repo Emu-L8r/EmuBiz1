@@ -92,22 +92,7 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Business Profile") },
-                actions = {
-                    if (BuildConfig.DEBUG) {
-                        IconButton(onClick = { viewModel.seedTestBusinessProfile() }) {
-                            Icon(
-                                imageVector = Icons.Default.BugReport,
-                                contentDescription = "Seed Business Profile",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-            )
-        }
+        topBar = {}  // MainActivity provides the header
     ) { padding ->
         Column(
             modifier = Modifier
