@@ -91,7 +91,7 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
 
     override suspend fun recordPayment(
         invoiceId: Long,
-        amountPaid: Double,
+        amountPaid: Long,  // Cents (e.g., 14999 = $149.99)
         paymentDate: LocalDate,
         paymentMethod: PaymentMethod,
         reference: String
@@ -113,9 +113,9 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
         customerName = customerName,
         invoiceDate = LocalDate.now(),
         dueDate = LocalDate.now(),
-        totalAmount = totalAmount,
-        paidAmount = paidAmount,
-        outstandingAmount = outstandingAmount,
+        totalAmount = totalAmount.toDouble() / 100.0,      // Convert cents to dollars
+        paidAmount = paidAmount.toDouble() / 100.0,        // Convert cents to dollars
+        outstandingAmount = outstandingAmount.toDouble() / 100.0,  // Convert cents to dollars
         paymentStatus = PaymentStatus.valueOf(paymentStatus),
         ageingBucket = AgeingBucket.valueOf(ageingBucket),
         daysOverdue = daysOverdue,
