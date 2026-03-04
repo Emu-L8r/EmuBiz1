@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.model.BusinessProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +33,7 @@ class SettingsViewModel @Inject constructor(
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
 
-    val profileState: StateFlow<BusinessProfile> = repository.profile
+    val profileState: StateFlow<BusinessProfile> = repository.activeProfile
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

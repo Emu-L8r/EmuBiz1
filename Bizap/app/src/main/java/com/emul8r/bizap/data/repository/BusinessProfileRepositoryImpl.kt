@@ -25,25 +25,22 @@ class BusinessProfileRepositoryImpl @Inject constructor(
 
     /**
      * REACTIVE IDENTITY ENGINE: 
-     * Watches DataStore for active ID -> Fetches full profile from Room.
+     * Watches DataStore for active ID -> Watches Room for profile changes.
+     * This ensures UI updates when business profile is edited.
      */
     override val activeProfile: Flow<BusinessProfile> = dataStore.data
         .map { it[Keys.ACTIVE_BUSINESS_ID] ?: 1L } // Default to seeded ID 1
+        .distinctUntilChanged()
         .flatMapLatest { id ->
-            flow {
-                try {
-                    val entity = businessProfileDao.getProfileById(id)
-                    if (entity != null) {
-                        emit(entity.toDomain())
-                    } else {
-                        Timber.w("BusinessProfile $id not found, using default")
-                        emit(BusinessProfile(id = 1, businessName = "Default Business"))
-                    }
-                } catch (e: Exception) {
+            businessProfileDao.getAllProfiles()
+                .map { profiles ->
+                    profiles.firstOrNull { it.id == id }?.toDomain()
+                        ?: BusinessProfile(id = 1, businessName = "Default Business")
+                }
+                .catch { e ->
                     Timber.e(e, "Error loading business profile $id")
                     emit(BusinessProfile(id = 1, businessName = "Error Loading Profile"))
                 }
-            }
         }
 
     override val allProfiles: Flow<List<BusinessProfile>> = businessProfileDao.getAllProfiles()

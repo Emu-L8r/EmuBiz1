@@ -2,7 +2,7 @@ package com.emul8r.bizap.ui.invoices
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.emul8r.bizap.BaseUnitTest
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository

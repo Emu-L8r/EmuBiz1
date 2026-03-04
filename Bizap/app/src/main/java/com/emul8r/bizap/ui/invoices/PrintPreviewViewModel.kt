@@ -9,7 +9,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.DocumentManager
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.repository.InvoiceRepository
@@ -46,7 +46,7 @@ class InvoicePdfViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val invoice = invoiceRepo.getInvoiceWithItemsById(invoiceId).first() ?: throw IllegalStateException("Invoice not found")
-                val profile = businessProfileRepo.profile.first()
+                val profile = businessProfileRepo.activeProfile.first()
 
                 // Build snapshot for PDF generation
                 val snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(

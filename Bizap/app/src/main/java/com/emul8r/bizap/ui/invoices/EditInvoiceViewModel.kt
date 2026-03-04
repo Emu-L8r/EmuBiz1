@@ -7,7 +7,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
@@ -151,7 +151,7 @@ class EditInvoiceViewModel @Inject constructor(
             val state = uiState.first()
             if (state is EditInvoiceUiState.Success) {
                 try {
-                    val businessProfile = businessProfileRepository.profile.first()
+                    val businessProfile = businessProfileRepository.activeProfile.first()
                     val invoice = state.invoice
 
                     // Build snapshot for PDF generation
