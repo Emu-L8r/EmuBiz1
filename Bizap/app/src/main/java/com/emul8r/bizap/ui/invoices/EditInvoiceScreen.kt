@@ -27,6 +27,7 @@ import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.calculateTotal
 import com.emul8r.bizap.ui.components.InvoiceBottomSummary
+import com.emul8r.bizap.ui.common.CurrencySelector
 import kotlinx.coroutines.delay
 import timber.log.Timber
 import java.io.File
@@ -153,6 +154,16 @@ fun EditInvoiceContent(
             item { Text("Customer: ${invoice.customerName}", style = MaterialTheme.typography.titleMedium) }
             item { OutlinedTextField(invoice.header ?: "", { viewModel.onHeaderChange(it) }, label = { Text("Header") }, modifier = Modifier.fillMaxWidth()) }
             item { OutlinedTextField(invoice.subheader ?: "", { viewModel.onSubheaderChange(it) }, label = { Text("Subheader") }, modifier = Modifier.fillMaxWidth()) }
+
+            item {
+                val currencies by viewModel.currencies.collectAsStateWithLifecycle()
+                CurrencySelector(
+                    currencies = currencies,
+                    selectedCurrencyCode = invoice.currencyCode,
+                    onCurrencySelected = viewModel::onCurrencyChange,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             item { Text("Line Items (changes save automatically)", style = MaterialTheme.typography.titleMedium) }
 

@@ -29,6 +29,9 @@ import com.emul8r.bizap.ui.invoices.*
 import com.emul8r.bizap.ui.components.BizapTopAppBar
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.revenue.RevenueDashboardScreen
+import com.emul8r.bizap.ui.risk.RiskDashboardScreen
+import com.emul8r.bizap.ui.invoice.analytics.PaymentAnalyticsScreen
+import com.emul8r.bizap.ui.settings.backup.BackupRestoreScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
@@ -111,6 +114,9 @@ fun MainScreen() {
                 currentDestination?.hasRoute<Screen.InvoiceDetail>() == true -> "Invoice Detail"
                 currentDestination?.hasRoute<Screen.InvoicePdf>() == true -> "PDF Preview"
                 currentDestination?.hasRoute<Screen.RevenueDashboard>() == true -> "Revenue Dashboard"
+                currentDestination?.hasRoute<Screen.RiskDashboard>() == true -> "Risk Dashboard"
+                currentDestination?.hasRoute<Screen.PaymentAnalytics>() == true -> "Payment Analytics"
+                currentDestination?.hasRoute<Screen.BackupRestore>() == true -> "Backup & Restore"
                 else -> "Bizap"
             }
 
@@ -211,6 +217,9 @@ fun MainScreen() {
                 InvoicePdfScreen(invoiceId = detail.invoiceId, isQuote = detail.isQuote)
             }
             composable<Screen.RevenueDashboard> { RevenueDashboardScreen() }
+            composable<Screen.RiskDashboard> { RiskDashboardScreen(onBackClick = {}) }
+            composable<Screen.PaymentAnalytics> { PaymentAnalyticsScreen() }
+            composable<Screen.BackupRestore> { BackupRestoreScreen() }
         }
 
         if (showBottomSheet) {

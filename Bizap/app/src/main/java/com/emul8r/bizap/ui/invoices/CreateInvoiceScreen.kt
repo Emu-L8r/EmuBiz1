@@ -30,6 +30,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.emul8r.bizap.BuildConfig
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.ui.components.InvoiceBottomSummary
+import com.emul8r.bizap.ui.common.CurrencySelector
 import java.io.File
 import java.util.Locale
 
@@ -118,6 +119,15 @@ fun CreateInvoiceScreen(
                     value = uiState.subheader,
                     onValueChange = viewModel::onSubheaderChange,
                     label = { Text("Subheader") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            item {
+                CurrencySelector(
+                    currencies = uiState.currencies,
+                    selectedCurrencyCode = uiState.selectedCurrencyCode,
+                    onCurrencySelected = viewModel::onCurrencySelected,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
