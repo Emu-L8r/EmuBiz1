@@ -111,21 +111,7 @@ fun EditTemplateScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Edit: ${formState!!.name}") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { showDeleteDialog = true }) {
-                        Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
-                    }
-                }
-            )
-        }
+        topBar = {}  // MainActivity provides the header
     ) { paddingValues ->
         Box(Modifier.fillMaxSize().padding(paddingValues)) {
             Column(Modifier.fillMaxSize().padding(bottom = 80.dp)) {

@@ -57,7 +57,7 @@ fun CustomerDetailScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Customer Details") }) }
+        topBar = {}  // MainActivity provides the header
     ) { padding ->
         when (val state = uiState) {
             is CustomerDetailUiState.Loading -> {

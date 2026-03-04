@@ -120,16 +120,7 @@ fun BackupRestoreScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Backup & Restore") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
+        topBar = {}  // MainActivity provides the header
     ) { paddingValues ->
         Box(
             modifier = Modifier

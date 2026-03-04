@@ -30,7 +30,10 @@ fun DocumentVaultScreen(viewModel: DocumentVaultViewModel = hiltViewModel()) {
     val context = LocalContext.current
 
     Scaffold(
-        topBar = {
+        topBar = {}  // MainActivity provides the header
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // Move SearchBar to content instead of topBar
             SearchBar(
                 inputField = {
                     SearchBarDefaults.InputField(
@@ -50,9 +53,8 @@ fun DocumentVaultScreen(viewModel: DocumentVaultViewModel = hiltViewModel()) {
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) { }
-        }
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+
+            Box(modifier = Modifier.fillMaxSize()) {
             when (val state = uiState) {
                 is DocumentVaultUiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.primary)

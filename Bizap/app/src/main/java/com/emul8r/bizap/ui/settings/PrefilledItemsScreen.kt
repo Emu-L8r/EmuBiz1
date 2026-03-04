@@ -22,6 +22,7 @@ fun PrefilledItemsScreen(viewModel: PrefilledItemsViewModel = hiltViewModel()) {
     var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
+        topBar = {},  // MainActivity provides the header
         floatingActionButton = {
             FloatingActionButton(onClick = { showDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add pre-filled item")

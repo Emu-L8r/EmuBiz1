@@ -33,21 +33,7 @@ fun DunningNoticesScreen(
     val uiState = viewModel.uiState.collectAsState().value
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Dunning Notices", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.refreshDunningNotices() }) {
-                        Icon(Icons.Default.Refresh, "Refresh")
-                    }
-                }
-            )
-        }
+        topBar = {}  // MainActivity provides the header
     ) { paddingValues ->
         when (uiState) {
             is DunningUiState.Loading -> {
@@ -69,8 +55,8 @@ fun DunningNoticesScreen(
                 ) {
                     Text(
                         text = "Error: ${uiState.message}",
-                        color = Color.Red,
-                        fontSize = 16.sp
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
             }
