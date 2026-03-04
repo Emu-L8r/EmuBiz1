@@ -13,7 +13,7 @@ interface PaymentAnalyticsRepository {
     suspend fun forecastCashFlow(businessProfileId: Long, days: Int): List<CashFlowForecast>
     suspend fun recordPayment(
         invoiceId: Long,
-        amountPaid: Double,
+        amountPaid: Long,  // Cents (e.g., 14999 = $149.99)
         paymentDate: LocalDate,
         paymentMethod: PaymentMethod,
         reference: String

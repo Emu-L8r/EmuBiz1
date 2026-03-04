@@ -24,7 +24,7 @@ data class InvoicePaymentEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val invoiceId: Long,
-    val amountPaid: Double,
+    val amountPaid: Long,  // Cents (e.g., 14999 = $149.99)
     val paymentDate: Long,  // Unix timestamp
     val paymentMethod: String,  // "CASH", "CHECK", "CREDIT_CARD", etc.
     val transactionReference: String,
@@ -70,17 +70,17 @@ data class InvoicePaymentSnapshot(
     val invoiceDate: Long,
     val dueDate: Long,
     
-    val totalAmount: Double,
-    val paidAmount: Double,
-    val outstandingAmount: Double,
-    
+    val totalAmount: Long,           // Cents
+    val paidAmount: Long,            // Cents
+    val outstandingAmount: Long,     // Cents
+
     val paymentStatus: String,
     val ageingBucket: String,
     val daysOverdue: Int,
     val daysSinceDue: Int,
     
     val lastPaymentDate: Long? = null,
-    val lastPaymentAmount: Double = 0.0,
+    val lastPaymentAmount: Long = 0,  // Cents
     val paymentCount: Int = 0,
     
     val isAtRisk: Boolean = false,
@@ -108,21 +108,21 @@ data class DailyPaymentSnapshot(
     val snapshotDate: Long,
     
     val paymentsReceivedCount: Int,
-    val paymentsReceivedAmount: Double,
+    val paymentsReceivedAmount: Long,      // Cents
     val invoicesDueCount: Int,
-    val invoicesDueAmount: Double,
+    val invoicesDueAmount: Long,           // Cents
     val invoicesOverdueCount: Int,
-    val invoicesOverdueAmount: Double,
-    
-    val outstandingCurrent: Double,
-    val outstandingPast30: Double,
-    val outstandingPast60: Double,
-    val outstandingPast90: Double,
-    
+    val invoicesOverdueAmount: Long,       // Cents
+
+    val outstandingCurrent: Long,          // Cents
+    val outstandingPast30: Long,           // Cents
+    val outstandingPast60: Long,           // Cents
+    val outstandingPast90: Long,           // Cents
+
     val collectionRate: Double,
     val averagePaymentTime: Double,
-    val projectedMonthlyRevenue: Double,
-    
+    val projectedMonthlyRevenue: Long,     // Cents
+
     val createdAtMs: Long = System.currentTimeMillis()
 )
 
@@ -136,26 +136,26 @@ data class CollectionMetrics(
     val metricsDate: Long,
     
     val totalInvoicesIssued: Int,
-    val totalInvoiceAmount: Double,
-    val totalPaidAmount: Double,
-    val totalOutstandingAmount: Double,
+    val totalInvoiceAmount: Long,      // Cents
+    val totalPaidAmount: Long,         // Cents
+    val totalOutstandingAmount: Long,  // Cents
     val collectionRate: Double,
     
-    val ageingCurrent: Double,
-    val ageingPast30: Double,
-    val ageingPast60: Double,
-    val ageingPast90: Double,
-    
+    val ageingCurrent: Long,           // Cents
+    val ageingPast30: Long,            // Cents
+    val ageingPast60: Long,            // Cents
+    val ageingPast90: Long,            // Cents
+
     val averageDaysToPayment: Double,
     val medianDaysToPayment: Double,
     val overdueInvoiceCount: Int,
-    val overdueAmount: Double,
-    
+    val overdueAmount: Long,           // Cents
+
     val collectionRateTrend: Double,
     val overdueTrend: Double,
     
     val projectedCollectionRate30Days: Double,
-    val projectedOutstanding30Days: Double,
-    
+    val projectedOutstanding30Days: Long,  // Cents
+
     val lastUpdatedMs: Long = System.currentTimeMillis()
 )
