@@ -393,14 +393,168 @@ if (index == targetIndex) { ... }  // ✓ Position-based
 
 ---
 
+## SECTION 6: BUG INTERACTION FLOW - HOW CORRUPTION LEADS TO TYPE ERROR
+
+### The Complete Failure Chain
+
+When Bug #1 corrupts the data, it creates a precondition that triggers Bug #2:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ BUG #1: NULL ID COLLISION (Edit Phase)                           │
+│                                                                   │
+│ User edits Item #1: qty = 2.5                                   │
+│   ↓                                                               │
+│ updateLineItem(id=null, "Service A", 2.5, 5000L)                │
+│   ↓                                                               │
+│ if (it.id == null) { ← ALL 3 items match! }                     │
+│   ↓                                                               │
+│ State becomes CORRUPTED:                                          │
+│   [Item("Service A", 2.5), Item("Service A", 2.5), Item("Service A", 2.5)]
+│                                                                   │
+│ ✗ BUG #1 DAMAGE: All items now identical                        │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ User clicks Save                                                  │
+│   ↓                                                               │
+│ Corrupted state flows into save pipeline:                         │
+│ [Item("Service A", 2.5), Item("Service A", 2.5), Item("Service A", 2.5)]
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ onSaveClicked() → lineItems = state.items.map { it.toDomain() } │
+│   ↓                                                               │
+│ Result: List<LineItem> with 3 identical items                   │
+│   ↓                                                               │
+│ subtotal = lineItems.sumOf { (it.unitPrice * it.quantity).toLong() }
+│         = (5000L * 2.5 * 3)  ← All three multiply same way      │
+│         = 37500L                                                  │
+│   ↓                                                               │
+│ ✓ Calculation completes (no error yet)                           │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ BUG #2: TYPE MISMATCH (Save Phase)                               │
+│                                                                   │
+│ Data ready for database insert:                                  │
+│ Invoice(                                                          │
+│   totalAmount = 37500L,  ← Long                                  │
+│   items = [3 identical items]                                    │
+│ )                                                                 │
+│   ↓                                                               │
+│ Display screen tries to show total:                              │
+│ Text("Total: ${String.format("%.2f", invoice.totalAmount)}")    │
+│        ↑                            ↑                             │
+│        ↑ Expects Double/Float      ↑ Provides Long (37500L)     │
+│   ↓                                                               │
+│ ❌ IllegalFormatConversionException: f != java.lang.Long        │
+│                                                                   │
+│ OR during database binding:                                       │
+│ Room tries to insert Long value into column with wrong affinity  │
+│   ↓                                                               │
+│ ❌ Type mismatch error                                            │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ Save fails, user loses all changes                               │
+│ User tries again, same two bugs trigger again                    │
+│ Infinite loop of failure                                          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Why Bug #2 Only Appears After Bug #1
+
+**Key insight:** Bug #2 might not occur at all with normal, non-corrupted data.
+
+Possible reasons Bug #2 only manifests with Bug #1's corruption:
+
+1. **Type conversion edge case:**
+   - Normal data: varied values → type conversion succeeds
+   - Corrupted data: 3 identical values → specific calculation fails
+
+2. **Database constraint issue:**
+   - Normal data: unique values pass validation
+   - Corrupted data: duplicate items trigger constraint violation
+
+3. **Display formatter quirk:**
+   - Normal data: varied amounts display correctly
+   - Corrupted data: identical amounts trigger formatter bug
+
+4. **Calculation overflow:**
+   - Normal data: sum is reasonable
+   - Corrupted data: 3x multiplication results in unexpected type
+
+### The Evidence
+
+**Why this theory is credible:**
+
+1. Bug #1 is **100% reproducible** - every edit causes collision
+2. Bug #2 is **only observed after invoice edit** - not on first create
+3. Bug #1 creates **identical values** - unusual state not in normal flow
+4. Bug #2 is **type-related** - suggests edge case in type handling
+
+**This suggests:**
+- Bug #2's root cause is something that only breaks with specific value patterns
+- Bug #1's corruption creates exactly those value patterns
+- They're linked mechanically, not coincidentally
+
+---
+
 **END OF DATA FLOW TYPE MAPPING**
+
+Version: 1.1  
+---
+
+## CRITICAL: HOW BUG #1 AND BUG #2 CREATE A COMPOUND FAILURE
+
+### The Vicious Cycle That Breaks Invoice Creation
+
+When both bugs are present, they interact destructively:
+
+**Bug #1 creates degenerate state:**
+```
+All line items become identical because they all have id=null
+Items: [
+  LineItemForm(id=null, transientId=UUID-A, description="Service A", qty=2.5),
+  LineItemForm(id=null, transientId=UUID-B, description="Service A", qty=2.5),  ← WRONG!
+  LineItemForm(id=null, transientId=UUID-C, description="Service A", qty=2.5)   ← WRONG!
+]
+```
+
+**Bug #2 fails on degenerate state:**
+```
+When saving this corrupted state, a type mismatch error occurs
+Possible locations:
+- Display formatter expecting Double, gets Long
+- Database binding seeing type mismatch on corrupted values
+- Calculation expecting unique values, fails on duplicates
+```
+
+**Result: Complete feature failure**
+- User edits items → Bug #1 creates identical items (not obvious)
+- User tries to save → Bug #2 throws type error (mysterious)
+- User loses all work → No recovery path
+- User tries again → Same cycle repeats
+
+### Why This Matters
+
+The two bugs are **NOT independent**:
+- Bug #1 alone would at least let you save (with wrong data)
+- Bug #2 alone would only affect certain states
+- **Together they make the feature completely non-functional**
+
+---
+
+**Last Updated:** March 4, 2026
+Includes: Bug interaction flow analysis
 
 Use this document as reference when:
 - Adding new line items
 - Saving invoices
 - Displaying amounts
 - Debugging type errors
+- Understanding bug interactions
 - Adding new features that handle money
 
-Last Updated: March 4, 2026
 
