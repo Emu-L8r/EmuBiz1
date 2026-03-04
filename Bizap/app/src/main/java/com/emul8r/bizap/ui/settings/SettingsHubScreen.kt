@@ -4,8 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
@@ -34,6 +37,24 @@ fun SettingsHubScreen(onNavigate: (Screen) -> Unit) {
             title = "Pre-filled Items",
             subtitle = "Manage your saved line items for faster invoicing",
             onClick = { onNavigate(Screen.PrefilledItems) }
+        )
+        SettingsItem(
+            icon = Icons.Default.ShowChart,
+            title = "Risk Dashboard",
+            subtitle = "View customer risk and outstanding invoice analytics",
+            onClick = { onNavigate(Screen.RiskDashboard) }
+        )
+        SettingsItem(
+            icon = Icons.Default.BarChart,
+            title = "Payment Analytics",
+            subtitle = "Analyse payment trends and cash flow forecasts",
+            onClick = { onNavigate(Screen.PaymentAnalytics) }
+        )
+        SettingsItem(
+            icon = Icons.Default.Backup,
+            title = "Backup & Restore",
+            subtitle = "Export or restore your app database",
+            onClick = { onNavigate(Screen.BackupRestore) }
         )
     }
 }

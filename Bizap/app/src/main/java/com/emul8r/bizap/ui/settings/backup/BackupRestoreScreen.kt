@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.ui.settings.backup.BackupRestoreUiState.*
 import timber.log.Timber
 import java.io.File
+import java.util.Locale
 
 @Composable
 fun BackupRestoreScreen(
@@ -367,8 +368,8 @@ fun BackupRestoreScreen(
  */
 private fun formatBytes(bytes: Long): String {
     return when {
-        bytes >= 1024 * 1024 -> String.format("%.2f MB", bytes / (1024.0 * 1024.0))
-        bytes >= 1024 -> String.format("%.2f KB", bytes / 1024.0)
+        bytes >= 1024 * 1024 -> String.format(Locale.getDefault(), "%.2f MB", bytes / (1024.0 * 1024.0))
+        bytes >= 1024 -> String.format(Locale.getDefault(), "%.2f KB", bytes / 1024.0)
         else -> "$bytes B"
     }
 }
