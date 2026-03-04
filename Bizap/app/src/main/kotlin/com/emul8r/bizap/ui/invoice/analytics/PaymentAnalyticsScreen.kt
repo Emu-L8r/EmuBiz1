@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.invoice.model.PaymentAnalyticsSummary
 import timber.log.Timber
+import java.util.Locale
 
 /**
  * Payment Analytics Dashboard Screen - Professional financial intelligence dashboard.
@@ -155,7 +156,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
         MetricCard(
             icon = Icons.Filled.AttachMoney,
             label = "Outstanding",
-            value = "$" + String.format("%.0f", analytics.totalOutstandingAmount),
+            value = "$" + String.format(Locale.getDefault(), "%.0f", analytics.totalOutstandingAmount),
             backgroundColor = Color(0xFFFFC107),
             modifier = Modifier.weight(1f)
         )
@@ -342,7 +343,7 @@ private fun AgingBracketRow(
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
-                text = "$" + String.format("%.0f", amount) + " (" + percentage + "%)",
+                text = "$" + String.format(Locale.getDefault(), "%.0f", amount) + " (" + percentage + "%)",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -423,7 +424,7 @@ private fun OutstandingCard(
                 color = backgroundColor
             )
             Text(
-                text = "$" + String.format("%.0f", amount),
+                text = "$" + String.format(Locale.getDefault(), "%.0f", amount),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold
             )
@@ -463,7 +464,7 @@ private fun CashFlowForecastSection(analytics: PaymentAnalyticsSummary) {
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
-                        text = "$" + String.format("%.0f", totalForecast),
+                        text = "$" + String.format(Locale.getDefault(), "%.0f", totalForecast),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (totalForecast > 0) Color(0xFF4CAF50) else Color(0xFFF44336)
@@ -600,7 +601,7 @@ private fun InvoiceStatusSummary(analytics: PaymentAnalyticsSummary) {
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
-                        text = "$" + String.format("%.0f", analytics.totalInvoiceAmount),
+                        text = "$" + String.format(Locale.getDefault(), "%.0f", analytics.totalInvoiceAmount),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
