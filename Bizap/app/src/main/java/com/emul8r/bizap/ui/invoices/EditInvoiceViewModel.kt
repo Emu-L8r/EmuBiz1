@@ -19,6 +19,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 
 sealed class NavigationEvent {
@@ -47,6 +48,7 @@ class EditInvoiceViewModel @Inject constructor(
 
     private val invoiceId: Long = checkNotNull(savedStateHandle["invoiceId"])
 
+    private var tempIdCounter = AtomicLong(-1L)
     private val _editState = MutableStateFlow<Invoice?>(null)
     private val _isSaving = MutableStateFlow(false)
     val isSaving = _isSaving.asStateFlow()
@@ -83,7 +85,7 @@ class EditInvoiceViewModel @Inject constructor(
             val currentInvoice = currentState.invoice
             val updatedInvoice = currentInvoice.copy(
                 items = currentInvoice.items + com.emul8r.bizap.domain.model.LineItem(
-                    id = 0,
+                    id = tempIdCounter.getAndDecrement(),
                     description = "",
                     quantity = 1.0,
                     unitPrice = 0L
