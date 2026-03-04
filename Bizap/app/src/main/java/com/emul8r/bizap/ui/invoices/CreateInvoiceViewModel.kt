@@ -124,12 +124,12 @@ class CreateInvoiceViewModel @Inject constructor(
         }
     }
 
-    fun removeLineItem(id: Long?) = _uiState.update { state -> state.copy(items = state.items.filter { it.id != id }) }
-    
-    fun updateLineItem(id: Long?, description: String, quantity: Double, unitPrice: Long) {
+    fun removeLineItem(transientId: java.util.UUID) = _uiState.update { state -> state.copy(items = state.items.filter { it.transientId != transientId }) }
+
+    fun updateLineItem(transientId: java.util.UUID, description: String, quantity: Double, unitPrice: Long) {
         _uiState.update { state ->
             state.copy(items = state.items.map {
-                if (it.id == id) it.copy(description = description, quantity = quantity, unitPrice = unitPrice) else it
+                if (it.transientId == transientId) it.copy(description = description, quantity = quantity, unitPrice = unitPrice) else it
             })
         }
     }
