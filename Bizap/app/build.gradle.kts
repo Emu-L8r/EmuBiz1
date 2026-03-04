@@ -75,7 +75,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     // Logging & Monitoring (TASK 1)
-    implementation("com.jakewharton.timber:timber:5.0.1")
+    implementation(libs.timber)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
