@@ -14,6 +14,7 @@ import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
 import com.emul8r.bizap.domain.test.TestDataProvider
+import com.emul8r.bizap.domain.validation.ValidationRules
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -154,6 +155,7 @@ class CreateInvoiceViewModel @Inject constructor(
                 val businessProfile = businessProfileRepository.activeProfile.first()
                 val lineItems = state.items.map { it.toDomain() }
                 Timber.d("✅ Line items mapped: ${lineItems.size} items")
+
                 // Calculate subtotal in cents: sum of (unitPrice * quantity) for each item
                 val subtotal: Long = lineItems.sumOf { it.calculateTotal() }
                 Timber.d("✅ Subtotal calculated: $subtotal cents")
@@ -186,6 +188,18 @@ class CreateInvoiceViewModel @Inject constructor(
                     updatedAt = createdAt,
                     currencyCode = state.selectedCurrencyCode
                 )
+
+                // 🔒 VALIDATION: Verify invoice meets all business rules before saving
+                // This is CRITICAL - prevents invalid data from entering the database
+                // Uses Result<Unit> pattern - doesn't throw, returns error message
+                val validationResult = ValidationRules.validateInvoice(invoice)
+                if (validationResult.isFailure()) {
+                    val errorMessage = validationResult.getErrorOrNull() ?: "Unknown validation error"
+                    Timber.w("⚠️ VALIDATION FAILED: $errorMessage")
+                    _uiState.update { it.copy(error = errorMessage, isSaving = false) }
+                    return@launch
+                }
+                Timber.d("✅ Invoice passed all validation rules")
 
                 val invoiceId = invoiceRepository.saveInvoice(invoice)
                 Timber.d("✅ Invoice saved to database: ID=$invoiceId")
