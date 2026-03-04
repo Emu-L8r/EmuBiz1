@@ -38,34 +38,18 @@ fun InvoiceListScreen(
         is InvoiceListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         }
-                is InvoiceListUiState.Empty -> EmptyState(Modifier.align(Alignment.Center))
-                is InvoiceListUiState.Error -> Text(
-                    currentState.message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-
-                is InvoiceListUiState.Success -> InvoiceList(
-                    invoices = currentState.invoices,
-                    onInvoiceClick = onInvoiceClick,
-                    onStatusChange = viewModel::updateInvoiceStatus
-                )
-            }
-        is InvoiceListUiState.Empty -> Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    Icons.Default.Receipt,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.outline
-                )
-                Text("No invoices yet", style = MaterialTheme.typography.bodyLarge)
-            }
+        is InvoiceListUiState.Empty -> EmptyState(Modifier.fillMaxSize())
+        is InvoiceListUiState.Error -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                currentState.message,
+                color = MaterialTheme.colorScheme.error
+            )
         }
+        is InvoiceListUiState.Success -> InvoiceList(
+            invoices = currentState.invoices,
+            onInvoiceClick = onInvoiceClick,
+            onStatusChange = viewModel::updateInvoiceStatus
+        )
     }
 }
 
