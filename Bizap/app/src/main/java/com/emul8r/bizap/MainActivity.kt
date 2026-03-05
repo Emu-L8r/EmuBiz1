@@ -25,6 +25,7 @@ import androidx.navigation.toRoute
 import com.emul8r.bizap.ui.customers.*
 import com.emul8r.bizap.ui.dashboard.DashboardScreen
 import com.emul8r.bizap.ui.documents.DocumentVaultScreen
+import com.emul8r.bizap.ui.dunning.DunningNoticesScreen
 import com.emul8r.bizap.ui.invoices.*
 import com.emul8r.bizap.ui.components.BizapTopAppBar
 import com.emul8r.bizap.ui.navigation.Screen
@@ -38,6 +39,9 @@ import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.settings.SettingsHubScreen
 import com.emul8r.bizap.ui.settings.ThemeSettingsScreen
 import com.emul8r.bizap.ui.settings.ThemeViewModel
+import com.emul8r.bizap.ui.templates.CreateTemplateScreen
+import com.emul8r.bizap.ui.templates.EditTemplateScreen
+import com.emul8r.bizap.ui.templates.TemplateListScreen
 import com.emul8r.bizap.ui.theme.BizapTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -117,6 +121,10 @@ fun MainScreen() {
                 currentDestination?.hasRoute<Screen.RiskDashboard>() == true -> "Risk Dashboard"
                 currentDestination?.hasRoute<Screen.PaymentAnalytics>() == true -> "Payment Analytics"
                 currentDestination?.hasRoute<Screen.BackupRestore>() == true -> "Backup & Restore"
+                currentDestination?.hasRoute<Screen.DunningNotices>() == true -> "Dunning Notices"
+                currentDestination?.hasRoute<Screen.InvoiceTemplates>() == true -> "Invoice Templates"
+                currentDestination?.hasRoute<Screen.CreateTemplate>() == true -> "Create Template"
+                currentDestination?.hasRoute<Screen.EditTemplate>() == true -> "Edit Template"
                 else -> "Bizap"
             }
 
@@ -217,9 +225,34 @@ fun MainScreen() {
                 InvoicePdfScreen(invoiceId = detail.invoiceId, isQuote = detail.isQuote)
             }
             composable<Screen.RevenueDashboard> { RevenueDashboardScreen() }
-            composable<Screen.RiskDashboard> { RiskDashboardScreen(onBackClick = {}) }
+            composable<Screen.RiskDashboard> { RiskDashboardScreen(onBackClick = { navController.popBackStack() }) }
             composable<Screen.PaymentAnalytics> { PaymentAnalyticsScreen() }
-            composable<Screen.BackupRestore> { BackupRestoreScreen(onBack = {}) }
+            composable<Screen.BackupRestore> { BackupRestoreScreen(onBack = { navController.popBackStack() }) }
+            composable<Screen.DunningNotices> { DunningNoticesScreen(onBackClick = { navController.popBackStack() }) }
+            composable<Screen.InvoiceTemplates> { backStackEntry ->
+                val route: Screen.InvoiceTemplates = backStackEntry.toRoute()
+                TemplateListScreen(
+                    businessProfileId = route.businessProfileId,
+                    onNavigateToCreate = { bpId -> navController.navigate(Screen.CreateTemplate(bpId)) },
+                    onNavigateToEdit = { templateId -> navController.navigate(Screen.EditTemplate(templateId)) }
+                )
+            }
+            composable<Screen.CreateTemplate> { backStackEntry ->
+                val route: Screen.CreateTemplate = backStackEntry.toRoute()
+                CreateTemplateScreen(
+                    businessProfileId = route.businessProfileId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onTemplateCreated = { navController.popBackStack() }
+                )
+            }
+            composable<Screen.EditTemplate> { backStackEntry ->
+                val route: Screen.EditTemplate = backStackEntry.toRoute()
+                EditTemplateScreen(
+                    templateId = route.templateId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onTemplateUpdated = { navController.popBackStack() }
+                )
+            }
         }
 
         if (showBottomSheet) {

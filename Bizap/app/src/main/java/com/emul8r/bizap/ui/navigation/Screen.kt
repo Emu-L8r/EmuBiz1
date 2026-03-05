@@ -56,5 +56,17 @@ sealed interface Screen {
     object PaymentAnalytics : Screen
 
     @Serializable
+    object DunningNotices : Screen
+
+    @Serializable
+    data class InvoiceTemplates(val businessProfileId: Long = 1L) : Screen
+
+    @Serializable
+    data class CreateTemplate(val businessProfileId: Long) : Screen
+
+    @Serializable
+    data class EditTemplate(val templateId: String) : Screen
+
+    @Serializable
     object BackupRestore : Screen
 }
