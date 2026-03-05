@@ -85,7 +85,7 @@ class InvoicePdfViewModel @Inject constructor(
                 val permanentFile = documentManager.archiveToInternalStorage(tempPdfFile, invoice.id)
 
                 // 2. Update Room immediately so the Vault sees it
-                invoiceRepo.updatePdfPath(invoice.id, permanentFile.absolutePath)
+                invoiceRepo.updatePdfPath(invoice.id, permanentFile.absolutePath).getOrThrow()
 
                 // Now, generate a bitmap for the UI preview from the permanent file
                 val bitmap = generateBitmapFromFile(permanentFile)
