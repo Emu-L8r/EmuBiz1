@@ -2,11 +2,14 @@ package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.InvoiceDao
+import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.util.TestDataFactory
+import io.mockk.Runs
 import io.mockk.coEvery
+import io.mockk.just
 import io.mockk.mockk
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -22,12 +25,12 @@ import com.emul8r.bizap.data.mapper.toEntity
 class InvoiceRepositoryTest : BaseUnitTest() {
     
     private val invoiceDao: InvoiceDao = mockk()
+    private val businessProfileRepo: BusinessProfileRepository = mockk()
     private lateinit var repository: InvoiceRepository
     
     @Before
     fun setup() {
-        // BusinessProfileRepository is not needed for these direct DAO-wrap tests
-        repository = InvoiceRepositoryImpl(invoiceDao, mockk())
+        repository = InvoiceRepositoryImpl(invoiceDao, businessProfileRepo)
     }
     
     @Test
@@ -63,5 +66,127 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         // Act & Assert
         assertEquals(0L, invoice.balanceRemaining)
         assertEquals(true, invoice.isFullyPaid)
+    }
+
+    // --- Result pattern tests ---
+
+    @Test
+    fun `saveInvoice returns success result with row id on success`() = runTest {
+        // Arrange
+        val businessId = 1L
+        val expectedRowId = 42L
+        val invoice = TestDataFactory.createTestInvoice(id = 0)
+
+        coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
+        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
+        coEvery { invoiceDao.insert(any(), any()) } returns expectedRowId
+
+        // Act
+        val result = repository.saveInvoice(invoice)
+
+        // Assert
+        assertTrue(result.isSuccess)
+        assertEquals(expectedRowId, result.getOrNull())
+    }
+
+    @Test
+    fun `saveInvoice returns failure result when database throws`() = runTest {
+        // Arrange
+        val businessId = 1L
+        val invoice = TestDataFactory.createTestInvoice(id = 0)
+        val dbException = RuntimeException("Database error")
+
+        coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
+        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
+        coEvery { invoiceDao.insert(any(), any()) } throws dbException
+
+        // Act
+        val result = repository.saveInvoice(invoice)
+
+        // Assert
+        assertTrue(result.isFailure)
+        assertEquals(dbException, result.exceptionOrNull())
+    }
+
+    @Test
+    fun `deleteInvoice returns success result on success`() = runTest {
+        // Arrange
+        val invoiceId = 1L
+        coEvery { invoiceDao.deleteInvoiceWithItems(invoiceId) } just Runs
+
+        // Act
+        val result = repository.deleteInvoice(invoiceId)
+
+        // Assert
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `deleteInvoice returns failure result when database throws`() = runTest {
+        // Arrange
+        val invoiceId = 1L
+        val dbException = RuntimeException("Delete failed")
+        coEvery { invoiceDao.deleteInvoiceWithItems(invoiceId) } throws dbException
+
+        // Act
+        val result = repository.deleteInvoice(invoiceId)
+
+        // Assert
+        assertTrue(result.isFailure)
+        assertEquals(dbException, result.exceptionOrNull())
+    }
+
+    @Test
+    fun `updateInvoiceStatus returns success result on success`() = runTest {
+        // Arrange
+        val invoiceId = 1L
+        coEvery { invoiceDao.updateInvoiceStatus(invoiceId, any()) } just Runs
+
+        // Act
+        val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID)
+
+        // Assert
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `updateInvoiceStatus returns failure result when database throws`() = runTest {
+        // Arrange
+        val invoiceId = 1L
+        val dbException = RuntimeException("Update failed")
+        coEvery { invoiceDao.updateInvoiceStatus(invoiceId, any()) } throws dbException
+
+        // Act
+        val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID)
+
+        // Assert
+        assertTrue(result.isFailure)
+        assertEquals(dbException, result.exceptionOrNull())
+    }
+
+    @Test
+    fun `updatePdfPath returns success result on success`() = runTest {
+        // Arrange
+        coEvery { invoiceDao.updatePdfPath(any(), any()) } just Runs
+
+        // Act
+        val result = repository.updatePdfPath(1L, "/path/to/invoice.pdf")
+
+        // Assert
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `updatePdfPath returns failure result when database throws`() = runTest {
+        // Arrange
+        val dbException = RuntimeException("Path update failed")
+        coEvery { invoiceDao.updatePdfPath(any(), any()) } throws dbException
+
+        // Act
+        val result = repository.updatePdfPath(1L, "/path/to/invoice.pdf")
+
+        // Assert
+        assertTrue(result.isFailure)
+        assertEquals(dbException, result.exceptionOrNull())
     }
 }

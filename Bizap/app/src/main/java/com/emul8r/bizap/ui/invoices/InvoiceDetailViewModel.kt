@@ -105,8 +105,8 @@ class InvoiceDetailViewModel @Inject constructor(
                 val newAmountPaid = invoice.amountPaid + amount
                 val newStatus = if (newAmountPaid >= invoice.totalAmount) InvoiceStatus.PAID else InvoiceStatus.PARTIALLY_PAID
                 
-                invoiceRepo.updateAmountPaid(invoice.id, newAmountPaid)
-                invoiceRepo.updateInvoiceStatus(invoice.id, newStatus)
+                invoiceRepo.updateAmountPaid(invoice.id, newAmountPaid).getOrThrow()
+                invoiceRepo.updateInvoiceStatus(invoice.id, newStatus).getOrThrow()
                 
                 _uiEvent.emit(UiEvent.ShowSnackbar("Payment of ${CentsFormatter.formatCents(amount)} recorded."))
             } catch (e: Exception) {
@@ -123,13 +123,14 @@ class InvoiceDetailViewModel @Inject constructor(
         val original = currentState.data
         
         viewModelScope.launch {
-            try {
-                val newId = invoiceRepo.createCorrection(original.id)
-                _uiEvent.emit(UiEvent.NavigateToInvoice(newId))
-                _uiEvent.emit(UiEvent.ShowSnackbar("New version created. Editing v${original.version + 1}."))
-            } catch (e: Exception) {
-                _uiEvent.emit(UiEvent.ShowSnackbar("Correction failed: ${e.message}"))
-            }
+            invoiceRepo.createCorrection(original.id)
+                .onSuccess { newId ->
+                    _uiEvent.emit(UiEvent.NavigateToInvoice(newId))
+                    _uiEvent.emit(UiEvent.ShowSnackbar("New version created. Editing v${original.version + 1}."))
+                }
+                .onFailure { e ->
+                    _uiEvent.emit(UiEvent.ShowSnackbar("Correction failed: ${e.message}"))
+                }
         }
     }
 
@@ -214,7 +215,7 @@ class InvoiceDetailViewModel @Inject constructor(
                     val quotePdf = quoteResult.getOrThrow()
                     val invoicePdf = invoiceResult.getOrThrow()
 
-                    invoiceRepo.updatePdfPath(invoiceData.id, invoicePdf.absolutePath)
+                    invoiceRepo.updatePdfPath(invoiceData.id, invoicePdf.absolutePath).getOrThrow()
 
                     if (share) {
                         _exportEvent.emit(invoicePdf)
@@ -292,12 +293,11 @@ class InvoiceDetailViewModel @Inject constructor(
 
     fun deleteInvoice(id: Long) {
         viewModelScope.launch {
-            try {
-                invoiceRepo.deleteInvoice(id)
-                _event.emit(InvoiceDetailEvent.InvoiceDeleted)
-            } catch (e: Exception) {
-                _uiEvent.emit(UiEvent.ShowSnackbar("Failed to delete invoice: ${e.message}"))
-            }
+            invoiceRepo.deleteInvoice(id)
+                .onSuccess { _event.emit(InvoiceDetailEvent.InvoiceDeleted) }
+                .onFailure { e ->
+                    _uiEvent.emit(UiEvent.ShowSnackbar("Failed to delete invoice: ${e.message}"))
+                }
         }
     }
 }

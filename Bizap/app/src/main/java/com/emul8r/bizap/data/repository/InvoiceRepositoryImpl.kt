@@ -49,7 +49,7 @@ class InvoiceRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveInvoice(invoice: Invoice): Long {
+    override suspend fun saveInvoice(invoice: Invoice): Result<Long> = runCatching {
         val activeBusinessId = businessProfileRepository.getActiveBusinessId()
         var invoiceToSave = invoice.copy(businessProfileId = activeBusinessId)
         
@@ -66,18 +66,23 @@ class InvoiceRepositoryImpl @Inject constructor(
 
         val invoiceEntity = invoiceToSave.toEntity()
         val lineItemEntities = invoiceToSave.items.map { it.toEntity(invoiceToSave.id) }
-        return invoiceDao.insert(invoiceEntity, lineItemEntities)
+        invoiceDao.insert(invoiceEntity, lineItemEntities)
+    }.also { result ->
+        result.onFailure { e -> Timber.e(e, "Database operation failed during saveInvoice") }
     }
 
-    override suspend fun updateAmountPaid(invoiceId: Long, amount: Long) {
+    override suspend fun updateAmountPaid(invoiceId: Long, amount: Long): Result<Unit> = runCatching {
         val invoiceWithItems = invoiceDao.getInvoiceWithItemsById(invoiceId).first()
         invoiceWithItems?.let {
             val updatedEntity = it.invoice.copy(amountPaid = amount)
             invoiceDao.insertInvoice(updatedEntity)
         }
+        Unit
+    }.also { result ->
+        result.onFailure { e -> Timber.e(e, "Database operation failed during updateAmountPaid") }
     }
 
-    override suspend fun createCorrection(originalInvoiceId: Long): Long {
+    override suspend fun createCorrection(originalInvoiceId: Long): Result<Long> = runCatching {
         val original = invoiceDao.getInvoiceWithItemsById(originalInvoiceId).first() 
             ?: throw Exception("Original invoice not found")
         
@@ -92,22 +97,30 @@ class InvoiceRepositoryImpl @Inject constructor(
         )
 
         val lineItemEntities = original.items.map { it.copy(id = 0) }
-        return invoiceDao.insert(correctionEntity, lineItemEntities)
+        invoiceDao.insert(correctionEntity, lineItemEntities)
+    }.also { result ->
+        result.onFailure { e -> Timber.e(e, "Database operation failed during createCorrection") }
     }
 
     override fun getBusinessProfile(): Flow<BusinessProfile> {
         return businessProfileRepository.activeProfile
     }
 
-    override suspend fun updateInvoiceStatus(invoiceId: Long, status: InvoiceStatus) {
+    override suspend fun updateInvoiceStatus(invoiceId: Long, status: InvoiceStatus): Result<Unit> = runCatching {
         invoiceDao.updateInvoiceStatus(invoiceId, status.name)
+    }.also { result ->
+        result.onFailure { e -> Timber.e(e, "Database operation failed during updateInvoiceStatus") }
     }
 
-    override suspend fun updatePdfPath(invoiceId: Long, pdfPath: String) {
+    override suspend fun updatePdfPath(invoiceId: Long, pdfPath: String): Result<Unit> = runCatching {
         invoiceDao.updatePdfPath(invoiceId, pdfPath)
+    }.also { result ->
+        result.onFailure { e -> Timber.e(e, "Database operation failed during updatePdfPath") }
     }
 
-    override suspend fun deleteInvoice(id: Long) {
+    override suspend fun deleteInvoice(id: Long): Result<Unit> = runCatching {
         invoiceDao.deleteInvoiceWithItems(id)
+    }.also { result ->
+        result.onFailure { e -> Timber.e(e, "Database operation failed during deleteInvoice") }
     }
 }

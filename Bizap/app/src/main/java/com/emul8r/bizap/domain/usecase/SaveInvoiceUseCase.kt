@@ -16,11 +16,6 @@ class SaveInvoiceUseCase @Inject constructor(
             return Result.failure(IllegalArgumentException("Customer name cannot be empty"))
         }
 
-        return try {
-            val id = repository.saveInvoice(invoice)
-            Result.success(id)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        return repository.saveInvoice(invoice)
     }
 }
