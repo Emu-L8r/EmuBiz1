@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import androidx.room.Upsert
 import com.emul8r.bizap.data.local.entities.InvoiceEntity
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
@@ -23,6 +24,9 @@ interface InvoiceDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertInvoice(invoice: InvoiceEntity): Long
+
+    @Update
+    suspend fun updateInvoice(invoice: InvoiceEntity)
 
     @Upsert
     suspend fun insertLineItems(items: List<LineItemEntity>)
