@@ -54,7 +54,7 @@ fun SettingsHubScreen(onNavigate: (Screen) -> Unit) {
             onClick = { onNavigate(Screen.PaymentAnalytics) }
         )
         SettingsItem(
-            icon = Icons.Default.TrendingUp,
+            icon = Icons.AutoMirrored.Default.TrendingUp,
             title = "Revenue Dashboard",
             subtitle = "View revenue metrics and business performance",
             onClick = { onNavigate(Screen.RevenueDashboard) }
