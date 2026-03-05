@@ -7,8 +7,11 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
@@ -49,6 +52,24 @@ fun SettingsHubScreen(onNavigate: (Screen) -> Unit) {
             title = "Payment Analytics",
             subtitle = "Analyse payment trends and cash flow forecasts",
             onClick = { onNavigate(Screen.PaymentAnalytics) }
+        )
+        SettingsItem(
+            icon = Icons.Default.TrendingUp,
+            title = "Revenue Dashboard",
+            subtitle = "View revenue metrics and business performance",
+            onClick = { onNavigate(Screen.RevenueDashboard) }
+        )
+        SettingsItem(
+            icon = Icons.Default.Notifications,
+            title = "Dunning Notices",
+            subtitle = "Manage overdue invoice payment reminders",
+            onClick = { onNavigate(Screen.DunningNotices) }
+        )
+        SettingsItem(
+            icon = Icons.Default.Description,
+            title = "Invoice Templates",
+            subtitle = "Create and manage reusable invoice templates",
+            onClick = { onNavigate(Screen.InvoiceTemplates()) }
         )
         SettingsItem(
             icon = Icons.Default.Backup,
