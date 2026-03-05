@@ -15,9 +15,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.Assert.*
-import org.mockito.Mock
-import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.whenever
+import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
 
 /**
  * CORE UNIT TESTS FOR BIZAP - WEEK 3
@@ -41,17 +42,15 @@ class CoreUnitTests {
     @get:Rule
     val instantExecutorRule = InstantTaskExecutorRule()
 
-    @Mock
-    private lateinit var invoiceRepository: InvoiceRepository
+    private val invoiceRepository: InvoiceRepository = mockk()
 
-    @Mock
-    private lateinit var customerRepository: CustomerRepository
+    private val customerRepository: CustomerRepository = mockk()
 
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
-        MockitoAnnotations.openMocks(this)
+        MockKAnnotations.init(this)
     }
 
     // ===============================================
@@ -95,7 +94,7 @@ class CoreUnitTests {
         )
 
         // Mock repository to return ID = 123
-        whenever(invoiceRepository.saveInvoice(invoice)).thenReturn(123L)
+        coEvery { invoiceRepository.saveInvoice(invoice) } returns 123L
 
         // ACT
         val savedId = invoiceRepository.saveInvoice(invoice)
@@ -161,8 +160,8 @@ class CoreUnitTests {
         val customer = TestDataFactory.createValidCustomer()
 
         // Mock repository behavior
-        whenever(customerRepository.save(customer)).thenReturn(456L)
-        whenever(customerRepository.getById(456L)).thenReturn(flowOf(customer))
+        coEvery { customerRepository.save(customer) } returns 456L
+        every { customerRepository.getById(456L) } returns flowOf(customer)
 
         // ACT
         val savedId = customerRepository.save(customer)
@@ -267,7 +266,7 @@ class CoreUnitTests {
         val customer3 = TestDataFactory.createValidCustomer().copy(name = "Customer 3")
         val allCustomers = listOf(customer1, customer2, customer3)
 
-        whenever(customerRepository.getAllCustomers()).thenReturn(flowOf(allCustomers))
+        every { customerRepository.getAllCustomers() } returns flowOf(allCustomers)
 
         // ACT
         val loaded = customerRepository.getAllCustomers().first()
@@ -398,8 +397,7 @@ class CoreUnitTests {
         val invoice3 = TestDataFactory.createValidInvoice().copy(customerId = customerId)
         val allInvoices = listOf(invoice1, invoice2, invoice3)
 
-        whenever(invoiceRepository.getInvoicesByCustomerId(customerId))
-            .thenReturn(flowOf(allInvoices))
+        every { invoiceRepository.getInvoicesByCustomerId(customerId) } returns flowOf(allInvoices)
 
         // ACT
         val loaded = invoiceRepository.getInvoicesByCustomerId(customerId).first()
