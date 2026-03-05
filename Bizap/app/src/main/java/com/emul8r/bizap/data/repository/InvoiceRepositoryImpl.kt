@@ -52,8 +52,9 @@ class InvoiceRepositoryImpl @Inject constructor(
     override suspend fun saveInvoice(invoice: Invoice): Result<Long> = runCatching {
         val activeBusinessId = businessProfileRepository.getActiveBusinessId()
         var invoiceToSave = invoice.copy(businessProfileId = activeBusinessId)
-        
-        if (invoice.id == 0L) {
+
+        if (invoiceToSave.id == 0L) {
+            // NEW invoice: INSERT with auto-generated ID
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
             val nextSequence = invoiceDao.getMaxSequenceForYear(currentYear, activeBusinessId) + 1
             invoiceToSave = invoiceToSave.copy(
@@ -62,11 +63,22 @@ class InvoiceRepositoryImpl @Inject constructor(
                 version = 1
             )
             Timber.i("🔢 Assigning scoped invoice number: INV-$currentYear-${nextSequence.toString().padStart(6, '0')} for business $activeBusinessId")
-        }
 
-        val invoiceEntity = invoiceToSave.toEntity()
-        val lineItemEntities = invoiceToSave.items.map { it.toEntity(invoiceToSave.id) }
-        invoiceDao.insert(invoiceEntity, lineItemEntities)
+            val invoiceEntity = invoiceToSave.toEntity()
+            val lineItemEntities = invoiceToSave.items.map { it.toEntity(invoiceToSave.id) }
+            Timber.d("💾 INSERT new invoice for business $activeBusinessId")
+            val newId = invoiceDao.insert(invoiceEntity, lineItemEntities)
+            newId
+        } else {
+            // EXISTING invoice: DELETE old line items, INSERT new ones, UPDATE invoice
+            val invoiceEntity = invoiceToSave.toEntity()
+            val lineItemEntities = invoiceToSave.items.map { it.toEntity(invoiceToSave.id) }
+            Timber.d("✏️ UPDATE existing invoice id=${invoiceToSave.id} for business $activeBusinessId")
+            invoiceDao.deleteLineItems(invoiceToSave.id)
+            invoiceDao.insertLineItems(lineItemEntities)
+            invoiceDao.updateInvoice(invoiceEntity)
+            invoiceToSave.id
+        }
     }.also { result ->
         result.onFailure { e -> Timber.e(e, "Database operation failed during saveInvoice") }
     }
@@ -75,7 +87,7 @@ class InvoiceRepositoryImpl @Inject constructor(
         val invoiceWithItems = invoiceDao.getInvoiceWithItemsById(invoiceId).first()
         invoiceWithItems?.let {
             val updatedEntity = it.invoice.copy(amountPaid = amount)
-            invoiceDao.insertInvoice(updatedEntity)
+            invoiceDao.updateInvoice(updatedEntity)
         }
         Unit
     }.also { result ->
