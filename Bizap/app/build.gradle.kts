@@ -3,8 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.dagger.hilt.android)
-    alias(libs.plugins.google.ksp)
+    alias(libs.plugins.google.ksp)  // KSP must come BEFORE Hilt for classloader compatibility
+    id("com.google.dagger.hilt.android") version "2.48.1"  // Direct plugin ID (not in root catalog)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
 }
