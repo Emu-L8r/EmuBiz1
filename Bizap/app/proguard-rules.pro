@@ -129,14 +129,29 @@
 }
 
 # ===== HILT DEPENDENCY INJECTION =====
-# Keep Hilt generated classes
--keep class ** extends dagger.hilt.internal.GeneratedComponent
+# Keep all Hilt generated classes - CRITICAL for DI to work
 -keep class dagger.hilt.** { *; }
+-keep class ** extends dagger.hilt.internal.GeneratedComponent { *; }
 -keep class com.emul8r.bizap.Hilt_* { *; }
 -keep class **_Hilt_* { *; }
 -keep class **_Factory { *; }
 -keep class **_Provide* { *; }
 -keep class **_Factory$* { *; }
+-keep class **_Module { *; }
+-keep class **_MembersInjector { *; }
+
+# Keep Hilt entry points explicitly
+-keep @dagger.hilt.android.HiltAndroidApp class *
+-keep @dagger.hilt.android.AndroidEntryPoint class *
+-keep @dagger.hilt.android.lifecycle.HiltViewModel class *
+
+# Keep all Hilt-annotated fields and methods
+-keepclassmembers class * {
+    @dagger.hilt.Inject <init>(...);
+    @dagger.hilt.Inject <fields>;
+    @javax.inject.Inject <init>(...);
+    @javax.inject.Inject <fields>;
+}
 
 # Keep custom application classes
 -keep class * extends android.app.Application
