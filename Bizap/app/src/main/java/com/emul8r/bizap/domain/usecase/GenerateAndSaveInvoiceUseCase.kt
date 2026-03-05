@@ -34,7 +34,7 @@ class GenerateAndSaveInvoiceUseCase @Inject constructor(
 
             // 2. Record the generation in the database
             val fileType = if (isQuote) "Quote" else "Invoice"
-            documentRepository.insertDocument(
+            val insertResult = documentRepository.insertDocument(
                 GeneratedDocumentEntity(
                     relatedInvoiceId = invoice.id,
                     fileName = generatedFile.name,
@@ -42,6 +42,11 @@ class GenerateAndSaveInvoiceUseCase @Inject constructor(
                     fileType = fileType
                 )
             )
+            if (insertResult.isFailure) {
+                // FAIL-SAFE ROLLBACK: Cleanup orphaned file if DB insert fails
+                generatedFile?.let { if (it.exists()) it.delete() }
+                return Result.failure(insertResult.exceptionOrNull() ?: Exception("Failed to record document"))
+            }
 
             Result.success(generatedFile)
         } catch (e: Exception) {
