@@ -148,11 +148,14 @@ class EditInvoiceViewModel @Inject constructor(
                 try {
                     Timber.d("Persisting invoice ${state.invoice.id}...")
                     invoiceRepository.saveInvoice(state.invoice)
-                    Timber.d("Persist successful.")
-                    _navigationEvent.emit(NavigationEvent.BackToInvoiceDetail)
-                } catch (e: Exception) {
-                    Timber.e(e, "Save failed: ${e.message}")
-                    _navigationEvent.emit(NavigationEvent.ShowError(e.message ?: "Unknown save error"))
+                        .onSuccess {
+                            Timber.d("Persist successful.")
+                            _navigationEvent.emit(NavigationEvent.BackToInvoiceDetail)
+                        }
+                        .onFailure { e ->
+                            Timber.e(e, "Save failed: ${e.message}")
+                            _navigationEvent.emit(NavigationEvent.ShowError(e.message ?: "Unknown save error"))
+                        }
                 } finally {
                     _isSaving.value = false
                 }

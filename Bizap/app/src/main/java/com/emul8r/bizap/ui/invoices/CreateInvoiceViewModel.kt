@@ -201,7 +201,7 @@ class CreateInvoiceViewModel @Inject constructor(
                 }
                 Timber.d("✅ Invoice passed all validation rules")
 
-                val invoiceId = invoiceRepository.saveInvoice(invoice)
+                val invoiceId = invoiceRepository.saveInvoice(invoice).getOrThrow()
                 Timber.d("✅ Invoice saved to database: ID=$invoiceId")
                 val invoiceWithId = invoice.copy(id = invoiceId)
 
