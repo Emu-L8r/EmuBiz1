@@ -1,13 +1,13 @@
 [versions]
 # Pinned versions — tested combination that avoids JavaPoet issues
-# AGP 8.5.0 is proven compatible with Hilt 2.46 (avoids canonicalName() error)
+# AGP 8.5.0 is proven compatible with Hilt 2.51.1
 agp = "8.5.0"
 # Kotlin 2.0.21 is required for KSP compatibility
 kotlin = "2.0.21"
 # KSP version must match the Kotlin prefix (2.0.21)
 ksp = "2.0.21-1.0.26"
-# Hilt 2.46 is the latest version compatible with AGP 8.5.0 (no JavaPoet issues)
-hilt = "2.46"
+# Hilt 2.51.1 is recommended for Kotlin 2.x
+hilt = "2.51.1"
 hilt-androidx = "1.2.0"
 work = "2.9.0"
 room = "2.6.1"
