@@ -10,8 +10,8 @@ interface BusinessProfileRepository {
     suspend fun getActiveBusinessId(): Long
     suspend fun setActiveBusinessId(id: Long)
     
-    suspend fun createProfile(profile: BusinessProfile): Long
-    suspend fun updateProfile(profile: BusinessProfile)
-    suspend fun updateLogoPath(path: String) // Restored for UI compatibility
-    suspend fun deleteProfile(id: Long)
+    suspend fun createProfile(profile: BusinessProfile): Result<Long>
+    suspend fun updateProfile(profile: BusinessProfile): Result<Unit>
+    suspend fun updateLogoPath(path: String): Result<Unit>
+    suspend fun deleteProfile(id: Long): Result<Unit>
 }
