@@ -36,3 +36,13 @@ Thumbs.db
 
 # google-services.json (contains Firebase keys)
 google-services.json
+
+# Backup and temporary directories
+Bizap - Copy/
+Bizap - Copy.zip
+
+# Temporary build artifacts and logs
+*.txt
+!README*.txt
+!CONTRIBUTING*.txt
+
