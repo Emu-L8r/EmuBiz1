@@ -7,9 +7,9 @@ import com.emul8r.bizap.data.local.entities.InvoiceCustomField
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mock
-import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.whenever
+import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.mockk
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
@@ -20,17 +20,15 @@ import kotlin.test.assertNotNull
  */
 class InvoiceTemplateRepositoryTest {
 
-    @Mock
-    private lateinit var templateDao: InvoiceTemplateDao
+    private val templateDao: InvoiceTemplateDao = mockk()
 
-    @Mock
-    private lateinit var fieldDao: InvoiceCustomFieldDao
+    private val fieldDao: InvoiceCustomFieldDao = mockk()
 
     private lateinit var repository: InvoiceTemplateRepository
 
     @Before
     fun setUp() {
-        MockitoAnnotations.openMocks(this)
+        MockKAnnotations.init(this)
         repository = InvoiceTemplateRepository(templateDao, fieldDao)
     }
 
@@ -56,7 +54,7 @@ class InvoiceTemplateRepositoryTest {
                 updatedAt = System.currentTimeMillis()
             )
         )
-        whenever(templateDao.getActiveTemplatesByBusiness(businessId)).thenReturn(templates)
+        coEvery { templateDao.getActiveTemplatesByBusiness(businessId) } returns templates
 
         // Act
         val result = repository.getAllTemplates(businessId)
@@ -71,7 +69,7 @@ class InvoiceTemplateRepositoryTest {
     fun testGetAllTemplates_Empty() = runBlocking {
         // Arrange
         val businessId = 1L
-        whenever(templateDao.getActiveTemplatesByBusiness(businessId)).thenReturn(emptyList())
+        coEvery { templateDao.getActiveTemplatesByBusiness(businessId) } returns emptyList()
 
         // Act
         val result = repository.getAllTemplates(businessId)
@@ -93,7 +91,7 @@ class InvoiceTemplateRepositoryTest {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
-        whenever(templateDao.getTemplate(templateId)).thenReturn(template)
+        coEvery { templateDao.getTemplate(templateId) } returns template
 
         // Act
         val result = repository.getTemplate(templateId)
@@ -108,7 +106,7 @@ class InvoiceTemplateRepositoryTest {
     fun testGetTemplate_NotFound() = runBlocking {
         // Arrange
         val templateId = "non-existent"
-        whenever(templateDao.getTemplate(templateId)).thenReturn(null)
+        coEvery { templateDao.getTemplate(templateId) } returns null
 
         // Act
         val result = repository.getTemplate(templateId)
@@ -129,7 +127,7 @@ class InvoiceTemplateRepositoryTest {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
-        whenever(templateDao.getActiveTemplateCount(1L)).thenReturn(5)
+        coEvery { templateDao.getActiveTemplateCount(1L) } returns 5
 
         // Act
         val result = repository.createTemplate(template)
@@ -150,7 +148,7 @@ class InvoiceTemplateRepositoryTest {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
-        whenever(templateDao.getActiveTemplateCount(1L)).thenReturn(100)
+        coEvery { templateDao.getActiveTemplateCount(1L) } returns 100
 
         // Act
         val result = repository.createTemplate(template)
@@ -186,7 +184,7 @@ class InvoiceTemplateRepositoryTest {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
-        whenever(templateDao.getTemplate(templateId)).thenReturn(template)
+        coEvery { templateDao.getTemplate(templateId) } returns template
 
         // Act
         val result = repository.setAsDefault(templateId, businessId)
@@ -208,7 +206,7 @@ class InvoiceTemplateRepositoryTest {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
-        whenever(templateDao.getTemplate(templateId)).thenReturn(template)
+        coEvery { templateDao.getTemplate(templateId) } returns template
 
         // Act
         val result = repository.setAsDefault(templateId, businessId)
@@ -231,7 +229,7 @@ class InvoiceTemplateRepositoryTest {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
-        whenever(templateDao.getDefaultTemplate(businessId)).thenReturn(template)
+        coEvery { templateDao.getDefaultTemplate(businessId) } returns template
 
         // Act
         val result = repository.getDefaultTemplate(businessId)
@@ -252,7 +250,7 @@ class InvoiceTemplateRepositoryTest {
             fieldType = "TEXT",
             displayOrder = 1
         )
-        whenever(fieldDao.getFieldCount("template-1")).thenReturn(5)
+        coEvery { fieldDao.getFieldCount("template-1") } returns 5
 
         // Act
         val result = repository.addCustomField(field)
@@ -272,7 +270,7 @@ class InvoiceTemplateRepositoryTest {
             fieldType = "TEXT",
             displayOrder = 51
         )
-        whenever(fieldDao.getFieldCount("template-1")).thenReturn(50)
+        coEvery { fieldDao.getFieldCount("template-1") } returns 50
 
         // Act
         val result = repository.addCustomField(field)
@@ -302,7 +300,7 @@ class InvoiceTemplateRepositoryTest {
                 displayOrder = 2
             )
         )
-        whenever(fieldDao.getFieldsByTemplate(templateId)).thenReturn(fields)
+        coEvery { fieldDao.getFieldsByTemplate(templateId) } returns fields
 
         // Act
         val result = repository.getCustomFields(templateId)
