@@ -141,7 +141,7 @@ class ValidationRulesTest {
         assertTrue("Invoice should fail validation", result.isFailure())
         assertTrue(
             "Error should mention due date",
-            result.getErrorOrNull()?.contains("due date") ?: false
+            result.getErrorOrNull()?.contains("Due date") ?: false
         )
     }
 
@@ -170,7 +170,7 @@ class ValidationRulesTest {
         assertTrue("Invoice should fail validation", result.isFailure())
         assertTrue(
             "Error should mention customer name",
-            result.getErrorOrNull()?.contains("customer") ?: false
+            result.getErrorOrNull()?.contains("Customer") ?: false
         )
     }
 
@@ -199,7 +199,7 @@ class ValidationRulesTest {
         assertTrue("Invoice should fail validation", result.isFailure())
         assertTrue(
             "Error should mention currency code",
-            result.getErrorOrNull()?.contains("currency") ?: false
+            result.getErrorOrNull()?.contains("Currency") ?: false
         )
     }
 

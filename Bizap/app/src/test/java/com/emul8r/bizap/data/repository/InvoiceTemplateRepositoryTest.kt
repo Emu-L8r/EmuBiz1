@@ -8,7 +8,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import io.mockk.MockKAnnotations
+import io.mockk.Runs
 import io.mockk.coEvery
+import io.mockk.just
 import io.mockk.mockk
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -128,6 +130,7 @@ class InvoiceTemplateRepositoryTest {
             updatedAt = System.currentTimeMillis()
         )
         coEvery { templateDao.getActiveTemplateCount(1L) } returns 5
+        coEvery { templateDao.insertTemplate(template) } just Runs
 
         // Act
         val result = repository.createTemplate(template)
@@ -162,6 +165,7 @@ class InvoiceTemplateRepositoryTest {
     fun testDeleteTemplate_Success() = runBlocking {
         // Arrange
         val templateId = "template-1"
+        coEvery { templateDao.softDeleteTemplate(templateId) } just Runs
 
         // Act
         val result = repository.deleteTemplate(templateId)
@@ -185,6 +189,8 @@ class InvoiceTemplateRepositoryTest {
             updatedAt = System.currentTimeMillis()
         )
         coEvery { templateDao.getTemplate(templateId) } returns template
+        coEvery { templateDao.clearDefaults(businessId) } just Runs
+        coEvery { templateDao.updateTemplate(any()) } just Runs
 
         // Act
         val result = repository.setAsDefault(templateId, businessId)
@@ -251,6 +257,7 @@ class InvoiceTemplateRepositoryTest {
             displayOrder = 1
         )
         coEvery { fieldDao.getFieldCount("template-1") } returns 5
+        coEvery { fieldDao.insertField(field) } just Runs
 
         // Act
         val result = repository.addCustomField(field)
@@ -298,6 +305,7 @@ class InvoiceTemplateRepositoryTest {
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
+        coEvery { templateDao.updateTemplate(template) } just Runs
 
         // Act
         val result = repository.updateTemplate(template)
