@@ -125,6 +125,7 @@ fun MainScreen() {
                 currentDestination?.hasRoute<Screen.InvoiceTemplates>() == true -> "Invoice Templates"
                 currentDestination?.hasRoute<Screen.CreateTemplate>() == true -> "Create Template"
                 currentDestination?.hasRoute<Screen.EditTemplate>() == true -> "Edit Template"
+                currentDestination?.hasRoute<Screen.CustomerSegments>() == true -> "Customer Segments"
                 else -> "Bizap"
             }
 
@@ -190,9 +191,12 @@ fun MainScreen() {
         ) {
             composable<Screen.Dashboard> { DashboardScreen(navController) }
             composable<Screen.Customers> {
-                CustomerListScreen(onCustomerClick = { customerId ->
-                    navController.navigate(Screen.CustomerDetail(customerId))
-                })
+                CustomerListScreen(
+                    onCustomerClick = { customerId ->
+                        navController.navigate(Screen.CustomerDetail(customerId))
+                    },
+                    onViewSegments = { navController.navigate(Screen.CustomerSegments) }
+                )
             }
             composable<Screen.Invoices> {
                 InvoiceListScreen(onInvoiceClick = { invoiceId ->
@@ -252,6 +256,9 @@ fun MainScreen() {
                     onNavigateBack = { navController.popBackStack() },
                     onTemplateUpdated = { navController.popBackStack() }
                 )
+            }
+            composable<Screen.CustomerSegments> {
+                CustomerSegmentationScreen()
             }
         }
 
