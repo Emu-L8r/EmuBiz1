@@ -2,6 +2,7 @@ package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.InvoiceDao
+import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
@@ -188,5 +189,43 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         // Assert
         assertTrue(result.isFailure)
         assertEquals(dbException, result.exceptionOrNull())
+    }
+
+    @Test
+    fun `testEditInvoiceSuccessfully - existing invoice uses UPDATE path without constraint violation`() = runTest {
+        // Arrange
+        val businessId = 1L
+        val existingInvoiceId = 2L
+        val invoice = TestDataFactory.createTestInvoice(id = existingInvoiceId, businessProfileId = businessId)
+
+        coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
+        coEvery { invoiceDao.deleteLineItems(existingInvoiceId) } just Runs
+        coEvery { invoiceDao.insertLineItems(any()) } just Runs
+        coEvery { invoiceDao.updateInvoice(any()) } just Runs
+
+        // Act
+        val result = repository.saveInvoice(invoice)
+
+        // Assert - no UNIQUE constraint violation, update succeeds
+        assertTrue(result.isSuccess)
+        assertEquals(existingInvoiceId, result.getOrNull())
+    }
+
+    @Test
+    fun `testRecordPaymentSuccessfully - updateAmountPaid uses UPDATE not INSERT`() = runTest {
+        // Arrange
+        val invoiceId = 2L
+        val paymentAmount = 4400L
+        val invoiceEntity = TestDataFactory.createTestInvoice(id = invoiceId).toEntity()
+        val invoiceWithItems = InvoiceWithItems(invoiceEntity, emptyList())
+
+        coEvery { invoiceDao.getInvoiceWithItemsById(invoiceId) } returns flowOf(invoiceWithItems)
+        coEvery { invoiceDao.updateInvoice(any()) } just Runs
+
+        // Act
+        val result = repository.updateAmountPaid(invoiceId, paymentAmount)
+
+        // Assert - no UNIQUE constraint violation, payment recording succeeds
+        assertTrue(result.isSuccess)
     }
 }
