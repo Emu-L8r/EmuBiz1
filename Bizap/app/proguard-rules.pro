@@ -128,6 +128,16 @@
     native <methods>;
 }
 
+# ===== HILT DEPENDENCY INJECTION =====
+# Keep Hilt generated classes
+-keep class ** extends dagger.hilt.internal.GeneratedComponent
+-keep class dagger.hilt.** { *; }
+-keep class com.emul8r.bizap.Hilt_* { *; }
+-keep class **_Hilt_* { *; }
+-keep class **_Factory { *; }
+-keep class **_Provide* { *; }
+-keep class **_Factory$* { *; }
+
 # Keep custom application classes
 -keep class * extends android.app.Application
 -keep class * extends android.app.Activity
