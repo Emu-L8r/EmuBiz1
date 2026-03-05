@@ -85,7 +85,6 @@ class InvoiceRepositoryImpl @Inject constructor(
 
     override suspend fun updateAmountPaid(invoiceId: Long, amount: Long): Result<Unit> = runCatching {
         val invoiceWithItems = invoiceDao.getInvoiceWithItemsById(invoiceId).first()
-<<<<<<< HEAD
             ?: throw Exception("Invoice with ID $invoiceId not found")
 
         val updatedEntity = invoiceWithItems.invoice.copy(amountPaid = amount)
@@ -94,12 +93,6 @@ class InvoiceRepositoryImpl @Inject constructor(
         invoiceDao.updateInvoice(updatedEntity)
 
         Timber.d("✅ Payment recorded for invoice $invoiceId: amount=$amount cents")
-=======
-        invoiceWithItems?.let {
-            val updatedEntity = it.invoice.copy(amountPaid = amount)
-            invoiceDao.updateInvoice(updatedEntity)
-        }
->>>>>>> 9c274d4dfd4ceb1fda2627c4d5fa475a4f62f864
         Unit
     }.also { result ->
         result.onFailure { e -> Timber.e(e, "Database operation failed during updateAmountPaid") }
