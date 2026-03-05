@@ -56,23 +56,23 @@ class CustomerDetailViewModel @Inject constructor(
 
     fun deleteCustomer(id: Long) {
         viewModelScope.launch {
-            try {
-                repository.deleteCustomer(id)
-                _event.emit(CustomerDetailEvent.CustomerDeleted)
-            } catch (e: Exception) {
-                _uiState.value = CustomerDetailUiState.Error("Failed to delete customer: ${e.message}")
-            }
+            repository.deleteCustomer(id)
+                .onSuccess { _event.emit(CustomerDetailEvent.CustomerDeleted) }
+                .onFailure { e ->
+                    Timber.e(e, "Failed to delete customer")
+                    _uiState.value = CustomerDetailUiState.Error("Failed to delete customer: ${e.message}")
+                }
         }
     }
 
     fun updateCustomer(customer: Customer) {
         viewModelScope.launch {
-            try {
-                repository.updateCustomer(customer)
-                _event.emit(CustomerDetailEvent.CustomerUpdated)
-            } catch (e: Exception) {
-                _uiState.value = CustomerDetailUiState.Error("Failed to update customer: ${e.message}")
-            }
+            repository.updateCustomer(customer)
+                .onSuccess { _event.emit(CustomerDetailEvent.CustomerUpdated) }
+                .onFailure { e ->
+                    Timber.e(e, "Failed to update customer")
+                    _uiState.value = CustomerDetailUiState.Error("Failed to update customer: ${e.message}")
+                }
         }
     }
 }

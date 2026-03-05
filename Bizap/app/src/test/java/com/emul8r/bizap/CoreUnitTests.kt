@@ -160,15 +160,17 @@ class CoreUnitTests {
         // ARRANGE
         val customer = TestDataFactory.createValidCustomer()
 
-        // Mock repository behavior
-        coEvery { customerRepository.insert(customer) } returns 456L
+        // Mock repository behavior - insert now returns Result<Long>
+        coEvery { customerRepository.insert(customer) } returns Result.success(456L)
         coEvery { customerRepository.getCustomerById(456L) } returns flowOf(customer)
 
         // ACT
-        val savedId = customerRepository.insert(customer)
-        val retrieved = customerRepository.getCustomerById(savedId)
+        val result = customerRepository.insert(customer)
+        val savedId = result.getOrNull()
+        val retrieved = customerRepository.getCustomerById(savedId!!)
 
         // ASSERT
+        assertTrue("Insert should succeed", result.isSuccess)
         assertEquals("Customer should be saved", 456L, savedId)
         val actual = retrieved.first()
         assertEquals("Customer name should match", customer.name, actual?.name)

@@ -18,18 +18,18 @@ class CustomerRepositoryImpl @Inject constructor(
             list.map { it.toDomain() } 
         }
 
-    override suspend fun insert(customer: Customer): Long {
-        return customerDao.insert(customer.toEntity())
+    override suspend fun insert(customer: Customer): Result<Long> = runCatching {
+        customerDao.insert(customer.toEntity())
     }
 
     override fun getCustomerById(id: Long): Flow<Customer?> = 
         customerDao.getCustomerById(id).map { it?.toDomain() }
 
-    override suspend fun updateCustomer(customer: Customer) {
+    override suspend fun updateCustomer(customer: Customer): Result<Unit> = runCatching {
         customerDao.update(customer.toEntity())
     }
 
-    override suspend fun deleteCustomer(id: Long) {
+    override suspend fun deleteCustomer(id: Long): Result<Unit> = runCatching {
         customerDao.deleteCustomer(id)
     }
 }

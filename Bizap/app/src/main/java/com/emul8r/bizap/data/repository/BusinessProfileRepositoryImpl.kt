@@ -54,28 +54,31 @@ class BusinessProfileRepositoryImpl @Inject constructor(
         dataStore.edit { it[Keys.ACTIVE_BUSINESS_ID] = id }
     }
 
-    override suspend fun createProfile(profile: BusinessProfile): Long {
+    override suspend fun createProfile(profile: BusinessProfile): Result<Long> = runCatching {
         val id = businessProfileDao.insertProfile(profile.toEntity())
         setActiveBusinessId(id) // Auto-switch to new business
-        return id
+        id
     }
 
-    override suspend fun updateProfile(profile: BusinessProfile) {
+    override suspend fun updateProfile(profile: BusinessProfile): Result<Unit> = runCatching {
         businessProfileDao.insertProfile(profile.toEntity())
+        Unit
     }
 
-    override suspend fun deleteProfile(id: Long) {
+    override suspend fun deleteProfile(id: Long): Result<Unit> = runCatching {
         // Logic to prevent deleting the last business could be added here
         val entity = businessProfileDao.getProfileById(id)
         entity?.let { businessProfileDao.deleteProfile(it) }
+        Unit
     }
 
-    override suspend fun updateLogoPath(path: String) {
+    override suspend fun updateLogoPath(path: String): Result<Unit> = runCatching {
         val currentId = getActiveBusinessId()
         val entity = businessProfileDao.getProfileById(currentId)
         entity?.let {
             businessProfileDao.insertProfile(it.copy(logoBase64 = path))
         }
+        Unit
     }
 
     // --- Mappers ---
