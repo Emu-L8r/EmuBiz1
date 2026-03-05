@@ -14,7 +14,13 @@ class DocumentRepositoryImpl @Inject constructor(
     override fun getDocumentsByInvoiceId(invoiceId: Long): Flow<List<GeneratedDocumentEntity>> = dao.getDocumentsByInvoiceId(invoiceId)
     override suspend fun getDocumentByInvoiceAndType(invoiceId: Long, fileType: String): GeneratedDocumentEntity? = 
         dao.getDocumentByInvoiceAndType(invoiceId, fileType)
-    override suspend fun insertDocument(document: GeneratedDocumentEntity) = dao.insertDocument(document)
-    override suspend fun deleteDocument(documentId: Long) = dao.deleteDocument(documentId)
-    override suspend fun updateDocumentStatus(id: Long, status: DocumentStatus) = dao.updateDocumentStatus(id, status)
+    override suspend fun insertDocument(document: GeneratedDocumentEntity): Result<Unit> = runCatching {
+        dao.insertDocument(document)
+    }
+    override suspend fun deleteDocument(documentId: Long): Result<Unit> = runCatching {
+        dao.deleteDocument(documentId)
+    }
+    override suspend fun updateDocumentStatus(id: Long, status: DocumentStatus): Result<Unit> = runCatching {
+        dao.updateDocumentStatus(id, status)
+    }
 }

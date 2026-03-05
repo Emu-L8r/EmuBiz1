@@ -46,6 +46,7 @@ class SettingsViewModel @Inject constructor(
     fun updateProfile(newProfile: BusinessProfile) {
         viewModelScope.launch {
             repository.updateProfile(newProfile)
+                .onFailure { _uiEvent.emit(UiEvent.ShowSnackbar("Failed to update profile")) }
         }
     }
 
@@ -67,8 +68,8 @@ class SettingsViewModel @Inject constructor(
 
                 // 3. Update the Repository with the LOCAL path
                 repository.updateLogoPath(localFile.absolutePath)
-
-                _uiEvent.emit(UiEvent.ShowSnackbar("Logo updated successfully"))
+                    .onSuccess { _uiEvent.emit(UiEvent.ShowSnackbar("Logo updated successfully")) }
+                    .onFailure { _uiEvent.emit(UiEvent.ShowSnackbar("Failed to process image")) }
             } catch (e: Exception) {
                 _uiEvent.emit(UiEvent.ShowSnackbar("Failed to process image"))
             }

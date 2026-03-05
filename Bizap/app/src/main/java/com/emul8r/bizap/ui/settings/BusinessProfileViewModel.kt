@@ -28,6 +28,7 @@ class BusinessProfileViewModel @Inject constructor(
     fun updateProfile(newProfile: BusinessProfile) {
         viewModelScope.launch {
             repository.updateProfile(newProfile)
+                .onFailure { e -> Timber.e(e, "Failed to update business profile") }
         }
     }
 
@@ -39,25 +40,21 @@ class BusinessProfileViewModel @Inject constructor(
 
         viewModelScope.launch {
             Timber.d("🐛 DEBUG BUTTON CLICKED: Seeding test business profile...")
-            try {
-                val testProfile = BusinessProfile(
-                    businessName = "Emu Consulting Pty Ltd",
-                    abn = "12 345 678 901",
-                    email = "contact@emuconsulting.com.au",
-                    phone = "(02) 8999 1234",
-                    address = "Level 10, 123 Business Avenue, Sydney NSW 2000",
-                    website = "www.emuconsulting.com.au",
-                    bankName = "Commonwealth Bank",
-                    accountName = "Emu Consulting Trust",
-                    bsbNumber = "062-000",
-                    accountNumber = "1234 5678"
-                )
-                
-                repository.updateProfile(testProfile)
-                Timber.d("✅ TEST BUSINESS PROFILE LOADED")
-            } catch (e: Exception) {
-                Timber.e(e, "❌ Seeding failed: ${e.message}")
-            }
+            val testProfile = BusinessProfile(
+                businessName = "Emu Consulting Pty Ltd",
+                abn = "12 345 678 901",
+                email = "contact@emuconsulting.com.au",
+                phone = "(02) 8999 1234",
+                address = "Level 10, 123 Business Avenue, Sydney NSW 2000",
+                website = "www.emuconsulting.com.au",
+                bankName = "Commonwealth Bank",
+                accountName = "Emu Consulting Trust",
+                bsbNumber = "062-000",
+                accountNumber = "1234 5678"
+            )
+            repository.updateProfile(testProfile)
+                .onSuccess { Timber.d("✅ TEST BUSINESS PROFILE LOADED") }
+                .onFailure { e -> Timber.e(e, "❌ Seeding failed: ${e.message}") }
         }
     }
 }

@@ -95,6 +95,7 @@ class DocumentVaultViewModel @Inject constructor(
     fun updateDocumentStatus(id: Long, newStatus: DocumentStatus) {
         viewModelScope.launch {
             documentRepository.updateDocumentStatus(id, newStatus)
+                .onFailure { e -> Timber.e(e, "Failed to update document status for id=$id") }
         }
     }
 }
