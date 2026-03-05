@@ -76,9 +76,12 @@ fun CurrencySelector(
 @Composable
 fun CurrencyDisplayWithAmount(
     currencySymbol: String,
-    amount: Double,
+    amount: Double,  // ✅ Already a Double (dollars, not cents)
     modifier: Modifier = Modifier
 ) {
+    // ✅ SAFE: 'amount' parameter is already in dollars (Double type)
+    // This composable is for display-only currency values, not monetary calculations
+    // String.format with Double is type-safe (no Long→Double conversion needed)
     Text(
         text = "$currencySymbol ${String.format(Locale.getDefault(), "%.2f", amount)}",
         style = MaterialTheme.typography.headlineSmall,
