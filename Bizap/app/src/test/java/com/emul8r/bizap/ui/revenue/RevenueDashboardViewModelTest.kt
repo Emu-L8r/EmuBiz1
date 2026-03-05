@@ -14,11 +14,13 @@ import kotlin.test.assertTrue
 class RevenueDashboardViewModelTest : BaseUnitTest() {
 
     private val useCase: GetRevenueMetricsUseCase = mockk()
+    private val businessProfileRepository = mockk<com.emul8r.bizap.domain.repository.BusinessProfileRepository>()
     private lateinit var viewModel: RevenueDashboardViewModel
 
     @Before
     fun setupViewModel() {
         // Setup default mock behavior
+        coEvery { businessProfileRepository.getActiveBusinessId() } returns 1L
         coEvery { useCase(any()) } returns RevenueMetrics(
             mtdRevenue = 100000L,      // $1000 in cents
             ytdRevenue = 500000L,      // $5000 in cents
@@ -41,7 +43,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
         coEvery { useCase(any()) } returns mockMetrics
 
         // Act
-        viewModel = RevenueDashboardViewModel(useCase)
+        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository)
         advanceUntilIdle() // Wait for coroutine in init to complete
         val state = viewModel.uiState.value
 
@@ -55,7 +57,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
         coEvery { useCase(any()) } throws Exception("Network Error")
 
         // Act
-        viewModel = RevenueDashboardViewModel(useCase)
+        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository)
         advanceUntilIdle() // Wait for coroutine in init to complete
         val state = viewModel.uiState.value
 

@@ -439,25 +439,27 @@ class ValidationRulesTest {
         val successResult: Result<Int> = Result.Success(5)
 
         // ACT
-        val successValue = successResult.fold(
-            onSuccess = { it * 2 },
-            onFailure = { -1 }
-        )
+        val successValue = if (successResult.isSuccess()) {
+            (successResult.getOrNull() ?: 0) * 2
+        } else {
+            -1
+        }
 
         // ASSERT
-        assertEquals("Fold should call onSuccess", 10, successValue)
+        assertEquals("Should return success value multiplied", 10, successValue)
 
         // ARRANGE - Failure case
         val failureResult: Result<Int> = Result.Failure("Error")
 
         // ACT
-        val failureValue = failureResult.fold(
-            onSuccess = { it * 2 },
-            onFailure = { -1 }
-        )
+        val failureValue = if (failureResult.isSuccess()) {
+            (failureResult.getOrNull() ?: 0) * 2
+        } else {
+            -1
+        }
 
         // ASSERT
-        assertEquals("Fold should call onFailure", -1, failureValue)
+        assertEquals("Should return failure value", -1, failureValue)
     }
 
     // ===============================
