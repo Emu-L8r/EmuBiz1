@@ -417,7 +417,8 @@ object TestDataFactory {
             website = "www.techsolutions.com.au",
             address = "123 Business St, Sydney NSW 2000",
             abn = "12345678901",
-            taxRate = 1000  // 10% in basis points
+            isTaxRegistered = true,
+            defaultTaxRate = 0.10f  // 10% tax rate
         )
     }
 

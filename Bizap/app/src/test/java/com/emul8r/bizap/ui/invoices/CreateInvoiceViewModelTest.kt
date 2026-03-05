@@ -32,7 +32,7 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
     private lateinit var generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase
 
     @Before
-    override fun setupBase() {
+    fun setup() {
         super.setupBase()
 
         // Mock repositories
@@ -129,9 +129,9 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
         )
 
         val updatedItem = viewModel.uiState.value.items.find { it.transientId == transientId }
-        assertEquals("Updated Item", updatedItem?.description)
-        assertEquals(5.0, updatedItem?.quantity, 0.01)
-        assertEquals(10000L, updatedItem?.unitPrice)
+        assertEquals(updatedItem?.description, "Updated Item")
+        assertEquals(5.0, updatedItem?.quantity ?: 0.0, 0.01)
+        assertEquals(10000L, updatedItem?.unitPrice ?: 0L)
     }
 
     @Test
@@ -201,9 +201,9 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
         val newItem = viewModel.uiState.value.items.lastOrNull()
 
         assertNotNull(newItem)
-        assertEquals("", newItem?.description)
-        assertEquals(0L, newItem?.unitPrice)
-        assertEquals(0.0, newItem?.quantity, 0.01)
+        assertEquals(newItem?.description, "")
+        assertEquals(0L, newItem?.unitPrice ?: 0L)
+        assertEquals(0.0, newItem?.quantity ?: 0.0, 0.01)
     }
 }
 
