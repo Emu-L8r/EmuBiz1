@@ -24,6 +24,9 @@ interface InvoiceDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertInvoice(invoice: InvoiceEntity): Long
 
+    @Update
+    suspend fun updateInvoice(invoice: InvoiceEntity)
+
     @Upsert
     suspend fun insertLineItems(items: List<LineItemEntity>)
 
