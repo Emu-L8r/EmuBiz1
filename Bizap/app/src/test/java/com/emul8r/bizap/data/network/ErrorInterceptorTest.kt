@@ -4,9 +4,11 @@ import com.emul8r.bizap.BaseUnitTest
 import io.mockk.every
 import io.mockk.mockk
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -48,11 +50,13 @@ class ErrorInterceptorTest : BaseUnitTest() {
 
     private fun createMockChain(code: Int): Interceptor.Chain {
         val request = Request.Builder().url("https://test.com").build()
+        val responseBody = "".toResponseBody("application/json".toMediaType())
         val response = Response.Builder()
             .request(request)
             .protocol(Protocol.HTTP_1_1)
             .code(code)
             .message("Error")
+            .body(responseBody)
             .build()
             
         val chain = mockk<Interceptor.Chain>()

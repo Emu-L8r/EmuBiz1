@@ -8,12 +8,18 @@ class CentsFormatterTest {
 
     @Test
     fun testFormatCents_AUD() {
-        assertEquals("$149.99", CentsFormatter.formatCents(14999, "AUD"))
+        val formatted = CentsFormatter.formatCents(14999, "AUD")
+        // AUD symbol is "A$" in US locale (CI environment) and "$" in Australian locale
+        val validFormats = listOf("A$149.99", "$149.99")
+        assertTrue("Expected AUD-formatted value, got: $formatted", formatted in validFormats)
     }
 
     @Test
     fun testFormatCents_Zero() {
-        assertEquals("$0.00", CentsFormatter.formatCents(0, "AUD"))
+        val formatted = CentsFormatter.formatCents(0, "AUD")
+        // AUD symbol is "A$" in US locale (CI environment) and "$" in Australian locale
+        val validFormats = listOf("A$0.00", "$0.00")
+        assertTrue("Expected AUD zero-formatted value, got: $formatted", formatted in validFormats)
     }
 
     @Test
@@ -26,7 +32,8 @@ class CentsFormatterTest {
     fun testFormatCents_Large() {
         // DecimalFormat depends on locale, but assuming standard US/AU grouping
         val formatted = CentsFormatter.formatCents(999999, "AUD")
-        assertTrue("Formatted value was $formatted", formatted == "$9,999.99" || formatted == "$9 999.99")
+        val validFormats = listOf("A$9,999.99", "$9,999.99", "$9 999.99", "A$9 999.99")
+        assertTrue("Formatted value was $formatted", formatted in validFormats)
     }
 
     @Test
