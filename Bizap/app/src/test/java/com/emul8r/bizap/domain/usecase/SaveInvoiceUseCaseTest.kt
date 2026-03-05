@@ -43,7 +43,7 @@ class SaveInvoiceUseCaseTest : BaseUnitTest() {
         val invoice = TestDataFactory.createTestInvoice().copy(
             items = listOf(mockk())
         )
-        coEvery { repository.saveInvoice(any()) } returns 1L
+        coEvery { repository.saveInvoice(any()) } returns Result.success(1L)
         
         // Act
         val result = useCase(invoice)

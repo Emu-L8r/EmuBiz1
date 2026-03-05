@@ -95,10 +95,10 @@ class CoreUnitTests {
         )
 
         // Mock repository to return ID = 123
-        coEvery { invoiceRepository.saveInvoice(invoice) } returns 123L
+        coEvery { invoiceRepository.saveInvoice(invoice) } returns Result.success(123L)
 
         // ACT
-        val savedId = invoiceRepository.saveInvoice(invoice)
+        val savedId = invoiceRepository.saveInvoice(invoice).getOrNull()
 
         // ASSERT
         assertEquals("Invoice should be saved with ID", 123L, savedId)
