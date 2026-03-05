@@ -93,13 +93,19 @@ fun DocumentVaultScreen(viewModel: DocumentVaultViewModel = hiltViewModel()) {
                                                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                                             ),
                                             onClick = {
-                                                if (file.exists()) {
-                                                    val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
-                                                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                                                        setDataAndType(uri, "application/pdf")
-                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                try {
+                                                    if (file.exists()) {
+                                                        val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
+                                                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                            setDataAndType(uri, "application/pdf")
+                                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                        }
+                                                        context.startActivity(intent)
                                                     }
-                                                    context.startActivity(intent)
+                                                } catch (e: IllegalArgumentException) {
+                                                    android.widget.Toast.makeText(context, "Unable to open file", android.widget.Toast.LENGTH_SHORT).show()
+                                                } catch (e: Exception) {
+                                                    android.widget.Toast.makeText(context, "Unable to open file", android.widget.Toast.LENGTH_SHORT).show()
                                                 }
                                             }
                                         ) {
@@ -119,14 +125,20 @@ fun DocumentVaultScreen(viewModel: DocumentVaultViewModel = hiltViewModel()) {
                                                 trailingContent = {
                                                     IconButton(
                                                         onClick = {
-                                                            if (file.exists()) {
-                                                                val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
-                                                                val intent = Intent(Intent.ACTION_SEND).apply {
-                                                                    type = "application/pdf"
-                                                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                            try {
+                                                                if (file.exists()) {
+                                                                    val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
+                                                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                                                        type = "application/pdf"
+                                                                        putExtra(Intent.EXTRA_STREAM, uri)
+                                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                                    }
+                                                                    context.startActivity(Intent.createChooser(intent, "Share PDF"))
                                                                 }
-                                                                context.startActivity(Intent.createChooser(intent, "Share PDF"))
+                                                            } catch (e: IllegalArgumentException) {
+                                                                android.widget.Toast.makeText(context, "Unable to share file", android.widget.Toast.LENGTH_SHORT).show()
+                                                            } catch (e: Exception) {
+                                                                android.widget.Toast.makeText(context, "Unable to share file", android.widget.Toast.LENGTH_SHORT).show()
                                                             }
                                                         },
                                                         enabled = file.exists()
