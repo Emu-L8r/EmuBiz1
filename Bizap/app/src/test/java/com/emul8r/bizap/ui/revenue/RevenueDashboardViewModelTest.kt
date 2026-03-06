@@ -1,10 +1,13 @@
 package com.emul8r.bizap.ui.revenue
 
 import com.emul8r.bizap.BaseUnitTest
+import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
 import com.emul8r.bizap.domain.revenue.usecase.GetRevenueMetricsUseCase
-import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.Before
@@ -19,14 +22,16 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
 
     @Before
     fun setupViewModel() {
-        // Setup default mock behavior
-        coEvery { businessProfileRepository.getActiveBusinessId() } returns 1L
-        coEvery { useCase(any()) } returns RevenueMetrics(
-            mtdRevenue = 100000L,      // $1000 in cents
-            ytdRevenue = 500000L,      // $5000 in cents
-            weeklyRevenue = 50000L,    // $500 in cents
-            dailyTrend = emptyList(),
-            topPerformers = emptyList()
+        val mockProfile = BusinessProfile(id = 1L)
+        every { businessProfileRepository.activeProfile } returns flowOf(mockProfile)
+        every { useCase(any()) } returns flowOf(
+            RevenueMetrics(
+                mtdRevenue = 100000L,
+                ytdRevenue = 500000L,
+                weeklyRevenue = 50000L,
+                dailyTrend = emptyList(),
+                topPerformers = emptyList()
+            )
         )
     }
 
@@ -40,11 +45,11 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
             dailyTrend = emptyList(),
             topPerformers = emptyList()
         )
-        coEvery { useCase(any()) } returns mockMetrics
+        every { useCase(any()) } returns flowOf(mockMetrics)
 
         // Act
         viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository)
-        advanceUntilIdle() // Wait for coroutine in init to complete
+        advanceUntilIdle() // Wait for StateFlow to emit
         val state = viewModel.uiState.value
 
         // Assert
@@ -54,11 +59,11 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
     @Test
     fun `when use case fails should show error state`() = runTest {
         // Arrange
-        coEvery { useCase(any()) } throws Exception("Network Error")
+        every { useCase(any()) } returns flow { throw Exception("Network Error") }
 
         // Act
         viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository)
-        advanceUntilIdle() // Wait for coroutine in init to complete
+        advanceUntilIdle() // Wait for StateFlow to emit
         val state = viewModel.uiState.value
 
         // Assert
