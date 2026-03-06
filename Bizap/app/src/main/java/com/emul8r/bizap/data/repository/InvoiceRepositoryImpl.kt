@@ -4,6 +4,7 @@ import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.dao.AnalyticsDao
 import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
 import com.emul8r.bizap.data.local.entities.InvoiceAnalyticsSnapshot
+import com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.mapper.toDomain
 import com.emul8r.bizap.data.mapper.toEntity
@@ -385,12 +386,13 @@ class InvoiceRepositoryImpl @Inject constructor(
                 ((System.currentTimeMillis() - invoice.dueDate) / MILLIS_PER_DAY).toInt()
             } else 0
 
+            val computedInvoiceNumber = "INV-${invoice.invoiceYear}-${invoice.invoiceSequence.toString().padStart(6, '0')}"
             val paymentSnapshot = InvoicePaymentSnapshot(
                 invoiceId = invoice.id,
                 businessProfileId = invoice.businessProfileId,
-                customerId = invoice.customerId,
+                customerId = invoice.customerId ?: 0L,
                 customerName = invoice.customerName,
-                invoiceNumber = invoice.invoiceNumber ?: "INV-${invoice.id}",
+                invoiceNumber = computedInvoiceNumber,
                 invoiceDate = invoice.date,
                 dueDate = invoice.dueDate,
                 totalAmount = invoice.totalAmount,
@@ -410,7 +412,7 @@ class InvoiceRepositoryImpl @Inject constructor(
                     else -> "PAST_90"
                 },
                 daysOverdue = daysOverdue,
-                daysSinceDue = if (invoice.dueDate < System.currentTimeMillis()) daysOverdue else 0,
+                daysSinceDue = maxOf(0, daysOverdue),
                 lastPaymentDate = if (invoice.amountPaid > 0) System.currentTimeMillis() else null,
                 lastPaymentAmount = if (invoice.amountPaid > 0) invoice.amountPaid else 0L,
                 paymentCount = if (invoice.amountPaid > 0) 1 else 0,

@@ -80,6 +80,9 @@ interface InvoicePaymentDao {
     @Query("SELECT COUNT(*) FROM invoice_payment_snapshots")
     suspend fun countSnapshots(): Int
 
+    @Query("DELETE FROM invoice_payment_snapshots WHERE invoiceId = :invoiceId")
+    suspend fun deleteSnapshotByInvoiceId(invoiceId: Long)
+
     /**
      * Find invoice IDs missing payment snapshots.
      * Used for health reporting and recovery.

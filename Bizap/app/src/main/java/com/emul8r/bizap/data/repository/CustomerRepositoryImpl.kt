@@ -5,6 +5,7 @@ import com.emul8r.bizap.data.mapper.toDomain
 import com.emul8r.bizap.data.mapper.toEntity
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.customer.repository.CustomerAnalyticsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -17,7 +18,8 @@ import javax.inject.Inject
  */
 class CustomerRepositoryImpl @Inject constructor(
     private val customerDao: CustomerDao,
-    private val customerAnalyticsRepository: CustomerAnalyticsRepository
+    private val customerAnalyticsRepository: CustomerAnalyticsRepository,
+    private val businessProfileRepository: BusinessProfileRepository
 ) : CustomerRepository {
     
     override fun getAllCustomers(): Flow<List<Customer>> = 
@@ -30,9 +32,10 @@ class CustomerRepositoryImpl @Inject constructor(
 
         // ✅ CREATE ANALYTICS SNAPSHOT when customer is created
         try {
+            val businessId = businessProfileRepository.getActiveBusinessId()
             customerAnalyticsRepository.createInitialSnapshot(
                 customerId = id,
-                businessId = customer.businessProfileId,
+                businessId = businessId,
                 customerName = customer.name,
                 customerEmail = customer.email
             ).onSuccess {
@@ -56,15 +59,13 @@ class CustomerRepositoryImpl @Inject constructor(
 
         // ✅ SYNC ANALYTICS when customer is updated
         try {
-            customerAnalyticsRepository.recalculateChurnRisks(customer.businessProfileId)
-                .onSuccess {
-                    Timber.d("✅ Recalculated churn risks for customer ${customer.id}")
-                }.onFailure { e ->
-                    Timber.w(e, "⚠️ Failed to recalculate churn risks (non-blocking)")
-                    // Non-blocking: don't fail the operation if analytics update fails
-                }
+            val businessId = businessProfileRepository.getActiveBusinessId()
+            // Recalculate churn risks for the business
+            customerAnalyticsRepository.recalculateChurnRisks(businessId)
+            Timber.d("✅ Recalculated churn risks for customer ${customer.id}")
         } catch (e: Exception) {
             Timber.w(e, "⚠️ Exception updating customer analytics: ${e.message}")
+            // Non-blocking: don't fail the operation if analytics update fails
         }
 
         Unit

@@ -7,8 +7,8 @@ import com.emul8r.bizap.data.local.entities.InvoiceAnalyticsSnapshot
 import com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot
 import com.emul8r.bizap.data.local.entities.InvoiceEntity
 import com.emul8r.bizap.domain.model.InvoiceStatus
-import dagger.Inject
 import timber.log.Timber
+import javax.inject.Inject
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -71,14 +71,15 @@ class SnapshotSyncHelper @Inject constructor(
                 Timber.d("✅ Updated InvoiceAnalyticsSnapshot for invoice ${invoice.id}")
             } else {
                 // Create new snapshot
+                val computedInvoiceNumber = "INV-${invoice.invoiceYear}-${invoice.invoiceSequence.toString().padStart(6, '0')}"
                 val snapshot = InvoiceAnalyticsSnapshot(
                     invoiceId = invoice.id,
                     businessProfileId = businessId,
-                    customerId = invoice.customerId,
+                    customerId = invoice.customerId ?: 0L,
                     customerName = invoice.customerName,
-                    invoiceNumber = invoice.invoiceNumber ?: "INV-${invoice.id}",
+                    invoiceNumber = computedInvoiceNumber,
                     currencyCode = invoice.currencyCode,
-                    subtotal = invoice.subtotalAmount,
+                    subtotal = (invoice.totalAmount - invoice.taxAmount),
                     taxAmount = invoice.taxAmount,
                     totalAmount = invoice.totalAmount,
                     status = invoice.status,
@@ -86,7 +87,7 @@ class SnapshotSyncHelper @Inject constructor(
                     isOverdue = invoice.dueDate < System.currentTimeMillis() &&
                             invoice.status != "PAID",
                     invoiceDateMs = invoice.date,
-                    createdAtMs = invoice.createdAt,
+                    createdAtMs = invoice.updatedAt,
                     paidAtMs = if (invoice.status == "PAID") System.currentTimeMillis() else null,
                     daysPending = if (invoice.status in listOf("SENT", "PARTIALLY_PAID")) {
                         ((System.currentTimeMillis() - invoice.date) / MILLIS_PER_DAY).toInt()
@@ -198,12 +199,13 @@ class SnapshotSyncHelper @Inject constructor(
                 Timber.d("✅ Updated InvoicePaymentSnapshot for invoice ${invoice.id}")
             } else {
                 // Create new payment snapshot
+                val computedInvoiceNumber = "INV-${invoice.invoiceYear}-${invoice.invoiceSequence.toString().padStart(6, '0')}"
                 val snapshot = InvoicePaymentSnapshot(
                     invoiceId = invoice.id,
                     businessProfileId = businessId,
-                    customerId = invoice.customerId,
+                    customerId = invoice.customerId ?: 0L,
                     customerName = invoice.customerName,
-                    invoiceNumber = invoice.invoiceNumber ?: "INV-${invoice.id}",
+                    invoiceNumber = computedInvoiceNumber,
                     invoiceDate = invoice.date,
                     dueDate = invoice.dueDate,
                     totalAmount = invoice.totalAmount,
@@ -223,7 +225,7 @@ class SnapshotSyncHelper @Inject constructor(
                         else -> "PAST_90"
                     },
                     daysOverdue = daysOverdue,
-                    daysSinceDue = if (invoice.dueDate < System.currentTimeMillis()) daysOverdue else 0,
+                    daysSinceDue = maxOf(0, daysOverdue),
                     lastPaymentDate = if (invoice.amountPaid > 0) System.currentTimeMillis() else null,
                     lastPaymentAmount = if (invoice.amountPaid > 0) invoice.amountPaid else 0L,
                     paymentCount = if (invoice.amountPaid > 0) 1 else 0,
