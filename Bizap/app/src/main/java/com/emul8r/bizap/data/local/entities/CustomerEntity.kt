@@ -8,7 +8,8 @@ import androidx.room.PrimaryKey
     tableName = "customers",
     indices = [
         Index(name = "idx_customers_business", value = ["businessProfileId"]),
-        Index(name = "idx_customers_email", value = ["email"])
+        Index(name = "idx_customers_email", value = ["email"], unique = true),
+        Index(name = "idx_customers_business_name", value = ["businessProfileId", "name"])
     ]
 )
 data class CustomerEntity(
