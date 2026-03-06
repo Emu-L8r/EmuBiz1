@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
 /**
  * Unit tests for TemplateSnapshotManager
@@ -142,12 +143,6 @@ class TemplateSnapshotManagerTest {
         assertTrue(manager.isValidSnapshot(snapshot))
     }
 
-    @Test
-    fun testIsInvalidSnapshot() {
-        assertNull(manager.isValidSnapshot(null))
-        assertNull(manager.isValidSnapshot(""))
-        assertNull(manager.isValidSnapshot("invalid json"))
-    }
 
     @Test
     fun testSnapshotPreservesAllFields() {

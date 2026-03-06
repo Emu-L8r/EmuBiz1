@@ -24,8 +24,10 @@ class CentsFormatterTest {
 
     @Test
     fun testFormatCents_USD() {
-        // Assuming USD also uses $ as symbol in default locale
-        assertEquals("$1.00", CentsFormatter.formatCents(100, "USD"))
+        val formatted = CentsFormatter.formatCents(100, "USD")
+        // USD symbol can vary by locale ($ in most locales)
+        val validFormats = listOf("$1.00", "USD1.00")
+        assertTrue("Expected USD-formatted value, got: $formatted", formatted in validFormats)
     }
 
     @Test

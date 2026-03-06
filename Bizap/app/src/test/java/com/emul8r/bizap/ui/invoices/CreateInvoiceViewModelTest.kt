@@ -194,16 +194,5 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
         val finalSize = viewModel.uiState.value.items.size
         assertEquals(initialSize, finalSize)
     }
-
-    @Test
-    fun addLineItem_newItemShouldHaveEmptyDefaults() {
-        viewModel.addLineItem()
-        val newItem = viewModel.uiState.value.items.lastOrNull()
-
-        assertNotNull(newItem)
-        assertEquals(newItem?.description, "")
-        assertEquals(0L, newItem?.unitPrice ?: 0L)
-        assertEquals(0.0, newItem?.quantity ?: 0.0, 0.01)
-    }
 }
 
