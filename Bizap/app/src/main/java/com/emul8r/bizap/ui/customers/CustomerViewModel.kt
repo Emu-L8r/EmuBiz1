@@ -81,15 +81,18 @@ class CustomerViewModel @Inject constructor(
                 .onSuccess { customerId ->
                     Timber.d("✅ Customer saved successfully: ${customer.name}")
                     // Create initial analytics snapshot with NEW segment
-                    val businessId = runCatching { businessProfileRepository.getActiveBusinessId() }
-                        .getOrDefault(1L)
-                    analyticsRepository.createInitialSnapshot(
-                        customerId = customerId,
-                        businessId = businessId,
-                        customerName = customer.name,
-                        customerEmail = customer.email
-                    ).onFailure { e ->
-                        Timber.w(e, "⚠️ Customer created but failed to create analytics snapshot")
+                    val businessIdResult = runCatching { businessProfileRepository.getActiveBusinessId() }
+                    if (businessIdResult.isFailure) {
+                        Timber.w(businessIdResult.exceptionOrNull(), "⚠️ Customer created but skipping analytics snapshot: could not get business ID")
+                    } else {
+                        analyticsRepository.createInitialSnapshot(
+                            customerId = customerId,
+                            businessId = businessIdResult.getOrThrow(),
+                            customerName = customer.name,
+                            customerEmail = customer.email
+                        ).onFailure { e ->
+                            Timber.w(e, "⚠️ Customer created but failed to create analytics snapshot")
+                        }
                     }
                     _formState.update { it.copy(error = null, isSaving = false) }
                     clearFields()
