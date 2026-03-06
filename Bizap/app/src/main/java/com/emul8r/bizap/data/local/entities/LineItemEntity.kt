@@ -15,7 +15,7 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("invoiceId")]
+    indices = [Index("invoiceId"), Index("currencyCode")]
 )
 data class LineItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
