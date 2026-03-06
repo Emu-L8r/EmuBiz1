@@ -78,10 +78,26 @@ fun CreateTemplateScreen(
             hidePaymentTerms = formState.hidePaymentTerms
         )
 
-        viewModel.createTemplate(template)
-        customFields.forEach { viewModel.addCustomField(it.copy(templateId = template.id)) }
-        showLoading = false
-        onTemplateCreated()
+        // ✅ FIX: Wait for async operations to complete before closing
+        scope.launch {
+            try {
+                // Save template
+                viewModel.createTemplate(template)
+
+                // Save custom fields
+                customFields.forEach {
+                    viewModel.addCustomField(it.copy(templateId = template.id))
+                }
+
+                // Only close on success
+                showLoading = false
+                showError = null
+                onTemplateCreated()
+            } catch (e: Exception) {
+                showLoading = false
+                showError = "Failed to create template: ${e.message}"
+            }
+        }
     }
 
     Scaffold(

@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
 
@@ -136,8 +137,23 @@ class InvoiceDetailViewModel @Inject constructor(
 
     fun updateStatus(invoiceId: Long, newStatus: String) {
         viewModelScope.launch {
-            val status = InvoiceStatus.valueOf(newStatus)
-            invoiceRepo.updateInvoiceStatus(invoiceId, status)
+            try {
+                val status = InvoiceStatus.valueOf(newStatus)
+                invoiceRepo.updateInvoiceStatus(invoiceId, status)
+                    .onSuccess {
+                        Timber.d("✅ Invoice status updated to $newStatus")
+                        // Reload invoice to show updated status
+                        loadInvoice(invoiceId)
+                        _uiEvent.emit(UiEvent.ShowSnackbar("Status updated to $newStatus"))
+                    }
+                    .onFailure { e ->
+                        Timber.e(e, "❌ Failed to update status")
+                        _uiEvent.emit(UiEvent.ShowSnackbar("Failed to update status: ${e.message}"))
+                    }
+            } catch (e: IllegalArgumentException) {
+                Timber.e(e, "❌ Invalid status value: $newStatus")
+                _uiEvent.emit(UiEvent.ShowSnackbar("Invalid status: $newStatus"))
+            }
         }
     }
 
