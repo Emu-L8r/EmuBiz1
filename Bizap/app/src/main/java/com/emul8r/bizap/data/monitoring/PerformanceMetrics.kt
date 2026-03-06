@@ -28,7 +28,9 @@ object PerformanceMetrics {
     private data class OperationStats(
         val successCount: AtomicInteger = AtomicInteger(0),
         val failureCount: AtomicInteger = AtomicInteger(0),
-        val totalDurationMs: AtomicLong = AtomicLong(0)
+        val totalDurationMs: AtomicLong = AtomicLong(0),
+        val errorTypeCount: java.util.concurrent.ConcurrentHashMap<String, Int> =
+            java.util.concurrent.ConcurrentHashMap()
     )
 
     private val stats = java.util.concurrent.ConcurrentHashMap<String, OperationStats>()
@@ -41,10 +43,14 @@ object PerformanceMetrics {
         s.totalDurationMs.addAndGet(durationMs)
     }
 
-    fun recordFailure(operation: String, durationMs: Long, @Suppress("UNUSED_PARAMETER") error: Throwable? = null) {
+    fun recordFailure(operation: String, durationMs: Long, error: Throwable? = null) {
         val s = stats.getOrPut(operation) { OperationStats() }
         s.failureCount.incrementAndGet()
         s.totalDurationMs.addAndGet(durationMs)
+        if (error != null) {
+            // Count errors by type for future breakdown reporting
+            s.errorTypeCount.merge(error.javaClass.simpleName, 1, Int::plus)
+        }
     }
 
     // ── Querying ─────────────────────────────────────────────────────────────────

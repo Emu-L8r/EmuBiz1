@@ -422,16 +422,26 @@ class InvoiceRepositoryImpl @Inject constructor(
             }
         }
 
-        throw lastException ?: Exception("$operationName failed after $maxRetries attempts")
+        throw lastException
+            ?: Exception("'$operationName' failed after $maxRetries retry attempts with no captured exception")
     }
 
     private fun isRetryable(e: Exception): Boolean = when (e) {
+        // Programming errors: never retry
         is IllegalArgumentException,
-        is IllegalStateException,
+        is IllegalStateException -> false
+        // Domain logic violations: never retry
         is BizapException.BusinessLogicError,
         is BizapException.ValidationError,
-        is BizapException.NotFoundError -> false
-        else -> true
+        is BizapException.NotFoundError,
+        is BizapException.InvalidInvoiceError,
+        is BizapException.DuplicateError -> false
+        // Any other BizapException: do not retry by default (conservative)
+        is BizapException -> false
+        // Generic RuntimeException from Room/SQLite – potentially transient (DB lock, etc.)
+        is RuntimeException -> true
+        // Anything else: do not retry
+        else -> false
     }
 
     // ==================== SNAPSHOT CONSISTENCY ====================
@@ -469,14 +479,12 @@ class InvoiceRepositoryImpl @Inject constructor(
     private suspend fun regenerateAnalyticsSnapshot(invoiceWithItems: InvoiceWithItems) {
         try {
             val invoice = invoiceWithItems.invoice
-            val invoiceNumber = "INV-${invoice.invoiceYear}-${invoice.invoiceSequence.toString().padStart(6, '0')}" +
-                    if (invoice.version > 1) "-v${invoice.version}" else ""
             val snapshot = InvoiceAnalyticsSnapshot(
                 invoiceId = invoice.id,
                 businessProfileId = invoice.businessProfileId,
                 customerId = invoice.customerId ?: 0L,
                 customerName = invoice.customerName,
-                invoiceNumber = invoiceNumber,
+                invoiceNumber = invoice.formattedInvoiceNumber(),
                 currencyCode = invoice.currencyCode,
                 subtotal = invoiceWithItems.subtotal,
                 taxAmount = invoice.taxAmount,
@@ -497,4 +505,18 @@ class InvoiceRepositoryImpl @Inject constructor(
             Timber.e(e, "Failed to regenerate analytics snapshot for invoice ${invoiceWithItems.invoice.id}")
         }
     }
+}
+
+// ==================== EXTENSION FUNCTIONS ====================
+
+/**
+ * Formats an [InvoiceEntity] invoice number in the canonical form
+ * `INV-YYYY-NNNNNN` (with optional `-vN` suffix for versions > 1).
+ *
+ * Centralises the formatting logic that is also used in [Invoice.invoiceNumber]
+ * so that entity-layer code does not duplicate the pattern.
+ */
+private fun com.emul8r.bizap.data.local.entities.InvoiceEntity.formattedInvoiceNumber(): String {
+    val base = "INV-$invoiceYear-${invoiceSequence.toString().padStart(6, '0')}"
+    return if (version > 1) "$base-v$version" else base
 }
