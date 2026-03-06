@@ -22,14 +22,16 @@ class CustomFieldPdfRenderer(
     companion object {
         private const val TAG = "CustomFieldPdfRenderer"
         private const val MARGIN = 40f
-        private const val LINE_HEIGHT = 15f
-        private const val SECTION_SPACING = 10f
+        private const val LINE_HEIGHT = 16f  // ✅ Increased from 15f for better spacing
+        private const val SECTION_SPACING = 15f  // ✅ Increased from 10f
+        private const val MAX_WIDTH = 515f  // pageWidth - (margin * 2) = 595 - 80
     }
 
     private var currentY = startY
 
     /**
      * Render custom fields section with type-aware formatting
+     * ✅ FIX: Now handles text wrapping for long values
      */
     fun renderCustomFields(
         fieldLabels: Map<String, String>,
@@ -42,11 +44,11 @@ class CustomFieldPdfRenderer(
 
         Timber.d("✅ Rendering ${fieldLabels.size} custom fields")
 
-        // Draw section header
+        // Draw section header with proper spacing
         currentY += SECTION_SPACING
         headerPaint.textAlign = Paint.Align.LEFT
         canvas.drawText("ADDITIONAL INFORMATION", MARGIN, currentY, headerPaint)
-        currentY += LINE_HEIGHT
+        currentY += LINE_HEIGHT + 5f
 
         // Draw divider
         val dividerPaint = Paint(bodyPaint).apply {
@@ -56,7 +58,7 @@ class CustomFieldPdfRenderer(
         canvas.drawLine(MARGIN, currentY, pageWidth - MARGIN, currentY, dividerPaint)
         currentY += SECTION_SPACING
 
-        // Render each field
+        // Render each field with text wrapping support
         bodyPaint.textAlign = Paint.Align.LEFT
         fieldLabels.forEach { (fieldId, label) ->
             val value = fieldValues[fieldId] ?: ""
@@ -66,14 +68,55 @@ class CustomFieldPdfRenderer(
                 val formattedValue = formatFieldValue(value, type)
                 val displayText = "$label: $formattedValue"
 
-                // Word wrap if needed
-                canvas.drawText(displayText, MARGIN, currentY, bodyPaint)
-                currentY += LINE_HEIGHT
+                // ✅ FIX: Wrap long text instead of letting it overflow
+                val wrappedLines = wrapText(displayText)
+                wrappedLines.forEach { line ->
+                    canvas.drawText(line, MARGIN, currentY, bodyPaint)
+                    currentY += LINE_HEIGHT
+                }
+
+                // Add spacing between fields
+                currentY += 5f
             }
         }
 
         currentY += SECTION_SPACING
         return currentY
+    }
+
+    /**
+     * ✅ NEW METHOD: Wrap text to fit within page width
+     */
+    private fun wrapText(text: String): List<String> {
+        if (text.isEmpty()) return emptyList()
+
+        val result = mutableListOf<String>()
+        var currentLine = ""
+        val words = text.split(" ")
+
+        words.forEach { word ->
+            val testLine = if (currentLine.isEmpty()) word else "$currentLine $word"
+            val width = bodyPaint.measureText(testLine)
+
+            if (width > MAX_WIDTH) {
+                if (currentLine.isNotEmpty()) {
+                    result.add(currentLine)
+                    currentLine = word
+                } else {
+                    // Word is longer than max width, add it anyway
+                    result.add(word)
+                    currentLine = ""
+                }
+            } else {
+                currentLine = testLine
+            }
+        }
+
+        if (currentLine.isNotEmpty()) {
+            result.add(currentLine)
+        }
+
+        return result
     }
 
     /**

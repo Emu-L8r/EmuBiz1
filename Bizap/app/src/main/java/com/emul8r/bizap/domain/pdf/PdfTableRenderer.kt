@@ -21,6 +21,7 @@ class PdfTableRenderer(
     private val margin = 40f
     private val padding = 10f
     private val tableWidth = pageWidth - (margin * 2)
+    private val minRowHeight = 25f  // ✅ NEW: Minimum row height to prevent overlap
 
     fun drawRow(
         values: List<String>,
@@ -34,13 +35,13 @@ class PdfTableRenderer(
             val colWidth = columnWeights[index] * tableWidth
             StaticLayout.Builder.obtain(text, 0, text.length, textPaint, (colWidth - padding * 2).toInt())
                 .setAlignment(if (index == 0) Layout.Alignment.ALIGN_NORMAL else Layout.Alignment.ALIGN_OPPOSITE)
-                .setLineSpacing(0f, 1.1f)
+                .setLineSpacing(0f, 1.15f)  // ✅ IMPROVED: Slightly better line spacing
                 .build()
         }
 
-        // 2. Calculate row height based on the tallest cell
+        // 2. Calculate row height based on the tallest cell (with minimum height)
         val maxHeight = layouts.maxOf { it.height }.toFloat()
-        val rowHeight = maxHeight + (padding * 2)
+        val rowHeight = maxOf(minRowHeight, maxHeight + (padding * 2))  // ✅ IMPROVED: Enforce minimum
 
         // 3. Draw background for headers
         if (isHeader) {
