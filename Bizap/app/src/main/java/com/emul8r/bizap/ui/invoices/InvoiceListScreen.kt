@@ -4,13 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -29,27 +32,43 @@ import java.util.Locale
 @Composable
 fun InvoiceListScreen(
     onInvoiceClick: (Long) -> Unit,
+    onViewAnalytics: (() -> Unit)? = null,
     viewModel: InvoiceListViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // MainActivity's Scaffold provides the TopAppBar
-    when (val currentState = state) {
-        is InvoiceListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (onViewAnalytics != null) {
+            OutlinedButton(
+                onClick = onViewAnalytics,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Icon(Icons.Default.BarChart, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("View Revenue Analytics")
+            }
         }
-        is InvoiceListUiState.Empty -> EmptyState(Modifier.fillMaxSize())
-        is InvoiceListUiState.Error -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                currentState.message,
-                color = MaterialTheme.colorScheme.error
+
+        // MainActivity's Scaffold provides the TopAppBar
+        when (val currentState = state) {
+            is InvoiceListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
+                CircularProgressIndicator(Modifier.align(Alignment.Center))
+            }
+            is InvoiceListUiState.Empty -> EmptyState(Modifier.fillMaxSize())
+            is InvoiceListUiState.Error -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    currentState.message,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            is InvoiceListUiState.Success -> InvoiceList(
+                invoices = currentState.invoices,
+                onInvoiceClick = onInvoiceClick,
+                onStatusChange = viewModel::updateInvoiceStatus
             )
         }
-        is InvoiceListUiState.Success -> InvoiceList(
-            invoices = currentState.invoices,
-            onInvoiceClick = onInvoiceClick,
-            onStatusChange = viewModel::updateInvoiceStatus
-        )
     }
 }
 
