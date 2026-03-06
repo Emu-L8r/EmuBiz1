@@ -22,6 +22,12 @@ interface InvoicePaymentDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSnapshots(snapshots: List<InvoicePaymentSnapshot>)
 
+    @Query("SELECT * FROM invoice_payment_snapshots WHERE invoiceId = :invoiceId LIMIT 1")
+    suspend fun getSnapshotByInvoiceId(invoiceId: Long): InvoicePaymentSnapshot?
+
+    @Update
+    suspend fun updateSnapshot(snapshot: InvoicePaymentSnapshot)
+
     @Query("SELECT * FROM invoice_payment_snapshots WHERE businessProfileId = :businessId ORDER BY dueDate ASC")
     fun observeAllSnapshots(businessId: Long): Flow<List<InvoicePaymentSnapshot>>
 

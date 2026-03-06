@@ -21,6 +21,12 @@ interface AnalyticsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertInvoiceSnapshot(snapshot: InvoiceAnalyticsSnapshot)
 
+    @Query("SELECT * FROM invoice_analytics_snapshots WHERE invoiceId = :invoiceId LIMIT 1")
+    suspend fun getInvoiceSnapshot(invoiceId: Long): InvoiceAnalyticsSnapshot?
+
+    @androidx.room.Update
+    suspend fun updateInvoiceSnapshot(snapshot: InvoiceAnalyticsSnapshot)
+
     @Query("SELECT * FROM invoice_analytics_snapshots WHERE businessProfileId = :businessId ORDER BY invoiceDateMs DESC LIMIT 100")
     suspend fun getRecentInvoices(businessId: Long): List<InvoiceAnalyticsSnapshot>
 
@@ -37,6 +43,15 @@ interface AnalyticsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDailyRevenue(snapshot: DailyRevenueSnapshot)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDailySnapshot(snapshot: DailyRevenueSnapshot)
+
+    @Query("SELECT * FROM daily_revenue_snapshots WHERE businessProfileId = :businessId AND dateString = :dateString LIMIT 1")
+    suspend fun getDailySnapshotByDate(businessId: Long, dateString: String): DailyRevenueSnapshot?
+
+    @androidx.room.Update
+    suspend fun updateDailySnapshot(snapshot: DailyRevenueSnapshot)
 
     @Query("SELECT * FROM daily_revenue_snapshots WHERE businessProfileId = :businessId AND dateString >= :startDate ORDER BY dateString DESC")
     suspend fun getDailyRevenueTrend(businessId: Long, startDate: String): List<DailyRevenueSnapshot>
