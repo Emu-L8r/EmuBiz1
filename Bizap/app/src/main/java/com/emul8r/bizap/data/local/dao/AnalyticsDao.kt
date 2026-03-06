@@ -124,6 +124,12 @@ interface AnalyticsDao {
     @Query("DELETE FROM invoice_analytics_snapshots WHERE invoiceId = :invoiceId")
     suspend fun deleteInvoiceSnapshot(invoiceId: Long)
 
+    @Query("DELETE FROM invoice_analytics_snapshots WHERE businessProfileId = :businessId")
+    suspend fun deleteAllInvoiceSnapshots(businessId: Long)
+
+    @Query("DELETE FROM daily_revenue_snapshots WHERE businessProfileId = :businessId")
+    suspend fun deleteAllDailySnapshots(businessId: Long)
+
     /**
      * Find invoice IDs that are missing analytics snapshots.
      * Used for health reporting and recovery.
