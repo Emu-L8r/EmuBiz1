@@ -9,12 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun AddCustomerForm(
     viewModel: CustomerViewModel,
     onCustomerSaved: () -> Unit
 ) {
+    val formState = viewModel.formState.collectAsStateWithLifecycle()
+
     Column(
         modifier = Modifier
             .padding(16.dp)
@@ -24,6 +27,40 @@ fun AddCustomerForm(
         Text("New Customer", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(16.dp))
         
+        // Show validation error messages if any
+        formState.value.validationError?.let { error ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.errorContainer,
+                shape = MaterialTheme.shapes.small
+            ) {
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(12.dp),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Show database/save error messages if any
+        formState.value.error?.let { error ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.errorContainer,
+                shape = MaterialTheme.shapes.small
+            ) {
+                Text(
+                    text = "Error: $error",
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(12.dp),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         // --- Primary Contact ---
         OutlinedTextField(
             value = viewModel.customerName,
@@ -80,13 +117,23 @@ fun AddCustomerForm(
         Button(
             onClick = { viewModel.saveNewCustomer(onSuccess = onCustomerSaved) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = viewModel.customerName.isNotBlank(),
+            enabled = viewModel.customerName.isNotBlank() && !formState.value.isSaving,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
         ) {
-            Text("Create Customer")
+            if (formState.value.isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Saving...")
+            } else {
+                Text("Create Customer")
+            }
         }
     }
 }
