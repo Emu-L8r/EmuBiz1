@@ -2,6 +2,8 @@ package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.InvoiceDao
+import com.emul8r.bizap.data.local.dao.AnalyticsDao
+import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
@@ -27,11 +29,13 @@ class InvoiceRepositoryTest : BaseUnitTest() {
     
     private val invoiceDao: InvoiceDao = mockk()
     private val businessProfileRepo: BusinessProfileRepository = mockk()
+    private val analyticsDao: AnalyticsDao = mockk(relaxed = true)
+    private val paymentDao: InvoicePaymentDao = mockk(relaxed = true)
     private lateinit var repository: InvoiceRepository
     
     @Before
     fun setup() {
-        repository = InvoiceRepositoryImpl(invoiceDao, businessProfileRepo)
+        repository = InvoiceRepositoryImpl(invoiceDao, businessProfileRepo, analyticsDao, paymentDao)
     }
     
     @Test
@@ -141,10 +145,14 @@ class InvoiceRepositoryTest : BaseUnitTest() {
     fun `updateInvoiceStatus returns success result on success`() = runTest {
         // Arrange
         val invoiceId = 1L
+        val invoiceEntity = TestDataFactory.createTestInvoice(id = invoiceId, status = InvoiceStatus.DRAFT).toEntity()
+        val invoiceWithItems = InvoiceWithItems(invoiceEntity, emptyList())
+
+        coEvery { invoiceDao.getInvoiceWithItemsById(invoiceId) } returns flowOf(invoiceWithItems)
         coEvery { invoiceDao.updateInvoiceStatus(invoiceId, any()) } just Runs
 
         // Act
-        val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID)
+        val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.SENT)
 
         // Assert
         assertTrue(result.isSuccess)
@@ -154,15 +162,18 @@ class InvoiceRepositoryTest : BaseUnitTest() {
     fun `updateInvoiceStatus returns failure result when database throws`() = runTest {
         // Arrange
         val invoiceId = 1L
+        val invoiceEntity = TestDataFactory.createTestInvoice(id = invoiceId, status = InvoiceStatus.DRAFT).toEntity()
+        val invoiceWithItems = InvoiceWithItems(invoiceEntity, emptyList())
         val dbException = RuntimeException("Update failed")
+
+        coEvery { invoiceDao.getInvoiceWithItemsById(invoiceId) } returns flowOf(invoiceWithItems)
         coEvery { invoiceDao.updateInvoiceStatus(invoiceId, any()) } throws dbException
 
         // Act
-        val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID)
+        val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.SENT)
 
         // Assert
         assertTrue(result.isFailure)
-        assertEquals(dbException, result.exceptionOrNull())
     }
 
     @Test

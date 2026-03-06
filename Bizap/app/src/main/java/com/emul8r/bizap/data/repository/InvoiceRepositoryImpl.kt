@@ -3,15 +3,20 @@ package com.emul8r.bizap.data.repository
 import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.dao.AnalyticsDao
 import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
+import com.emul8r.bizap.data.local.entities.InvoiceAnalyticsSnapshot
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.mapper.toDomain
 import com.emul8r.bizap.data.mapper.toEntity
+import com.emul8r.bizap.data.monitoring.PerformanceMetrics
+import com.emul8r.bizap.domain.error.BizapException
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.domain.validation.StatusTransitionValidator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
 import java.time.Instant
@@ -29,6 +34,11 @@ class InvoiceRepositoryImpl @Inject constructor(
 
     companion object {
         private const val MILLIS_PER_DAY = 86400000L
+        private const val RETRY_MAX_ATTEMPTS = 3
+        private const val RETRY_INITIAL_DELAY_MS = 100L
+        private const val RETRY_MAX_DELAY_MS = 2000L
+        private const val CONCURRENCY_RETRY_MAX = 5
+        private const val OP_UPDATE_INVOICE_STATUS = "updateInvoiceStatus"
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -152,107 +162,172 @@ class InvoiceRepositoryImpl @Inject constructor(
         return businessProfileRepository.activeProfile
     }
 
-    override suspend fun updateInvoiceStatus(invoiceId: Long, status: InvoiceStatus): Result<Unit> = runCatching {
-        Timber.d("🔄 updateInvoiceStatus: Updating invoice $invoiceId to status ${status.name}")
+    override suspend fun updateInvoiceStatus(invoiceId: Long, status: InvoiceStatus): Result<Unit> {
+        val startTime = System.currentTimeMillis()
 
-        // Fetch the invoice BEFORE updating to determine the delta for snapshot recalculation
-        val oldInvoiceWithItems = invoiceDao.getInvoiceWithItemsById(invoiceId).first()
-
-        // Step 1: Update the invoice record in invoices table
-        invoiceDao.updateInvoiceStatus(invoiceId, status.name)
-
-        if (oldInvoiceWithItems != null) {
-            val invoiceEntity = oldInvoiceWithItems.invoice
-            val oldStatus = runCatching { InvoiceStatus.valueOf(invoiceEntity.status) }.getOrNull()
-            Timber.d("✅ Invoice updated in database (${oldStatus?.name} → ${status.name}), now syncing snapshots")
-
-            // === Update InvoiceAnalyticsSnapshot ===
-            val existingAnalyticsSnapshot = analyticsDao.getInvoiceSnapshot(invoiceId)
-            if (existingAnalyticsSnapshot != null) {
-                val updatedAnalyticsSnapshot = existingAnalyticsSnapshot.copy(
-                    status = status.name,
-                    isPaid = status == InvoiceStatus.PAID,
-                    isOverdue = invoiceEntity.dueDate < System.currentTimeMillis() &&
-                               status != InvoiceStatus.PAID
-                )
-                analyticsDao.updateInvoiceSnapshot(updatedAnalyticsSnapshot)
-                Timber.d("✅ Updated InvoiceAnalyticsSnapshot: $status")
+        return runCatching {
+            // ── Input validation ──────────────────────────────────────────────────
+            require(invoiceId > 0) {
+                "Invalid invoice ID: $invoiceId. ID must be a positive number."
             }
 
-            // === Update DailyRevenueSnapshot ===
+            Timber.d("🔄 updateInvoiceStatus: Updating invoice $invoiceId to status ${status.name}")
+
+            // ── Fetch current invoice (needed for transition validation & deltas) ─
+            val oldInvoiceWithItems = invoiceDao.getInvoiceWithItemsById(invoiceId).first()
+                ?: throw BizapException.NotFoundError(
+                    entityType = "Invoice",
+                    identifier = invoiceId.toString()
+                )
+
+            val invoiceEntity = oldInvoiceWithItems.invoice
+            val currentStatus = runCatching {
+                InvoiceStatus.valueOf(invoiceEntity.status)
+            }.getOrElse {
+                throw BizapException.BusinessLogicError(
+                    rule = "Invoice must have a recognised status",
+                    action = "Read status of invoice $invoiceId",
+                    reason = "Unknown stored status '${invoiceEntity.status}'"
+                )
+            }
+
+            // ── Status-transition validation ─────────────────────────────────────
+            StatusTransitionValidator.validate(invoiceId, currentStatus, status)
+            Timber.d("✅ Status transition validated: $currentStatus → ${status.name}")
+
+            // ── Step 1: Update the invoice record ────────────────────────────────
+            retryOnFailure(operationName = "invoiceDao.updateInvoiceStatus") {
+                invoiceDao.updateInvoiceStatus(invoiceId, status.name)
+            }
+
+            Timber.d("✅ Invoice $invoiceId updated in database ($currentStatus → ${status.name})")
+
+            // ── Step 2: Sync InvoiceAnalyticsSnapshot ────────────────────────────
+            retryOnFailure(operationName = "analyticsDao.updateInvoiceSnapshot") {
+                val existingAnalyticsSnapshot = analyticsDao.getInvoiceSnapshot(invoiceId)
+                if (existingAnalyticsSnapshot != null) {
+                    val updatedAnalyticsSnapshot = existingAnalyticsSnapshot.copy(
+                        status = status.name,
+                        isPaid = status == InvoiceStatus.PAID,
+                        isOverdue = invoiceEntity.dueDate < System.currentTimeMillis() &&
+                                status != InvoiceStatus.PAID
+                    )
+                    analyticsDao.updateInvoiceSnapshot(updatedAnalyticsSnapshot)
+                    Timber.d("✅ Updated InvoiceAnalyticsSnapshot: $status")
+                }
+            }
+
+            // ── Step 3: Sync DailyRevenueSnapshot (with optimistic locking) ──────
             val invoiceDate = LocalDate.ofInstant(
                 Instant.ofEpochMilli(invoiceEntity.date),
                 ZoneId.systemDefault()
             ).toString()
 
-            val existingDailySnapshot = analyticsDao.getDailySnapshotByDate(
-                invoiceEntity.businessProfileId,
-                invoiceDate
+            updateDailySnapshotWithOptimisticLock(
+                businessId = invoiceEntity.businessProfileId,
+                invoiceDate = invoiceDate,
+                invoiceEntity = invoiceEntity,
+                oldStatus = currentStatus,
+                newStatus = status
             )
 
-            if (existingDailySnapshot != null) {
-                // Calculate this invoice's old and new revenue contributions
-                val paidStatuses = listOf(InvoiceStatus.PAID, InvoiceStatus.PARTIALLY_PAID)
-                val oldRevenueContribution = if (oldStatus in paidStatuses) invoiceEntity.amountPaid else 0L
-                val newRevenueContribution = if (status in paidStatuses) invoiceEntity.amountPaid else 0L
-                val delta = newRevenueContribution - oldRevenueContribution
-
-                val newPaidCount = when {
-                    oldStatus != InvoiceStatus.PAID && status == InvoiceStatus.PAID ->
-                        existingDailySnapshot.paidInvoiceCount + 1
-                    oldStatus == InvoiceStatus.PAID && status != InvoiceStatus.PAID ->
-                        (existingDailySnapshot.paidInvoiceCount - 1).coerceAtLeast(0)
-                    else -> existingDailySnapshot.paidInvoiceCount
-                }
-
-                val updatedDailySnapshot = existingDailySnapshot.copy(
-                    totalRevenue = (existingDailySnapshot.totalRevenue + delta).coerceAtLeast(0L),
-                    paidInvoiceCount = newPaidCount
-                )
-                analyticsDao.updateDailySnapshot(updatedDailySnapshot)
-                Timber.d("✅ Updated DailyRevenueSnapshot: delta=$$delta, paidCount=$newPaidCount")
-            }
-
-            // === Update InvoicePaymentSnapshot ===
-            val existingPaymentSnapshot = paymentDao.getSnapshotByInvoiceId(invoiceId)
-            if (existingPaymentSnapshot != null) {
-                val daysOverdue = if (invoiceEntity.dueDate < System.currentTimeMillis()) {
-                    ((System.currentTimeMillis() - invoiceEntity.dueDate) / MILLIS_PER_DAY).toInt()
-                } else {
-                    0
-                }
-
-                val updatedPaymentSnapshot = existingPaymentSnapshot.copy(
-                    paymentStatus = when (status) {
-                        InvoiceStatus.PAID -> "PAID"
-                        InvoiceStatus.PARTIALLY_PAID -> "PARTIALLY_PAID"
-                        InvoiceStatus.SENT -> "UNPAID"
-                        InvoiceStatus.OVERDUE -> "OVERDUE"
-                        InvoiceStatus.DRAFT -> "DRAFT"
-                    },
-                    isAtRisk = invoiceEntity.dueDate < System.currentTimeMillis() &&
-                              status != InvoiceStatus.PAID,
-                    riskScore = when {
-                        daysOverdue <= 0 -> 0.0
-                        daysOverdue <= 30 -> 0.3
-                        daysOverdue <= 60 -> 0.6
-                        daysOverdue <= 90 -> 0.8
-                        else -> 1.0
+            // ── Step 4: Sync InvoicePaymentSnapshot ──────────────────────────────
+            retryOnFailure(operationName = "paymentDao.updateSnapshot") {
+                val existingPaymentSnapshot = paymentDao.getSnapshotByInvoiceId(invoiceId)
+                if (existingPaymentSnapshot != null) {
+                    val daysOverdue = if (invoiceEntity.dueDate < System.currentTimeMillis()) {
+                        ((System.currentTimeMillis() - invoiceEntity.dueDate) / MILLIS_PER_DAY).toInt()
+                    } else {
+                        0
                     }
-                )
-                paymentDao.updateSnapshot(updatedPaymentSnapshot)
-                Timber.d("✅ Updated InvoicePaymentSnapshot: $status")
+
+                    val updatedPaymentSnapshot = existingPaymentSnapshot.copy(
+                        paymentStatus = when (status) {
+                            InvoiceStatus.PAID -> "PAID"
+                            InvoiceStatus.PARTIALLY_PAID -> "PARTIALLY_PAID"
+                            InvoiceStatus.SENT -> "UNPAID"
+                            InvoiceStatus.OVERDUE -> "OVERDUE"
+                            InvoiceStatus.DRAFT -> "DRAFT"
+                        },
+                        isAtRisk = invoiceEntity.dueDate < System.currentTimeMillis() &&
+                                status != InvoiceStatus.PAID,
+                        riskScore = when {
+                            daysOverdue <= 0 -> 0.0
+                            daysOverdue <= 30 -> 0.3
+                            daysOverdue <= 60 -> 0.6
+                            daysOverdue <= 90 -> 0.8
+                            else -> 1.0
+                        }
+                    )
+                    paymentDao.updateSnapshot(updatedPaymentSnapshot)
+                    Timber.d("✅ Updated InvoicePaymentSnapshot: $status")
+                }
             }
-        } else {
-            Timber.w("⚠️ Could not find invoice $invoiceId before status update")
-        }
 
-        Timber.d("✅ updateInvoiceStatus completed successfully")
+            // ── Step 5: Verify snapshot consistency ───────────────────────────────
+            verifySnapshotConsistency(invoiceId)
 
-    }.also { result ->
-        result.onFailure { e ->
-            Timber.e(e, "❌ Failed to update invoice status: ${e.message}")
+            Timber.i("✅ updateInvoiceStatus completed: Invoice $invoiceId → ${status.name}")
+        }.also { result ->
+            val duration = System.currentTimeMillis() - startTime
+            result.onSuccess {
+                PerformanceMetrics.recordSuccess(OP_UPDATE_INVOICE_STATUS, duration)
+                Timber.d("⏱ $OP_UPDATE_INVOICE_STATUS completed in ${duration}ms")
+            }.onFailure { e ->
+                PerformanceMetrics.recordFailure(OP_UPDATE_INVOICE_STATUS, duration, e)
+                Timber.e(e, "❌ $OP_UPDATE_INVOICE_STATUS failed after ${duration}ms: ${e.message}")
+            }
         }
+    }
+
+    /**
+     * Updates [DailyRevenueSnapshot] using optimistic locking to guard against concurrent writes.
+     *
+     * On version conflict the snapshot is re-read and the update is retried up to
+     * [CONCURRENCY_RETRY_MAX] times before giving up with a warning log.
+     */
+    private suspend fun updateDailySnapshotWithOptimisticLock(
+        businessId: Long,
+        invoiceDate: String,
+        invoiceEntity: com.emul8r.bizap.data.local.entities.InvoiceEntity,
+        oldStatus: InvoiceStatus,
+        newStatus: InvoiceStatus
+    ) {
+        val paidStatuses = listOf(InvoiceStatus.PAID, InvoiceStatus.PARTIALLY_PAID)
+        var attempt = 0
+        while (attempt < CONCURRENCY_RETRY_MAX) {
+            val existingDailySnapshot = analyticsDao.getDailySnapshotByDate(businessId, invoiceDate)
+                ?: return // No snapshot to update
+
+            val oldRevenueContribution = if (oldStatus in paidStatuses) invoiceEntity.amountPaid else 0L
+            val newRevenueContribution = if (newStatus in paidStatuses) invoiceEntity.amountPaid else 0L
+            val delta = newRevenueContribution - oldRevenueContribution
+
+            val newPaidCount = when {
+                oldStatus != InvoiceStatus.PAID && newStatus == InvoiceStatus.PAID ->
+                    existingDailySnapshot.paidInvoiceCount + 1
+                oldStatus == InvoiceStatus.PAID && newStatus != InvoiceStatus.PAID ->
+                    (existingDailySnapshot.paidInvoiceCount - 1).coerceAtLeast(0)
+                else -> existingDailySnapshot.paidInvoiceCount
+            }
+
+            val rowsUpdated = analyticsDao.updateSnapshotWithVersion(
+                id = existingDailySnapshot.id,
+                totalRevenue = (existingDailySnapshot.totalRevenue + delta).coerceAtLeast(0L),
+                paidInvoiceCount = newPaidCount,
+                expectedVersion = existingDailySnapshot.version,
+                updatedAtMs = System.currentTimeMillis()
+            )
+
+            if (rowsUpdated > 0) {
+                Timber.d("✅ Updated DailyRevenueSnapshot: delta=$delta, paidCount=$newPaidCount (attempt ${attempt + 1})")
+                return
+            }
+
+            attempt++
+            Timber.w("⚠️ DailyRevenueSnapshot version conflict – retrying ($attempt/$CONCURRENCY_RETRY_MAX)")
+        }
+        Timber.w("⚠️ Could not update DailyRevenueSnapshot after $CONCURRENCY_RETRY_MAX attempts (concurrent update conflict)")
     }
 
     override suspend fun updatePdfPath(invoiceId: Long, pdfPath: String): Result<Unit> = runCatching {
@@ -311,6 +386,115 @@ class InvoiceRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Timber.e(e, "Failed to update payment snapshots")
+        }
+    }
+
+    // ==================== RESILIENCE HELPERS ====================
+
+    /**
+     * Executes [operation] with simple exponential-backoff retry.
+     *
+     * Only retries on generic [Exception]s.  [BizapException.BusinessLogicError] and
+     * [BizapException.ValidationError] (and [IllegalArgumentException] / [IllegalStateException])
+     * are considered non-retryable and re-thrown immediately.
+     */
+    private suspend fun <T> retryOnFailure(
+        operationName: String = "operation",
+        maxRetries: Int = RETRY_MAX_ATTEMPTS,
+        initialDelayMs: Long = RETRY_INITIAL_DELAY_MS,
+        maxDelayMs: Long = RETRY_MAX_DELAY_MS,
+        operation: suspend () -> T
+    ): T {
+        var currentDelay = initialDelayMs
+        var lastException: Exception? = null
+
+        repeat(maxRetries) { attempt ->
+            try {
+                return operation()
+            } catch (e: Exception) {
+                if (!isRetryable(e)) throw e
+                lastException = e
+                if (attempt < maxRetries - 1) {
+                    Timber.w(e, "⚠️ $operationName attempt ${attempt + 1} failed, retrying in ${currentDelay}ms")
+                    delay(currentDelay)
+                    currentDelay = (currentDelay * 2).coerceAtMost(maxDelayMs)
+                }
+            }
+        }
+
+        throw lastException ?: Exception("$operationName failed after $maxRetries attempts")
+    }
+
+    private fun isRetryable(e: Exception): Boolean = when (e) {
+        is IllegalArgumentException,
+        is IllegalStateException,
+        is BizapException.BusinessLogicError,
+        is BizapException.ValidationError,
+        is BizapException.NotFoundError -> false
+        else -> true
+    }
+
+    // ==================== SNAPSHOT CONSISTENCY ====================
+
+    /**
+     * Verifies that the persisted [InvoiceAnalyticsSnapshot] matches the invoice's current status.
+     * Logs a warning and triggers [regenerateAnalyticsSnapshot] if drift is detected.
+     */
+    private suspend fun verifySnapshotConsistency(invoiceId: Long) {
+        try {
+            val invoiceWithItems = invoiceDao.getInvoiceWithItemsById(invoiceId).first() ?: return
+
+            val analyticsSnapshot = analyticsDao.getInvoiceSnapshot(invoiceId) ?: run {
+                Timber.w("⚠️ Missing analytics snapshot for invoice $invoiceId – regenerating")
+                regenerateAnalyticsSnapshot(invoiceWithItems)
+                return
+            }
+
+            if (analyticsSnapshot.status != invoiceWithItems.invoice.status) {
+                Timber.e(
+                    "🔴 SNAPSHOT DRIFT DETECTED: Invoice $invoiceId – " +
+                        "invoice.status=${invoiceWithItems.invoice.status}, " +
+                        "snapshot.status=${analyticsSnapshot.status}"
+                )
+                regenerateAnalyticsSnapshot(invoiceWithItems)
+            }
+        } catch (e: Exception) {
+            Timber.w(e, "⚠️ Snapshot consistency check failed for invoice $invoiceId (non-blocking)")
+        }
+    }
+
+    /**
+     * Rebuilds [InvoiceAnalyticsSnapshot] from the source-of-truth invoice record.
+     */
+    private suspend fun regenerateAnalyticsSnapshot(invoiceWithItems: InvoiceWithItems) {
+        try {
+            val invoice = invoiceWithItems.invoice
+            val invoiceNumber = "INV-${invoice.invoiceYear}-${invoice.invoiceSequence.toString().padStart(6, '0')}" +
+                    if (invoice.version > 1) "-v${invoice.version}" else ""
+            val snapshot = InvoiceAnalyticsSnapshot(
+                invoiceId = invoice.id,
+                businessProfileId = invoice.businessProfileId,
+                customerId = invoice.customerId ?: 0L,
+                customerName = invoice.customerName,
+                invoiceNumber = invoiceNumber,
+                currencyCode = invoice.currencyCode,
+                subtotal = invoiceWithItems.subtotal,
+                taxAmount = invoice.taxAmount,
+                totalAmount = invoice.totalAmount,
+                status = invoice.status,
+                isPaid = invoice.status == InvoiceStatus.PAID.name,
+                isOverdue = invoice.dueDate < System.currentTimeMillis() &&
+                        invoice.status != InvoiceStatus.PAID.name,
+                invoiceDateMs = invoice.date,
+                createdAtMs = invoice.date,
+                paidAtMs = if (invoice.status == InvoiceStatus.PAID.name) System.currentTimeMillis() else null,
+                lineItemCount = invoiceWithItems.items.size,
+                snapshotCreatedAtMs = System.currentTimeMillis()
+            )
+            analyticsDao.upsertInvoiceSnapshot(snapshot)
+            Timber.i("✅ Regenerated analytics snapshot for invoice ${invoice.id}")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to regenerate analytics snapshot for invoice ${invoiceWithItems.invoice.id}")
         }
     }
 }
