@@ -11,8 +11,8 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.ShowChart
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
@@ -43,7 +43,7 @@ fun SettingsHubScreen(onNavigate: (Screen) -> Unit) {
             onClick = { onNavigate(Screen.PrefilledItems) }
         )
         SettingsItem(
-            icon = Icons.Default.ShowChart,
+            icon = Icons.AutoMirrored.Filled.ShowChart,
             title = "Risk Dashboard",
             subtitle = "View customer risk and outstanding invoice analytics",
             onClick = { onNavigate(Screen.RiskDashboard) }
@@ -55,7 +55,7 @@ fun SettingsHubScreen(onNavigate: (Screen) -> Unit) {
             onClick = { onNavigate(Screen.PaymentAnalytics) }
         )
         SettingsItem(
-            icon = Icons.AutoMirrored.Default.TrendingUp,
+            icon = Icons.AutoMirrored.Filled.TrendingUp,
             title = "Revenue Dashboard",
             subtitle = "View revenue metrics and business performance",
             onClick = { onNavigate(Screen.RevenueDashboard) }
