@@ -8,6 +8,9 @@ import com.emul8r.bizap.domain.revenue.model.RevenueByCurrency
 import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import timber.log.Timber
@@ -18,6 +21,30 @@ import javax.inject.Inject
 class RevenueRepositoryImpl @Inject constructor(
     private val analyticsDao: AnalyticsDao
 ) : RevenueRepository {
+
+    override fun observeRevenueMetrics(businessProfileId: Long): Flow<RevenueMetrics> {
+        return analyticsDao.observeLast30DaysRevenue(businessProfileId)
+            .map { snapshots ->
+                Timber.d("RevenueRepository: Reactive update with ${snapshots.size} snapshots for business $businessProfileId")
+                if (snapshots.isEmpty()) {
+                    RevenueMetrics(
+                        mtdRevenue = 0L,
+                        ytdRevenue = 0L,
+                        weeklyRevenue = 0L,
+                        dailyTrend = emptyList(),
+                        topPerformers = emptyList()
+                    )
+                } else {
+                    RevenueMetrics(
+                        mtdRevenue = calculateMTD(snapshots),
+                        ytdRevenue = calculateYTD(snapshots),
+                        weeklyRevenue = calculateWeekly(snapshots),
+                        dailyTrend = transformToDailyData(snapshots),
+                        topPerformers = calculateByCurrency(snapshots)
+                    )
+                }
+            }
+    }
 
     override suspend fun getRevenueMetrics(businessProfileId: Long): RevenueMetrics {
         return withContext(Dispatchers.IO) {

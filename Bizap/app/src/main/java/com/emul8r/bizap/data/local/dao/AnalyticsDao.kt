@@ -44,6 +44,9 @@ interface AnalyticsDao {
     @Query("SELECT * FROM daily_revenue_snapshots WHERE businessProfileId = :businessId ORDER BY dateString DESC LIMIT 30")
     suspend fun getLast30DaysRevenue(businessId: Long): List<DailyRevenueSnapshot>
 
+    @Query("SELECT * FROM daily_revenue_snapshots WHERE businessProfileId = :businessId ORDER BY dateString DESC LIMIT 30")
+    fun observeLast30DaysRevenue(businessId: Long): Flow<List<DailyRevenueSnapshot>>
+
     // ==================== CUSTOMER ANALYTICS ====================
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

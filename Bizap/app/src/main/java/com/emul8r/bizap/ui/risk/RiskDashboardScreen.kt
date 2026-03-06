@@ -5,11 +5,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,11 +28,6 @@ fun RiskDashboardScreen(
     onBackClick: () -> Unit
 ) {
     val uiState = viewModel.uiState.collectAsState().value
-
-    // ✅ FIX: Refresh risk invoices when screen comes into view
-    LaunchedEffect(Unit) {
-        viewModel.refreshRiskInvoices()
-    }
 
     Scaffold(
         topBar = {}  // MainActivity provides the header

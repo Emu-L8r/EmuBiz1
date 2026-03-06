@@ -1,5 +1,6 @@
 package com.emul8r.bizap.ui.invoices
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.DocumentManager
@@ -49,11 +50,35 @@ class InvoiceDetailViewModel @Inject constructor(
     private val businessProfileRepository: BusinessProfileRepository,
     private val printService: PrintService,
     private val documentManager: DocumentManager,
-    private val generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase
+    private val generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<InvoiceDetailUiState>(InvoiceDetailUiState.Loading)
-    val uiState = _uiState.asStateFlow()
+    private val _currentInvoiceId = MutableStateFlow<Long>(checkNotNull(savedStateHandle["invoiceId"]))
+
+    val uiState: StateFlow<InvoiceDetailUiState> = _currentInvoiceId
+        .flatMapLatest { id ->
+            invoiceRepo.getInvoiceWithItemsById(id)
+                .flatMapLatest { invoice ->
+                    if (invoice == null) {
+                        flowOf(InvoiceDetailUiState.Error("Invoice not found"))
+                    } else {
+                        invoiceRepo.getInvoiceGroupWithVersions(invoice.invoiceYear, invoice.invoiceSequence)
+                            .map { versions ->
+                                InvoiceDetailUiState.Success(invoice, versions)
+                            }
+                    }
+                }
+        }
+        .catch { e ->
+            Timber.e(e, "Failed to load invoice")
+            emit(InvoiceDetailUiState.Error(e.message ?: "Unknown error"))
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = InvoiceDetailUiState.Loading
+        )
 
     private val _exportEvent = MutableSharedFlow<File>()
     val exportEvent = _exportEvent.asSharedFlow()
@@ -74,24 +99,7 @@ class InvoiceDetailViewModel @Inject constructor(
     )
 
     fun loadInvoice(id: Long) {
-        viewModelScope.launch {
-            _uiState.value = InvoiceDetailUiState.Loading
-            invoiceRepo.getInvoiceWithItemsById(id)
-                .flatMapLatest { invoice ->
-                    if (invoice == null) {
-                        flowOf(InvoiceDetailUiState.Error("Invoice not found"))
-                    } else {
-                        // PHASE 3A: Load all versions in this numbering group
-                        invoiceRepo.getInvoiceGroupWithVersions(invoice.invoiceYear, invoice.invoiceSequence)
-                            .map { versions ->
-                                InvoiceDetailUiState.Success(invoice, versions)
-                            }
-                    }
-                }
-                .onEach { _uiState.value = it }
-                .catch { e -> _uiState.value = InvoiceDetailUiState.Error(e.message ?: "Unknown error") }
-                .launchIn(this)
-        }
+        _currentInvoiceId.value = id
     }
 
     /**
@@ -142,8 +150,6 @@ class InvoiceDetailViewModel @Inject constructor(
                 invoiceRepo.updateInvoiceStatus(invoiceId, status)
                     .onSuccess {
                         Timber.d("✅ Invoice status updated to $newStatus")
-                        // Reload invoice to show updated status
-                        loadInvoice(invoiceId)
                         _uiEvent.emit(UiEvent.ShowSnackbar("Status updated to $newStatus"))
                     }
                     .onFailure { e ->
