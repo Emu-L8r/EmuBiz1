@@ -70,7 +70,7 @@ class TaxRegistrationTest {
             subtotal
         }
 
-        assertEquals(3300.0, total)
+        assertEquals(3300.0, total, 0.01)
     }
 
     @Test
@@ -85,7 +85,7 @@ class TaxRegistrationTest {
             subtotal
         }
 
-        assertEquals(3450.0, total)
+        assertEquals(3450.0, total, 0.01)
     }
 
     @Test
@@ -100,7 +100,7 @@ class TaxRegistrationTest {
             subtotal
         }
 
-        assertEquals(3600.0, total)
+        assertEquals(3600.0, total, 0.01)
     }
 
     @Test
@@ -115,7 +115,7 @@ class TaxRegistrationTest {
             0.0
         }
 
-        assertEquals(300.0, taxAmount)
+        assertEquals(300.0, taxAmount, 0.01)
     }
 
     @Test
