@@ -30,8 +30,11 @@ val MIGRATION_24_25 = object : Migration(24, 25) {
         )
 
         // ── Customers ────────────────────────────────────────────────────────────
-        // Unique index on email — existing duplicate emails (if any) will be dropped
-        // during the migration. In practice the app validates uniqueness in the UI.
+        // Unique index on email.
+        // IMPORTANT: This will throw an exception if duplicate email values exist in the
+        // customers table. The app UI validates uniqueness before inserting, so duplicates
+        // should not exist in production data. If a migration failure is observed here,
+        // duplicate rows must be resolved manually before upgrading.
         database.execSQL(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_email_unique ON customers(email)"
         )

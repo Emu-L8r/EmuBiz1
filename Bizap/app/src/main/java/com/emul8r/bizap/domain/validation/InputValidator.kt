@@ -61,10 +61,6 @@ object InputValidator {
             ValidationResult.Success(null)
         !phone.matches(PHONE_REGEX) ->
             ValidationResult.Failure("Invalid phone number format")
-        phone.length < 7 ->
-            ValidationResult.Failure("Phone number is too short")
-        phone.length > 20 ->
-            ValidationResult.Failure("Phone number is too long")
         else -> ValidationResult.Success(phone)
     }
 

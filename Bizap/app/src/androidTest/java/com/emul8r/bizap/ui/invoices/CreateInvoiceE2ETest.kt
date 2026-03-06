@@ -1,11 +1,8 @@
 package com.emul8r.bizap.ui.invoices
 
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit4.runners.AndroidJUnit4
 import com.emul8r.bizap.ui.BaseE2ETest
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 

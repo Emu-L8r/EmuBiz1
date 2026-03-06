@@ -1,7 +1,6 @@
 package com.emul8r.bizap.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -49,6 +48,4 @@ open class BaseE2ETest {
     protected fun verifyTextNotDisplayed(text: String) {
         composeRule.onNodeWithText(text).assertDoesNotExist()
     }
-
-    protected fun node(text: String): SemanticsNodeInteractionsProvider = composeRule
 }
