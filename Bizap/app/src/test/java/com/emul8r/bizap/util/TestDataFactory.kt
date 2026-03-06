@@ -45,7 +45,8 @@ object TestDataFactory {
         customerId: Long = 1,
         currencyCode: String = "AUD",
         total: Long = 100000L,  // $1000 in cents
-        isQuote: Boolean = false
+        isQuote: Boolean = false,
+        status: InvoiceStatus = InvoiceStatus.DRAFT
     ): Invoice {
         return Invoice(
             id = id,
@@ -56,7 +57,7 @@ object TestDataFactory {
             dueDate = System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000),
             totalAmount = total,
             currencyCode = currencyCode,
-            status = InvoiceStatus.DRAFT,
+            status = status,
             items = emptyList(),
             isQuote = isQuote
         )
