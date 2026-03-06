@@ -1,6 +1,7 @@
 package com.emul8r.bizap.ui.revenue
 
 import com.emul8r.bizap.BaseUnitTest
+import com.emul8r.bizap.data.repository.SnapshotRebuildService
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
 import com.emul8r.bizap.domain.revenue.usecase.GetRevenueMetricsUseCase
@@ -18,6 +19,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
 
     private val useCase: GetRevenueMetricsUseCase = mockk()
     private val businessProfileRepository = mockk<com.emul8r.bizap.domain.repository.BusinessProfileRepository>()
+    private val snapshotRebuildService: SnapshotRebuildService = mockk(relaxed = true)
     private lateinit var viewModel: RevenueDashboardViewModel
 
     @Before
@@ -48,7 +50,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
         every { useCase(any()) } returns flowOf(mockMetrics)
 
         // Act
-        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository)
+        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository, snapshotRebuildService)
         advanceUntilIdle() // Wait for StateFlow to emit
         val state = viewModel.uiState.value
 
@@ -62,7 +64,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
         every { useCase(any()) } returns flow { throw Exception("Network Error") }
 
         // Act
-        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository)
+        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository, snapshotRebuildService)
         advanceUntilIdle() // Wait for StateFlow to emit
         val state = viewModel.uiState.value
 

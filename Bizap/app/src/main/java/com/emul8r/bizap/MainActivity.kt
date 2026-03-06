@@ -126,6 +126,7 @@ fun MainScreen() {
                 currentDestination?.hasRoute<Screen.CreateTemplate>() == true -> "Create Template"
                 currentDestination?.hasRoute<Screen.EditTemplate>() == true -> "Edit Template"
                 currentDestination?.hasRoute<Screen.CustomerSegments>() == true -> "Customer Segments"
+                currentDestination?.hasRoute<Screen.CustomerAnalytics>() == true -> "Customer Analytics"
                 else -> "Bizap"
             }
 
@@ -195,13 +196,17 @@ fun MainScreen() {
                     onCustomerClick = { customerId ->
                         navController.navigate(Screen.CustomerDetail(customerId))
                     },
-                    onViewSegments = { navController.navigate(Screen.CustomerSegments) }
+                    onViewSegments = { navController.navigate(Screen.CustomerSegments) },
+                    onViewAnalytics = { navController.navigate(Screen.CustomerAnalytics) }
                 )
             }
             composable<Screen.Invoices> {
-                InvoiceListScreen(onInvoiceClick = { invoiceId ->
-                    navController.navigate(Screen.InvoiceDetail(invoiceId))
-                })
+                InvoiceListScreen(
+                    onInvoiceClick = { invoiceId ->
+                        navController.navigate(Screen.InvoiceDetail(invoiceId))
+                    },
+                    onViewAnalytics = { navController.navigate(Screen.RevenueDashboard) }
+                )
             }
             composable<Screen.DocumentVault> { DocumentVaultScreen() }
             composable<Screen.SettingsHub> { SettingsHubScreen(onNavigate = { screen -> navController.navigate(screen) }) }
@@ -217,7 +222,9 @@ fun MainScreen() {
                 val detail: Screen.InvoiceDetail = backStackEntry.toRoute()
                 InvoiceDetailScreen(
                     invoiceId = detail.invoiceId,
-                    onEdit = { navController.navigate(Screen.EditInvoice(detail.invoiceId)) }
+                    onEdit = { navController.navigate(Screen.EditInvoice(detail.invoiceId)) },
+                    onNavigateToRevenue = { navController.navigate(Screen.RevenueDashboard) },
+                    onNavigateToPayments = { navController.navigate(Screen.PaymentAnalytics) }
                 )
             }
             composable<Screen.CustomerDetail> { backStackEntry ->
@@ -258,6 +265,11 @@ fun MainScreen() {
                 )
             }
             composable<Screen.CustomerSegments> {
+                CustomerSegmentationScreen()
+            }
+            // CustomerAnalytics routes to the same segmentation screen as it
+            // is the primary customer analytics view in the app.
+            composable<Screen.CustomerAnalytics> {
                 CustomerSegmentationScreen()
             }
         }

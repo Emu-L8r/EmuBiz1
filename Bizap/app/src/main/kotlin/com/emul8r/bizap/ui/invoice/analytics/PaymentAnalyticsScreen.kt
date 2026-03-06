@@ -9,10 +9,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,24 +36,93 @@ fun PaymentAnalyticsScreen(
     viewModel: PaymentAnalyticsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Box(
+    LaunchedEffect(Unit) {
+        viewModel.snackbarMessage.collect { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(padding)
+        ) {
+            when (state) {
+                is PaymentAnalyticsUiState.Loading -> {
+                    PaymentAnalyticsLoadingScreen()
+                }
+                is PaymentAnalyticsUiState.Success -> {
+                    val analytics = (state as PaymentAnalyticsUiState.Success).analytics
+                    Column {
+                        PaymentAnalyticsDashboardActions(
+                            isRefreshing = isRefreshing,
+                            onRefresh = { viewModel.forceRefresh() },
+                            onRebuild = { viewModel.rebuildSnapshots() }
+                        )
+                        PaymentAnalyticsContent(analytics)
+                    }
+                }
+                is PaymentAnalyticsUiState.Error -> {
+                    val message = (state as PaymentAnalyticsUiState.Error).message
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        PaymentAnalyticsErrorScreen(message) {}
+                        Spacer(Modifier.height(16.dp))
+                        PaymentAnalyticsDashboardActions(
+                            isRefreshing = isRefreshing,
+                            onRefresh = { viewModel.forceRefresh() },
+                            onRebuild = { viewModel.rebuildSnapshots() }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PaymentAnalyticsDashboardActions(
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    onRebuild: () -> Unit
+) {
+    Row(
         modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        when (state) {
-            is PaymentAnalyticsUiState.Loading -> {
-                PaymentAnalyticsLoadingScreen()
+        OutlinedButton(
+            onClick = onRefresh,
+            enabled = !isRefreshing,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+            Spacer(Modifier.width(4.dp))
+            Text("Refresh")
+        }
+        OutlinedButton(
+            onClick = onRebuild,
+            enabled = !isRefreshing,
+            modifier = Modifier.weight(1f)
+        ) {
+            if (isRefreshing) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+            } else {
+                Icon(Icons.Default.Build, contentDescription = "Rebuild Data")
             }
-            is PaymentAnalyticsUiState.Success -> {
-                val analytics = (state as PaymentAnalyticsUiState.Success).analytics
-                PaymentAnalyticsContent(analytics)
-            }
-            is PaymentAnalyticsUiState.Error -> {
-                val message = (state as PaymentAnalyticsUiState.Error).message
-                PaymentAnalyticsErrorScreen(message) {}
-            }
+            Spacer(Modifier.width(4.dp))
+            Text("Rebuild Data")
         }
     }
 }

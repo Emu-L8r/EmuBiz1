@@ -31,11 +31,12 @@ class InvoiceRepositoryTest : BaseUnitTest() {
     private val businessProfileRepo: BusinessProfileRepository = mockk()
     private val analyticsDao: AnalyticsDao = mockk(relaxed = true)
     private val paymentDao: InvoicePaymentDao = mockk(relaxed = true)
+    private val snapshotSyncHelper: SnapshotSyncHelper = mockk(relaxed = true)
     private lateinit var repository: InvoiceRepository
     
     @Before
     fun setup() {
-        repository = InvoiceRepositoryImpl(invoiceDao, businessProfileRepo, analyticsDao, paymentDao)
+        repository = InvoiceRepositoryImpl(invoiceDao, businessProfileRepo, analyticsDao, paymentDao, snapshotSyncHelper)
     }
     
     @Test
