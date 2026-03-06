@@ -12,6 +12,20 @@ import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.local.entities.LineItemEntity
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Data class for calculated payment metrics.
+ * Represents metrics calculated directly from invoices table (single source of truth).
+ */
+data class CalculatedMetrics(
+    val totalInvoices: Int,
+    val paidInvoices: Int,
+    val unpaidInvoices: Int,
+    val totalAmount: Long,
+    val paidAmount: Long,
+    val totalOutstanding: Long,
+    val collectionRate: Double
+)
+
 @Dao
 interface InvoiceDao {
     @Transaction
@@ -92,4 +106,28 @@ interface InvoiceDao {
      */
     @Query("SELECT COUNT(DISTINCT customerId) FROM invoices")
     suspend fun countDistinctCustomers(): Int
+
+    // ==================== VALIDATION TEST QUERY ====================
+
+    /**
+     * Calculate payment metrics directly from invoices table.
+     * Used to compare against snapshot-based calculations.
+     * This helps validate whether snapshots are stale or accurate.
+     */
+    @Query("""
+        SELECT 
+            COUNT(*) as totalInvoices,
+            SUM(CASE WHEN status = 'PAID' THEN 1 ELSE 0 END) as paidInvoices,
+            SUM(CASE WHEN status != 'PAID' THEN 1 ELSE 0 END) as unpaidInvoices,
+            SUM(totalAmount) as totalAmount,
+            SUM(amountPaid) as paidAmount,
+            SUM(totalAmount - amountPaid) as totalOutstanding,
+            CASE 
+                WHEN SUM(totalAmount) > 0 THEN ROUND((SUM(amountPaid) / CAST(SUM(totalAmount) AS REAL)) * 100.0, 1)
+                ELSE 0.0
+            END as collectionRate
+        FROM invoices
+        WHERE businessProfileId = :businessId
+    """)
+    suspend fun calculatePaymentMetrics(businessId: Long): CalculatedMetrics?
 }
