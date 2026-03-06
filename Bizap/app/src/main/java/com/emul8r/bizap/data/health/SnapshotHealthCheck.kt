@@ -44,11 +44,24 @@ class SnapshotHealthCheck @Inject constructor(
             val customerHealth = checkCustomerSnapshots()
 
             // Aggregate results
-            val isHealthy = invoiceHealth.isHealthy && paymentHealth.isHealthy && customerHealth.isHealthy
+            val invoiceHealthy = when (invoiceHealth) {
+                is SnapshotTypeHealth.Healthy -> true
+                else -> false
+            }
+            val paymentHealthy = when (paymentHealth) {
+                is SnapshotTypeHealth.Healthy -> true
+                else -> false
+            }
+            val customerHealthy = when (customerHealth) {
+                is SnapshotTypeHealth.Healthy -> true
+                else -> false
+            }
+
+            val isHealthy = invoiceHealthy && paymentHealthy && customerHealthy
             val allIssues = listOfNotNull(
-                if (!invoiceHealth.isHealthy) invoiceHealth.issue else null,
-                if (!paymentHealth.isHealthy) paymentHealth.issue else null,
-                if (!customerHealth.isHealthy) customerHealth.issue else null
+                if (!invoiceHealthy) (invoiceHealth as? SnapshotTypeHealth.Unhealthy)?.issue else null,
+                if (!paymentHealthy) (paymentHealth as? SnapshotTypeHealth.Unhealthy)?.issue else null,
+                if (!customerHealthy) (customerHealth as? SnapshotTypeHealth.Unhealthy)?.issue else null
             )
 
             val report = SnapshotHealthReport(
