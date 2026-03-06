@@ -28,7 +28,7 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         InvoiceTemplate::class,
         InvoiceCustomField::class
     ],
-    version = 27,
+    version = 28,
     exportSchema = true
 )
 @TypeConverters(DocumentStatusConverter::class)

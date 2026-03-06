@@ -126,6 +126,11 @@ class CustomerAnalyticsRepositoryImpl @Inject constructor(
         Timber.d("✅ Created initial analytics snapshot for customer $customerId with NEW segment")
     }
 
+    override suspend fun deleteCustomerSnapshot(customerId: Long): Result<Unit> = runCatching {
+        analyticsDao.deleteCustomerSnapshot(customerId)
+        Timber.d("✅ Deleted customer analytics snapshot for customer $customerId")
+    }
+
     // --- Internal Mappers ---
 
     private fun CustomerAnalyticsSnapshot.toLtvModel() = CustomerLifetimeValue(

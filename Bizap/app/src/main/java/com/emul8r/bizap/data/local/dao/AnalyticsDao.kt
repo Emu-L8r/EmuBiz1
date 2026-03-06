@@ -111,5 +111,35 @@ interface AnalyticsDao {
 
     @Query("SELECT * FROM business_health_metrics WHERE businessProfileId = :businessId")
     fun observeBusinessHealth(businessId: Long): Flow<BusinessHealthMetrics?>
-}
 
+    // ==================== HEALTH CHECK QUERIES ====================
+
+    /**
+     * Count total invoice analytics snapshots.
+     * Used to verify snapshot coverage.
+     */
+    @Query("SELECT COUNT(*) FROM invoice_analytics_snapshots")
+    suspend fun countInvoiceSnapshots(): Int
+
+    /**
+     * Find invoice IDs that are missing analytics snapshots.
+     * Used for health reporting and recovery.
+     */
+    @Query("""
+        SELECT DISTINCT i.id FROM invoices i
+        LEFT JOIN invoice_analytics_snapshots ias ON i.id = ias.invoiceId
+        WHERE ias.invoiceId IS NULL
+    """)
+    suspend fun getMissingInvoiceSnapshots(): List<Long>
+
+    /**
+     * Find orphaned invoice analytics snapshots (snapshots without invoices).
+     * Used for cleanup operations.
+     */
+    @Query("""
+        SELECT DISTINCT ias.invoiceId FROM invoice_analytics_snapshots ias
+        LEFT JOIN invoices i ON ias.invoiceId = i.id
+        WHERE i.id IS NULL
+    """)
+    suspend fun getOrphanedInvoiceSnapshots(): List<Long>
+}

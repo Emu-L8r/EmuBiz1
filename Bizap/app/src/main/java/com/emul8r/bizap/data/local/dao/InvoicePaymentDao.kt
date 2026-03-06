@@ -71,6 +71,37 @@ interface InvoicePaymentDao {
     @Query("SELECT * FROM daily_payment_snapshots WHERE businessProfileId = :businessId ORDER BY snapshotDate DESC LIMIT :days")
     suspend fun getDailySnapshots(businessId: Long, days: Int = 30): List<DailyPaymentSnapshot>
 
+    // ==================== HEALTH CHECK QUERIES ====================
+
+    /**
+     * Count total payment snapshots.
+     * Used to verify snapshot coverage.
+     */
+    @Query("SELECT COUNT(*) FROM invoice_payment_snapshots")
+    suspend fun countSnapshots(): Int
+
+    /**
+     * Find invoice IDs missing payment snapshots.
+     * Used for health reporting and recovery.
+     */
+    @Query("""
+        SELECT DISTINCT i.id FROM invoices i
+        LEFT JOIN invoice_payment_snapshots ips ON i.id = ips.invoiceId
+        WHERE ips.invoiceId IS NULL
+    """)
+    suspend fun getMissingSnapshots(): List<Long>
+
+    /**
+     * Find orphaned payment snapshots (snapshots without invoices).
+     * Used for cleanup operations.
+     */
+    @Query("""
+        SELECT DISTINCT ips.invoiceId FROM invoice_payment_snapshots ips
+        LEFT JOIN invoices i ON ips.invoiceId = i.id
+        WHERE i.id IS NULL
+    """)
+    suspend fun getOrphanedSnapshots(): List<Long>
+
     data class OutstandingByAgingRow(
         val current: Double,
         val past30: Double,

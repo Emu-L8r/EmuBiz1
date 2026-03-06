@@ -15,6 +15,7 @@ import com.emul8r.bizap.data.local.migrations.MIGRATION_23_24
 import com.emul8r.bizap.data.local.migrations.MIGRATION_24_25
 import com.emul8r.bizap.data.local.migrations.MIGRATION_25_26
 import com.emul8r.bizap.data.local.migrations.MIGRATION_26_27
+import com.emul8r.bizap.data.local.migrations.MIGRATION_27_28
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,7 +37,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "bizap-db"
         )
-        .addMigrations(MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27)
+        .addMigrations(MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28)
         .build()
     }
 

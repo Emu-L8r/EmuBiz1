@@ -21,4 +21,10 @@ interface CustomerAnalyticsRepository {
         customerName: String,
         customerEmail: String?
     ): Result<Unit>
+
+    /**
+     * Deletes analytics snapshot for a customer.
+     * Called when customer is deleted to clean up orphaned snapshot data.
+     */
+    suspend fun deleteCustomerSnapshot(customerId: Long): Result<Unit>
 }
