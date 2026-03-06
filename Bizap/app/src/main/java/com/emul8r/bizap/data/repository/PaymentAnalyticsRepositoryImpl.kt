@@ -155,7 +155,7 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
             val metricsRow = paymentDao.getPaymentMetrics(businessId)
             val agingRow = paymentDao.getOutstandingByAging(businessId)
 
-            PaymentAnalyticsSummary(
+            return PaymentAnalyticsSummary(
                 businessProfileId = businessId,
                 totalInvoices = metricsRow.totalInvoices,
                 paidInvoices = paymentDao.countByStatus(businessId, "PAID"),
