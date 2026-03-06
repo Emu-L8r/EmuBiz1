@@ -22,7 +22,8 @@ import javax.inject.Inject
 
 data class CustomerFormState(
     val validationError: String? = null,
-    val error: String? = null
+    val error: String? = null,
+    val isSaving: Boolean = false
 )
 
 @HiltViewModel
@@ -49,7 +50,11 @@ class CustomerViewModel @Inject constructor(
     var address by mutableStateOf("")
 
     fun saveNewCustomer(onSuccess: () -> Unit = {}) {
-        if (customerName.isBlank()) return
+        if (customerName.isBlank()) {
+            _formState.update { it.copy(validationError = "Please enter a customer name") }
+            return
+        }
+
         val customer = Customer(
             name = customerName,
             businessName = businessName.ifBlank { null },
@@ -58,21 +63,27 @@ class CustomerViewModel @Inject constructor(
             email = email.ifBlank { null },
             address = address.ifBlank { null }
         )
+
         val validation = ValidationRules.validateCustomer(customer)
         if (validation.isFailure()) {
-            _formState.update { it.copy(validationError = validation.getErrorOrNull()) }
+            _formState.update { it.copy(validationError = validation.getErrorOrNull() ?: "Validation failed") }
             return
         }
-        _formState.update { it.copy(validationError = null) }
+
+        _formState.update { it.copy(validationError = null, isSaving = true) }
+
         viewModelScope.launch {
             repository.insert(customer)
                 .onSuccess {
+                    Timber.d("✅ Customer saved successfully: ${customer.name}")
+                    _formState.update { it.copy(error = null, isSaving = false) }
                     clearFields()
                     onSuccess()
                 }
                 .onFailure { e ->
-                    Timber.e(e, "Failed to save customer")
-                    _formState.update { it.copy(error = e.message) }
+                    Timber.e(e, "❌ Failed to save customer")
+                    val errorMessage = e.message ?: "Unknown error occurred"
+                    _formState.update { it.copy(error = errorMessage, isSaving = false) }
                 }
         }
     }
