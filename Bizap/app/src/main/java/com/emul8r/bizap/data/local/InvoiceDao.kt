@@ -76,4 +76,20 @@ interface InvoiceDao {
         ORDER BY version ASC
     """)
     fun getInvoiceGroupWithVersions(invoiceYear: Int, invoiceSequence: Int, businessId: Long): Flow<List<InvoiceEntity>>
+
+    // ==================== HEALTH CHECK QUERIES ====================
+
+    /**
+     * Count total number of invoices.
+     * Used for snapshot consistency checks.
+     */
+    @Query("SELECT COUNT(*) FROM invoices")
+    suspend fun count(): Int
+
+    /**
+     * Count distinct customers across all invoices.
+     * Used to verify customer analytics snapshot coverage.
+     */
+    @Query("SELECT COUNT(DISTINCT customerId) FROM invoices")
+    suspend fun countDistinctCustomers(): Int
 }

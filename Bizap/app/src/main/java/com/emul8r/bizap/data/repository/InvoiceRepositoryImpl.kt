@@ -29,7 +29,8 @@ class InvoiceRepositoryImpl @Inject constructor(
     private val invoiceDao: InvoiceDao,
     private val businessProfileRepository: BusinessProfileRepository,
     private val analyticsDao: AnalyticsDao,
-    private val paymentDao: InvoicePaymentDao
+    private val paymentDao: InvoicePaymentDao,
+    private val snapshotSyncHelper: SnapshotSyncHelper
 ) : InvoiceRepository {
 
     companion object {
@@ -120,17 +121,27 @@ class InvoiceRepositoryImpl @Inject constructor(
 
         val updatedEntity = invoiceWithItems.invoice.copy(amountPaid = amount)
 
-        // ✅ FIX: Use UPDATE, not INSERT
+        // Step 1: Update invoices table
         invoiceDao.updateInvoice(updatedEntity)
-
         Timber.d("✅ Payment recorded for invoice $invoiceId: amount=$amount cents")
 
-        // ✅ UPDATE SNAPSHOTS when payment is recorded
+        // Step 2: Sync payment snapshots (with fallback to create if missing)
         try {
-            updatePaymentSnapshots(updatedEntity)
-            Timber.d("✅ Updated payment snapshots for invoice $invoiceId")
+            val existingPaymentSnapshot = paymentDao.getSnapshotByInvoiceId(invoiceId)
+
+            if (existingPaymentSnapshot != null) {
+                // ✅ Snapshot exists: update it with new payment data
+                updatePaymentSnapshots(updatedEntity)
+                Timber.d("✅ Updated existing payment snapshot for invoice $invoiceId")
+            } else {
+                // ⚠️ Snapshot missing: create it as fallback
+                Timber.w("⚠️ Payment snapshot missing for invoice $invoiceId, creating fallback")
+                createPaymentSnapshot(updatedEntity)
+                Timber.d("✅ Created missing payment snapshot (fallback) for invoice $invoiceId")
+            }
         } catch (e: Exception) {
-            Timber.w(e, "⚠️ Failed to update payment snapshots (non-blocking)")
+            Timber.w(e, "⚠️ Failed to sync payment snapshots for invoice $invoiceId (non-blocking)")
+            // Don't throw - snapshot sync is best-effort
         }
 
         Unit
@@ -202,66 +213,10 @@ class InvoiceRepositoryImpl @Inject constructor(
 
             Timber.d("✅ Invoice $invoiceId updated in database ($currentStatus → ${status.name})")
 
-            // ── Step 2: Sync InvoiceAnalyticsSnapshot ────────────────────────────
-            retryOnFailure(operationName = "analyticsDao.updateInvoiceSnapshot") {
-                val existingAnalyticsSnapshot = analyticsDao.getInvoiceSnapshot(invoiceId)
-                if (existingAnalyticsSnapshot != null) {
-                    val updatedAnalyticsSnapshot = existingAnalyticsSnapshot.copy(
-                        status = status.name,
-                        isPaid = status == InvoiceStatus.PAID,
-                        isOverdue = invoiceEntity.dueDate < System.currentTimeMillis() &&
-                                status != InvoiceStatus.PAID
-                    )
-                    analyticsDao.updateInvoiceSnapshot(updatedAnalyticsSnapshot)
-                    Timber.d("✅ Updated InvoiceAnalyticsSnapshot: $status")
-                }
-            }
-
-            // ── Step 3: Sync DailyRevenueSnapshot (with optimistic locking) ──────
-            val invoiceDate = LocalDate.ofInstant(
-                Instant.ofEpochMilli(invoiceEntity.date),
-                ZoneId.systemDefault()
-            ).toString()
-
-            updateDailySnapshotWithOptimisticLock(
-                businessId = invoiceEntity.businessProfileId,
-                invoiceDate = invoiceDate,
-                invoiceEntity = invoiceEntity,
-                oldStatus = currentStatus,
-                newStatus = status
-            )
-
-            // ── Step 4: Sync InvoicePaymentSnapshot ──────────────────────────────
-            retryOnFailure(operationName = "paymentDao.updateSnapshot") {
-                val existingPaymentSnapshot = paymentDao.getSnapshotByInvoiceId(invoiceId)
-                if (existingPaymentSnapshot != null) {
-                    val daysOverdue = if (invoiceEntity.dueDate < System.currentTimeMillis()) {
-                        ((System.currentTimeMillis() - invoiceEntity.dueDate) / MILLIS_PER_DAY).toInt()
-                    } else {
-                        0
-                    }
-
-                    val updatedPaymentSnapshot = existingPaymentSnapshot.copy(
-                        paymentStatus = when (status) {
-                            InvoiceStatus.PAID -> "PAID"
-                            InvoiceStatus.PARTIALLY_PAID -> "PARTIALLY_PAID"
-                            InvoiceStatus.SENT -> "UNPAID"
-                            InvoiceStatus.OVERDUE -> "OVERDUE"
-                            InvoiceStatus.DRAFT -> "DRAFT"
-                        },
-                        isAtRisk = invoiceEntity.dueDate < System.currentTimeMillis() &&
-                                status != InvoiceStatus.PAID,
-                        riskScore = when {
-                            daysOverdue <= 0 -> 0.0
-                            daysOverdue <= 30 -> 0.3
-                            daysOverdue <= 60 -> 0.6
-                            daysOverdue <= 90 -> 0.8
-                            else -> 1.0
-                        }
-                    )
-                    paymentDao.updateSnapshot(updatedPaymentSnapshot)
-                    Timber.d("✅ Updated InvoicePaymentSnapshot: $status")
-                }
+            // ── Step 2-4: Sync all snapshots using helper ─────────────────────────
+            val updatedInvoiceEntity = invoiceEntity.copy(status = status.name)
+            retryOnFailure(operationName = "snapshotSync") {
+                snapshotSyncHelper.syncAllSnapshots(updatedInvoiceEntity, invoiceEntity.businessProfileId)
             }
 
             // ── Step 5: Verify snapshot consistency ───────────────────────────────
@@ -337,7 +292,34 @@ class InvoiceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteInvoice(id: Long): Result<Unit> = runCatching {
-        invoiceDao.deleteInvoiceWithItems(id)
+        Timber.d("🗑️ Deleting invoice $id and associated snapshots")
+
+        try {
+            // Step 1: Delete individual invoice snapshots
+            // (These are specific to this invoice and should be cleaned up)
+            analyticsDao.deleteInvoiceSnapshot(id)
+            Timber.d("✅ Deleted InvoiceAnalyticsSnapshot for invoice $id")
+
+            paymentDao.deleteSnapshotByInvoiceId(id)
+            Timber.d("✅ Deleted InvoicePaymentSnapshot for invoice $id")
+
+            // Step 2: Delete the invoice and line items
+            // (Do this after snapshots in case there are FK constraints)
+            invoiceDao.deleteInvoiceWithItems(id)
+            Timber.d("✅ Deleted invoice $id and line items")
+
+            // Note: We intentionally do NOT delete DailyRevenueSnapshot
+            // Reason: It's aggregate daily data (historical record)
+            // Deleting one invoice shouldn't erase daily revenue records
+            // The aggregates are still valid for historical reporting
+            Timber.d("ℹ️ DailyRevenueSnapshot kept (aggregate historical data)")
+
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to delete snapshots for invoice $id")
+            throw e  // Re-throw to trigger onFailure handler
+        }
+
+        Unit
     }.also { result ->
         result.onFailure { e -> Timber.e(e, "Database operation failed during deleteInvoice") }
     }
@@ -346,14 +328,18 @@ class InvoiceRepositoryImpl @Inject constructor(
 
     /**
      * Creates initial analytics snapshots when a new invoice is saved.
+     * Delegates all snapshot creation logic to SnapshotSyncHelper.
      */
-    private suspend fun createAnalyticsSnapshots(invoice: com.emul8r.bizap.data.local.entities.InvoiceEntity, businessId: Long) {
+    private suspend fun createAnalyticsSnapshots(
+        invoice: com.emul8r.bizap.data.local.entities.InvoiceEntity,
+        businessProfileId: Long
+    ) {
         try {
-            // Note: We need to fetch business profile to check status, but for snapshots we mainly care about basic data
-            Timber.d("📸 Creating snapshots for invoice ${invoice.id}")
-            // Snapshots will be updated later via updateInvoiceStatus if needed
+            snapshotSyncHelper.syncAllSnapshots(invoice, businessProfileId)
+            Timber.d("✅ Created all analytics snapshots for invoice ${invoice.id}")
         } catch (e: Exception) {
-            Timber.e(e, "Failed to create snapshots")
+            Timber.e(e, "❌ Failed to create analytics snapshots")
+            throw e
         }
     }
 
@@ -386,6 +372,64 @@ class InvoiceRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Timber.e(e, "Failed to update payment snapshots")
+        }
+    }
+
+    /**
+     * Creates payment snapshot when it's missing (fallback for edge cases).
+     * Called when payment is recorded but snapshot was never created.
+     */
+    private suspend fun createPaymentSnapshot(invoice: com.emul8r.bizap.data.local.entities.InvoiceEntity) {
+        try {
+            val daysOverdue = if (invoice.dueDate < System.currentTimeMillis()) {
+                ((System.currentTimeMillis() - invoice.dueDate) / MILLIS_PER_DAY).toInt()
+            } else 0
+
+            val paymentSnapshot = InvoicePaymentSnapshot(
+                invoiceId = invoice.id,
+                businessProfileId = invoice.businessProfileId,
+                customerId = invoice.customerId,
+                customerName = invoice.customerName,
+                invoiceNumber = invoice.invoiceNumber ?: "INV-${invoice.id}",
+                invoiceDate = invoice.date,
+                dueDate = invoice.dueDate,
+                totalAmount = invoice.totalAmount,
+                paidAmount = invoice.amountPaid,
+                outstandingAmount = invoice.totalAmount - invoice.amountPaid,
+                paymentStatus = when {
+                    invoice.status == "PAID" -> "PAID"
+                    invoice.status == "PARTIALLY_PAID" -> "PARTIALLY_PAID"
+                    invoice.status == "SENT" -> "UNPAID"
+                    invoice.status == "OVERDUE" -> "OVERDUE"
+                    else -> "UNPAID"
+                },
+                ageingBucket = when {
+                    daysOverdue <= 0 -> "CURRENT"
+                    daysOverdue <= 30 -> "PAST_30"
+                    daysOverdue <= 60 -> "PAST_60"
+                    else -> "PAST_90"
+                },
+                daysOverdue = daysOverdue,
+                daysSinceDue = if (invoice.dueDate < System.currentTimeMillis()) daysOverdue else 0,
+                lastPaymentDate = if (invoice.amountPaid > 0) System.currentTimeMillis() else null,
+                lastPaymentAmount = if (invoice.amountPaid > 0) invoice.amountPaid else 0L,
+                paymentCount = if (invoice.amountPaid > 0) 1 else 0,
+                isAtRisk = invoice.dueDate < System.currentTimeMillis() && invoice.status != "PAID",
+                riskScore = when {
+                    daysOverdue <= 0 -> 0.0
+                    daysOverdue <= 30 -> 0.3
+                    daysOverdue <= 60 -> 0.6
+                    daysOverdue <= 90 -> 0.8
+                    else -> 1.0
+                },
+                riskFactors = "",
+                lastUpdatedMs = System.currentTimeMillis(),
+                snapshotDateMs = System.currentTimeMillis()
+            )
+            paymentDao.insertSnapshots(listOf(paymentSnapshot))
+            Timber.d("✅ Created missing payment snapshot for invoice ${invoice.id}")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to create payment snapshot")
         }
     }
 

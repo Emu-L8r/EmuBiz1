@@ -447,4 +447,274 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
     fun `PerformanceMetrics getFailureRate returns zero for unknown operation`() {
         assertEquals(0.0, PerformanceMetrics.getFailureRate("no_such_op"))
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // PATHWAY 2: Analytics Snapshot Creation Tests
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    @Test
+    fun `saveInvoice creates InvoiceAnalyticsSnapshot`() = runTest {
+        val invoice = TestDataFactory.createTestInvoice(status = InvoiceStatus.PAID)
+        val entity = invoice.toEntity()
+
+        coEvery { invoiceDao.insert(any(), any()) } returns 123L
+        coEvery { invoiceDao.getInvoiceWithItemsById(123L) } returns flowOf(
+            InvoiceWithItems(entity.copy(id = 123L), emptyList())
+        )
+        coEvery { analyticsDao.insertInvoiceSnapshot(any()) } just Runs
+
+        repository.saveInvoice(invoice).getOrThrow()
+
+        coVerify { analyticsDao.insertInvoiceSnapshot(any()) }
+    }
+
+    @Test
+    fun `saveInvoice creates DailyRevenueSnapshot`() = runTest {
+        val invoice = TestDataFactory.createTestInvoice(status = InvoiceStatus.PAID)
+        val entity = invoice.toEntity()
+
+        coEvery { invoiceDao.insert(any(), any()) } returns 123L
+        coEvery { invoiceDao.getInvoiceWithItemsById(123L) } returns flowOf(
+            InvoiceWithItems(entity.copy(id = 123L), emptyList())
+        )
+        coEvery { analyticsDao.insertDailySnapshot(any()) } just Runs
+        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
+
+        repository.saveInvoice(invoice).getOrThrow()
+
+        coVerify { analyticsDao.insertDailySnapshot(any()) }
+    }
+
+    @Test
+    fun `saveInvoice creates InvoicePaymentSnapshot`() = runTest {
+        val invoice = TestDataFactory.createTestInvoice(status = InvoiceStatus.PAID)
+        val entity = invoice.toEntity()
+
+        coEvery { invoiceDao.insert(any(), any()) } returns 123L
+        coEvery { invoiceDao.getInvoiceWithItemsById(123L) } returns flowOf(
+            InvoiceWithItems(entity.copy(id = 123L), emptyList())
+        )
+        coEvery { paymentDao.insertSnapshots(any()) } just Runs
+
+        repository.saveInvoice(invoice).getOrThrow()
+
+        coVerify { paymentDao.insertSnapshots(any()) }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // PATHWAY 2B: Payment Update Snapshot Sync Tests
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    @Test
+    fun `updateAmountPaid updates existing payment snapshot`() = runTest {
+        val invoice = TestDataFactory.createTestInvoice(status = InvoiceStatus.SENT)
+        val entity = invoice.toEntity()
+
+        mockInvoice(invoiceId = 1L, status = InvoiceStatus.SENT)
+
+        val existingSnapshot = mockk<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>(relaxed = true)
+        coEvery { paymentDao.getSnapshotByInvoiceId(1L) } returns existingSnapshot
+        coEvery { paymentDao.updateSnapshot(any()) } just Runs
+
+        repository.updateAmountPaid(1L, 5000).getOrThrow()
+
+        coVerify { paymentDao.updateSnapshot(any()) }
+    }
+
+    @Test
+    fun `updateAmountPaid creates payment snapshot if missing`() = runTest {
+        val invoice = TestDataFactory.createTestInvoice(status = InvoiceStatus.SENT)
+
+        mockInvoice(invoiceId = 1L, status = InvoiceStatus.SENT)
+        coEvery { paymentDao.getSnapshotByInvoiceId(1L) } returns null  // Missing
+        coEvery { paymentDao.insertSnapshots(any()) } just Runs
+
+        repository.updateAmountPaid(1L, 5000).getOrThrow()
+
+        coVerify { paymentDao.insertSnapshots(any()) }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // PATHWAY 2C: Invoice Deletion Snapshot Cleanup Tests
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    @Test
+    fun `deleteInvoice deletes InvoiceAnalyticsSnapshot`() = runTest {
+        coEvery { analyticsDao.deleteInvoiceSnapshot(123L) } just Runs
+        coEvery { paymentDao.deleteSnapshotByInvoiceId(123L) } just Runs
+        coEvery { invoiceDao.deleteInvoiceWithItems(123L) } just Runs
+
+        repository.deleteInvoice(123L).getOrThrow()
+
+        coVerify { analyticsDao.deleteInvoiceSnapshot(123L) }
+    }
+
+    @Test
+    fun `deleteInvoice deletes InvoicePaymentSnapshot`() = runTest {
+        coEvery { analyticsDao.deleteInvoiceSnapshot(123L) } just Runs
+        coEvery { paymentDao.deleteSnapshotByInvoiceId(123L) } just Runs
+        coEvery { invoiceDao.deleteInvoiceWithItems(123L) } just Runs
+
+        repository.deleteInvoice(123L).getOrThrow()
+
+        coVerify { paymentDao.deleteSnapshotByInvoiceId(123L) }
+    }
+
+    @Test
+    fun `deleteInvoice deletes invoice record`() = runTest {
+        coEvery { analyticsDao.deleteInvoiceSnapshot(123L) } just Runs
+        coEvery { paymentDao.deleteSnapshotByInvoiceId(123L) } just Runs
+        coEvery { invoiceDao.deleteInvoiceWithItems(123L) } just Runs
+
+        repository.deleteInvoice(123L).getOrThrow()
+
+        coVerify { invoiceDao.deleteInvoiceWithItems(123L) }
+    }
+
+    @Test
+    fun `deleteInvoice does NOT delete DailyRevenueSnapshot`() = runTest {
+        coEvery { analyticsDao.deleteInvoiceSnapshot(123L) } just Runs
+        coEvery { paymentDao.deleteSnapshotByInvoiceId(123L) } just Runs
+        coEvery { invoiceDao.deleteInvoiceWithItems(123L) } just Runs
+
+        repository.deleteInvoice(123L).getOrThrow()
+
+        // DailyRevenueSnapshot should NOT be deleted (historical aggregate)
+        coVerify(inverse = true) { analyticsDao.deleteDailySnapshot(any()) }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // PATHWAY 1 & Status Update: Comprehensive Snapshot Sync Tests
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    @Test
+    fun `updateInvoiceStatus syncs InvoiceAnalyticsSnapshot`() = runTest {
+        mockInvoice(invoiceId = 1L, status = InvoiceStatus.SENT)
+
+        val existingAnalyticsSnapshot = mockk<InvoiceAnalyticsSnapshot>(relaxed = true)
+        coEvery { analyticsDao.getInvoiceSnapshot(1L) } returns existingAnalyticsSnapshot
+        coEvery { analyticsDao.updateInvoiceSnapshot(any()) } just Runs
+        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
+        coEvery { analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any()) } returns Unit
+        coEvery { paymentDao.getSnapshotByInvoiceId(1L) } returns null
+
+        repository.updateInvoiceStatus(1L, InvoiceStatus.PAID).getOrThrow()
+
+        coVerify { analyticsDao.updateInvoiceSnapshot(any()) }
+    }
+
+    @Test
+    fun `updateInvoiceStatus syncs DailyRevenueSnapshot`() = runTest {
+        mockInvoice(invoiceId = 1L, status = InvoiceStatus.SENT)
+
+        val existingAnalyticsSnapshot = mockk<InvoiceAnalyticsSnapshot>(relaxed = true)
+        coEvery { analyticsDao.getInvoiceSnapshot(1L) } returns existingAnalyticsSnapshot
+        coEvery { analyticsDao.updateInvoiceSnapshot(any()) } just Runs
+        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
+        coEvery { analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any()) } returns Unit
+        coEvery { paymentDao.getSnapshotByInvoiceId(1L) } returns null
+
+        repository.updateInvoiceStatus(1L, InvoiceStatus.PAID).getOrThrow()
+
+        coVerify { analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `updateInvoiceStatus syncs InvoicePaymentSnapshot`() = runTest {
+        mockInvoice(invoiceId = 1L, status = InvoiceStatus.SENT)
+
+        val existingAnalyticsSnapshot = mockk<InvoiceAnalyticsSnapshot>(relaxed = true)
+        val existingPaymentSnapshot = mockk<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>(relaxed = true)
+
+        coEvery { analyticsDao.getInvoiceSnapshot(1L) } returns existingAnalyticsSnapshot
+        coEvery { analyticsDao.updateInvoiceSnapshot(any()) } just Runs
+        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
+        coEvery { analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any()) } returns Unit
+        coEvery { paymentDao.getSnapshotByInvoiceId(1L) } returns existingPaymentSnapshot
+        coEvery { paymentDao.updateSnapshot(any()) } just Runs
+
+        repository.updateInvoiceStatus(1L, InvoiceStatus.PAID).getOrThrow()
+
+        coVerify { paymentDao.updateSnapshot(any()) }
+    }
+
+    @Test
+    fun `updateInvoiceStatus sets isPaid flag correctly for PAID status`() = runTest {
+        mockInvoice(invoiceId = 1L, status = InvoiceStatus.SENT)
+
+        val existingAnalyticsSnapshot = InvoiceAnalyticsSnapshot(
+            invoiceId = 1L,
+            businessProfileId = 1L,
+            customerId = 1L,
+            customerName = "Test",
+            invoiceNumber = "INV-1",
+            currencyCode = "AUD",
+            subtotal = 10000L,
+            taxAmount = 1000L,
+            totalAmount = 11000L,
+            status = "SENT",
+            isPaid = false,
+            isOverdue = false,
+            invoiceDateMs = System.currentTimeMillis(),
+            createdAtMs = System.currentTimeMillis()
+        )
+
+        coEvery { analyticsDao.getInvoiceSnapshot(1L) } returns existingAnalyticsSnapshot
+        coEvery { analyticsDao.updateInvoiceSnapshot(any()) } just Runs
+        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
+        coEvery { analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any()) } returns Unit
+        coEvery { paymentDao.getSnapshotByInvoiceId(1L) } returns null
+
+        repository.updateInvoiceStatus(1L, InvoiceStatus.PAID).getOrThrow()
+
+        coVerify {
+            analyticsDao.updateInvoiceSnapshot(
+                match { snapshot ->
+                    snapshot.status == "PAID" && snapshot.isPaid == true
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `Snapshot sync handles all three snapshots atomically`() = runTest {
+        mockInvoice(invoiceId = 1L, status = InvoiceStatus.SENT)
+
+        val analyticsSnapshot = InvoiceAnalyticsSnapshot(
+            invoiceId = 1L,
+            businessProfileId = 1L,
+            customerId = 1L,
+            customerName = "Test",
+            invoiceNumber = "INV-1",
+            currencyCode = "AUD",
+            subtotal = 10000L,
+            taxAmount = 1000L,
+            totalAmount = 11000L,
+            status = "SENT",
+            isPaid = false,
+            isOverdue = false,
+            invoiceDateMs = System.currentTimeMillis(),
+            createdAtMs = System.currentTimeMillis()
+        )
+
+        val paymentSnapshot = mockk<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>(relaxed = true)
+
+        coEvery { analyticsDao.getInvoiceSnapshot(1L) } returns analyticsSnapshot
+        coEvery { analyticsDao.updateInvoiceSnapshot(any()) } just Runs
+        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
+        coEvery { analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any()) } returns Unit
+        coEvery { paymentDao.getSnapshotByInvoiceId(1L) } returns paymentSnapshot
+        coEvery { paymentDao.updateSnapshot(any()) } just Runs
+
+        repository.updateInvoiceStatus(1L, InvoiceStatus.PAID).getOrThrow()
+
+        // Verify all three snapshots were synced
+        coVerify {
+            analyticsDao.updateInvoiceSnapshot(any())
+            analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any())
+            paymentDao.updateSnapshot(any())
+        }
+    }
 }
+
+
