@@ -46,7 +46,7 @@ class PaymentAnalyticsViewModel @Inject constructor(
                 val businessId = businessProfileRepository.getActiveBusinessId()
                 val analytics = getPaymentAnalyticsUseCase(businessId)
 
-                Timber.d("✅ PaymentAnalyticsViewModel: Loaded analytics - Total invoices: ${analytics.totalInvoices}, Outstanding: ${analytics.outstandingAmount / 100.0}")
+                Timber.d("✅ PaymentAnalyticsViewModel: Loaded analytics - Total invoices: ${analytics.totalInvoices}, Outstanding: ${analytics.totalOutstandingAmount}")
                 _state.value = PaymentAnalyticsUiState.Success(analytics)
             } catch (e: Exception) {
                 Timber.e(e, "❌ PaymentAnalyticsViewModel: Error loading analytics")
