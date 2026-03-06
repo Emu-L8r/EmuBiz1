@@ -13,6 +13,10 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * ViewModel for Risk Dashboard.
+ * ✅ FIXED: Now properly supports refresh when invoice data changes
+ */
 @HiltViewModel
 class RiskDashboardViewModel @Inject constructor(
     private val identifyRiskInvoicesUseCase: IdentifyRiskInvoicesUseCase,
@@ -23,21 +27,36 @@ class RiskDashboardViewModel @Inject constructor(
     val uiState: StateFlow<RiskUiState> = _uiState.asStateFlow()
 
     init {
-        refreshRiskInvoices()
+        loadRiskInvoices()
     }
 
-    fun refreshRiskInvoices() {
+    /**
+     * Load risk invoices from the database.
+     * ✅ IMPROVED: Made public so it can be called to refresh data
+     */
+    fun loadRiskInvoices() {
         viewModelScope.launch {
             try {
+                Timber.d("⚠️  RiskDashboardViewModel: Loading risk invoices")
                 _uiState.value = RiskUiState.Loading
                 val businessId = businessProfileRepository.getActiveBusinessId()
                 val risks = identifyRiskInvoicesUseCase.execute(businessId)
+                Timber.d("✅ RiskDashboardViewModel: Loaded ${risks.size} risk invoices")
                 _uiState.value = RiskUiState.Success(risks)
             } catch (e: Exception) {
-                Timber.e(e, "Failed to load risk invoices")
+                Timber.e(e, "❌ RiskDashboardViewModel: Failed to load risk invoices")
                 _uiState.value = RiskUiState.Error(e.message ?: "Unknown Error")
             }
         }
+    }
+
+    /**
+     * ✅ IMPROVED: Better naming - call this after invoice operations
+     * Refreshes the list of at-risk invoices
+     */
+    fun refreshRiskInvoices() {
+        Timber.d("🔄 RiskDashboardViewModel: Refreshing risk invoices after invoice operation")
+        loadRiskInvoices()
     }
 }
 

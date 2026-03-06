@@ -26,6 +26,10 @@ class RevenueDashboardViewModel @Inject constructor(
         loadMetrics()
     }
 
+    /**
+     * Load revenue metrics from the database.
+     * ✅ FIX: Public method so it can be called to refresh data
+     */
     fun loadMetrics() {
         viewModelScope.launch {
             try {
@@ -33,12 +37,21 @@ class RevenueDashboardViewModel @Inject constructor(
                 val businessId = businessProfileRepository.getActiveBusinessId()
                 val metrics = getRevenueMetricsUseCase(businessId)
                 _uiState.value = RevenueDashboardUiState.Success(metrics)
-                Timber.d("RevenueDashboardViewModel: Metrics loaded successfully")
+                Timber.d("✅ RevenueDashboardViewModel: Metrics loaded successfully")
             } catch (e: Exception) {
-                Timber.e(e, "RevenueDashboardViewModel: Failed to load metrics")
+                Timber.e(e, "❌ RevenueDashboardViewModel: Failed to load metrics")
                 _uiState.value = RevenueDashboardUiState.Error(e.message ?: "Unknown Error")
             }
         }
+    }
+
+    /**
+     * ✅ NEW: Refresh metrics (called after invoice operations)
+     * This allows the dashboard to update when data changes
+     */
+    fun refreshMetrics() {
+        Timber.d("🔄 RevenueDashboardViewModel: Refreshing metrics after invoice operation")
+        loadMetrics()
     }
 }
 
