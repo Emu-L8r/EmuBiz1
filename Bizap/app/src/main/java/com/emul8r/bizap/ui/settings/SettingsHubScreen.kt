@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.ShowChart
@@ -76,6 +77,12 @@ fun SettingsHubScreen(onNavigate: (Screen) -> Unit) {
             title = "Backup & Restore",
             subtitle = "Export or restore your app database",
             onClick = { onNavigate(Screen.BackupRestore) }
+        )
+        SettingsItem(
+            icon = Icons.Default.Groups,
+            title = "Customer Segments",
+            subtitle = "View customer segmentation and analytics",
+            onClick = { onNavigate(Screen.CustomerSegments) }
         )
     }
 }

@@ -69,4 +69,7 @@ sealed interface Screen {
 
     @Serializable
     object BackupRestore : Screen
+
+    @Serializable
+    object CustomerSegments : Screen
 }
