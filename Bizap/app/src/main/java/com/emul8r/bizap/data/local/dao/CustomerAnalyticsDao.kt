@@ -14,6 +14,9 @@ interface CustomerAnalyticsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSnapshots(snapshots: List<CustomerAnalyticsSnapshot>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSnapshot(snapshot: CustomerAnalyticsSnapshot): Long
+
     @Query("SELECT * FROM customer_analytics_snapshots WHERE customerId = :customerId LIMIT 1")
     suspend fun getCustomerSnapshot(customerId: Long): CustomerAnalyticsSnapshot?
 

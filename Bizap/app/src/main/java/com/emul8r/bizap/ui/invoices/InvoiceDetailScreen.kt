@@ -51,7 +51,6 @@ fun InvoiceDetailScreen(
     var isExporting by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.loadInvoice(invoiceId)
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
                 is UiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(event.message)
@@ -132,7 +131,10 @@ fun InvoiceDetailScreen(
                             )
 
                             ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-                                InvoiceStatusBanner(invoice.status.name)
+                                InvoiceStatusBanner(
+                                    status = invoice.status.name,
+                                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                )
                                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                                     InvoiceStatus.entries.forEach { status ->
                                         DropdownMenuItem(text = { Text(status.name) }, onClick = {
@@ -471,7 +473,7 @@ fun Section(title: String, content: String) {
 }
 
 @Composable
-fun InvoiceStatusBanner(status: String) {
+fun InvoiceStatusBanner(status: String, modifier: Modifier = Modifier) {
     val (backgroundColor, textColor, icon) = when (status) {
         "PAID" -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, Icons.Default.CheckCircle)
         "SENT" -> Triple(MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, Icons.AutoMirrored.Filled.Send)
@@ -481,7 +483,7 @@ fun InvoiceStatusBanner(status: String) {
     }
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         color = backgroundColor,
         shape = RoundedCornerShape(12.dp)
     ) {

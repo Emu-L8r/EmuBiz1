@@ -11,7 +11,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -35,11 +34,6 @@ fun PaymentAnalyticsScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    // ✅ FIX: Refresh analytics when screen comes into view
-    LaunchedEffect(Unit) {
-        viewModel.refreshAnalytics()
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -55,9 +49,7 @@ fun PaymentAnalyticsScreen(
             }
             is PaymentAnalyticsUiState.Error -> {
                 val message = (state as PaymentAnalyticsUiState.Error).message
-                PaymentAnalyticsErrorScreen(message) {
-                    viewModel.refreshAnalytics()
-                }
+                PaymentAnalyticsErrorScreen(message) {}
             }
         }
     }
