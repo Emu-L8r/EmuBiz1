@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,6 +38,8 @@ fun InvoiceDetailScreen(
     invoiceId: Long,
     onEdit: () -> Unit,
     onInvoiceDeleted: () -> Unit = {},
+    onNavigateToRevenue: (() -> Unit)? = null,
+    onNavigateToPayments: (() -> Unit)? = null,
     viewModel: InvoiceDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -255,6 +258,40 @@ fun InvoiceDetailScreen(
                                 Icon(Icons.Default.Delete, contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
                                 Text("Delete Invoice")
+                            }
+
+                            if (onNavigateToRevenue != null || onNavigateToPayments != null) {
+                                HorizontalDivider(Modifier.padding(vertical = 4.dp))
+                                Text(
+                                    text = "Analytics",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    if (onNavigateToRevenue != null) {
+                                        OutlinedButton(
+                                            onClick = onNavigateToRevenue,
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null)
+                                            Spacer(Modifier.width(4.dp))
+                                            Text("Revenue")
+                                        }
+                                    }
+                                    if (onNavigateToPayments != null) {
+                                        OutlinedButton(
+                                            onClick = onNavigateToPayments,
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Icon(Icons.Default.Payment, contentDescription = null)
+                                            Spacer(Modifier.width(4.dp))
+                                            Text("Payments")
+                                        }
+                                    }
+                                }
                             }
                         }
 
