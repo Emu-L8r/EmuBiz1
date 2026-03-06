@@ -23,6 +23,21 @@ val MIGRATION_24_25 = object : Migration(24, 25) {
     override fun migrate(database: SupportSQLiteDatabase) {
         // ── Invoices ────────────────────────────────────────────────────────────
         database.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_invoices_business ON invoices(businessProfileId)"
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_invoices_customer ON invoices(customerId)"
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status)"
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_invoices_business_status ON invoices(businessProfileId, status)"
+        )
+        database.execSQL(
+            "CREATE INDEX IF NOT EXISTS idx_invoices_year_sequence ON invoices(invoiceYear, invoiceSequence, businessProfileId)"
+        )
+        database.execSQL(
             "CREATE INDEX IF NOT EXISTS idx_invoices_date ON invoices(date)"
         )
         database.execSQL(
@@ -30,13 +45,16 @@ val MIGRATION_24_25 = object : Migration(24, 25) {
         )
 
         // ── Customers ────────────────────────────────────────────────────────────
-        // Unique index on email.
-        // IMPORTANT: This will throw an exception if duplicate email values exist in the
-        // customers table. The app UI validates uniqueness before inserting, so duplicates
-        // should not exist in production data. If a migration failure is observed here,
-        // duplicate rows must be resolved manually before upgrading.
+        // Business index (non-unique, required by schema)
         database.execSQL(
-            "CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_email_unique ON customers(email)"
+            "CREATE INDEX IF NOT EXISTS idx_customers_business ON customers(businessProfileId)"
+        )
+        // Unique index on email (matches @Index annotation in CustomerEntity)
+        // IMPORTANT: This will throw an exception if duplicate email values exist.
+        // The app UI validates uniqueness before inserting, so duplicates should not
+        // exist in production data.
+        database.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_email ON customers(email)"
         )
         database.execSQL(
             "CREATE INDEX IF NOT EXISTS idx_customers_business_name ON customers(businessProfileId, name)"
