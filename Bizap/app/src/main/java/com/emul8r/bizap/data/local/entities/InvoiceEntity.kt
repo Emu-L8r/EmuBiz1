@@ -20,7 +20,9 @@ import androidx.room.PrimaryKey
         Index(name = "idx_invoices_customer", value = ["customerId"]),
         Index(name = "idx_invoices_status", value = ["status"]),
         Index(name = "idx_invoices_business_status", value = ["businessProfileId", "status"]),
-        Index(name = "idx_invoices_year_sequence", value = ["invoiceYear", "invoiceSequence", "businessProfileId"])
+        Index(name = "idx_invoices_year_sequence", value = ["invoiceYear", "invoiceSequence", "businessProfileId"]),
+        Index(name = "idx_invoices_date", value = ["date"]),
+        Index(name = "idx_invoices_customer_date", value = ["customerId", "date"])
     ]
 )
 data class InvoiceEntity(
