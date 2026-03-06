@@ -85,7 +85,53 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
     override suspend fun getPaymentAnalytics(businessId: Long): PaymentAnalyticsSummary {
         Timber.d("PaymentAnalyticsRepositoryImpl: Fetching analytics for business $businessId")
 
-        return try {
+        // 🧪 VALIDATION TEST: Compare calculated vs snapshot-based metrics
+        try {
+            val calculated = invoiceDao.calculatePaymentMetrics(businessId)
+            val metricsRow = paymentDao.getPaymentMetrics(businessId)
+
+            if (calculated != null && metricsRow != null) {
+                val snapshotCollectionRate = if (metricsRow.totalAmount > 0.0) {
+                    ((metricsRow.paidAmount / metricsRow.totalAmount) * 100.0).coerceIn(0.0, 100.0)
+                } else 0.0
+
+                // Log comparison for analysis
+                Timber.d("""
+                    ┌─── METRICS COMPARISON ───┐
+                    │ Source: Invoices Table (Calculated)
+                    │   Total: ${calculated.totalInvoices} invoices
+                    │   Paid: ${calculated.paidInvoices} invoices
+                    │   Outstanding: ${calculated.totalOutstanding} cents
+                    │   Collection Rate: ${calculated.collectionRate}%
+                    │
+                    │ Source: Snapshot Tables
+                    │   Total: ${metricsRow.totalInvoices} invoices
+                    │   Paid Amount: ${metricsRow.paidAmount}
+                    │   Outstanding: ${metricsRow.outstanding} cents
+                    │   Collection Rate: $snapshotCollectionRate%
+                    │
+                    │ DISCREPANCIES:
+                    │   Invoice Count Match: ${calculated.totalInvoices == metricsRow.totalInvoices}
+                    │   Outstanding Match: ${calculated.totalOutstanding == metricsRow.outstanding.toLong()}
+                    └─────────────────────────┘
+                """.trimIndent())
+
+                // If there are discrepancies, flag them
+                if (calculated.totalInvoices != metricsRow.totalInvoices ||
+                    calculated.totalOutstanding != metricsRow.outstanding.toLong()) {
+
+                    Timber.w("""
+                        ⚠️ SNAPSHOT INCONSISTENCY DETECTED!
+                        Snapshots may be stale or incomplete.
+                        Calculated metrics from invoices table should be used.
+                    """.trimIndent())
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error during validation test - continuing with snapshot metrics")
+        }
+
+        try {
             val snapshots = paymentDao.getAllSnapshots(businessId)
 
             if (snapshots.isEmpty()) {
