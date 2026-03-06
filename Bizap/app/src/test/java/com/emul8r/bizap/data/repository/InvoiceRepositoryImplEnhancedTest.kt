@@ -284,7 +284,7 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
         mockInvoice(invoiceId = invoiceId, status = InvoiceStatus.SENT)
         val analyticsSnap = makeAnalyticsSnapshot(invoiceId = invoiceId, status = "SENT")
         coEvery { analyticsDao.getInvoiceSnapshot(invoiceId) } returns analyticsSnap
-        coEvery { analyticsDao.updateSnapshotWithVersion(any(), any(), any(), any(), any()) } returns 1
+        coEvery { analyticsDao.updateInvoiceSnapshot(any()) } just Runs
 
         val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID)
 
@@ -293,39 +293,27 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
     }
 
     @Test
-    fun `updateInvoiceStatus increments paidInvoiceCount when transitioning to PAID`() = runTest {
+    fun `updateInvoiceStatus calls optimistic lock update when transitioning to PAID`() = runTest {
         val invoiceId = 1L
         mockInvoice(invoiceId = invoiceId, status = InvoiceStatus.SENT)
         coEvery { analyticsDao.getInvoiceSnapshot(invoiceId) } returns null
-        val dailySnap = makeDailySnapshot(paidInvoiceCount = 3)
-        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns dailySnap
-        coEvery { analyticsDao.updateSnapshotWithVersion(any(), any(), eq(4), any(), any()) } returns 1
 
         val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID)
 
         assertTrue(result.isSuccess)
-        coVerify { analyticsDao.updateSnapshotWithVersion(any(), any(), 4, any(), any()) }
+        coVerify { analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any()) }
     }
 
     @Test
-    fun `updateInvoiceStatus decrements paidInvoiceCount when transitioning from PAID`() = runTest {
-        val invoiceId = 1L
-        mockInvoice(invoiceId = invoiceId, status = InvoiceStatus.PAID)
-        // PAID → PARTIALLY_PAID (but this is blocked by transition rules; use OVERDUE→PARTIALLY_PAID)
-
-        // Instead test OVERDUE→PARTIALLY_PAID doesn't change paidCount
+    fun `updateInvoiceStatus calls optimistic lock update for OVERDUE to PARTIALLY_PAID transition`() = runTest {
         val invoiceId2 = 2L
         mockInvoice(invoiceId = invoiceId2, status = InvoiceStatus.OVERDUE)
         coEvery { analyticsDao.getInvoiceSnapshot(invoiceId2) } returns null
-        val dailySnap = makeDailySnapshot(paidInvoiceCount = 2)
-        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns dailySnap
-        coEvery { analyticsDao.updateSnapshotWithVersion(any(), any(), eq(2), any(), any()) } returns 1
 
         val result = repository.updateInvoiceStatus(invoiceId2, InvoiceStatus.PARTIALLY_PAID)
 
         assertTrue(result.isSuccess)
-        // paidInvoiceCount stays at 2 (OVERDUE→PARTIALLY_PAID doesn't change paid count)
-        coVerify { analyticsDao.updateSnapshotWithVersion(any(), any(), 2, any(), any()) }
+        coVerify { analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -333,7 +321,6 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
         val invoiceId = 1L
         mockInvoice(invoiceId = invoiceId, status = InvoiceStatus.DRAFT)
         coEvery { analyticsDao.getInvoiceSnapshot(invoiceId) } returns null
-        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
 
         val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.SENT)
 
@@ -344,23 +331,15 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
     // ── Optimistic locking ────────────────────────────────────────────────────────
 
     @Test
-    fun `updateInvoiceStatus retries DailySnapshot update on version conflict`() = runTest {
+    fun `updateInvoiceStatus delegates daily snapshot update to DAO optimistic lock method`() = runTest {
         val invoiceId = 1L
         mockInvoice(invoiceId = invoiceId, status = InvoiceStatus.SENT)
         coEvery { analyticsDao.getInvoiceSnapshot(invoiceId) } returns null
 
-        val snap1 = makeDailySnapshot(version = 1)
-        val snap2 = makeDailySnapshot(version = 2)
-
-        // First read returns version 1, conflict; second read returns version 2, succeeds
-        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returnsMany listOf(snap1, snap2)
-        coEvery { analyticsDao.updateSnapshotWithVersion(any(), any(), any(), eq(1), any()) } returns 0
-        coEvery { analyticsDao.updateSnapshotWithVersion(any(), any(), any(), eq(2), any()) } returns 1
-
         val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID)
 
         assertTrue(result.isSuccess)
-        coVerify(exactly = 2) { analyticsDao.updateSnapshotWithVersion(any(), any(), any(), any(), any()) }
+        coVerify(exactly = 1) { analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any()) }
     }
 
     // ── Retry on transient failure ────────────────────────────────────────────────
@@ -455,13 +434,12 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
 
     @Test
     fun `saveInvoice creates InvoiceAnalyticsSnapshot`() = runTest {
-        val invoice = TestDataFactory.createTestInvoice(status = InvoiceStatus.PAID)
-        val entity = invoice.toEntity()
+        val businessId = 1L
+        val invoice = TestDataFactory.createTestInvoice(id = 0, status = InvoiceStatus.PAID)
 
+        coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
+        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
         coEvery { invoiceDao.insert(any(), any()) } returns 123L
-        coEvery { invoiceDao.getInvoiceWithItemsById(123L) } returns flowOf(
-            InvoiceWithItems(entity.copy(id = 123L), emptyList())
-        )
         coEvery { analyticsDao.insertInvoiceSnapshot(any()) } just Runs
 
         repository.saveInvoice(invoice).getOrThrow()
@@ -471,13 +449,12 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
 
     @Test
     fun `saveInvoice creates DailyRevenueSnapshot`() = runTest {
-        val invoice = TestDataFactory.createTestInvoice(status = InvoiceStatus.PAID)
-        val entity = invoice.toEntity()
+        val businessId = 1L
+        val invoice = TestDataFactory.createTestInvoice(id = 0, status = InvoiceStatus.PAID)
 
+        coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
+        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
         coEvery { invoiceDao.insert(any(), any()) } returns 123L
-        coEvery { invoiceDao.getInvoiceWithItemsById(123L) } returns flowOf(
-            InvoiceWithItems(entity.copy(id = 123L), emptyList())
-        )
         coEvery { analyticsDao.insertDailySnapshot(any()) } just Runs
         coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
 
@@ -488,13 +465,12 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
 
     @Test
     fun `saveInvoice creates InvoicePaymentSnapshot`() = runTest {
-        val invoice = TestDataFactory.createTestInvoice(status = InvoiceStatus.PAID)
-        val entity = invoice.toEntity()
+        val businessId = 1L
+        val invoice = TestDataFactory.createTestInvoice(id = 0, status = InvoiceStatus.PAID)
 
+        coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
+        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
         coEvery { invoiceDao.insert(any(), any()) } returns 123L
-        coEvery { invoiceDao.getInvoiceWithItemsById(123L) } returns flowOf(
-            InvoiceWithItems(entity.copy(id = 123L), emptyList())
-        )
         coEvery { paymentDao.insertSnapshots(any()) } just Runs
 
         repository.saveInvoice(invoice).getOrThrow()
@@ -508,10 +484,8 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
 
     @Test
     fun `updateAmountPaid updates existing payment snapshot`() = runTest {
-        val invoice = TestDataFactory.createTestInvoice(status = InvoiceStatus.SENT)
-        val entity = invoice.toEntity()
-
         mockInvoice(invoiceId = 1L, status = InvoiceStatus.SENT)
+        coEvery { invoiceDao.updateInvoice(any()) } just Runs
 
         val existingSnapshot = mockk<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>(relaxed = true)
         coEvery { paymentDao.getSnapshotByInvoiceId(1L) } returns existingSnapshot
@@ -524,9 +498,8 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
 
     @Test
     fun `updateAmountPaid creates payment snapshot if missing`() = runTest {
-        val invoice = TestDataFactory.createTestInvoice(status = InvoiceStatus.SENT)
-
         mockInvoice(invoiceId = 1L, status = InvoiceStatus.SENT)
+        coEvery { invoiceDao.updateInvoice(any()) } just Runs
         coEvery { paymentDao.getSnapshotByInvoiceId(1L) } returns null  // Missing
         coEvery { paymentDao.insertSnapshots(any()) } just Runs
 

@@ -4,11 +4,14 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.emul8r.bizap.data.local.entities.InvoiceAnalyticsSnapshot
-import com.emul8r.bizap.data.local.entities.DailyRevenueSnapshot
-import com.emul8r.bizap.data.local.entities.CustomerAnalyticsSnapshot
 import com.emul8r.bizap.data.local.entities.BusinessHealthMetrics
+import com.emul8r.bizap.data.local.entities.CustomerAnalyticsSnapshot
+import com.emul8r.bizap.data.local.entities.DailyRevenueSnapshot
+import com.emul8r.bizap.data.local.entities.InvoiceAnalyticsSnapshot
+import com.emul8r.bizap.data.local.entities.InvoiceEntity
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import kotlinx.coroutines.flow.Flow
+import timber.log.Timber
 
 /**
  * Data access for analytics queries
@@ -130,6 +133,9 @@ interface AnalyticsDao {
     @Query("DELETE FROM daily_revenue_snapshots WHERE businessProfileId = :businessId")
     suspend fun deleteAllDailySnapshots(businessId: Long)
 
+    @Query("DELETE FROM daily_revenue_snapshots WHERE id = :id")
+    suspend fun deleteDailySnapshot(id: Long)
+
     /**
      * Find invoice IDs that are missing analytics snapshots.
      * Used for health reporting and recovery.
@@ -151,4 +157,56 @@ interface AnalyticsDao {
         WHERE i.id IS NULL
     """)
     suspend fun getOrphanedInvoiceSnapshots(): List<Long>
+
+    /**
+     * Updates [DailyRevenueSnapshot] for a status transition using optimistic locking with retry.
+     *
+     * Computes the revenue and paid-invoice-count deltas from [oldStatus] → [newStatus] and
+     * applies them to the existing snapshot. Retries up to [CONCURRENCY_RETRY_MAX] times on
+     * version conflicts. If no snapshot exists for [invoiceDate], the call is a no-op (daily
+     * snapshots are created on invoice creation, not on status transitions).
+     */
+    suspend fun updateDailySnapshotWithOptimisticLock(
+        businessId: Long,
+        invoiceDate: String,
+        invoiceEntity: InvoiceEntity,
+        oldStatus: InvoiceStatus,
+        newStatus: InvoiceStatus
+    ) {
+        val paidStatuses = listOf(InvoiceStatus.PAID, InvoiceStatus.PARTIALLY_PAID)
+        var attempt = 0
+        while (attempt < CONCURRENCY_RETRY_MAX) {
+            val existing = getDailySnapshotByDate(businessId, invoiceDate) ?: return
+
+            val oldRevenueContribution = if (oldStatus in paidStatuses) invoiceEntity.amountPaid else 0L
+            val newRevenueContribution = if (newStatus in paidStatuses) invoiceEntity.amountPaid else 0L
+            val delta = newRevenueContribution - oldRevenueContribution
+
+            val newPaidCount = when {
+                oldStatus != InvoiceStatus.PAID && newStatus == InvoiceStatus.PAID ->
+                    existing.paidInvoiceCount + 1
+                oldStatus == InvoiceStatus.PAID && newStatus != InvoiceStatus.PAID ->
+                    (existing.paidInvoiceCount - 1).coerceAtLeast(0)
+                else -> existing.paidInvoiceCount
+            }
+
+            val rowsUpdated = updateSnapshotWithVersion(
+                id = existing.id,
+                totalRevenue = (existing.totalRevenue + delta).coerceAtLeast(0L),
+                paidInvoiceCount = newPaidCount,
+                expectedVersion = existing.version,
+                updatedAtMs = System.currentTimeMillis()
+            )
+
+            if (rowsUpdated > 0) return
+
+            attempt++
+            Timber.w("⚠️ DailyRevenueSnapshot version conflict – retrying ($attempt/$CONCURRENCY_RETRY_MAX)")
+        }
+        Timber.w("⚠️ Could not update DailyRevenueSnapshot after $CONCURRENCY_RETRY_MAX attempts (concurrent update conflict)")
+    }
+
+    companion object {
+        const val CONCURRENCY_RETRY_MAX = 5
+    }
 }
