@@ -159,7 +159,8 @@ class InputValidatorTest {
 
     // ── validateAmount ───────────────────────────────────────────────────────────
 
-    @Test {
+    @Test
+    fun validateAmount_success() {
         val result = InputValidator.validateAmount(1000L)
         assertTrue(result.isSuccess())
         assertEquals(1000L, result.getOrNull())
