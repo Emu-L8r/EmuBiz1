@@ -142,8 +142,9 @@ class InvoiceRepositoryImpl @Inject constructor(
                 Timber.d("✅ Created missing payment snapshot (fallback) for invoice $invoiceId")
             }
         } catch (e: Exception) {
-            Timber.w(e, "⚠️ Failed to sync payment snapshots for invoice $invoiceId (non-blocking)")
-            // Don't throw - snapshot sync is best-effort
+            // 🚨 CRITICAL: Expose the exception so we can debug outstanding amount calculation
+            Timber.e(e, "❌ CRITICAL: Failed to sync payment snapshots for invoice $invoiceId")
+            throw e  // ← Re-throw to expose the actual error in logs
         }
 
         Unit
@@ -419,15 +420,30 @@ class InvoiceRepositoryImpl @Inject constructor(
         }
         val existingPaymentSnapshot = paymentDao.getSnapshotByInvoiceId(invoice.id)
         if (existingPaymentSnapshot != null) {
+            // ✅ SAFE: Type-safe calculation of outstanding amount
+            val totalAmount: Long = invoice.totalAmount ?: 0L
+            val amountPaid: Long = invoice.amountPaid ?: 0L
+            val outstandingAmount: Long = (totalAmount - amountPaid).coerceAtLeast(0L)
+
+            // ✅ Validation: Check for logical errors
+            if (amountPaid > totalAmount) {
+                Timber.e("⚠️ Warning: Payment ($amountPaid) exceeds total ($totalAmount) for invoice ${invoice.id}")
+            }
+
             paymentDao.updateSnapshot(
                 existingPaymentSnapshot.copy(
-                    paidAmount = invoice.amountPaid,
-                    outstandingAmount = invoice.totalAmount - invoice.amountPaid,
+                    paidAmount = amountPaid,
+                    outstandingAmount = outstandingAmount,
                     paymentStatus = paymentStatusStr,
                     lastUpdatedMs = System.currentTimeMillis()
                 )
             )
         } else {
+            // ✅ SAFE: Type-safe calculation for new snapshot
+            val totalAmount: Long = invoice.totalAmount ?: 0L
+            val amountPaid: Long = invoice.amountPaid ?: 0L
+            val outstandingAmount: Long = (totalAmount - amountPaid).coerceAtLeast(0L)
+
             paymentDao.insertSnapshots(
                 listOf(
                     InvoicePaymentSnapshot(
@@ -438,9 +454,9 @@ class InvoiceRepositoryImpl @Inject constructor(
                         invoiceNumber = computedInvoiceNumber,
                         invoiceDate = invoice.date,
                         dueDate = invoice.dueDate,
-                        totalAmount = invoice.totalAmount,
-                        paidAmount = invoice.amountPaid,
-                        outstandingAmount = invoice.totalAmount - invoice.amountPaid,
+                        totalAmount = totalAmount,
+                        paidAmount = amountPaid,
+                        outstandingAmount = outstandingAmount,
                         paymentStatus = paymentStatusStr,
                         ageingBucket = when {
                             daysOverdue <= 0 -> "CURRENT"
@@ -450,9 +466,9 @@ class InvoiceRepositoryImpl @Inject constructor(
                         },
                         daysOverdue = daysOverdue,
                         daysSinceDue = maxOf(0, daysOverdue),
-                        lastPaymentDate = if (invoice.amountPaid > 0) System.currentTimeMillis() else null,
-                        lastPaymentAmount = if (invoice.amountPaid > 0) invoice.amountPaid else 0L,
-                        paymentCount = if (invoice.amountPaid > 0) 1 else 0,
+                        lastPaymentDate = if (amountPaid > 0) System.currentTimeMillis() else null,
+                        lastPaymentAmount = if (amountPaid > 0) amountPaid else 0L,
+                        paymentCount = if (amountPaid > 0) 1 else 0,
                         isAtRisk = invoice.dueDate < System.currentTimeMillis() &&
                                 invoice.status != InvoiceStatus.PAID.name,
                         riskScore = when {
