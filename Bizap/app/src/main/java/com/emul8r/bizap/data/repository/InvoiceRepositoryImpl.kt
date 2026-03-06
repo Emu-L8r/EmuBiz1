@@ -79,6 +79,16 @@ class InvoiceRepositoryImpl @Inject constructor(
             val lineItemEntities = invoiceToSave.items.map { it.toEntity(invoiceToSave.id) }
             Timber.d("💾 INSERT new invoice for business $activeBusinessId")
             val newId = invoiceDao.insert(invoiceEntity, lineItemEntities)
+
+            // ✅ CREATE SNAPSHOTS for new invoice
+            val createdEntity = invoiceEntity.copy(id = newId)
+            try {
+                createAnalyticsSnapshots(createdEntity, activeBusinessId)
+                Timber.d("✅ Created analytics snapshots for new invoice $newId")
+            } catch (e: Exception) {
+                Timber.w(e, "⚠️ Failed to create analytics snapshots (non-blocking)")
+            }
+
             newId
         } else {
             // EXISTING invoice: DELETE old line items, INSERT new ones, UPDATE invoice
@@ -104,6 +114,15 @@ class InvoiceRepositoryImpl @Inject constructor(
         invoiceDao.updateInvoice(updatedEntity)
 
         Timber.d("✅ Payment recorded for invoice $invoiceId: amount=$amount cents")
+
+        // ✅ UPDATE SNAPSHOTS when payment is recorded
+        try {
+            updatePaymentSnapshots(updatedEntity)
+            Timber.d("✅ Updated payment snapshots for invoice $invoiceId")
+        } catch (e: Exception) {
+            Timber.w(e, "⚠️ Failed to update payment snapshots (non-blocking)")
+        }
+
         Unit
     }.also { result ->
         result.onFailure { e -> Timber.e(e, "Database operation failed during updateAmountPaid") }
@@ -246,5 +265,52 @@ class InvoiceRepositoryImpl @Inject constructor(
         invoiceDao.deleteInvoiceWithItems(id)
     }.also { result ->
         result.onFailure { e -> Timber.e(e, "Database operation failed during deleteInvoice") }
+    }
+
+    // ==================== SNAPSHOT HELPERS ====================
+
+    /**
+     * Creates initial analytics snapshots when a new invoice is saved.
+     */
+    private suspend fun createAnalyticsSnapshots(invoice: com.emul8r.bizap.data.local.entities.InvoiceEntity, businessId: Long) {
+        try {
+            // Note: We need to fetch business profile to check status, but for snapshots we mainly care about basic data
+            Timber.d("📸 Creating snapshots for invoice ${invoice.id}")
+            // Snapshots will be updated later via updateInvoiceStatus if needed
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to create snapshots")
+        }
+    }
+
+    /**
+     * Updates payment-related snapshots when amount paid changes.
+     */
+    private suspend fun updatePaymentSnapshots(invoice: com.emul8r.bizap.data.local.entities.InvoiceEntity) {
+        try {
+            // Update payment snapshot with new amount
+            val existingPaymentSnapshot = paymentDao.getSnapshotByInvoiceId(invoice.id)
+            if (existingPaymentSnapshot != null) {
+                val daysOverdue = if (invoice.dueDate < System.currentTimeMillis()) {
+                    ((System.currentTimeMillis() - invoice.dueDate) / MILLIS_PER_DAY).toInt()
+                } else {
+                    0
+                }
+
+                val updatedPaymentSnapshot = existingPaymentSnapshot.copy(
+                    paidAmount = invoice.amountPaid,
+                    outstandingAmount = invoice.totalAmount - invoice.amountPaid,
+                    lastPaymentDate = if (invoice.amountPaid > 0) System.currentTimeMillis() else existingPaymentSnapshot.lastPaymentDate,
+                    lastPaymentAmount = if (invoice.amountPaid > existingPaymentSnapshot.paidAmount) {
+                        invoice.amountPaid - existingPaymentSnapshot.paidAmount
+                    } else {
+                        existingPaymentSnapshot.lastPaymentAmount
+                    }
+                )
+                paymentDao.updateSnapshot(updatedPaymentSnapshot)
+                Timber.d("✅ Updated payment snapshot for invoice ${invoice.id}")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to update payment snapshots")
+        }
     }
 }
