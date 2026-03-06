@@ -91,6 +91,41 @@ class CustomerAnalyticsRepositoryImpl @Inject constructor(
         analyticsDao.insertSnapshots(updated)
     }
 
+    override suspend fun createInitialSnapshot(
+        customerId: Long,
+        businessId: Long,
+        customerName: String,
+        customerEmail: String?
+    ): Result<Unit> = runCatching {
+        val snapshot = CustomerAnalyticsSnapshot(
+            customerId = customerId,
+            businessProfileId = businessId,
+            customerName = customerName,
+            customerEmail = customerEmail,
+            segment = "NEW",
+            totalRevenue = 0L,
+            invoiceCount = 0,
+            paidInvoiceCount = 0,
+            overdueInvoiceCount = 0,
+            averageInvoiceAmount = 0L,
+            customerLifetimeValue = 0L,
+            estimatedLTV = 0L,
+            isTopCustomer = false,
+            purchaseVelocity = 0.0,
+            averageDaysBetweenPurchases = 0.0,
+            daysSinceLastPurchase = 0,
+            churnRiskScore = 0.0,
+            isPredictedToChurn = false,
+            churnRiskFactors = "[]",
+            isActive = true,
+            riskScore = 0,
+            snapshotCreatedAtMs = System.currentTimeMillis(),
+            lastUpdatedMs = System.currentTimeMillis()
+        )
+        analyticsDao.insertSnapshot(snapshot)
+        Timber.d("✅ Created initial analytics snapshot for customer $customerId with NEW segment")
+    }
+
     // --- Internal Mappers ---
 
     private fun CustomerAnalyticsSnapshot.toLtvModel() = CustomerLifetimeValue(

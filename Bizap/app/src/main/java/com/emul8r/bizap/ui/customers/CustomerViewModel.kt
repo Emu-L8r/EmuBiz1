@@ -6,7 +6,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.BuildConfig
+import com.emul8r.bizap.domain.customer.repository.CustomerAnalyticsRepository
 import com.emul8r.bizap.domain.model.Customer
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.validation.ValidationRules
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,7 +30,9 @@ data class CustomerFormState(
 
 @HiltViewModel
 class CustomerViewModel @Inject constructor(
-    private val repository: CustomerRepository
+    private val repository: CustomerRepository,
+    private val analyticsRepository: CustomerAnalyticsRepository,
+    private val businessProfileRepository: BusinessProfileRepository
 ) : ViewModel() {
 
     // Single source of truth for the UI
@@ -74,8 +78,19 @@ class CustomerViewModel @Inject constructor(
 
         viewModelScope.launch {
             repository.insert(customer)
-                .onSuccess {
+                .onSuccess { customerId ->
                     Timber.d("✅ Customer saved successfully: ${customer.name}")
+                    // Create initial analytics snapshot with NEW segment
+                    val businessId = runCatching { businessProfileRepository.getActiveBusinessId() }
+                        .getOrDefault(1L)
+                    analyticsRepository.createInitialSnapshot(
+                        customerId = customerId,
+                        businessId = businessId,
+                        customerName = customer.name,
+                        customerEmail = customer.email
+                    ).onFailure { e ->
+                        Timber.w(e, "⚠️ Customer created but failed to create analytics snapshot")
+                    }
                     _formState.update { it.copy(error = null, isSaving = false) }
                     clearFields()
                     onSuccess()

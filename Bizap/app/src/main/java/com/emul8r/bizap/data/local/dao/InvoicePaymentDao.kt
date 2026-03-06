@@ -23,6 +23,12 @@ interface InvoicePaymentDao {
     suspend fun insertSnapshots(snapshots: List<InvoicePaymentSnapshot>)
 
     @Query("SELECT * FROM invoice_payment_snapshots WHERE businessProfileId = :businessId ORDER BY dueDate ASC")
+    fun observeAllSnapshots(businessId: Long): Flow<List<InvoicePaymentSnapshot>>
+
+    @Query("SELECT * FROM invoice_payment_snapshots WHERE businessProfileId = :businessId AND isAtRisk = 1 ORDER BY riskScore DESC LIMIT :limit")
+    fun observeRiskInvoices(businessId: Long, limit: Int = 10): Flow<List<InvoicePaymentSnapshot>>
+
+    @Query("SELECT * FROM invoice_payment_snapshots WHERE businessProfileId = :businessId ORDER BY dueDate ASC")
     suspend fun getAllSnapshots(businessId: Long): List<InvoicePaymentSnapshot>
 
     @Query("SELECT COUNT(*) FROM invoice_payment_snapshots WHERE businessProfileId = :businessId AND paymentStatus = :status")
