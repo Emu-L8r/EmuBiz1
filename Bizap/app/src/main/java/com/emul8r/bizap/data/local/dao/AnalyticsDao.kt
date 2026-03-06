@@ -53,6 +53,31 @@ interface AnalyticsDao {
     @androidx.room.Update
     suspend fun updateDailySnapshot(snapshot: DailyRevenueSnapshot)
 
+    /**
+     * Updates a [DailyRevenueSnapshot] only when the stored version matches [expectedVersion].
+     *
+     * Returns the number of rows updated (1 on success, 0 if the version has changed due to a
+     * concurrent write). Callers should retry with a fresh read when 0 is returned.
+     */
+    @Query("""
+        UPDATE daily_revenue_snapshots
+        SET totalRevenue      = :totalRevenue,
+            paidInvoiceCount  = :paidInvoiceCount,
+            version           = version + 1,
+            updatedAtMs       = :updatedAtMs
+        WHERE id = :id AND version = :expectedVersion
+    """)
+    suspend fun updateSnapshotWithVersion(
+        id: Long,
+        totalRevenue: Long,
+        paidInvoiceCount: Int,
+        expectedVersion: Int,
+        updatedAtMs: Long
+    ): Int
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertInvoiceSnapshot(snapshot: InvoiceAnalyticsSnapshot)
+
     @Query("SELECT * FROM daily_revenue_snapshots WHERE businessProfileId = :businessId AND dateString >= :startDate ORDER BY dateString DESC")
     suspend fun getDailyRevenueTrend(businessId: Long, startDate: String): List<DailyRevenueSnapshot>
 
