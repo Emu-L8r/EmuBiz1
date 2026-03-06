@@ -4,8 +4,12 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.*
 import com.emul8r.bizap.data.worker.ExchangeRateWorker
+import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import com.emul8r.bizap.utils.CrashlyticsTree
 import java.util.concurrent.TimeUnit
@@ -16,6 +20,9 @@ class BizapApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+
+    @Inject
+    lateinit var currencyRepository: CurrencyRepository
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -30,6 +37,9 @@ class BizapApplication : Application(), Configuration.Provider {
 
         // 📊 INITIALIZE FIREBASE ANALYTICS
         initializeAnalytics()
+
+        // 💱 SEED CURRENCIES (must happen early so dropdowns work)
+        seedCurrencies()
 
         // ⏰ SCHEDULE BACKGROUND JOBS
         scheduleExchangeRateUpdates()
@@ -120,5 +130,23 @@ class BizapApplication : Application(), Configuration.Provider {
             ExistingPeriodicWorkPolicy.KEEP,
             exchangeRateWork
         )
+    }
+
+    /**
+     * CURRENCY SEEDING
+     * ================
+     * Seeds the currencies table with default currencies (AUD, USD, EUR, GBP, JPY)
+     * This is called on app startup to ensure currency dropdowns have data
+     */
+    private fun seedCurrencies() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                Timber.d("💱 Seeding currencies...")
+                currencyRepository.seedDefaultCurrencies()
+                Timber.d("✅ Currencies seeded successfully")
+            } catch (e: Exception) {
+                Timber.e(e, "⚠️ Failed to seed currencies (non-blocking)")
+            }
+        }
     }
 }
