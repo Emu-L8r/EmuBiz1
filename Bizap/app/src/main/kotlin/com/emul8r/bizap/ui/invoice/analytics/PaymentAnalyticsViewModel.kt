@@ -16,6 +16,7 @@ import javax.inject.Inject
 /**
  * ViewModel for Payment Analytics Dashboard.
  * Manages payment metrics, aging analysis, cash flow forecasts, and dunning notices.
+ * ✅ FIXED: Now supports refresh when invoice data changes
  */
 @HiltViewModel
 class PaymentAnalyticsViewModel @Inject constructor(
@@ -32,19 +33,23 @@ class PaymentAnalyticsViewModel @Inject constructor(
         loadPaymentAnalytics()
     }
 
-    private fun loadPaymentAnalytics() {
+    /**
+     * Load payment analytics from the database.
+     * ✅ IMPROVED: Made public so it can be called to refresh data
+     */
+    fun loadPaymentAnalytics() {
         viewModelScope.launch {
             try {
-                Timber.d("PaymentAnalyticsViewModel: Loading analytics")
+                Timber.d("📊 PaymentAnalyticsViewModel: Loading analytics")
                 _state.value = PaymentAnalyticsUiState.Loading
 
                 val businessId = businessProfileRepository.getActiveBusinessId()
                 val analytics = getPaymentAnalyticsUseCase(businessId)
 
-                Timber.d("PaymentAnalyticsViewModel: Loaded analytics - Total: ${analytics.totalInvoices}")
+                Timber.d("✅ PaymentAnalyticsViewModel: Loaded analytics - Total invoices: ${analytics.totalInvoices}, Outstanding: ${analytics.outstandingAmount / 100.0}")
                 _state.value = PaymentAnalyticsUiState.Success(analytics)
             } catch (e: Exception) {
-                Timber.e(e, "PaymentAnalyticsViewModel: Error loading analytics")
+                Timber.e(e, "❌ PaymentAnalyticsViewModel: Error loading analytics")
                 _state.value = PaymentAnalyticsUiState.Error(
                     "Failed to load analytics: ${e.message}"
                 )
@@ -52,7 +57,12 @@ class PaymentAnalyticsViewModel @Inject constructor(
         }
     }
 
-    fun retryLoadAnalytics() {
+    /**
+     * ✅ RENAMED: Made public and renamed for clarity
+     * Call this to refresh analytics (e.g., after creating/editing invoices)
+     */
+    fun refreshAnalytics() {
+        Timber.d("🔄 PaymentAnalyticsViewModel: Refreshing analytics after invoice operation")
         loadPaymentAnalytics()
     }
 }
