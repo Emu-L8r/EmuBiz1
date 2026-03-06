@@ -72,4 +72,7 @@ sealed interface Screen {
 
     @Serializable
     object CustomerSegments : Screen
+
+    @Serializable
+    object CustomerAnalytics : Screen
 }
