@@ -37,7 +37,12 @@ data class DailyRevenueSnapshot(
     val dayOverDayGrowth: Double = 0.0, // Percentage
     val weekOverWeekGrowth: Double = 0.0,
 
-    val snapshotCreatedAtMs: Long = System.currentTimeMillis()
+    val snapshotCreatedAtMs: Long = System.currentTimeMillis(),
+
+    // Optimistic locking: incremented on every update to detect concurrent writes
+    val version: Int = 1,
+
+    val updatedAtMs: Long = System.currentTimeMillis()
 )
 
 
