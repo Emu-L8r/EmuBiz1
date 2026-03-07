@@ -87,8 +87,8 @@ class SnapshotRepairWorker(
                     .addTag(WORKER_TAG)
                     .setBackoffCriteria(
                         backoffPolicy = androidx.work.BackoffPolicy.EXPONENTIAL,
-                        initialBackoff = 15,
-                        backoffTimeUnit = TimeUnit.MINUTES
+                        backoffDelay = 15,
+                        timeUnit = TimeUnit.MINUTES
                     )
                     .build()
 
@@ -145,4 +145,5 @@ class SnapshotRepairWorker(
 interface SnapshotRepairWorkerEntryPoint {
     fun snapshotRebuildService(): SnapshotRebuildService
 }
+
 
