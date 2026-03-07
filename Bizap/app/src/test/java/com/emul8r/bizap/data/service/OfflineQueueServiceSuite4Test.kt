@@ -173,8 +173,8 @@ class OfflineQueueServiceSuite4Test {
         assertTrue("status is String", operation.status is String)
         assertTrue("retryCount is Int", operation.retryCount is Int)
 
-        // Assert: Primary key is auto-generated
-        assertEquals("id auto-generated (0 before insert)", true, true)
+        // Assert: Primary key is auto-generated (0 before insert)
+        assertEquals("id is 0 before insert (auto-generated)", 0L, operation.id)
     }
 
     /**
