@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Legacy colors (retained for compatibility) -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -7,4 +8,46 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Material 3 Primary -->
+    <color name="md_theme_light_primary">#FF6750A4</color>
+    <color name="md_theme_light_onPrimary">#FFFFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#FFEADDFF</color>
+    <color name="md_theme_light_onPrimaryContainer">#FF21005D</color>
+
+    <!-- Material 3 Secondary -->
+    <color name="md_theme_light_secondary">#FF625B71</color>
+    <color name="md_theme_light_onSecondary">#FFFFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#FFE8DEF8</color>
+    <color name="md_theme_light_onSecondaryContainer">#FF1D192B</color>
+
+    <!-- Material 3 Tertiary -->
+    <color name="md_theme_light_tertiary">#FF7D5260</color>
+    <color name="md_theme_light_onTertiary">#FFFFFFFF</color>
+    <color name="md_theme_light_tertiaryContainer">#FFFFD8E4</color>
+    <color name="md_theme_light_onTertiaryContainer">#FF31111D</color>
+
+    <!-- Material 3 Error -->
+    <color name="md_theme_light_error">#FFB3261E</color>
+    <color name="md_theme_light_onError">#FFFFFFFF</color>
+    <color name="md_theme_light_errorContainer">#FFF9DEDC</color>
+    <color name="md_theme_light_onErrorContainer">#FF410E0B</color>
+
+    <!-- Material 3 Surface / Background -->
+    <color name="md_theme_light_background">#FFFBFDF8</color>
+    <color name="md_theme_light_onBackground">#FF191C19</color>
+    <color name="md_theme_light_surface">#FFFAFAFA</color>
+    <color name="md_theme_light_onSurface">#FF1C1C1C</color>
+    <color name="md_theme_light_surfaceVariant">#FFE7E0EC</color>
+    <color name="md_theme_light_onSurfaceVariant">#FF49454F</color>
+
+    <!-- Material 3 Outline -->
+    <color name="md_theme_light_outline">#FF79747E</color>
+    <color name="md_theme_light_outlineVariant">#FFCAC4D0</color>
+
+    <!-- Semantic / Status Colors -->
+    <color name="semantic_success">#FF4CAF50</color>
+    <color name="semantic_warning">#FFFFA500</color>
+    <color name="semantic_error">#FFB3261E</color>
+    <color name="semantic_info">#FF2196F3</color>
 </resources>
