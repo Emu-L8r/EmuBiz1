@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 22,
-    "identityHash": "b3f5c7d2e4a6891c0f2d3e5g7h9i1j3k",
+    "identityHash": "c55bf9a31604bed2107eb941e5b369b9",
     "entities": [
       {
         "tableName": "customers",
@@ -2187,7 +2187,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '56e106de0a286b081877d7dc61c93cdd')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c55bf9a31604bed2107eb941e5b369b9')"
     ]
   }
 }
