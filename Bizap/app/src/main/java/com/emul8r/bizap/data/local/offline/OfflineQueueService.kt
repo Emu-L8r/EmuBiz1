@@ -136,7 +136,6 @@ class OfflineQueueService @Inject constructor(
             val id = dao.insert(operation)
             cacheUpdateMutex.withLock {
                 pendingCache.add(operation.copy(id = id))
-                updateStateFlow(businessId)
             }
             Timber.d("🗑️ Queued DELETE_CUSTOMER: $id for customer $customerId")
             id
