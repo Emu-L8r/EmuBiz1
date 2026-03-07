@@ -21,12 +21,14 @@ private const val HIGH_CHURN_RATE_THRESHOLD = 20.0
 
 @Composable
 fun CustomerSegmentationScreen(
-    viewModel: CustomerSegmentationViewModel = hiltViewModel()
+    viewModel: CustomerSegmentationViewModel = hiltViewModel(),
+    modifier: Modifier = Modifier,
+    headerSlot: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         when (val state = uiState) {
             is CustomerSegmentationUiState.Loading -> {
@@ -65,7 +67,11 @@ fun CustomerSegmentationScreen(
                 }
             }
             is CustomerSegmentationUiState.Success -> {
-                CustomerSegmentationContent(summary = state.summary, onRefresh = { viewModel.loadSegments() })
+                CustomerSegmentationContent(
+                    summary = state.summary,
+                    onRefresh = { viewModel.loadSegments() },
+                    headerSlot = headerSlot,
+                )
             }
         }
     }
@@ -74,7 +80,8 @@ fun CustomerSegmentationScreen(
 @Composable
 private fun CustomerSegmentationContent(
     summary: CustomerAnalyticsSummary,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    headerSlot: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     LazyColumn(
         modifier = Modifier
@@ -83,18 +90,22 @@ private fun CustomerSegmentationContent(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Customer Segments",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = onRefresh) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+            Column {
+                headerSlot?.invoke(this) ?: run {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Customer Segments",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        IconButton(onClick = onRefresh) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        }
+                    }
                 }
             }
         }

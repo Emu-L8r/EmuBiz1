@@ -23,7 +23,10 @@ import com.emul8r.bizap.utils.CentsFormatter
 
 @Composable
 fun RevenueDashboardScreen(
-    viewModel: RevenueDashboardViewModel = hiltViewModel()
+    viewModel: RevenueDashboardViewModel = hiltViewModel(),
+    modifier: Modifier = Modifier,
+    headerSlot: (@Composable ColumnScope.() -> Unit)? = null,
+    footerSlot: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val state by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -55,7 +58,10 @@ fun RevenueDashboardScreen(
                         metrics = s.metrics,
                         isRefreshing = isRefreshing,
                         onRefresh = { viewModel.forceRefresh() },
-                        onRebuild = { viewModel.rebuildSnapshots() }
+                        onRebuild = { viewModel.rebuildSnapshots() },
+                        headerSlot = headerSlot,
+                        footerSlot = footerSlot,
+                        modifier = modifier,
                     )
                 }
                 is RevenueDashboardUiState.Error -> {
@@ -83,15 +89,26 @@ private fun RevenueDashboardContent(
     metrics: RevenueMetrics,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
-    onRebuild: () -> Unit
+    onRebuild: () -> Unit,
+    headerSlot: (@Composable ColumnScope.() -> Unit)? = null,
+    footerSlot: (@Composable ColumnScope.() -> Unit)? = null,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        headerSlot?.invoke(this) ?: run {
+            Text(
+                text = "Revenue Dashboard",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+
         DashboardActionButtons(
             isRefreshing = isRefreshing,
             onRefresh = onRefresh,
@@ -118,6 +135,15 @@ private fun RevenueDashboardContent(
                     Text(text = CentsFormatter.formatCents(performer.totalAmount, performer.currencyCode))
                 }
             }
+        }
+
+        footerSlot?.invoke(this) ?: run {
+            HorizontalDivider()
+            Text(
+                text = "Data as of today",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

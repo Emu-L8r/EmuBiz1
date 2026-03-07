@@ -40,7 +40,9 @@ fun InvoiceDetailScreen(
     onInvoiceDeleted: () -> Unit = {},
     onNavigateToRevenue: (() -> Unit)? = null,
     onNavigateToPayments: (() -> Unit)? = null,
-    viewModel: InvoiceDetailViewModel = hiltViewModel()
+    viewModel: InvoiceDetailViewModel = hiltViewModel(),
+    modifier: Modifier = Modifier,
+    actionSlot: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val overwriteDialogState by viewModel.showOverwriteDialog.collectAsStateWithLifecycle()
@@ -302,96 +304,99 @@ fun InvoiceDetailScreen(
                                 .padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // PRIMARY ACTION: Save Invoice
-                            Button(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(54.dp),
-                                onClick = {
-                                    isSaving = true
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("Invoice saved successfully")
+                            actionSlot?.invoke(this) ?: run {
+                                // DEFAULT: Standard action buttons (Save, Export PDF, Delete)
+                                // PRIMARY ACTION: Save Invoice
+                                Button(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(54.dp),
+                                    onClick = {
+                                        isSaving = true
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Invoice saved successfully")
+                                        }
+                                        isSaving = false
+                                    },
+                                    enabled = !isSaving && !isExporting,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                    )
+                                ) {
+                                    if (isSaving) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            "Saving...",
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Save,
+                                            contentDescription = "Save",
+                                            modifier = Modifier.size(20.dp),
+                                            tint = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            "Save Invoice",
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
-                                    isSaving = false
-                                },
-                                enabled = !isSaving && !isExporting,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                                )
-                            ) {
-                                if (isSaving) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        strokeWidth = 2.dp
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Saving...",
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Default.Save,
-                                        contentDescription = "Save",
-                                        modifier = Modifier.size(20.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Save Invoice",
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                                        fontWeight = FontWeight.Bold
-                                    )
                                 }
-                            }
 
-                            // SECONDARY ACTION: Export as PDF
-                            Button(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                onClick = {
-                                    isExporting = true
-                                    viewModel.shareInternalPdf()
-                                },
-                                enabled = !isSaving && !isExporting,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondary,
-                                    disabledContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
-                                )
-                            ) {
-                                if (isExporting) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = MaterialTheme.colorScheme.onSecondary,
-                                        strokeWidth = 2.dp
+                                // SECONDARY ACTION: Export as PDF
+                                Button(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
+                                    onClick = {
+                                        isExporting = true
+                                        viewModel.shareInternalPdf()
+                                    },
+                                    enabled = !isSaving && !isExporting,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondary,
+                                        disabledContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Exporting...",
-                                        color = MaterialTheme.colorScheme.onSecondary,
-                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Default.Download,
-                                        contentDescription = "Export",
-                                        modifier = Modifier.size(20.dp),
-                                        tint = MaterialTheme.colorScheme.onSecondary
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Export as PDF",
-                                        color = MaterialTheme.colorScheme.onSecondary,
-                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                ) {
+                                    if (isExporting) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            color = MaterialTheme.colorScheme.onSecondary,
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            "Exporting...",
+                                            color = MaterialTheme.colorScheme.onSecondary,
+                                            fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Download,
+                                            contentDescription = "Export",
+                                            modifier = Modifier.size(20.dp),
+                                            tint = MaterialTheme.colorScheme.onSecondary
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            "Export as PDF",
+                                            color = MaterialTheme.colorScheme.onSecondary,
+                                            fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                             }
                         }
