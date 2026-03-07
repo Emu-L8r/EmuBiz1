@@ -9,7 +9,7 @@ import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -23,27 +23,31 @@ class RevenueRepositoryImpl @Inject constructor(
 ) : RevenueRepository {
 
     override fun observeRevenueMetrics(businessProfileId: Long): Flow<RevenueMetrics> {
-        return analyticsDao.observeLast30DaysRevenue(businessProfileId)
-            .map { snapshots ->
-                Timber.d("RevenueRepository: Reactive update with ${snapshots.size} snapshots for business $businessProfileId")
-                if (snapshots.isEmpty()) {
-                    RevenueMetrics(
-                        mtdRevenue = 0L,
-                        ytdRevenue = 0L,
-                        weeklyRevenue = 0L,
-                        dailyTrend = emptyList(),
-                        topPerformers = emptyList()
-                    )
-                } else {
-                    RevenueMetrics(
-                        mtdRevenue = calculateMTD(snapshots),
-                        ytdRevenue = calculateYTD(snapshots),
-                        weeklyRevenue = calculateWeekly(snapshots),
-                        dailyTrend = transformToDailyData(snapshots),
-                        topPerformers = calculateByCurrency(snapshots)
-                    )
-                }
+        return combine(
+            analyticsDao.observeLast30DaysRevenue(businessProfileId),
+            analyticsDao.observeTotalPaidRevenue(businessProfileId)
+        ) { snapshots, totalPaid ->
+            Timber.d("RevenueRepository: Reactive update with ${snapshots.size} snapshots, totalPaid=$totalPaid cents for business $businessProfileId")
+            if (snapshots.isEmpty() && totalPaid == 0L) {
+                RevenueMetrics(
+                    mtdRevenue = 0L,
+                    ytdRevenue = 0L,
+                    weeklyRevenue = 0L,
+                    totalPaidRevenue = 0L,
+                    dailyTrend = emptyList(),
+                    topPerformers = emptyList()
+                )
+            } else {
+                RevenueMetrics(
+                    mtdRevenue = calculateMTD(snapshots),
+                    ytdRevenue = calculateYTD(snapshots),
+                    weeklyRevenue = calculateWeekly(snapshots),
+                    totalPaidRevenue = totalPaid,
+                    dailyTrend = transformToDailyData(snapshots),
+                    topPerformers = calculateByCurrency(snapshots)
+                )
             }
+        }
     }
 
     override suspend fun getRevenueMetrics(businessProfileId: Long): RevenueMetrics {
@@ -59,6 +63,7 @@ class RevenueRepositoryImpl @Inject constructor(
                         mtdRevenue = 0L,
                         ytdRevenue = 0L,
                         weeklyRevenue = 0L,
+                        totalPaidRevenue = analyticsDao.getTotalPaidRevenueLong(businessProfileId),
                         dailyTrend = emptyList(),
                         topPerformers = emptyList()
                     )
@@ -71,11 +76,13 @@ class RevenueRepositoryImpl @Inject constructor(
                 val weekly = calculateWeekly(dailySnapshots)
                 val dailyTrend = transformToDailyData(dailySnapshots)
                 val currencyBreakdown = calculateByCurrency(dailySnapshots)
+                val totalPaid = analyticsDao.getTotalPaidRevenueLong(businessProfileId)
 
                 RevenueMetrics(
                     mtdRevenue = mtd,
                     ytdRevenue = ytd,
                     weeklyRevenue = weekly,
+                    totalPaidRevenue = totalPaid,
                     dailyTrend = dailyTrend,
                     topPerformers = currencyBreakdown
                 )

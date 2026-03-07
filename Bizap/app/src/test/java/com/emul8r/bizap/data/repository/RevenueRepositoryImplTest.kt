@@ -44,6 +44,7 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
         )
 
         coEvery { analyticsDao.getLast30DaysRevenue(businessId) } returns testSnapshots
+        coEvery { analyticsDao.getTotalPaidRevenueLong(businessId) } returns 150000L
 
         // Act
         val metrics = repository.getRevenueMetrics(businessId)
@@ -51,5 +52,6 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
         // Assert
         assertEquals(100000L, metrics.mtdRevenue)
         assertEquals(150000L, metrics.ytdRevenue) // Assumes both in same year
+        assertEquals(150000L, metrics.totalPaidRevenue) // Summed from all paid invoices
     }
 }
