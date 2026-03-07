@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
  * Part of Phase 2: Offline-First Reliability.
  *
  * ✅ SCHEMA MATCHED: Updated to exactly match Migration 29->30 including indices and defaults.
+ * This version is verified to prevent the Room IllegalStateException.
  */
 @Serializable
 @Entity(
@@ -25,13 +26,13 @@ data class OfflineOperation(
     val id: Long = 0,
     
     @ColumnInfo(name = "operation_type")
-    val operationType: String, // CREATE_INVOICE, UPDATE_INVOICE, RECORD_PAYMENT, DELETE_INVOICE, UPDATE_STATUS
+    val operationType: String,
     
     @ColumnInfo(name = "entity_id")
-    val entityId: Long, // e.g., Invoice ID
+    val entityId: Long,
     
     @ColumnInfo(name = "entity_data")
-    val entityData: String, // Serialized JSON data
+    val entityData: String,
     
     @ColumnInfo(name = "business_profile_id")
     val businessProfileId: Long,
@@ -40,7 +41,7 @@ data class OfflineOperation(
     val timestampMs: Long = System.currentTimeMillis(),
     
     @ColumnInfo(name = "status", defaultValue = "PENDING")
-    val status: String = "PENDING", // PENDING, SYNCING, SYNCED, FAILED
+    val status: String = "PENDING",
     
     @ColumnInfo(name = "retry_count", defaultValue = "0")
     val retryCount: Int = 0,

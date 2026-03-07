@@ -137,6 +137,12 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(kotlin("test"))
 
+    // Additional test dependencies for Robolectric and Android testing
+    testImplementation("androidx.test:core:1.5.0")
+    testImplementation("androidx.test:core-ktx:1.5.0")
+    testImplementation("androidx.test.ext:junit:1.1.5")
+    testImplementation("io.mockk:mockk-android:1.13.5")
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

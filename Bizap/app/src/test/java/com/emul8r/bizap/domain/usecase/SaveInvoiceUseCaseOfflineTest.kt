@@ -1,10 +1,8 @@
 package com.emul8r.bizap.domain.usecase
 
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import androidx.test.core.app.ApplicationProvider
-import com.emul8r.bizap.data.local.entities.InvoiceEntity
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.emul8r.bizap.data.local.offline.OfflineQueueService
 import com.emul8r.bizap.data.repository.SnapshotSyncHelper
 import com.emul8r.bizap.domain.model.Invoice
@@ -16,19 +14,13 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
-import org.robolectric.shadows.ShadowConnectivityManager
-import org.robolectric.shadows.ShadowNetworkCapabilities
 import kotlin.test.assertTrue
 import kotlin.test.assertEquals
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class SaveInvoiceUseCaseOfflineTest {
     
     private lateinit var context: Context
-    private lateinit var connectivityManager: ConnectivityManager
-    private lateinit var shadowConnectivityManager: ShadowConnectivityManager
     private lateinit var mockRepository: InvoiceRepository
     private lateinit var mockSnapshotHelper: SnapshotSyncHelper
     private lateinit var mockQueueService: OfflineQueueService
@@ -37,9 +29,6 @@ class SaveInvoiceUseCaseOfflineTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        shadowConnectivityManager = shadowOf(connectivityManager)
-        
         mockRepository = mockk()
         mockSnapshotHelper = mockk(relaxed = true)
         mockQueueService = mockk()
@@ -55,13 +44,14 @@ class SaveInvoiceUseCaseOfflineTest {
     @Test
     fun testSaveInvoiceOnline() = runBlocking {
         // GIVEN: Online state
-        val network = shadowConnectivityManager.activeNetwork
-        val capabilities = shadowNetworkCapabilities(network)
-        capabilities.addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-        
-        val invoice = createTestInvoice()
+        mockkObject(ConnectivityHelper)
+        every { ConnectivityHelper.isNetworkAvailable(any()) } returns true
+
         coEvery { mockRepository.saveInvoice(any()) } returns Result.success(1L)
-        
+        coEvery { mockSnapshotHelper.syncAllSnapshots(any(), any()) } just Runs
+
+        val invoice = createTestInvoice()
+
         // WHEN
         val result = useCase(invoice)
         
@@ -70,16 +60,20 @@ class SaveInvoiceUseCaseOfflineTest {
         assertEquals(1L, result.getOrNull())
         coVerify { mockRepository.saveInvoice(any()) }
         coVerify { mockSnapshotHelper.syncAllSnapshots(any(), any()) }
+
+        unmockkObject(ConnectivityHelper)
     }
     
     @Test
     fun testSaveInvoiceOffline() = runBlocking {
-        // GIVEN: Offline state (no active network)
-        shadowConnectivityManager.setDefaultNetworkActive(false)
-        
+        // GIVEN: Offline state
+        mockkObject(ConnectivityHelper)
+        every { ConnectivityHelper.isNetworkAvailable(any()) } returns false
+
+        coEvery { mockQueueService.queueCreateInvoice(any()) } returns 100L
+
         val invoice = createTestInvoice()
-        coEvery { mockQueueService.queueCreateInvoice(any()) } returns 100L // Operation ID
-        
+
         // WHEN
         val result = useCase(invoice)
         
@@ -88,22 +82,32 @@ class SaveInvoiceUseCaseOfflineTest {
         assertEquals(100L, result.getOrNull())
         coVerify(exactly = 0) { mockRepository.saveInvoice(any()) }
         coVerify { mockQueueService.queueCreateInvoice(any()) }
-    }
-    
-    private fun shadowNetworkCapabilities(network: android.net.Network?): ShadowNetworkCapabilities {
-        return shadowOf(connectivityManager.getNetworkCapabilities(network))
+
+        unmockkObject(ConnectivityHelper)
     }
 
     private fun createTestInvoice(): Invoice {
+        val now = System.currentTimeMillis()
         return Invoice(
             id = 0L,
             businessProfileId = 1L,
             customerId = 1L,
             customerName = "Test Customer",
-            totalAmount = 10000,
-            amountPaid = 0,
+            customerAddress = "123 Test St",
+            customerEmail = "test@example.com",
+            items = listOf(mockk(relaxed = true)),
+            totalAmount = 10000L,
+            amountPaid = 0L,
             status = InvoiceStatus.DRAFT,
-            items = listOf(mockk(relaxed = true))
+            date = now,
+            dueDate = now + 86400000L,
+            isQuote = false,
+            currencyCode = "AUD",
+            taxRate = 10.0,
+            taxAmount = 1000L,
+            invoiceYear = 2026,
+            invoiceSequence = 1,
+            updatedAt = now
         )
     }
 }
