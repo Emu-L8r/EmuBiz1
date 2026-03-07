@@ -39,6 +39,12 @@ interface AnalyticsDao {
     @Query("SELECT SUM(totalAmount) as total FROM invoice_analytics_snapshots WHERE businessProfileId = :businessId AND isPaid = 1")
     suspend fun getTotalPaidRevenue(businessId: Long): Double?
 
+    @Query("SELECT COALESCE(SUM(totalAmount), 0) FROM invoice_analytics_snapshots WHERE businessProfileId = :businessId AND isPaid = 1")
+    fun observeTotalPaidRevenue(businessId: Long): Flow<Long>
+
+    @Query("SELECT COALESCE(SUM(totalAmount), 0) FROM invoice_analytics_snapshots WHERE businessProfileId = :businessId AND isPaid = 1")
+    suspend fun getTotalPaidRevenueLong(businessId: Long): Long
+
     @Query("SELECT COUNT(*) FROM invoice_analytics_snapshots WHERE businessProfileId = :businessId AND status = 'PAID'")
     suspend fun getPaidInvoiceCount(businessId: Long): Int
 

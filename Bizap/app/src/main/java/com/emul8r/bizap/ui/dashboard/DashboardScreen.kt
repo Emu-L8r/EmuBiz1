@@ -98,7 +98,7 @@ fun DashboardScreen(
                     Icon(Icons.Default.AttachMoney, contentDescription = null)
                     Text("Revenue", style = MaterialTheme.typography.labelMedium)
                     val mtdText = when (val s = revenueState) {
-                        is RevenueDashboardUiState.Success -> CentsFormatter.formatCents(s.metrics.mtdRevenue)
+                        is RevenueDashboardUiState.Success -> CentsFormatter.formatCents(s.metrics.totalPaidRevenue)
                         else -> "$0.00"
                     }
                     Text(mtdText, style = MaterialTheme.typography.headlineMedium)
