@@ -1,5 +1,6 @@
 package com.emul8r.bizap.data.local.offline
 
+import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -12,6 +13,26 @@ object OperationSerializer {
     
     private val json = Json { ignoreUnknownKeys = true }
     
+    fun serializeCustomer(customer: Customer): String {
+        return try {
+            val serialized = json.encodeToString(customer)
+            Timber.d("📦 Serialized customer: ${customer.id}")
+            serialized
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to serialize customer")
+            throw e
+        }
+    }
+
+    fun deserializeCustomer(serialized: String): Customer {
+        return try {
+            json.decodeFromString(serialized)
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to deserialize customer")
+            throw e
+        }
+    }
+
     fun serializeInvoice(invoice: Invoice): String {
         return try {
             val serialized = json.encodeToString(invoice)

@@ -2,6 +2,7 @@ package com.emul8r.bizap.data.local.offline
 
 import com.emul8r.bizap.data.local.dao.OfflineOperationDao
 import com.emul8r.bizap.data.local.entities.OfflineOperation
+import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.InvoiceRepository
@@ -71,7 +72,79 @@ class OfflineQueueService @Inject constructor(
             throw e
         }
     }
-    
+
+    /**
+     * Queue a new customer creation
+     */
+    suspend fun queueCreateCustomer(customer: Customer): Long {
+        return try {
+            val operation = OfflineOperation(
+                operationType = "CREATE_CUSTOMER",
+                entityId = customer.id,
+                entityData = OperationSerializer.serializeCustomer(customer),
+                businessProfileId = 1L,
+                status = "PENDING"
+            )
+            val id = dao.insert(operation)
+            cacheUpdateMutex.withLock {
+                pendingCache.add(operation.copy(id = id))
+            }
+            Timber.d("📝 Queued CREATE_CUSTOMER: $id for customer ${customer.id}")
+            id
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to queue customer creation")
+            throw e
+        }
+    }
+
+    /**
+     * Queue a customer update
+     */
+    suspend fun queueUpdateCustomer(customer: Customer): Long {
+        return try {
+            val operation = OfflineOperation(
+                operationType = "UPDATE_CUSTOMER",
+                entityId = customer.id,
+                entityData = OperationSerializer.serializeCustomer(customer),
+                businessProfileId = 1L,
+                status = "PENDING"
+            )
+            val id = dao.insert(operation)
+            cacheUpdateMutex.withLock {
+                pendingCache.add(operation.copy(id = id))
+            }
+            Timber.d("📝 Queued UPDATE_CUSTOMER: $id for customer ${customer.id}")
+            id
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to queue customer update")
+            throw e
+        }
+    }
+
+    /**
+     * Queue a customer deletion
+     */
+    suspend fun queueDeleteCustomer(customerId: Long, businessId: Long): Long {
+        return try {
+            val operation = OfflineOperation(
+                operationType = "DELETE_CUSTOMER",
+                entityId = customerId,
+                entityData = "",
+                businessProfileId = businessId,
+                status = "PENDING"
+            )
+            val id = dao.insert(operation)
+            cacheUpdateMutex.withLock {
+                pendingCache.add(operation.copy(id = id))
+            }
+            Timber.d("🗑️ Queued DELETE_CUSTOMER: $id for customer $customerId")
+            id
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to queue customer deletion")
+            throw e
+        }
+    }
+
     /**
      * Queue an invoice update
      */
