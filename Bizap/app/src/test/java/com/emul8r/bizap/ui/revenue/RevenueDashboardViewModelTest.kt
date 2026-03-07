@@ -29,6 +29,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
                 mtdRevenue = 100000L,
                 ytdRevenue = 500000L,
                 weeklyRevenue = 50000L,
+                totalPaidRevenue = 600000L,
                 dailyTrend = emptyList(),
                 topPerformers = emptyList()
             )
