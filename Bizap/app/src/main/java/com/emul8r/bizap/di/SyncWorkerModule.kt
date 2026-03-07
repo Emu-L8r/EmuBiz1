@@ -27,9 +27,9 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object SyncWorkerModule {
 
-    private const val SYNC_WORKER_NAME = "offline_sync_worker"
-    private const val SYNC_INTERVAL_MINUTES = 15L
-    private const val WORKER_TAG = "offline_sync"
+    internal const val SYNC_WORKER_NAME = "offline_sync_worker"
+    internal const val SYNC_INTERVAL_MINUTES = 15L
+    internal const val WORKER_TAG = "offline_sync"
 
     /**
      * Provides the WorkManager singleton instance.
@@ -98,7 +98,7 @@ class SyncWorkerScheduler(
 
             // Build periodic work request with constraints
             val syncWorkRequest = PeriodicWorkRequestBuilder<SyncWorker>(
-                SYNC_INTERVAL_MINUTES,
+                SyncWorkerModule.SYNC_INTERVAL_MINUTES,
                 TimeUnit.MINUTES
             )
                 // Retry policy: exponential backoff
