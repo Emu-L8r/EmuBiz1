@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,11 +27,9 @@ import com.emul8r.bizap.ui.components.OverwritePdfDialog
 import com.emul8r.bizap.ui.invoices.components.InvoiceActionHub
 import com.emul8r.bizap.ui.invoices.components.VersionPicker
 import com.emul8r.bizap.utils.CentsFormatter
-import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.utils.formatDate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
-import java.io.File
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -401,13 +401,17 @@ fun InvoiceDetailScreen(
         }
 
         if (showPaymentDialog) {
-            RecordPaymentDialog(
-                onDismiss = { showPaymentDialog = false },
-                onConfirm = { amount ->
-                    viewModel.recordPayment(amount)
-                    showPaymentDialog = false
-                }
-            )
+            (state as? InvoiceDetailUiState.Success)?.let { successState ->
+                RecordPaymentDialog(
+                    onDismiss = { showPaymentDialog = false },
+                    onConfirm = { amount ->
+                        viewModel.recordPayment(amount)
+                        showPaymentDialog = false
+                    },
+                    invoiceTotal = successState.data.totalAmount,
+                    amountPaid = successState.data.amountPaid
+                )
+            }
         }
 
         overwriteDialogState?.let { dialogState ->
@@ -474,26 +478,79 @@ fun PaymentProgressCard(invoice: com.emul8r.bizap.domain.model.Invoice, onRecord
 }
 
 @Composable
-fun RecordPaymentDialog(onDismiss: () -> Unit, onConfirm: (Long) -> Unit) {
+fun RecordPaymentDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (Long) -> Unit,
+    invoiceTotal: Long = 0,
+    amountPaid: Long = 0
+) {
     var amount by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val remainingBalance = invoiceTotal - amountPaid
+    val isFullyPaid = remainingBalance <= 0
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Record Payment") },
         text = {
-            OutlinedTextField(
-                value = amount,
-                onValueChange = { amount = it },
-                label = { Text("Amount Received ($)") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column {
+                if (isFullyPaid) {
+                    Text(
+                        "✅ This invoice is already fully paid",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                } else {
+                    Text(
+                        "Remaining balance: ${CentsFormatter.formatCents(remainingBalance)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = {
+                        amount = it
+                        errorMessage = null // Clear error on edit
+                    },
+                    label = { Text("Amount ($)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isFullyPaid,
+                    supportingText = errorMessage?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    isError = errorMessage != null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+            }
         },
         confirmButton = {
-            Button(onClick = {
-                amount.toDoubleOrNull()?.let { doubleAmount ->
-                    val centsAmount = (doubleAmount * 100).toLong()
-                    onConfirm(centsAmount)
-                }
-            }) { Text("Confirm") }
+            Button(
+                onClick = {
+                    amount.toDoubleOrNull()?.let { doubleAmount ->
+                        val centsAmount = (doubleAmount * 100).toLong()
+
+                        // ✅ VALIDATION in UI before sending to ViewModel
+                        when {
+                            centsAmount <= 0 -> {
+                                errorMessage = "Amount must be greater than $0"
+                            }
+                            centsAmount > remainingBalance -> {
+                                errorMessage = "Payment exceeds remaining balance of ${CentsFormatter.formatCents(remainingBalance)}"
+                            }
+                            else -> {
+                                onConfirm(centsAmount)
+                                onDismiss()
+                            }
+                        }
+                    } ?: run {
+                        errorMessage = "Invalid amount"
+                    }
+                },
+                enabled = !isFullyPaid && amount.isNotBlank()
+            ) { Text("Confirm") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
