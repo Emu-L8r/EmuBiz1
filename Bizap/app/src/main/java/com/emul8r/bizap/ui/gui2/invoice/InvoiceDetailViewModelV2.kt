@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -46,6 +48,33 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = InvoiceDetailUiStateV2.Loading
             )
+
+    fun recordPayment(amount: Long) {
+        viewModelScope.launch {
+            try {
+                val invoice = invoiceDao.getInvoiceById(invoiceId) ?: return@launch
+                val newAmountPaid = invoice.amountPaid + amount
+                Timber.d("InvoiceDetailViewModelV2: Recording payment of $amount cents")
+                invoiceDao.updateAmountPaid(invoiceId, newAmountPaid)
+                Timber.d("InvoiceDetailViewModelV2: Payment recorded successfully")
+            } catch (e: Exception) {
+                Timber.e(e, "InvoiceDetailViewModelV2: Failed to record payment")
+            }
+        }
+    }
+
+    fun updateInvoiceStatus(newStatus: com.emul8r.bizap.domain.model.InvoiceStatus) {
+        viewModelScope.launch {
+            try {
+                val invoice = invoiceDao.getInvoiceById(invoiceId) ?: return@launch
+                Timber.d("InvoiceDetailViewModelV2: Updating status to $newStatus")
+                invoiceDao.updateStatus(invoiceId, newStatus)
+                Timber.d("InvoiceDetailViewModelV2: Status updated successfully")
+            } catch (e: Exception) {
+                Timber.e(e, "InvoiceDetailViewModelV2: Failed to update status")
+            }
+        }
+    }
 }
 
 sealed class InvoiceDetailUiStateV2 {

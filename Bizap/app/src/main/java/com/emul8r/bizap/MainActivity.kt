@@ -163,7 +163,9 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 logoBase64 = businessProfile.logoBase64,
                 showLogo = showLogo,
                 showBackButton = !isTopLevelScreen,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onActionClick = onSwitchGui,
+                actionButtonLabel = "Switch to Modern UI"
             )
         },
         bottomBar = {

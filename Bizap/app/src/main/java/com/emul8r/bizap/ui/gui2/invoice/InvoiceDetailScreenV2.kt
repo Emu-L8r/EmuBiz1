@@ -5,18 +5,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.ui.gui2.common.*
+import com.emul8r.bizap.ui.gui2.invoices.RecordPaymentDialogV2
+import com.emul8r.bizap.ui.gui2.invoices.StatusUpdateMenuV2
 import java.text.SimpleDateFormat
 import java.util.*
+import timber.log.Timber
 
 /**
  * GUI2 invoice detail screen.
@@ -31,6 +36,8 @@ fun InvoiceDetailScreenV2(
     viewModel: InvoiceDetailViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showPaymentDialog by remember { mutableStateOf(false) }
+    var showStatusMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -39,6 +46,16 @@ fun InvoiceDetailScreenV2(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (uiState is InvoiceDetailUiStateV2.Success) {
+                        IconButton(onClick = { showPaymentDialog = true }) {
+                            Icon(Icons.Default.Payment, contentDescription = "Record Payment")
+                        }
+                        IconButton(onClick = { showStatusMenu = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Update Status")
+                        }
                     }
                 }
             )
@@ -56,10 +73,39 @@ fun InvoiceDetailScreenV2(
                 message = state.message,
                 modifier = Modifier.padding(paddingValues)
             )
-            is InvoiceDetailUiStateV2.Success -> InvoiceDetailContentV2(
-                invoice = state.invoice,
-                modifier = Modifier.padding(paddingValues)
-            )
+            is InvoiceDetailUiStateV2.Success -> {
+                InvoiceDetailContentV2(
+                    invoice = state.invoice,
+                    modifier = Modifier.padding(paddingValues)
+                )
+
+                // Payment Dialog
+                if (showPaymentDialog && state.invoice.invoice.totalAmount > state.invoice.invoice.amountPaid) {
+                    RecordPaymentDialogV2(
+                        invoiceTotal = state.invoice.invoice.totalAmount,
+                        amountPaid = state.invoice.invoice.amountPaid,
+                        onDismiss = { showPaymentDialog = false },
+                        onConfirm = { amount ->
+                            Timber.d("Recording payment: $amount cents")
+                            viewModel.recordPayment(amount)
+                            showPaymentDialog = false
+                        }
+                    )
+                }
+
+                // Status Update Menu
+                if (showStatusMenu) {
+                    StatusUpdateMenuV2(
+                        currentStatus = state.invoice.invoice.status,
+                        onStatusSelected = { newStatus ->
+                            Timber.d("Updating status to: $newStatus")
+                            viewModel.updateInvoiceStatus(newStatus)
+                            showStatusMenu = false
+                        },
+                        onDismiss = { showStatusMenu = false }
+                    )
+                }
+            }
         }
     }
 }

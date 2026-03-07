@@ -3,9 +3,9 @@ package com.emul8r.bizap.ui.activities
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -29,7 +29,7 @@ import dagger.hilt.android.AndroidEntryPoint
  * causes [com.emul8r.bizap.MainActivity] to re-display [LandingScreen].
  */
 @AndroidEntryPoint
-class ModernGUIMainActivity : AppCompatActivity() {
+class ModernGUIMainActivity : ComponentActivity() {
 
     companion object {
         /** Intent extra key used to pass the active business ID to this activity. */
