@@ -53,9 +53,9 @@ val MIGRATION_27_28 = object : Migration(27, 28) {
                     i.businessProfileId,
                     i.customerId,
                     i.customerName,
-                    COALESCE(i.invoiceNumber, 'INV-' || i.id),
+                    'INV-' || i.invoiceYear || '-' || PRINTF('%04d', i.invoiceSequence),
                     i.currencyCode,
-                    i.subtotalAmount,
+                    (i.totalAmount - i.taxAmount),
                     i.taxAmount,
                     i.totalAmount,
                     i.status,
@@ -66,7 +66,7 @@ val MIGRATION_27_28 = object : Migration(27, 28) {
                         ELSE 0 
                     END,
                     i.date,
-                    i.createdAt,
+                    i.updatedAt,
                     CASE WHEN i.status = 'PAID' THEN i.updatedAt ELSE NULL END,
                     CASE 
                         WHEN i.status IN ('SENT', 'PARTIALLY_PAID')
@@ -171,7 +171,7 @@ val MIGRATION_27_28 = object : Migration(27, 28) {
                     i.businessProfileId,
                     i.customerId,
                     i.customerName,
-                    COALESCE(i.invoiceNumber, 'INV-' || i.id),
+                    'INV-' || i.invoiceYear || '-' || PRINTF('%04d', i.invoiceSequence),
                     i.date,
                     i.dueDate,
                     i.totalAmount,
@@ -235,4 +235,3 @@ val MIGRATION_27_28 = object : Migration(27, 28) {
         }
     }
 }
-
