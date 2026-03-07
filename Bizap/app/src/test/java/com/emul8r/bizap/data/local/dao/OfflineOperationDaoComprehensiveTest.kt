@@ -45,7 +45,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 2, TEST 2.1: Create Customer Offline
      */
     @Test
-    fun `suite2_test2_1_create_customer_offline` {
+    fun suite2_test2_1_create_customer_offline() {
         runBlocking {
             // Arrange
             val customerOp = OfflineOperation(
@@ -70,7 +70,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 2, TEST 2.2: Update Customer Offline
      */
     @Test
-    fun `suite2_test2_2_update_customer_offline` {
+    fun suite2_test2_2_update_customer_offline() {
         runBlocking {
             // Arrange: Insert customer create first
             val createOp = OfflineOperation(
@@ -102,7 +102,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 2, TEST 2.3: Delete Customer Offline
      */
     @Test
-    fun `suite2_test2_3_delete_customer_offline` {
+    fun suite2_test2_3_delete_customer_offline() {
         runBlocking {
             // Arrange
             val deleteOp = OfflineOperation(
@@ -126,7 +126,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 2, TEST 2.4: Multiple Customer Operations
      */
     @Test
-    fun `suite2_test2_4_multiple_customer_operations` {
+    fun suite2_test2_4_multiple_customer_operations() {
         runBlocking {
             // Act: Queue 4 operations
             dao.insert(OfflineOperation(operationType = "CREATE_CUSTOMER", entityId = 1L, entityData = "{}", businessProfileId = 1L))
@@ -145,7 +145,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 3, TEST 3.1: Back-to-back Operations
      */
     @Test
-    fun `suite3_test3_1_back_to_back_customer_invoice` {
+    fun suite3_test3_1_back_to_back_customer_invoice() {
         runBlocking {
             // Act: Create customer then invoice immediately
             dao.insert(OfflineOperation(operationType = "CREATE_CUSTOMER", entityId = 1L, entityData = "{\"name\": \"Acme\"}", businessProfileId = 1L))
@@ -163,7 +163,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 3, TEST 3.2: Rapid-Fire Invoices
      */
     @Test
-    fun `suite3_test3_2_rapid_fire_invoices` {
+    fun suite3_test3_2_rapid_fire_invoices() {
         runBlocking {
             // Act: Create 5 invoices rapidly
             repeat(5) { i ->
@@ -182,7 +182,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 3, TEST 3.3: Mixed Operations
      */
     @Test
-    fun `suite3_test3_3_mixed_operations` {
+    fun suite3_test3_3_mixed_operations() {
         runBlocking {
             // Act: Queue mixed operations
             dao.insert(OfflineOperation(operationType = "CREATE_CUSTOMER", entityId = 1L, entityData = "{}", businessProfileId = 1L))
@@ -210,7 +210,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 4, TEST 4.1: Verify Zero Data Loss
      */
     @Test
-    fun `suite4_test4_1_verify_zero_data_loss` {
+    fun suite4_test4_1_verify_zero_data_loss() {
         runBlocking {
             // Act: Queue 12+ operations (from all suites)
             repeat(3) {
@@ -224,7 +224,7 @@ class OfflineOperationDaoComprehensiveTest {
             }
 
             // Assert
-            val all = dao.getAllOperations()
+            val all = dao.getRecentOperations(1L)
             assertTrue("12+ operations persisted", all.size >= 12)
             assertTrue("No null data", all.all { it.entityData.isNotEmpty() })
             assertTrue("All PENDING", all.all { it.status == "PENDING" })
@@ -235,7 +235,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 4, TEST 4.2: Queue Status Consistency
      */
     @Test
-    fun `suite4_test4_2_queue_status_consistency` {
+    fun suite4_test4_2_queue_status_consistency() {
         runBlocking {
             // Act
             repeat(5) { i ->
@@ -258,7 +258,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 4, TEST 4.3: Database Schema Integrity
      */
     @Test
-    fun `suite4_test4_3_database_schema_integrity` {
+    fun suite4_test4_3_database_schema_integrity() {
         // Arrange
         val op = OfflineOperation(
             operationType = "CREATE_INVOICE",
@@ -281,7 +281,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 4, TEST 4.4: UI Consistency
      */
     @Test
-    fun `suite4_test4_4_ui_consistency` {
+    fun suite4_test4_4_ui_consistency() {
         runBlocking {
             // Act: Create mixed operations
             repeat(4) {
@@ -292,7 +292,7 @@ class OfflineOperationDaoComprehensiveTest {
             }
 
             // Assert
-            val all = dao.getAllOperations()
+            val all = dao.getRecentOperations(1L)
             val customerCount = all.count { it.operationType == "CREATE_CUSTOMER" }
             val invoiceCount = all.count { it.operationType == "CREATE_INVOICE" }
 
@@ -306,7 +306,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 4, TEST 4.5: Offline→Online Transition Readiness
      */
     @Test
-    fun `suite4_test4_5_offline_online_transition_readiness` {
+    fun suite4_test4_5_offline_online_transition_readiness() {
         runBlocking {
             // Act: Create queue in correct order
             dao.insert(OfflineOperation(operationType = "CREATE_CUSTOMER", entityId = 1L, entityData = "{\"name\": \"Acme\"}", businessProfileId = 1L))
@@ -323,7 +323,7 @@ class OfflineOperationDaoComprehensiveTest {
             assertEquals("Third: PAYMENT", "RECORD_PAYMENT", pending[2].operationType)
 
             // Valid JSON
-            assertTrue("Valid data", pending.all { it.entityData.startsWith("{") })
+            assertTrue("Valid data", pending.all { it.entityData.startsWith("{") || it.entityData == "{}" })
         }
     }
 
@@ -331,7 +331,7 @@ class OfflineOperationDaoComprehensiveTest {
      * SUITE 4, TEST 4.6: Final Gate Decision
      */
     @Test
-    fun `suite4_test4_6_final_gate_decision` {
+    fun suite4_test4_6_final_gate_decision() {
         runBlocking {
             // Act: Queue comprehensive test data
             repeat(4) { dao.insert(OfflineOperation(operationType = "CREATE_CUSTOMER", entityId = (it + 1).toLong(), entityData = "{}", businessProfileId = 1L)) }
@@ -340,7 +340,7 @@ class OfflineOperationDaoComprehensiveTest {
             repeat(3) { dao.insert(OfflineOperation(operationType = "RECORD_PAYMENT", entityId = (it + 1).toLong(), entityData = "{}", businessProfileId = 1L)) }
 
             // Assert: All gate criteria
-            val all = dao.getAllOperations()
+            val all = dao.getRecentOperations(1L)
 
             // Criterion 1: 12+ operations
             assertTrue("GATE 1: 12+ operations", all.size >= 12)
@@ -358,11 +358,15 @@ class OfflineOperationDaoComprehensiveTest {
             // Criterion 5: FIFO order
             var allOrdered = true
             for (i in 0 until all.size - 1) {
-                if (all[i].timestampMs > all[i + 1].timestampMs) {
-                    allOrdered = false
+                if (all[i].timestampMs < all[i + 1].timestampMs) { // Recent first in getRecentOperations
+                    // OK
                 }
             }
-            assertTrue("GATE 5: FIFO order", allOrdered)
+            // For getPendingOperations it is FIFO
+            val pending = dao.getPendingOperations(1L)
+            for (i in 0 until pending.size - 1) {
+                assertTrue("FIFO order in pending", pending[i].timestampMs <= pending[i+1].timestampMs)
+            }
 
             // Criterion 6: Valid timestamps
             assertTrue("GATE 6: Valid timestamps", all.all { it.timestampMs > 0 })
@@ -372,13 +376,3 @@ class OfflineOperationDaoComprehensiveTest {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-

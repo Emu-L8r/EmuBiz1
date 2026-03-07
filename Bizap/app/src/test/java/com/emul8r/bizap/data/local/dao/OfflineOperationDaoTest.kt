@@ -2,6 +2,7 @@ package com.emul8r.bizap.data.local.dao
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.emul8r.bizap.data.local.AppDatabase
 import com.emul8r.bizap.data.local.entities.OfflineOperation
 import kotlinx.coroutines.runBlocking
@@ -9,12 +10,11 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class OfflineOperationDaoTest {
     
     private lateinit var db: AppDatabase

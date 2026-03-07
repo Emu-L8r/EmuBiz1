@@ -1,27 +1,44 @@
 package com.emul8r.bizap.domain.usecase
 
-import com.emul8r.bizap.BaseUnitTest
+import android.content.Context
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.emul8r.bizap.data.local.offline.OfflineQueueService
+import com.emul8r.bizap.data.repository.SnapshotSyncHelper
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.util.TestDataFactory
-import io.mockk.coEvery
-import io.mockk.mockk
+import com.emul8r.bizap.utils.ConnectivityHelper
+import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import kotlin.test.assertTrue
 
 /**
  * Unit tests for SaveInvoiceUseCase
  * Verifies business rules for creating invoices
  */
-class SaveInvoiceUseCaseTest : BaseUnitTest() {
-    
+@RunWith(AndroidJUnit4::class)
+class SaveInvoiceUseCaseTest {
+
     private val repository: InvoiceRepository = mockk()
+    private val snapshotSyncHelper: SnapshotSyncHelper = mockk(relaxed = true)
+    private val offlineQueueService: OfflineQueueService = mockk()
+    private val context: Context = mockk()
     private lateinit var useCase: SaveInvoiceUseCase
     
     @Before
     fun setup() {
-        useCase = SaveInvoiceUseCase(repository)
+        // Mock ConnectivityHelper to be online by default
+        mockkObject(ConnectivityHelper)
+        every { ConnectivityHelper.isNetworkAvailable(any()) } returns true
+
+        useCase = SaveInvoiceUseCase(
+            repository = repository,
+            snapshotSyncHelper = snapshotSyncHelper,
+            offlineQueueService = offlineQueueService,
+            context = context
+        )
     }
     
     @Test
@@ -41,14 +58,17 @@ class SaveInvoiceUseCaseTest : BaseUnitTest() {
     fun `test create invoice with valid data succeeds`() = runTest {
         // Arrange
         val invoice = TestDataFactory.createTestInvoice().copy(
-            items = listOf(mockk())
+            items = listOf(mockk(relaxed = true))
         )
         coEvery { repository.saveInvoice(any()) } returns Result.success(1L)
-        
+        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
+
         // Act
         val result = useCase(invoice)
         
         // Assert
         assertTrue(result.isSuccess)
+        coVerify { repository.saveInvoice(any()) }
+        coVerify { snapshotSyncHelper.syncAllSnapshots(any(), any()) }
     }
 }
