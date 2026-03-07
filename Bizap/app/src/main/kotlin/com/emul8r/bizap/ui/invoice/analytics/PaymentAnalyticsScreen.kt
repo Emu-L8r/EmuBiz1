@@ -33,7 +33,10 @@ import java.util.Locale
 @Composable
 fun PaymentAnalyticsScreen(
     onBack: () -> Unit = {},
-    viewModel: PaymentAnalyticsViewModel = hiltViewModel()
+    viewModel: PaymentAnalyticsViewModel = hiltViewModel(),
+    modifier: Modifier = Modifier,
+    topBarSlot: (@Composable ColumnScope.() -> Unit)? = null,
+    footerSlot: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -60,13 +63,29 @@ fun PaymentAnalyticsScreen(
                 }
                 is PaymentAnalyticsUiState.Success -> {
                     val analytics = (state as PaymentAnalyticsUiState.Success).analytics
-                    Column {
+                    Column(modifier = modifier) {
+                        topBarSlot?.invoke(this) ?: run {
+                            Text(
+                                text = "Payment Analytics",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                        }
                         PaymentAnalyticsDashboardActions(
                             isRefreshing = isRefreshing,
                             onRefresh = { viewModel.forceRefresh() },
                             onRebuild = { viewModel.rebuildSnapshots() }
                         )
                         PaymentAnalyticsContent(analytics)
+                        footerSlot?.invoke(this) ?: run {
+                            Text(
+                                text = "Ageing buckets: Current · 30 · 60 · 90+ days",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            )
+                        }
                     }
                 }
                 is PaymentAnalyticsUiState.Error -> {
