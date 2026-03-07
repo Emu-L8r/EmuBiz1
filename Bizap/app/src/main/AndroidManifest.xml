@@ -28,6 +28,18 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="com.emul8r.bizap.ui.activities.TraditionalGUIMainActivity"
+            android:exported="false"
+            android:parentActivityName="com.emul8r.bizap.MainActivity"
+            android:theme="@style/Theme.Bizap" />
+
+        <activity
+            android:name="com.emul8r.bizap.ui.activities.ModernGUIMainActivity"
+            android:exported="false"
+            android:parentActivityName="com.emul8r.bizap.MainActivity"
+            android:theme="@style/Theme.Bizap" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
