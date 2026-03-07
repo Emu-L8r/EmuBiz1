@@ -1,7 +1,6 @@
 package com.emul8r.bizap.ui.revenue
 
 import com.emul8r.bizap.BaseUnitTest
-import com.emul8r.bizap.data.repository.SnapshotRebuildService
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
 import com.emul8r.bizap.domain.revenue.usecase.GetRevenueMetricsUseCase
@@ -17,7 +16,6 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
 
     private val useCase: GetRevenueMetricsUseCase = mockk()
     private val businessProfileRepository = mockk<com.emul8r.bizap.domain.repository.BusinessProfileRepository>()
-    private val snapshotRebuildService: SnapshotRebuildService = mockk(relaxed = true)
     private lateinit var viewModel: RevenueDashboardViewModel
 
     @Before
@@ -39,7 +37,7 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
     @Test
     fun `when initialized should create ViewModel`() {
         // Act
-        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository, snapshotRebuildService)
+        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository)
 
         // Assert - ViewModel created successfully
         assertTrue(::viewModel.isInitialized)
@@ -48,29 +46,9 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
     @Test
     fun `uiState StateFlow is initialized with Loading state`() {
         // Act
-        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository, snapshotRebuildService)
+        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository)
 
         // Assert - Initial state is Loading
         assertEquals(RevenueDashboardUiState.Loading, viewModel.uiState.value)
-    }
-
-    @Test
-    fun `isRefreshing StateFlow starts as false`() {
-        // Act
-        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository, snapshotRebuildService)
-
-        // Assert
-        assertEquals(false, viewModel.isRefreshing.value)
-    }
-
-    @Test
-    fun `forceRefresh increments refresh trigger`() {
-        // Act
-        viewModel = RevenueDashboardViewModel(useCase, businessProfileRepository, snapshotRebuildService)
-
-        viewModel.forceRefresh()
-
-        // Assert - Function executed without error
-        assertTrue(true)  // If we got here, forceRefresh worked
     }
 }
