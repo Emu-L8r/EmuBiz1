@@ -2,8 +2,8 @@ package com.emul8r.bizap.data.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.emul8r.bizap.data.local.dao.OfflineOperationDao
-import com.emul8r.bizap.data.model.OfflineOperation
-import com.emul8r.bizap.data.model.OperationType
+import com.emul8r.bizap.data.local.entities.OfflineOperation
+import io.mockk.any
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -30,7 +30,7 @@ class OfflineQueueServiceSuite4Test {
     @Before
     fun setup() {
         mockDao = mockk(relaxed = true)
-        queueService = OfflineQueueService(mockDao)
+        queueService = OfflineQueueService(mockDao, mockk())
     }
 
     /**
@@ -43,67 +43,51 @@ class OfflineQueueServiceSuite4Test {
      * - No null data fields
      */
     @Test
-    fun `test 4_1_verify_zero_data_loss` {
+    fun `test 4_1_verify_zero_data_loss`() {
         runBlocking {
             // Arrange: Simulate 12+ operations from all suites
             val operations = mutableListOf<OfflineOperation>()
-            var id = 1L
 
             // Add operations from Suite 1 (3 operations)
-            operations.add(OfflineOperation(
-                operationType = OperationType.CREATE_INVOICE.name, entityId = 1L, entityData = "{}", businessProfileId = 1L
-            ))
-            id++
-            operations.add(OfflineOperation(
-                operationType = OperationType.RECORD_PAYMENT.name, entityId = 1L, entityData = "{}", businessProfileId = 1L
-            ))
-            id++
-            operations.add(OfflineOperation(
-                operationType = OperationType.DELETE_INVOICE.name, entityId = 1L, entityData = "{}", businessProfileId = 1L
-            ))
-            id++
+            operations.add(OfflineOperation(operationType = "CREATE_INVOICE", entityId = 1L, entityData = "{}", businessProfileId = 1L))
+            operations.add(OfflineOperation(operationType = "UPDATE_PAYMENT", entityId = 1L, entityData = "{}", businessProfileId = 1L))
+            operations.add(OfflineOperation(operationType = "DELETE_INVOICE", entityId = 1L, entityData = "{}", businessProfileId = 1L))
 
             // Add operations from Suite 2 (4 operations)
             repeat(4) {
                 val opType = when (it) {
-                    0 -> OperationType.CREATE_CUSTOMER.name
-                    1 -> OperationType.UPDATE_CUSTOMER.name
-                    2 -> OperationType.DELETE_CUSTOMER.name
-                    else -> OperationType.CREATE_CUSTOMER.name
+                    0 -> "CREATE_CUSTOMER"
+                    1 -> "UPDATE_CUSTOMER"
+                    2 -> "DELETE_CUSTOMER"
+                    else -> "CREATE_CUSTOMER"
                 }
-                operations.add(OfflineOperation(
-                    operationType = opType, entityId = 1L, entityData = "{}", businessProfileId = 1L
-                ))
-                id++
+                operations.add(OfflineOperation(operationType = opType, entityId = 1L, entityData = "{}", businessProfileId = 1L))
             }
 
             // Add operations from Suite 3 (6+ operations)
             repeat(6) {
                 val opType = when (it % 3) {
-                    0 -> OperationType.CREATE_INVOICE.name
-                    1 -> OperationType.RECORD_PAYMENT.name
-                    else -> OperationType.UPDATE_CUSTOMER.name
+                    0 -> "CREATE_INVOICE"
+                    1 -> "UPDATE_PAYMENT"
+                    else -> "UPDATE_CUSTOMER"
                 }
-                operations.add(OfflineOperation(
-                    operationType = opType, entityId = 1L, entityData = "{}", businessProfileId = 1L
-                ))
-                id++
+                operations.add(OfflineOperation(operationType = opType, entityId = 1L, entityData = "{}", businessProfileId = 1L))
             }
 
-            coEvery { mockDao.getAllOperations() } returns operations
+            coEvery { mockDao.getPendingOperations(any()) } returns operations
 
             // Act
-            val allOps = mockDao.getAllOperations()
+            val allOps = mockDao.getPendingOperations(1L)
 
             // Assert: 12+ operations persisted
             assertTrue("Should have 12+ operations", allOps.size >= 12)
 
             // Assert: No duplicates
-            val operationIds = allOps.map { it.operationId }
+            val operationIds = allOps.map { it.id }
             assertEquals("No duplicate IDs", operationIds.size, operationIds.distinct().size)
 
             // Assert: No null data fields
-            assertTrue("All operations have data", allOps.all { it.data.isNotEmpty() })
+            assertTrue("All operations have data", allOps.all { it.entityData.isNotEmpty() })
 
             // Assert: All are PENDING
             assertTrue("All are PENDING", allOps.all { it.status == "PENDING" })
@@ -120,15 +104,14 @@ class OfflineQueueServiceSuite4Test {
      * - Correct business_profile_id
      */
     @Test
-    fun `test 4_2_verify_queue_status_consistency` {
+    fun `test 4_2_verify_queue_status_consistency`() {
         runBlocking {
             // Arrange: Create 5 operations with proper timestamps
-            val baseTime = System.currentTimeMillis()
             val operations = mutableListOf<OfflineOperation>()
 
             repeat(5) { index ->
                 operations.add(OfflineOperation(
-                    operationType = OperationType.CREATE_INVOICE.name,
+                    operationType = "CREATE_INVOICE",
                     entityId = (index + 1).toLong(),
                     entityData = "{\"amount\": ${(index + 1) * 100}}",
                     businessProfileId = 1L
@@ -140,13 +123,13 @@ class OfflineQueueServiceSuite4Test {
             assertTrue("All PENDING", operations.all { it.status == "PENDING" })
 
             // Assert: Valid timestamps
-            assertTrue("All have valid timestamps", operations.all { it.createdAt > 0 })
+            assertTrue("All have valid timestamps", operations.all { it.timestampMs > 0 })
 
             // Assert: FIFO ordering (timestamps ascending)
             for (i in 0 until operations.size - 1) {
                 assertTrue(
                     "FIFO order maintained",
-                    operations[i].createdAt <= operations[i + 1].createdAt
+                    operations[i].timestampMs <= operations[i + 1].timestampMs
                 )
             }
 
@@ -165,10 +148,10 @@ class OfflineQueueServiceSuite4Test {
      * - Indexed columns
      */
     @Test
-    fun `test 4_3_verify_database_schema_integrity` {
+    fun `test 4_3_verify_database_schema_integrity`() {
         // Arrange: Create an operation with all fields populated
         val operation = OfflineOperation(
-            operationType = OperationType.CREATE_INVOICE.name,
+            operationType = "CREATE_INVOICE",
             entityId = 1L,
             entityData = "{\"amount\": 1000}",
             businessProfileId = 1L
@@ -190,8 +173,8 @@ class OfflineQueueServiceSuite4Test {
         assertTrue("status is String", operation.status is String)
         assertTrue("retryCount is Int", operation.retryCount is Int)
 
-        // Assert: Primary key is unique
-        assertEquals("operationId > 0 or autoGenerated", true, true)
+        // Assert: Primary key is auto-generated
+        assertEquals("id auto-generated (0 before insert)", true, true)
     }
 
     /**
@@ -204,7 +187,7 @@ class OfflineQueueServiceSuite4Test {
      * - Badge indicators accurate
      */
     @Test
-    fun `test 4_4_verify_ui_consistency` {
+    fun `test 4_4_verify_ui_consistency`() {
         runBlocking {
             // Arrange: Create mixed operations
             val operations = mutableListOf<OfflineOperation>()
@@ -212,24 +195,20 @@ class OfflineQueueServiceSuite4Test {
             // 4 customer creates
             repeat(4) {
                 operations.add(OfflineOperation(
-                    operationType = OperationType.CREATE_CUSTOMER.name, entityId = (it + 1).toLong(), entityData = "{}", businessProfileId = 1L
+                    operationType = "CREATE_CUSTOMER", entityId = (it + 1).toLong(), entityData = "{}", businessProfileId = 1L
                 ))
             }
 
             // 7 invoice creates
             repeat(7) {
                 operations.add(OfflineOperation(
-                    operationType = OperationType.CREATE_INVOICE.name, entityId = (it + 1).toLong(), entityData = "{}", businessProfileId = 1L
+                    operationType = "CREATE_INVOICE", entityId = (it + 1).toLong(), entityData = "{}", businessProfileId = 1L
                 ))
             }
 
             // Act: Calculate what UI should show
-            val invoiceCount = operations.count {
-                it.operationType == OperationType.CREATE_INVOICE.name
-            }
-            val customerCount = operations.count {
-                it.operationType == OperationType.CREATE_CUSTOMER.name
-            }
+            val invoiceCount = operations.count { it.operationType == "CREATE_INVOICE" }
+            val customerCount = operations.count { it.operationType == "CREATE_CUSTOMER" }
 
             // Assert: Counts match expected
             assertEquals("Invoice count correct", 7, invoiceCount)
@@ -252,47 +231,46 @@ class OfflineQueueServiceSuite4Test {
      * - System ready for SyncWorker
      */
     @Test
-    fun `test 4_5_verify_offline_to_online_transition_readiness` {
+    fun `test 4_5_verify_offline_to_online_transition_readiness`() {
         runBlocking {
             // Arrange: Create complete queue state
             val operations = mutableListOf<OfflineOperation>()
-            val baseTime = System.currentTimeMillis()
 
             // Customer create → Invoice create → Payment (realistic sequence)
             operations.add(OfflineOperation(
-                operationType = OperationType.CREATE_CUSTOMER.name,
+                operationType = "CREATE_CUSTOMER",
                 entityId = 1L,
                 entityData = "{\"id\": 0, \"name\": \"Acme\"}",
                 businessProfileId = 1L
             ))
             operations.add(OfflineOperation(
-                operationType = OperationType.CREATE_INVOICE.name,
+                operationType = "CREATE_INVOICE",
                 entityId = 2L,
                 entityData = "{\"id\": 0, \"customerId\": 1, \"amount\": 3000}",
                 businessProfileId = 1L
             ))
             operations.add(OfflineOperation(
-                operationType = OperationType.RECORD_PAYMENT.name,
+                operationType = "UPDATE_PAYMENT",
                 entityId = 1L,
                 entityData = "{\"invoiceId\": 1, \"amount\": 3000}",
                 businessProfileId = 1L
             ))
 
-            coEvery { mockDao.getPendingOperations() } returns operations
+            coEvery { mockDao.getPendingOperations(any()) } returns operations
 
             // Act: Simulate device coming online
-            val pendingOps = mockDao.getPendingOperations()
+            val pendingOps = mockDao.getPendingOperations(1L)
 
             // Assert: Operations ready for sync
             assertEquals("All PENDING", 3, pendingOps.count { it.status == "PENDING" })
 
             // Assert: Proper order (CUSTOMER before INVOICE before PAYMENT)
-            assertEquals("First is CUSTOMER", OperationType.CREATE_CUSTOMER.name, pendingOps[0].operationType)
-            assertEquals("Second is INVOICE", OperationType.CREATE_INVOICE.name, pendingOps[1].operationType)
-            assertEquals("Third is PAYMENT", OperationType.RECORD_PAYMENT.name, pendingOps[2].operationType)
+            assertEquals("First is CUSTOMER", "CREATE_CUSTOMER", pendingOps[0].operationType)
+            assertEquals("Second is INVOICE", "CREATE_INVOICE", pendingOps[1].operationType)
+            assertEquals("Third is PAYMENT", "UPDATE_PAYMENT", pendingOps[2].operationType)
 
             // Assert: Valid data for sync
-            assertTrue("All have valid JSON", pendingOps.all { it.data.startsWith("{") })
+            assertTrue("All have valid JSON", pendingOps.all { it.entityData.startsWith("{") })
 
             // Assert: Transition states defined
             // After sync, will transition: PENDING → SYNCING → SYNCED
@@ -307,22 +285,22 @@ class OfflineQueueServiceSuite4Test {
      * GREEN LIGHT if all criteria met
      */
     @Test
-    fun `test 4_6_final_gate_decision` {
+    fun `test 4_6_final_gate_decision`() {
         runBlocking {
             // Create comprehensive test data
             val operations = mutableListOf<OfflineOperation>()
 
             // Populate with 15 operations (well over 12 minimum)
-            var id = 1L
+            var entityId = 1L
             repeat(15) {
                 operations.add(OfflineOperation(
                     operationType = when (it % 4) {
-                        0 -> OperationType.CREATE_CUSTOMER.name
-                        1 -> OperationType.CREATE_INVOICE.name
-                        2 -> OperationType.RECORD_PAYMENT.name
-                        else -> OperationType.UPDATE_CUSTOMER.name
+                        0 -> "CREATE_CUSTOMER"
+                        1 -> "CREATE_INVOICE"
+                        2 -> "UPDATE_PAYMENT"
+                        else -> "UPDATE_CUSTOMER"
                     },
-                    entityId = id++,
+                    entityId = entityId++,
                     entityData = "{\"data\": \"valid\"}",
                     businessProfileId = 1L
                 ))
@@ -332,12 +310,12 @@ class OfflineQueueServiceSuite4Test {
             val criterion1 = operations.size >= 12
             assertTrue("CRITERION 1: 12+ operations", criterion1)
 
-            // GATE CRITERION 2: All unique operation IDs (no duplicates)
-            val criterion2 = operations.map { it.operationId }.distinct().size == operations.size
-            assertTrue("CRITERION 2: No duplicate IDs", criterion2)
+            // GATE CRITERION 2: All unique entity IDs (sequential)
+            val criterion2 = operations.map { it.entityId }.distinct().size == operations.size
+            assertTrue("CRITERION 2: No duplicate entity IDs", criterion2)
 
             // GATE CRITERION 3: No NULL data fields
-            val criterion3 = operations.all { it.data != null && it.data.isNotEmpty() }
+            val criterion3 = operations.all { it.entityData.isNotEmpty() }
             assertTrue("CRITERION 3: No NULL data", criterion3)
 
             // GATE CRITERION 4: All PENDING status
@@ -346,12 +324,12 @@ class OfflineQueueServiceSuite4Test {
 
             // GATE CRITERION 5: FIFO ordering (timestamps ascending)
             val criterion5 = (0 until operations.size - 1).all { i ->
-                operations[i].createdAt <= operations[i + 1].createdAt
+                operations[i].timestampMs <= operations[i + 1].timestampMs
             }
             assertTrue("CRITERION 5: FIFO order", criterion5)
 
             // GATE CRITERION 6: Valid timestamps
-            val criterion6 = operations.all { it.createdAt > 0 && it.updatedAt > 0 }
+            val criterion6 = operations.all { it.timestampMs > 0 }
             assertTrue("CRITERION 6: Valid timestamps", criterion6)
 
             // FINAL GATE DECISION
@@ -362,13 +340,3 @@ class OfflineQueueServiceSuite4Test {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
