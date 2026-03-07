@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.*
 import com.emul8r.bizap.data.worker.ExchangeRateWorker
+import com.emul8r.bizap.data.worker.SyncWorker
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.HiltAndroidApp
@@ -43,6 +44,7 @@ class BizapApplication : Application(), Configuration.Provider {
 
         // ⏰ SCHEDULE BACKGROUND JOBS
         scheduleExchangeRateUpdates()
+        scheduleSyncWorker()
     }
 
     /**
@@ -130,6 +132,17 @@ class BizapApplication : Application(), Configuration.Provider {
             ExistingPeriodicWorkPolicy.KEEP,
             exchangeRateWork
         )
+    }
+
+    /**
+     * OFFLINE SYNC WORKER
+     * ===================
+     * Enqueues a one-shot sync on startup so any operations that were
+     * queued while the app was last closed are replayed immediately
+     * once connectivity is available.
+     */
+    private fun scheduleSyncWorker() {
+        SyncWorker.enqueueOneShot(this)
     }
 
     /**

@@ -26,9 +26,10 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         DailyPaymentSnapshot::class,
         CollectionMetrics::class,
         InvoiceTemplate::class,
-        InvoiceCustomField::class
+        InvoiceCustomField::class,
+        PendingOperationEntity::class
     ],
-    version = 28,
+    version = 29,
     exportSchema = true
 )
 @TypeConverters(DocumentStatusConverter::class)
@@ -45,6 +46,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun invoicePaymentDao(): InvoicePaymentDao
     abstract fun invoiceTemplateDao(): InvoiceTemplateDao
     abstract fun invoiceCustomFieldDao(): InvoiceCustomFieldDao
+    abstract fun pendingOperationDao(): PendingOperationDao
 }
 
 
