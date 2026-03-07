@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.emul8r.bizap.data.local.dao.OfflineOperationDao
 import com.emul8r.bizap.data.local.entities.OfflineOperation
 import com.emul8r.bizap.domain.usecase.SyncPendingOperationsUseCase
+import io.mockk.any
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -49,7 +50,7 @@ class SyncWorkerTest {
      * - No operations skipped
      */
     @Test
-    fun `test_syncWorker_processes_queue_in_fifo_order` {
+    fun `test_syncWorker_processes_queue_in_fifo_order`() {
         runBlocking {
             // Arrange: Create 3 operations in order
             val operations = listOf(
@@ -76,7 +77,7 @@ class SyncWorkerTest {
                 )
             )
 
-            coEvery { mockDao.getPendingOperations() } returns operations
+            coEvery { mockDao.getPendingOperations(any()) } returns operations
             coEvery { mockUseCase() } returns Unit
 
             // Act
@@ -96,7 +97,7 @@ class SyncWorkerTest {
      * - Max retries enforced
      */
     @Test
-    fun `test_syncWorker_handles_network_failure_with_retry` {
+    fun `test_syncWorker_handles_network_failure_with_retry`() {
         runBlocking {
             // Arrange: UseCase throws network error
             coEvery { mockUseCase() } throws Exception("Network error")
@@ -129,7 +130,7 @@ class SyncWorkerTest {
      * - Operation removed from queue
      */
     @Test
-    fun `test_syncWorker_updates_operation_status_to_synced` {
+    fun `test_syncWorker_updates_operation_status_to_synced`() {
         runBlocking {
             // Arrange
             val operation = OfflineOperation(
@@ -139,7 +140,7 @@ class SyncWorkerTest {
                 businessProfileId = 1L
             )
 
-            coEvery { mockDao.getPendingOperations() } returns listOf(operation)
+            coEvery { mockDao.getPendingOperations(any()) } returns listOf(operation)
             coEvery { mockDao.update(any()) } returns Unit
             coEvery { mockDao.delete(any()) } returns Unit
             coEvery { mockUseCase() } returns Unit
@@ -162,7 +163,7 @@ class SyncWorkerTest {
      * - No orphaned data
      */
     @Test
-    fun `test_syncWorker_removes_synced_operations_from_queue` {
+    fun `test_syncWorker_removes_synced_operations_from_queue`() {
         runBlocking {
             // Arrange: 3 operations, 2 succeed, 1 fails
             val operations = listOf(
@@ -180,7 +181,7 @@ class SyncWorkerTest {
                 )
             )
 
-            coEvery { mockDao.getPendingOperations() } returns operations
+            coEvery { mockDao.getPendingOperations(any()) } returns operations
             coEvery { mockUseCase() } returns Unit
             coEvery { mockDao.delete(any()) } returns Unit
 
@@ -201,7 +202,7 @@ class SyncWorkerTest {
      * - Final state is consistent
      */
     @Test
-    fun `test_syncWorker_maintains_concurrency_safety` {
+    fun `test_syncWorker_maintains_concurrency_safety`() {
         runBlocking {
             // Arrange: Multiple sync requests
             val operations = listOf(
@@ -213,7 +214,7 @@ class SyncWorkerTest {
                 )
             )
 
-            coEvery { mockDao.getPendingOperations() } returns operations
+            coEvery { mockDao.getPendingOperations(any()) } returns operations
             coEvery { mockUseCase() } returns Unit
 
             // Act: Simulate concurrent syncs
@@ -235,10 +236,10 @@ class SyncWorkerTest {
      * - No database operations
      */
     @Test
-    fun `test_syncWorker_handles_empty_queue_gracefully` {
+    fun `test_syncWorker_handles_empty_queue_gracefully`() {
         runBlocking {
             // Arrange: Empty queue
-            coEvery { mockDao.getPendingOperations() } returns emptyList()
+            coEvery { mockDao.getPendingOperations(any()) } returns emptyList()
             coEvery { mockUseCase() } returns Unit
 
             // Act
@@ -258,7 +259,7 @@ class SyncWorkerTest {
      * - Jitter prevents thundering herd
      */
     @Test
-    fun `test_syncWorker_exponential_backoff_calculation` {
+    fun `test_syncWorker_exponential_backoff_calculation`() {
         // Test backoff delays
         val delays = listOf(
             calculateBackoff(0),  // ~1s
