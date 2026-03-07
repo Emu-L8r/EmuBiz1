@@ -16,6 +16,7 @@ import com.emul8r.bizap.data.local.migrations.MIGRATION_24_25
 import com.emul8r.bizap.data.local.migrations.MIGRATION_25_26
 import com.emul8r.bizap.data.local.migrations.MIGRATION_26_27
 import com.emul8r.bizap.data.local.migrations.MIGRATION_27_28
+import com.emul8r.bizap.data.local.migrations.MIGRATION_28_29
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,7 +38,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "bizap-db"
         )
-        .addMigrations(MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28)
+        .addMigrations(MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29)
         .build()
     }
 
@@ -53,6 +54,7 @@ object DatabaseModule {
     @Provides fun provideInvoicePaymentDao(db: AppDatabase): InvoicePaymentDao = db.invoicePaymentDao()
     @Provides fun provideInvoiceTemplateDao(db: AppDatabase): InvoiceTemplateDao = db.invoiceTemplateDao()
     @Provides fun provideInvoiceCustomFieldDao(db: AppDatabase): InvoiceCustomFieldDao = db.invoiceCustomFieldDao()
+    @Provides fun providePendingOperationDao(db: AppDatabase): PendingOperationDao = db.pendingOperationDao()
 
     @Provides
     @Singleton
