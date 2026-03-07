@@ -50,4 +50,9 @@
     <color name="semantic_warning">#FFFFA500</color>
     <color name="semantic_error">#FFB3261E</color>
     <color name="semantic_info">#FF2196F3</color>
+
+    <!-- Material Blue Colors -->
+    <color name="material_blue_500">#FF2196F3</color>
+    <color name="material_blue_700">#FF1976D2</color>
+    <color name="material_blue_900">#FF0D47A1</color>
 </resources>

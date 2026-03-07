@@ -3,9 +3,9 @@ package com.emul8r.bizap.ui.activities
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -18,7 +18,7 @@ import dagger.hilt.android.AndroidEntryPoint
 /**
  * Activity for the traditional (GUI1) experience.
  *
- * Wraps the existing [MainScreen] composable in an AppCompatActivity so it can
+ * Wraps the existing [MainScreen] composable in an ComponentActivity so it can
  * be started as an independent task.  The calling code may optionally pass
  * [EXTRA_BUSINESS_ID] to communicate the active business ID to the Composable
  * hierarchy via the intent.  If omitted, the default profile loaded by
@@ -30,7 +30,7 @@ import dagger.hilt.android.AndroidEntryPoint
  * [com.emul8r.bizap.MainActivity] re-display [LandingScreen].
  */
 @AndroidEntryPoint
-class TraditionalGUIMainActivity : AppCompatActivity() {
+class TraditionalGUIMainActivity : ComponentActivity() {
 
     companion object {
         /** Intent extra key used to pass the active business ID to this activity. */

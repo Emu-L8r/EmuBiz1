@@ -23,4 +23,34 @@ sealed interface ScreenV2 {
 
     @Serializable
     data class InvoiceDetail(val businessId: Long, val invoiceId: Long) : ScreenV2
+
+    @Serializable
+    data class Customers(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class CustomerDetail(val businessId: Long, val customerId: Long) : ScreenV2
+
+    @Serializable
+    data class CreateCustomer(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class EditCustomer(val businessId: Long, val customerId: Long) : ScreenV2
+
+    @Serializable
+    data class Invoices(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class CreateInvoice(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class EditInvoice(val businessId: Long, val invoiceId: Long) : ScreenV2
+
+    @Serializable
+    data class Settings(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class BusinessProfile(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class ThemeSettings(val businessId: Long) : ScreenV2
 }

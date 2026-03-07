@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.Bizap" parent="Theme.Material3.Light.NoActionBar" />
+    <!-- Using AppCompat theme as base - works with all Material libraries -->
+    <style name="Theme.Bizap" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">@color/material_blue_700</item>
+        <item name="colorPrimaryDark">@color/material_blue_900</item>
+        <item name="colorAccent">@color/material_blue_500</item>
+    </style>
 </resources>

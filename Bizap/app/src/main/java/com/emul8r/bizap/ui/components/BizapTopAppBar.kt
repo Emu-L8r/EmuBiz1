@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +37,8 @@ import com.emul8r.bizap.utils.ImageCompressor
  * @param showLogo Whether to show the logo (default: true on Dashboard, false elsewhere)
  * @param showBackButton Whether to show a back navigation button
  * @param onBackClick Callback for back button click
+ * @param onActionClick Optional callback for action button (e.g., switch GUI)
+ * @param actionButtonLabel Optional label for the action button
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +47,9 @@ fun BizapTopAppBar(
     logoBase64: String? = null,
     showLogo: Boolean = false,
     showBackButton: Boolean = false,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onActionClick: (() -> Unit)? = null,
+    actionButtonLabel: String? = null
 ) {
     TopAppBar(
         title = {
@@ -86,6 +91,16 @@ fun BizapTopAppBar(
             if (showBackButton) {
                 IconButton(onClick = onBackClick) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            }
+        },
+        actions = {
+            if (onActionClick != null) {
+                IconButton(onClick = onActionClick) {
+                    Icon(
+                        imageVector = Icons.Default.SwapHoriz,
+                        contentDescription = actionButtonLabel ?: "Switch GUI"
+                    )
                 }
             }
         },
