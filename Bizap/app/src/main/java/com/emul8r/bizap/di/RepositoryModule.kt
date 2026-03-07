@@ -1,21 +1,27 @@
 package com.emul8r.bizap.di
 
 import com.emul8r.bizap.data.repository.BusinessProfileRepositoryImpl
+import com.emul8r.bizap.data.repository.CustomFieldRepositoryImpl
 import com.emul8r.bizap.data.repository.CustomerRepositoryImpl
 import com.emul8r.bizap.data.repository.CurrencyRepositoryImpl
 import com.emul8r.bizap.data.repository.CustomerAnalyticsRepositoryImpl
 import com.emul8r.bizap.data.repository.DocumentRepositoryImpl
 import com.emul8r.bizap.data.repository.InvoiceRepositoryImpl
 import com.emul8r.bizap.data.repository.PaymentAnalyticsRepositoryImpl
+import com.emul8r.bizap.data.repository.PDFRepositoryImpl
 import com.emul8r.bizap.data.repository.PrefilledItemRepositoryImpl
 import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
+import com.emul8r.bizap.data.repository.TaxRepositoryImpl
 import com.emul8r.bizap.data.repository.ThemeRepositoryImpl
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.repository.CustomFieldRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.domain.repository.PDFRepository
 import com.emul8r.bizap.domain.repository.PrefilledItemRepository
+import com.emul8r.bizap.domain.repository.TaxRepository
 import com.emul8r.bizap.domain.repository.ThemeRepository
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import com.emul8r.bizap.domain.customer.repository.CustomerAnalyticsRepository
@@ -89,4 +95,22 @@ abstract class RepositoryModule {
     abstract fun bindCustomerAnalyticsRepository(
         impl: CustomerAnalyticsRepositoryImpl
     ): CustomerAnalyticsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCustomFieldRepository(
+        impl: CustomFieldRepositoryImpl
+    ): CustomFieldRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTaxRepository(
+        impl: TaxRepositoryImpl
+    ): TaxRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPDFRepository(
+        impl: PDFRepositoryImpl
+    ): PDFRepository
 }
