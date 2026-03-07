@@ -91,6 +91,74 @@ interface InvoiceDao {
     """)
     fun getInvoiceGroupWithVersions(invoiceYear: Int, invoiceSequence: Int, businessId: Long): Flow<List<InvoiceEntity>>
 
+    // ==================== DIRECT REVENUE QUERIES ====================
+
+    /**
+     * Revenue trend data class for direct-from-invoices queries.
+     * Represents one row per (date, currency) combination from the invoices table.
+     */
+    data class DailyRevenueTrend(
+        val dateString: String,
+        val revenue: Long,
+        val invoiceCount: Int,
+        val paidCount: Int,
+        val currencyCode: String
+    )
+
+    @Query("""
+        SELECT 
+            COALESCE(SUM(totalAmount), 0) as mtdRevenue
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND status = 'PAID'
+        AND DATE(date/1000, 'unixepoch') >= date('now', 'start of month')
+    """)
+    fun observeMTDRevenue(businessId: Long): Flow<Long>
+
+    @Query("""
+        SELECT 
+            COALESCE(SUM(totalAmount), 0) as ytdRevenue
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND status = 'PAID'
+        AND strftime('%Y', date/1000, 'unixepoch') = strftime('%Y', 'now')
+    """)
+    fun observeYTDRevenue(businessId: Long): Flow<Long>
+
+    @Query("""
+        SELECT 
+            COALESCE(SUM(totalAmount), 0) as weeklyRevenue
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND status = 'PAID'
+        AND DATE(date/1000, 'unixepoch') >= date('now', '-7 days')
+    """)
+    fun observeWeeklyRevenue(businessId: Long): Flow<Long>
+
+    @Query("""
+        SELECT 
+            COALESCE(SUM(totalAmount), 0) as totalPaidRevenue
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND status = 'PAID'
+    """)
+    fun observeTotalPaidRevenue(businessId: Long): Flow<Long>
+
+    @Query("""
+        SELECT 
+            DATE(date/1000, 'unixepoch') as dateString,
+            COALESCE(SUM(CASE WHEN status = 'PAID' THEN totalAmount ELSE 0 END), 0) as revenue,
+            COUNT(*) as invoiceCount,
+            COUNT(CASE WHEN status = 'PAID' THEN 1 END) as paidCount,
+            currencyCode
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND DATE(date/1000, 'unixepoch') >= date('now', '-30 days')
+        GROUP BY dateString, currencyCode
+        ORDER BY dateString DESC
+    """)
+    fun observeLast30DaysRevenueTrend(businessId: Long): Flow<List<DailyRevenueTrend>>
+
     // ==================== HEALTH CHECK QUERIES ====================
 
     /**
