@@ -18,24 +18,38 @@ class RevenueDashboardViewModel @Inject constructor(
     private val businessProfileRepository: BusinessProfileRepository
 ) : ViewModel() {
 
-    val uiState: StateFlow<RevenueDashboardUiState> =
-        businessProfileRepository.activeProfile
-            .flatMapLatest { businessProfile ->
-                getRevenueMetricsUseCase(businessProfile.id)
-                    .map { metrics ->
-                        Timber.d("✅ RevenueDashboardViewModel: Metrics updated reactively")
-                        RevenueDashboardUiState.Success(metrics) as RevenueDashboardUiState
-                    }
-                    .catch { error ->
-                        Timber.e(error, "❌ RevenueDashboardViewModel: Failed to load metrics")
-                        emit(RevenueDashboardUiState.Error(error.message ?: "Unknown Error"))
-                    }
-            }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = RevenueDashboardUiState.Loading
-            )
+    private val _overrideBusinessId = MutableStateFlow<Long?>(null)
+
+    val uiState: StateFlow<RevenueDashboardUiState> = combine(
+        businessProfileRepository.activeProfile,
+        _overrideBusinessId
+    ) { profile, override ->
+        override ?: profile.id
+    }
+        .flatMapLatest { businessId ->
+            getRevenueMetricsUseCase(businessId)
+                .map { metrics ->
+                    Timber.d("✅ RevenueDashboardViewModel: Metrics updated reactively")
+                    RevenueDashboardUiState.Success(metrics) as RevenueDashboardUiState
+                }
+                .catch { error ->
+                    Timber.e(error, "❌ RevenueDashboardViewModel: Failed to load metrics")
+                    emit(RevenueDashboardUiState.Error(error.message ?: "Unknown Error"))
+                }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = RevenueDashboardUiState.Loading
+        )
+
+    // ✅ FIX 3: Accept businessId from navigation
+    fun setBusinessId(businessId: Long?) {
+        if (businessId != null) {
+            _overrideBusinessId.value = businessId
+            Timber.d("📍 RevenueDashboardViewModel: Using business context $businessId from navigation")
+        }
+    }
 }
 
 sealed class RevenueDashboardUiState {

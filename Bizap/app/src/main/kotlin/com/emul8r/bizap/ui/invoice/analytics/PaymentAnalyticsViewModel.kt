@@ -26,13 +26,17 @@ class PaymentAnalyticsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _refreshTrigger = MutableStateFlow(0)
+    private val _overrideBusinessId = MutableStateFlow<Long?>(null)
 
     val state: StateFlow<PaymentAnalyticsUiState> = combine(
         businessProfileRepository.activeProfile,
-        _refreshTrigger
-    ) { profile, _ -> profile }
-        .flatMapLatest { businessProfile ->
-            getPaymentAnalyticsUseCase(businessProfile.id)
+        _refreshTrigger,
+        _overrideBusinessId
+    ) { profile, _, override ->
+        override ?: profile.id
+    }
+        .flatMapLatest { businessId ->
+            getPaymentAnalyticsUseCase(businessId)
                 .map { analytics ->
                     Timber.d("✅ PaymentAnalyticsViewModel: Analytics updated reactively")
                     PaymentAnalyticsUiState.Success(analytics) as PaymentAnalyticsUiState
@@ -53,6 +57,14 @@ class PaymentAnalyticsViewModel @Inject constructor(
 
     private val _snackbarMessage = MutableSharedFlow<String>()
     val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
+
+    // ✅ FIX 3: Accept businessId from navigation
+    fun setBusinessId(businessId: Long?) {
+        if (businessId != null) {
+            _overrideBusinessId.value = businessId
+            Timber.d("📍 PaymentAnalyticsViewModel: Using business context $businessId from navigation")
+        }
+    }
 
     fun forceRefresh() {
         _refreshTrigger.value++

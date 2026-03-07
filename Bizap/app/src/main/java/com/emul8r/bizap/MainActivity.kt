@@ -32,6 +32,7 @@ import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.revenue.RevenueDashboardScreen
 import com.emul8r.bizap.ui.risk.RiskDashboardScreen
 import com.emul8r.bizap.ui.invoice.analytics.PaymentAnalyticsScreen
+import com.emul8r.bizap.ui.invoice.analytics.PaymentAnalyticsViewModel
 import com.emul8r.bizap.ui.settings.backup.BackupRestoreScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
@@ -248,8 +249,9 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 InvoiceDetailScreen(
                     invoiceId = detail.invoiceId,
                     onEdit = { navController.navigate(Screen.EditInvoice(detail.invoiceId)) },
+                    // ✅ FIX 3: Pass businessId context to payment analytics
                     onNavigateToRevenue = { navController.navigate(Screen.RevenueDashboard) },
-                    onNavigateToPayments = { navController.navigate(Screen.PaymentAnalytics) }
+                    onNavigateToPayments = { navController.navigate(Screen.PaymentAnalytics()) }
                 )
             }
             composable<Screen.CustomerDetail> { backStackEntry ->
@@ -262,7 +264,17 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
             }
             composable<Screen.RevenueDashboard> { RevenueDashboardScreen() }
             composable<Screen.RiskDashboard> { RiskDashboardScreen(onBackClick = { navController.popBackStack() }) }
-            composable<Screen.PaymentAnalytics> { PaymentAnalyticsScreen() }
+            composable<Screen.PaymentAnalytics> { backStackEntry ->
+                val route: Screen.PaymentAnalytics = backStackEntry.toRoute()
+                val viewModel: PaymentAnalyticsViewModel = hiltViewModel()
+
+                // ✅ FIX 3: Apply business context if passed from navigation
+                LaunchedEffect(route.businessId) {
+                    route.businessId?.let { viewModel.setBusinessId(it) }
+                }
+
+                PaymentAnalyticsScreen()
+            }
             composable<Screen.BackupRestore> { BackupRestoreScreen(onBack = { navController.popBackStack() }) }
             composable<Screen.DunningNotices> { DunningNoticesScreen(onBackClick = { navController.popBackStack() }) }
             composable<Screen.InvoiceTemplates> { backStackEntry ->
