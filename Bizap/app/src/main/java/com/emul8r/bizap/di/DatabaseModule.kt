@@ -9,14 +9,7 @@ import com.emul8r.bizap.data.backup.DatabaseBackupService
 import com.emul8r.bizap.data.backup.DatabaseRestoreService
 import com.emul8r.bizap.data.local.*
 import com.emul8r.bizap.data.local.dao.*
-import com.emul8r.bizap.data.local.migrations.MIGRATION_21_22
-import com.emul8r.bizap.data.local.migrations.MIGRATION_22_23
-import com.emul8r.bizap.data.local.migrations.MIGRATION_23_24
-import com.emul8r.bizap.data.local.migrations.MIGRATION_24_25
-import com.emul8r.bizap.data.local.migrations.MIGRATION_25_26
-import com.emul8r.bizap.data.local.migrations.MIGRATION_26_27
-import com.emul8r.bizap.data.local.migrations.MIGRATION_27_28
-import com.emul8r.bizap.data.local.migrations.MIGRATION_28_29
+import com.emul8r.bizap.data.local.migrations.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,7 +31,17 @@ object DatabaseModule {
             AppDatabase::class.java,
             "bizap-db"
         )
-        .addMigrations(MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29)
+        .addMigrations(
+            MIGRATION_21_22, 
+            MIGRATION_22_23, 
+            MIGRATION_23_24, 
+            MIGRATION_24_25, 
+            MIGRATION_25_26, 
+            MIGRATION_26_27, 
+            MIGRATION_27_28, 
+            MIGRATION_28_29,
+            MIGRATION_29_30
+        )
         .build()
     }
 
@@ -55,6 +58,7 @@ object DatabaseModule {
     @Provides fun provideInvoiceTemplateDao(db: AppDatabase): InvoiceTemplateDao = db.invoiceTemplateDao()
     @Provides fun provideInvoiceCustomFieldDao(db: AppDatabase): InvoiceCustomFieldDao = db.invoiceCustomFieldDao()
     @Provides fun providePendingOperationDao(db: AppDatabase): PendingOperationDao = db.pendingOperationDao()
+    @Provides fun provideOfflineOperationDao(db: AppDatabase): OfflineOperationDao = db.offlineOperationDao()
     @Provides fun provideInvoiceDaoV2(db: AppDatabase): InvoiceDaoV2 = db.invoiceDaoV2()
 
     @Provides

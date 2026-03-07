@@ -1,9 +1,11 @@
 package com.emul8r.bizap.domain.model
 
+import kotlinx.serialization.Serializable
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@Serializable
 data class Invoice(
     val id: Long = 0,
     val businessProfileId: Long = 0,
@@ -59,6 +61,7 @@ data class Invoice(
     }
 }
 
+@Serializable
 data class LineItem(
     val id: Long = 0,
     val description: String,
@@ -75,6 +78,7 @@ data class LineItem(
     }
 }
 
+@Serializable
 enum class InvoiceStatus {
     DRAFT,
     SENT,

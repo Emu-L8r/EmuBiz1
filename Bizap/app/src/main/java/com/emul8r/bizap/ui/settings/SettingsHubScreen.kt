@@ -52,7 +52,7 @@ fun SettingsHubScreen(onNavigate: (Screen) -> Unit) {
             icon = Icons.Default.BarChart,
             title = "Payment Analytics",
             subtitle = "Analyse payment trends and cash flow forecasts",
-            onClick = { onNavigate(Screen.PaymentAnalytics) }
+            onClick = { onNavigate(Screen.PaymentAnalytics()) }
         )
         SettingsItem(
             icon = Icons.AutoMirrored.Filled.TrendingUp,
