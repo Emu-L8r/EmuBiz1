@@ -47,6 +47,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun invoiceTemplateDao(): InvoiceTemplateDao
     abstract fun invoiceCustomFieldDao(): InvoiceCustomFieldDao
     abstract fun pendingOperationDao(): PendingOperationDao
+    abstract fun invoiceDaoV2(): InvoiceDaoV2
 }
 
 
