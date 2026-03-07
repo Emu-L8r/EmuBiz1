@@ -227,12 +227,12 @@ class OfflineQueueServiceSuite3Test {
             // Act: Launch concurrent operations from multiple coroutines
             val job1 = async {
                 queueService.queueCreateCustomer(com.emul8r.bizap.domain.model.Customer(name = "Customer 1"))
-                queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 1L, customerName = "C1", totalAmount = 100, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
+                queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 1L, customerId = null, customerName = "C1", totalAmount = 100, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
             }
 
             val job2 = async {
                 queueService.queueCreateCustomer(com.emul8r.bizap.domain.model.Customer(name = "Customer 2"))
-                queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 2L, customerName = "C2", totalAmount = 200, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
+                queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 2L, customerId = null, customerName = "C2", totalAmount = 200, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
             }
 
             val job3 = async {
@@ -286,7 +286,7 @@ class OfflineQueueServiceSuite3Test {
             }
             // 7 invoice creates
             repeat(7) {
-                queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = it.toLong(), customerName = "C$it", totalAmount = (it + 1) * 100L, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
+                queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = it.toLong(), customerId = null, customerName = "C$it", totalAmount = (it + 1) * 100L, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
             }
             // 2 deletes
             repeat(2) {
