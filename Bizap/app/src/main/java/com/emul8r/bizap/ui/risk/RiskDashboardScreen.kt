@@ -25,7 +25,9 @@ import java.util.Locale
 @Composable
 fun RiskDashboardScreen(
     viewModel: RiskDashboardViewModel = hiltViewModel(),
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    headerSlot: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val uiState = viewModel.uiState.collectAsState().value
 
@@ -65,12 +67,24 @@ fun RiskDashboardScreen(
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier
+                        modifier = modifier
                             .fillMaxSize()
                             .padding(paddingValues)
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        item {
+                            Column {
+                                headerSlot?.invoke(this) ?: run {
+                                    Text(
+                                        text = "Risk Dashboard",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+                            }
+                        }
                         item {
                             RiskSummaryCard(uiState.riskInvoices)
                         }
