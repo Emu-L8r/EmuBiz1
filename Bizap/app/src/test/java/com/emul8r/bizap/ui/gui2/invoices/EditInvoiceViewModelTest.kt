@@ -7,15 +7,14 @@ import com.emul8r.bizap.domain.model.LineItem
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for [EditInvoiceViewModelV2].
@@ -128,15 +127,5 @@ class EditInvoiceViewModelTest : BaseUnitTest() {
         val state: EditInvoiceUiStateV2 = EditInvoiceUiStateV2.Error("Invoice not found")
         assertIs<EditInvoiceUiStateV2.Error>(state)
         assertEquals("Invoice not found", (state as EditInvoiceUiStateV2.Error).message)
-    }
-
-    // ── Helper ─────────────────────────────────────────────────────────────────
-
-    private fun assertTrue(condition: Boolean, message: String? = null) {
-        kotlin.test.assertTrue(condition, message)
-    }
-
-    private fun assertTrue(condition: Boolean) {
-        kotlin.test.assertTrue(condition)
     }
 }
