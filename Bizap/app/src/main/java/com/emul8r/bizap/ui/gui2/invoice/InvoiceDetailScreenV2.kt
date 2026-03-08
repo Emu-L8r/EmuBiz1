@@ -93,18 +93,19 @@ fun InvoiceDetailScreenV2(
                     )
                 }
 
-                // Status Update Menu
+                // Status Update Menu - TEMPORARILY DISABLED
+                /*
                 if (showStatusMenu) {
                     StatusUpdateMenuV2(
                         currentStatus = state.invoice.invoice.status,
-                        onStatusSelected = { newStatus ->
-                            Timber.d("Updating status to: $newStatus")
-                            viewModel.updateInvoiceStatus(newStatus)
+                        onStatusSelected = { status: InvoiceStatus ->
+                            viewModel.updateInvoiceStatus(status)
                             showStatusMenu = false
                         },
                         onDismiss = { showStatusMenu = false }
                     )
                 }
+                */
             }
         }
     }

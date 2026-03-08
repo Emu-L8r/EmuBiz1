@@ -20,6 +20,7 @@ import com.emul8r.bizap.ui.gui2.invoices.EditInvoiceScreenV2
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListScreenV2
 import com.emul8r.bizap.ui.gui2.settings.BusinessProfileScreenV2
 import com.emul8r.bizap.ui.gui2.settings.SettingsHubScreenV2
+import com.emul8r.bizap.ui.gui2.settings.ThemeSettingsScreenV2
 
 /**
  * Navigation graph for GUI2.
