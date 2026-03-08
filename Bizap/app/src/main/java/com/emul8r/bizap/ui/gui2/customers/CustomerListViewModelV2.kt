@@ -22,7 +22,7 @@ class CustomerListViewModelV2 @Inject constructor(
     private val customerRepository: CustomerRepository
 ) : ViewModel() {
 
-    private val route: ScreenV2.Dashboard = savedStateHandle.toRoute()
+    private val route: ScreenV2.Customers = savedStateHandle.toRoute()
     val businessId: Long = route.businessId
 
     val uiState: StateFlow<CustomerListUiStateV2> = customerRepository

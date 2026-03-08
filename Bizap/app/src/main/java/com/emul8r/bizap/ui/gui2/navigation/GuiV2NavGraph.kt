@@ -9,8 +9,17 @@ import androidx.navigation.toRoute
 import com.emul8r.bizap.ui.gui2.analytics.PaymentAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.RevenueAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.RiskAnalyticsScreenV2
+import com.emul8r.bizap.ui.gui2.customers.CreateCustomerScreenV2
+import com.emul8r.bizap.ui.gui2.customers.CustomerDetailScreenV2
+import com.emul8r.bizap.ui.gui2.customers.CustomerListScreenV2
+import com.emul8r.bizap.ui.gui2.customers.EditCustomerScreenV2
 import com.emul8r.bizap.ui.gui2.dashboard.DashboardScreenV2
 import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailScreenV2
+import com.emul8r.bizap.ui.gui2.invoices.CreateInvoiceScreenV2
+import com.emul8r.bizap.ui.gui2.invoices.EditInvoiceScreenV2
+import com.emul8r.bizap.ui.gui2.invoices.InvoiceListScreenV2
+import com.emul8r.bizap.ui.gui2.settings.BusinessProfileScreenV2
+import com.emul8r.bizap.ui.gui2.settings.SettingsHubScreenV2
 
 /**
  * Navigation graph for GUI2.
@@ -76,6 +85,113 @@ fun GuiV2NavGraph(
             InvoiceDetailScreenV2(
                 businessId = route.businessId,
                 invoiceId = route.invoiceId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // ── Customer routes ──
+
+        composable<ScreenV2.Customers> { backStackEntry ->
+            val route: ScreenV2.Customers = backStackEntry.toRoute()
+            CustomerListScreenV2(
+                businessId = route.businessId,
+                onCustomerClick = { customerId ->
+                    navController.navigateToCustomerDetailV2(route.businessId, customerId)
+                },
+                onCreateCustomer = { navController.navigateToCreateCustomerV2(route.businessId) },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.CustomerDetail> { backStackEntry ->
+            val route: ScreenV2.CustomerDetail = backStackEntry.toRoute()
+            CustomerDetailScreenV2(
+                businessId = route.businessId,
+                customerId = route.customerId,
+                onEdit = {
+                    navController.navigateToEditCustomerV2(route.businessId, route.customerId)
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.CreateCustomer> { backStackEntry ->
+            val route: ScreenV2.CreateCustomer = backStackEntry.toRoute()
+            CreateCustomerScreenV2(
+                businessId = route.businessId,
+                onCreate = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.EditCustomer> { backStackEntry ->
+            val route: ScreenV2.EditCustomer = backStackEntry.toRoute()
+            EditCustomerScreenV2(
+                businessId = route.businessId,
+                customerId = route.customerId,
+                onUpdate = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // ── Invoice routes ──
+
+        composable<ScreenV2.Invoices> { backStackEntry ->
+            val route: ScreenV2.Invoices = backStackEntry.toRoute()
+            InvoiceListScreenV2(
+                businessId = route.businessId,
+                onInvoiceClick = { invoiceId ->
+                    navController.navigateToInvoiceDetailV2(route.businessId, invoiceId)
+                },
+                onCreateInvoice = { navController.navigateToCreateInvoiceV2(route.businessId) },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.CreateInvoice> { backStackEntry ->
+            val route: ScreenV2.CreateInvoice = backStackEntry.toRoute()
+            CreateInvoiceScreenV2(
+                businessId = route.businessId,
+                onCreate = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.EditInvoice> { backStackEntry ->
+            val route: ScreenV2.EditInvoice = backStackEntry.toRoute()
+            EditInvoiceScreenV2(
+                businessId = route.businessId,
+                invoiceId = route.invoiceId,
+                onUpdate = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // ── Settings routes ──
+
+        composable<ScreenV2.Settings> { backStackEntry ->
+            val route: ScreenV2.Settings = backStackEntry.toRoute()
+            SettingsHubScreenV2(
+                onBusinessProfileClick = {
+                    navController.navigateToBusinessProfileV2(route.businessId)
+                },
+                onThemeSettingsClick = {
+                    navController.navigateToThemeSettingsV2(route.businessId)
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.BusinessProfile> { backStackEntry ->
+            BusinessProfileScreenV2(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.ThemeSettings> { backStackEntry ->
+            val route: ScreenV2.ThemeSettings = backStackEntry.toRoute()
+            ThemeSettingsScreenV2(
+                businessId = route.businessId,
                 onBack = { navController.popBackStack() }
             )
         }

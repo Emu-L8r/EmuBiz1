@@ -24,7 +24,7 @@ class EditInvoiceViewModelV2 @Inject constructor(
     private val invoiceId: Long = route.invoiceId
 
     val uiState: StateFlow<EditInvoiceUiStateV2> = invoiceRepository
-        .getInvoiceById(invoiceId)
+        .getInvoiceWithItemsById(invoiceId)
         .map { invoice ->
             Timber.d("EditInvoiceViewModelV2: Loaded invoice $invoiceId")
             if (invoice != null) {

@@ -127,39 +127,39 @@ private fun CustomerDetailContent(
         }
 
         // Business information
-        if (customer.businessName.isNotBlank()) {
+        customer.businessName?.takeIf { it.isNotBlank() }?.let { name ->
             DetailSection(title = "Business Name") {
                 Text(
-                    text = customer.businessName,
+                    text = name,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
 
         // Contact information
-        if (customer.email.isNotBlank()) {
+        customer.email?.takeIf { it.isNotBlank() }?.let { email ->
             DetailSection(title = "Email") {
                 Text(
-                    text = customer.email,
+                    text = email,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
 
-        if (customer.phone.isNotBlank()) {
+        customer.phone?.takeIf { it.isNotBlank() }?.let { phone ->
             DetailSection(title = "Phone") {
                 Text(
-                    text = customer.phone,
+                    text = phone,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
 
         // Address
-        if (customer.address.isNotBlank()) {
+        customer.address?.takeIf { it.isNotBlank() }?.let { address ->
             DetailSection(title = "Address") {
                 Text(
-                    text = customer.address,
+                    text = address,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
