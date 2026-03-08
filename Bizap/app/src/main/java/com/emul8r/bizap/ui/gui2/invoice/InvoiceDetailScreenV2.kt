@@ -21,7 +21,6 @@ import com.emul8r.bizap.ui.gui2.invoices.RecordPaymentDialogV2
 import com.emul8r.bizap.ui.gui2.invoices.StatusUpdateMenuV2
 import java.text.SimpleDateFormat
 import java.util.*
-import timber.log.Timber
 
 /**
  * GUI2 invoice detail screen.
@@ -80,16 +79,15 @@ fun InvoiceDetailScreenV2(
                 )
 
                 // Payment Dialog
-                if (showPaymentDialog && state.invoice.invoice.totalAmount > state.invoice.invoice.amountPaid) {
+                if (showPaymentDialog) {
                     RecordPaymentDialogV2(
+                        invoiceId = state.invoice.invoice.id,
+                        businessId = businessId,
                         invoiceTotal = state.invoice.invoice.totalAmount,
                         amountPaid = state.invoice.invoice.amountPaid,
+                        invoiceDate = state.invoice.invoice.date,
                         onDismiss = { showPaymentDialog = false },
-                        onConfirm = { amount ->
-                            Timber.d("Recording payment: $amount cents")
-                            viewModel.recordPayment(amount)
-                            showPaymentDialog = false
-                        }
+                        onSuccess = { showPaymentDialog = false }
                     )
                 }
 

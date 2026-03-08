@@ -32,6 +32,32 @@ interface InvoiceDaoV2 {
     suspend fun insert(invoice: InvoiceEntity): Long
 
     /**
+     * Returns the invoice entity for the given [invoiceId], or null if not found.
+     */
+    @Query("SELECT * FROM invoices WHERE id = :invoiceId LIMIT 1")
+    suspend fun getById(invoiceId: Long): InvoiceEntity?
+
+    /**
+     * Updates [amountPaid] for a single invoice and stamps [updatedAt].
+     */
+    @Query("UPDATE invoices SET amountPaid = :amountPaid, updatedAt = :updatedAt WHERE id = :invoiceId")
+    suspend fun updateAmountPaid(
+        invoiceId: Long,
+        amountPaid: Long,
+        updatedAt: Long = System.currentTimeMillis()
+    )
+
+    /**
+     * Updates [status] for a single invoice and stamps [updatedAt].
+     */
+    @Query("UPDATE invoices SET status = :status, updatedAt = :updatedAt WHERE id = :invoiceId")
+    suspend fun updateStatus(
+        invoiceId: Long,
+        status: String,
+        updatedAt: Long = System.currentTimeMillis()
+    )
+
+    /**
      * Inserts a batch of line items and returns their generated row ids.
      */
     @Insert(onConflict = OnConflictStrategy.ABORT)

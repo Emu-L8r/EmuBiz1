@@ -1,8 +1,10 @@
 package com.emul8r.bizap.di
 
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
+import com.emul8r.bizap.data.local.dao.PaymentDaoV2
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
+import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
@@ -41,4 +43,11 @@ object GuiV2Module {
         businessProfileRepository: BusinessProfileRepository
     ): BusinessContextRepositoryV2 =
         BusinessContextRepositoryV2(businessProfileRepository)
+
+    @Provides
+    @Singleton
+    fun providePaymentRepositoryV2(
+        invoiceDaoV2: InvoiceDaoV2,
+        paymentDaoV2: PaymentDaoV2
+    ): PaymentRepositoryV2 = PaymentRepositoryV2(invoiceDaoV2, paymentDaoV2)
 }
