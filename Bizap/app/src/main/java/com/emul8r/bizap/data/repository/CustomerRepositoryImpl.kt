@@ -3,6 +3,7 @@ package com.emul8r.bizap.data.repository
 import com.emul8r.bizap.data.local.CustomerDao
 import com.emul8r.bizap.data.mapper.toDomain
 import com.emul8r.bizap.data.mapper.toEntity
+import com.emul8r.bizap.data.remote.api.CustomerApi
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
@@ -19,7 +20,8 @@ import javax.inject.Inject
 class CustomerRepositoryImpl @Inject constructor(
     private val customerDao: CustomerDao,
     private val customerAnalyticsRepository: CustomerAnalyticsRepository,
-    private val businessProfileRepository: BusinessProfileRepository
+    private val businessProfileRepository: BusinessProfileRepository,
+    private val customerApi: CustomerApi
 ) : CustomerRepository {
     
     override fun getAllCustomers(): Flow<List<Customer>> = 
@@ -88,5 +90,42 @@ class CustomerRepositoryImpl @Inject constructor(
         }
 
         Unit
+    }
+
+    // --- PHASE 2: Remote Sync ---
+
+    override suspend fun createCustomerRemote(customer: Customer): Result<Customer> = runCatching {
+        val response = customerApi.createCustomer(customer)
+        if (response.isSuccessful) {
+            response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("API Error: ${response.code()} ${response.message()}")
+        }
+    }
+
+    override suspend fun updateCustomerRemote(customer: Customer): Result<Customer> = runCatching {
+        // Using updatedAt as a simple optimistic lock version (assuming server expects timestamp)
+        val response = customerApi.updateCustomer(customer.id, customer, customer.updatedAt)
+        if (response.isSuccessful) {
+            response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("API Error: ${response.code()} ${response.message()}")
+        }
+    }
+
+    override suspend fun deleteCustomerRemote(id: Long): Result<Unit> = runCatching {
+        val response = customerApi.deleteCustomer(id)
+        if (!response.isSuccessful) {
+            throw Exception("API Error: ${response.code()} ${response.message()}")
+        }
+    }
+
+    override suspend fun getCustomerRemote(id: Long): Result<Customer> = runCatching {
+        val response = customerApi.getCustomer(id)
+        if (response.isSuccessful) {
+            response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("API Error: ${response.code()} ${response.message()}")
+        }
     }
 }
