@@ -255,7 +255,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
         MetricCard(
             icon = Icons.AutoMirrored.Filled.TrendingUp,
             label = "Collection Rate",
-            value = String.format("%.1f", analytics.collectionRate) + "%",
+            value = String.format(Locale.US, "%.1f", analytics.collectionRate) + "%",
             backgroundColor = Color(0xFF4CAF50),
             modifier = Modifier.weight(1f)
         )
@@ -335,7 +335,7 @@ private fun CollectionRateCard(analytics: PaymentAnalyticsSummary) {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = String.format("%.1f", analytics.collectionRate) + "%",
+                    text = String.format(Locale.US, "%.1f", analytics.collectionRate) + "%",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = getCollectionRateColor(analytics.collectionRate)
@@ -704,7 +704,7 @@ private fun InvoiceStatusSummary(analytics: PaymentAnalyticsSummary) {
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
-                        text = String.format("%.0f", analytics.averagePaymentTime) + " days",
+                        text = String.format(Locale.US, "%.0f", analytics.averagePaymentTime) + " days",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

@@ -232,10 +232,10 @@ class InvoiceRepositoryImpl @Inject constructor(
             }
 
             // ── Step 3: Sync DailyRevenueSnapshot (optimistic locking) ───────────
-            val invoiceDate = LocalDate.ofInstant(
-                Instant.ofEpochMilli(invoiceEntity.date),
-                ZoneId.systemDefault()
-            ).toString()
+            val invoiceDate = Instant.ofEpochMilli(invoiceEntity.date)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+                .toString()
             analyticsDao.updateDailySnapshotWithOptimisticLock(
                 businessId = invoiceEntity.businessProfileId,
                 invoiceDate = invoiceDate,
@@ -375,10 +375,10 @@ class InvoiceRepositoryImpl @Inject constructor(
         Timber.d("✅ Synced InvoiceAnalyticsSnapshot for invoice ${invoice.id}")
 
         // 2. Create or update DailyRevenueSnapshot
-        val dateString = LocalDate.ofInstant(
-            Instant.ofEpochMilli(invoice.date),
-            ZoneId.systemDefault()
-        ).toString()
+        val dateString = Instant.ofEpochMilli(invoice.date)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+            .toString()
         val revenueContribution = if (invoice.status in paidStatuses) invoice.amountPaid else 0L
         val existingDailySnapshot = analyticsDao.getDailySnapshotByDate(businessProfileId, dateString)
         if (existingDailySnapshot != null) {

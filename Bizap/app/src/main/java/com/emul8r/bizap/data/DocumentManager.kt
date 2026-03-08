@@ -43,7 +43,11 @@ class DocumentManager @Inject constructor(
         }
 
         val resolver = context.contentResolver
-        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+        val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+        } else {
+            resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+        }
 
         uri?.let { destinationUri ->
             try {
