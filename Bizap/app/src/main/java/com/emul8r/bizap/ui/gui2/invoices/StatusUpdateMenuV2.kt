@@ -1,8 +1,11 @@
 package com.emul8r.bizap.ui.gui2.invoices
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.window.DialogProperties
 import com.emul8r.bizap.domain.model.InvoiceStatus
 
 /**
@@ -14,25 +17,6 @@ fun StatusUpdateMenuV2(
     onStatusSelected: (InvoiceStatus) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Update Invoice Status") },
-        text = {
-            Text("Select new status:")
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    )
-
-    // Show status options
     val statusOptions = listOf(
         InvoiceStatus.DRAFT,
         InvoiceStatus.SENT,
@@ -64,7 +48,11 @@ fun StatusUpdateMenuV2(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
+        },
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
     )
 }
 
