@@ -3,7 +3,9 @@ package com.emul8r.bizap.ui.gui2.invoices
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -23,6 +25,7 @@ class InvoiceErrorHandlingTest {
 
     @Before
     fun setup() {
+        every { customerRepository.getAllCustomers() } returns flowOf(emptyList())
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
             customerRepository = customerRepository
