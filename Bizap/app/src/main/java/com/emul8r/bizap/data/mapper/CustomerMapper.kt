@@ -12,6 +12,8 @@ fun Customer.toEntity(): CustomerEntity {
         email = this.email,
         phone = this.phone,
         address = this.address,
+        city = this.city,
+        postalCode = this.postalCode,
         notes = this.notes,
         createdAt = this.createdAt,
         updatedAt = this.updatedAt
@@ -27,6 +29,8 @@ fun CustomerEntity.toDomain(): Customer {
         email = this.email,
         phone = this.phone,
         address = this.address,
+        city = this.city,
+        postalCode = this.postalCode,
         notes = this.notes,
         createdAt = this.createdAt,
         updatedAt = this.updatedAt
