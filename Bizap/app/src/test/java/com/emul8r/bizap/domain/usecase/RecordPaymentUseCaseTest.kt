@@ -64,7 +64,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             invoiceId = invoiceId,
             businessId = businessId,
             amount = 50000L,
-            outstanding = outstanding,
+            trueOutstanding = outstanding,
             paymentDate = todayMidnight,
             invoiceDate = invoiceDate
         )
@@ -97,7 +97,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             invoiceId = invoiceId,
             businessId = businessId,
             amount = outstanding,  // Exact outstanding
-            outstanding = outstanding,
+            trueOutstanding = outstanding,
             paymentDate = todayMidnight,
             invoiceDate = invoiceDate
         )
@@ -113,7 +113,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             invoiceId = invoiceId,
             businessId = businessId,
             amount = outstanding + 1L,  // One cent over outstanding
-            outstanding = outstanding,
+            trueOutstanding = outstanding,
             paymentDate = todayMidnight,
             invoiceDate = invoiceDate
         )
@@ -130,7 +130,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             invoiceId = invoiceId,
             businessId = businessId,
             amount = outstanding + 10000L,
-            outstanding = outstanding,
+            trueOutstanding = outstanding,
             paymentDate = todayMidnight,
             invoiceDate = invoiceDate
         )
@@ -156,7 +156,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             invoiceId = invoiceId,
             businessId = businessId,
             amount = 50000L,
-            outstanding = outstanding,
+            trueOutstanding = outstanding,
             paymentDate = futureDate,
             invoiceDate = invoiceDate
         )
@@ -175,7 +175,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             invoiceId = invoiceId,
             businessId = businessId,
             amount = 50000L,
-            outstanding = outstanding,
+            trueOutstanding = outstanding,
             paymentDate = beforeInvoiceDate,
             invoiceDate = invoiceDate
         )
@@ -191,7 +191,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             invoiceId = invoiceId,
             businessId = businessId,
             amount = 0L,
-            outstanding = outstanding,
+            trueOutstanding = outstanding,
             paymentDate = todayMidnight,
             invoiceDate = invoiceDate
         )
@@ -237,7 +237,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             invoiceId = invoiceId,
             businessId = businessId,
             amount = 50000L,
-            outstanding = outstanding,
+            trueOutstanding = outstanding,
             paymentDate = todayMidnight,
             invoiceDate = invoiceDate
         )
@@ -270,7 +270,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             invoiceId = invoiceId,
             businessId = businessId,
             amount = 50000L,
-            outstanding = outstanding,
+            trueOutstanding = outstanding,
             paymentDate = todayMidnight,
             invoiceDate = invoiceDate,
             notes = notes
