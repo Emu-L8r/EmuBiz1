@@ -1,9 +1,16 @@
 package com.emul8r.bizap.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
 import com.emul8r.bizap.data.local.entities.DailyRevenueTrendV2
+import com.emul8r.bizap.data.local.entities.InvoiceEntity
+import com.emul8r.bizap.data.local.entities.InvoiceItemEntity
 import com.emul8r.bizap.data.local.entities.InvoiceStatusCountV2
+import com.emul8r.bizap.data.local.entities.InvoiceWithInvoiceItems
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -15,6 +22,37 @@ import kotlinx.coroutines.flow.Flow
  */
 @Dao
 interface InvoiceDaoV2 {
+
+    // ==================== CRUD ====================
+
+    /**
+     * Inserts a new invoice and returns its generated row id.
+     */
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insert(invoice: InvoiceEntity): Long
+
+    /**
+     * Inserts a batch of line items and returns their generated row ids.
+     */
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertItems(items: List<InvoiceItemEntity>): List<Long>
+
+    @Update
+    suspend fun update(invoice: InvoiceEntity)
+
+    /**
+     * Soft-deletes an invoice by setting [isActive] to false.
+     * The record is retained for audit and analytics purposes.
+     */
+    @Query("UPDATE invoices SET isActive = 0, updatedAt = :updatedAt WHERE id = :invoiceId")
+    suspend fun delete(invoiceId: Long, updatedAt: Long = System.currentTimeMillis())
+
+    /**
+     * Observe all active invoices for a business (with their line items), newest first.
+     */
+    @Transaction
+    @Query("SELECT * FROM invoices WHERE businessProfileId = :businessId AND isActive = 1 ORDER BY date DESC")
+    fun observeAllInvoices(businessId: Long): Flow<List<InvoiceWithInvoiceItems>>
 
     // ==================== REVENUE QUERIES ====================
 
