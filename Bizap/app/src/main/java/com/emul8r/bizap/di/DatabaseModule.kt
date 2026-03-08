@@ -40,7 +40,8 @@ object DatabaseModule {
             MIGRATION_26_27, 
             MIGRATION_27_28, 
             MIGRATION_28_29,
-            MIGRATION_29_30
+            MIGRATION_29_30,
+            MIGRATION_30_31
         )
         .build()
     }
@@ -60,6 +61,7 @@ object DatabaseModule {
     @Provides fun providePendingOperationDao(db: AppDatabase): PendingOperationDao = db.pendingOperationDao()
     @Provides fun provideOfflineOperationDao(db: AppDatabase): OfflineOperationDao = db.offlineOperationDao()
     @Provides fun provideInvoiceDaoV2(db: AppDatabase): InvoiceDaoV2 = db.invoiceDaoV2()
+    @Provides fun provideCustomerDaoV2(db: AppDatabase): CustomerDaoV2 = db.customerDaoV2()
 
     @Provides
     @Singleton

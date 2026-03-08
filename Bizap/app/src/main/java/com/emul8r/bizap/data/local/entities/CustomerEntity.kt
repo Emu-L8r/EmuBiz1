@@ -9,7 +9,8 @@ import androidx.room.PrimaryKey
     indices = [
         Index(name = "idx_customers_business", value = ["businessProfileId"]),
         Index(name = "idx_customers_email", value = ["email"], unique = true),
-        Index(name = "idx_customers_business_name", value = ["businessProfileId", "name"])
+        Index(name = "idx_customers_business_name", value = ["businessProfileId", "name"]),
+        Index(name = "idx_customers_business_active_name", value = ["businessProfileId", "isActive", "name"])
     ]
 )
 data class CustomerEntity(
@@ -21,7 +22,10 @@ data class CustomerEntity(
     val email: String? = null,
     val phone: String? = null,
     val address: String? = null,
+    val city: String? = null,
+    val postalCode: String? = null,
     val notes: String = "",
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    val isActive: Boolean = true
 )
