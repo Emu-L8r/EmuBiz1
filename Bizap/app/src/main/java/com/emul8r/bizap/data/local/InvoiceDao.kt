@@ -208,4 +208,13 @@ interface InvoiceDao {
         WHERE businessProfileId = :businessId
     """)
     suspend fun calculatePaymentMetrics(businessId: Long): CalculatedMetrics?
+
+    @Query("""
+        SELECT COALESCE(SUM(totalAmount), 0) / 100.0
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
+          AND isActive = 1
+    """)
+    suspend fun getTotalRevenueForCustomers(businessId: Long): Double
 }

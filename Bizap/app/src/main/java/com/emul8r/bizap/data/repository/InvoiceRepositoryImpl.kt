@@ -252,15 +252,21 @@ class InvoiceRepositoryImpl @Inject constructor(
                 val daysOverdue = if (invoiceEntity.dueDate < System.currentTimeMillis()) {
                     ((System.currentTimeMillis() - invoiceEntity.dueDate) / MILLIS_PER_DAY).toInt()
                 } else 0
+
+                val updatedPaymentStatus = when {
+                    status == InvoiceStatus.PAID -> "PAID"
+                    status == InvoiceStatus.PARTIALLY_PAID -> "PARTIALLY_PAID"
+                    status == InvoiceStatus.SENT -> "UNPAID"
+                    status == InvoiceStatus.OVERDUE -> "OVERDUE"
+                    else -> "UNPAID"
+                }
+
                 paymentDao.updateSnapshot(
                     paymentSnapshot.copy(
-                        paymentStatus = when {
-                            status == InvoiceStatus.PAID -> "PAID"
-                            status == InvoiceStatus.PARTIALLY_PAID -> "PARTIALLY_PAID"
-                            status == InvoiceStatus.SENT -> "UNPAID"
-                            status == InvoiceStatus.OVERDUE -> "OVERDUE"
-                            else -> "UNPAID"
-                        },
+                        totalAmount = invoiceEntity.totalAmount,
+                        paidAmount = invoiceEntity.amountPaid,
+                        outstandingAmount = invoiceEntity.totalAmount - invoiceEntity.amountPaid,
+                        paymentStatus = updatedPaymentStatus,
                         daysOverdue = daysOverdue,
                         isAtRisk = invoiceEntity.dueDate < System.currentTimeMillis() &&
                                 status != InvoiceStatus.PAID,

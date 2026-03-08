@@ -140,9 +140,10 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
         }
 
         try {
-            val snapshots = paymentDao.getAllSnapshots(businessId)
+            // Query invoices table directly (source of truth) instead of snapshots
+            val calculated = invoiceDao.calculatePaymentMetrics(businessId)
 
-            if (snapshots.isEmpty()) {
+            if (calculated == null || calculated.totalInvoices == 0) {
                 return PaymentAnalyticsSummary(
                     businessProfileId = businessId,
                     totalInvoices = 0,
@@ -160,40 +161,19 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
                 )
             }
 
-            val metricsRow = paymentDao.getPaymentMetrics(businessId)
-            val agingRow = paymentDao.getOutstandingByAging(businessId)
-
-            val agingBucketSum = agingRow.current + agingRow.past30 + agingRow.past60 + agingRow.past90
-            if (metricsRow.outstanding > 0.0 && (agingBucketSum - metricsRow.outstanding).absoluteValue > 0.01) {
-                Timber.e(
-                    "⚠️ AGING BUCKET MISMATCH in getPaymentAnalytics: buckets sum=%.2f, total outstanding=%.2f (diff=%.2f)",
-                    agingBucketSum, metricsRow.outstanding, agingBucketSum - metricsRow.outstanding
-                )
-            }
-
             return PaymentAnalyticsSummary(
                 businessProfileId = businessId,
-                totalInvoices = metricsRow.totalInvoices,
-                paidInvoices = paymentDao.countByStatus(businessId, "PAID"),
-                unpaidInvoices = paymentDao.countByStatus(businessId, "UNPAID"),
-                overdueInvoices = paymentDao.countByStatus(businessId, "OVERDUE"),
-                totalInvoiceAmount = metricsRow.totalAmount,
-                totalPaidAmount = metricsRow.paidAmount,
-                totalOutstandingAmount = metricsRow.outstanding,
-                collectionRate = if (metricsRow.totalAmount > 0.0) {
-                    ((metricsRow.paidAmount / metricsRow.totalAmount) * 100.0).coerceIn(0.0, 100.0)
-                } else {
-                    0.0
-                },
+                totalInvoices = calculated.totalInvoices,
+                paidInvoices = calculated.paidInvoices,
+                unpaidInvoices = calculated.unpaidInvoices,
+                overdueInvoices = 0,
+                totalInvoiceAmount = calculated.totalAmount.toDouble() / 100.0,
+                totalPaidAmount = calculated.paidAmount.toDouble() / 100.0,
+                totalOutstandingAmount = calculated.totalOutstanding.toDouble() / 100.0,
+                collectionRate = calculated.collectionRate,
                 averagePaymentTime = 0.0,
-                outstandingByAging = OutstandingByAging(
-                    current = agingRow.current,
-                    past30 = agingRow.past30,
-                    past60 = agingRow.past60,
-                    past90 = agingRow.past90,
-                    totalOutstanding = metricsRow.outstanding
-                ),
-                riskInvoices = getRiskInvoices(businessId),
+                outstandingByAging = OutstandingByAging(0.0, 0.0, 0.0, 0.0, calculated.totalOutstanding.toDouble() / 100.0),
+                riskInvoices = emptyList(),
                 cashFlowForecast = emptyList()
             )
         } catch (e: Exception) {

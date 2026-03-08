@@ -49,6 +49,10 @@ class CustomerAnalyticsRepositoryImpl @Inject constructor(
             val atRiskCustomers = analyticsDao.getAtRiskCustomers(businessProfileId)
                 .map { it.toChurnModel() }
 
+            // Calculate total revenue from PAID/PARTIALLY_PAID invoices (source of truth)
+            // Sum of total amounts for invoices with status PAID or PARTIALLY_PAID
+            val totalRevenueCalculated = invoiceDao.getTotalRevenueForCustomers(businessProfileId)
+
             CustomerAnalyticsSummary(
                 totalCustomers = snapshots.size,
                 vipCount = snapshots.count { it.segment == "VIP" },
@@ -56,7 +60,7 @@ class CustomerAnalyticsRepositoryImpl @Inject constructor(
                 atRiskCount = atRiskCustomers.size,
                 dormantCount = snapshots.count { it.segment == "DORMANT" },
                 averageLTV = snapshots.map { it.customerLifetimeValue.toDouble() / 100.0 }.average(),
-                totalRevenue = snapshots.sumOf { it.totalRevenue.toDouble() } / 100.0,
+                totalRevenue = totalRevenueCalculated,
                 churnRate = (atRiskCustomers.size.toDouble() / snapshots.size) * 100.0,
                 topCustomers = topCustomers,
                 atRiskCustomers = atRiskCustomers
