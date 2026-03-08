@@ -14,8 +14,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
-import com.emul8r.bizap.ui.gui2.common.formatCents
-import timber.log.Timber
 
 /**
  * GUI2 Edit Invoice Screen
