@@ -5,6 +5,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,10 +17,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
 import com.emul8r.bizap.ui.gui2.common.*
+import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
 
 /**
  * GUI2 main dashboard screen.
- * Displays a unified view of revenue, payment, and risk metrics for the given business.
+ * Displays a unified view of revenue, payment, and risk metrics for the given business,
+ * with quick-action shortcuts to Customers and Invoices screens.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +32,10 @@ fun DashboardScreenV2(
     onNavigateToPayment: () -> Unit,
     onNavigateToRisk: () -> Unit,
     onNavigateToInvoice: (Long) -> Unit,
+    onNavigateToCustomers: () -> Unit,
+    onNavigateToInvoices: () -> Unit,
+    onCreateCustomer: () -> Unit,
+    onCreateInvoice: () -> Unit,
     onSwitchToGui1: () -> Unit,
     viewModel: DashboardViewModelV2 = hiltViewModel()
 ) {
@@ -43,7 +52,7 @@ fun DashboardScreenV2(
         }
     ) { paddingValues ->
         when (val state = uiState) {
-            is DashboardUiStateV2.Loading -> LoadingIndicatorV2(
+            is DashboardUiStateV2.Loading -> DashboardSkeletonV2(
                 modifier = Modifier.padding(paddingValues)
             )
             is DashboardUiStateV2.Error -> ErrorStateV2(
@@ -55,6 +64,10 @@ fun DashboardScreenV2(
                 onNavigateToRevenue = onNavigateToRevenue,
                 onNavigateToPayment = onNavigateToPayment,
                 onNavigateToRisk = onNavigateToRisk,
+                onNavigateToCustomers = onNavigateToCustomers,
+                onNavigateToInvoices = onNavigateToInvoices,
+                onCreateCustomer = onCreateCustomer,
+                onCreateInvoice = onCreateInvoice,
                 modifier = Modifier.padding(paddingValues)
             )
         }
@@ -67,6 +80,10 @@ private fun DashboardContentV2(
     onNavigateToRevenue: () -> Unit,
     onNavigateToPayment: () -> Unit,
     onNavigateToRisk: () -> Unit,
+    onNavigateToCustomers: () -> Unit,
+    onNavigateToInvoices: () -> Unit,
+    onCreateCustomer: () -> Unit,
+    onCreateInvoice: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -81,6 +98,32 @@ private fun DashboardContentV2(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
         )
+
+        // ── Quick Actions ──
+        SectionHeaderV2(title = "Quick Actions")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = onCreateCustomer,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("New Customer")
+            }
+            Button(
+                onClick = onCreateInvoice,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("New Invoice")
+            }
+        }
+
+        HorizontalDivider()
 
         // ── Revenue section ──
         SectionHeaderV2(title = "Revenue")
@@ -181,6 +224,31 @@ private fun DashboardContentV2(
         ) {
             Text("View Risk Dashboard")
             Spacer(Modifier.width(4.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+        }
+
+        HorizontalDivider()
+
+        // ── Navigation links ──
+        SectionHeaderV2(title = "Manage")
+        OutlinedButton(
+            onClick = onNavigateToCustomers,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.People, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("View All Customers")
+            Spacer(Modifier.weight(1f))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+        }
+        OutlinedButton(
+            onClick = onNavigateToInvoices,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Receipt, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("View All Invoices")
+            Spacer(Modifier.weight(1f))
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
         }
 
