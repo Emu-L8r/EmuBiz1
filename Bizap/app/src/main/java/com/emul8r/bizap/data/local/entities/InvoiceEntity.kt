@@ -22,7 +22,8 @@ import androidx.room.PrimaryKey
         Index(name = "idx_invoices_business_status", value = ["businessProfileId", "status"]),
         Index(name = "idx_invoices_year_sequence", value = ["invoiceYear", "invoiceSequence", "businessProfileId"]),
         Index(name = "idx_invoices_date", value = ["date"]),
-        Index(name = "idx_invoices_customer_date", value = ["customerId", "date"])
+        Index(name = "idx_invoices_customer_date", value = ["customerId", "date"]),
+        Index(name = "idx_invoices_number_business", value = ["invoiceNumber", "businessProfileId"])
     ]
 )
 data class InvoiceEntity(
@@ -56,5 +57,9 @@ data class InvoiceEntity(
     // Template integration fields (Phase 5)
     val templateId: String? = null,              // Reference to InvoiceTemplate used
     val templateSnapshot: String? = null,        // JSON snapshot of template at creation
-    val customFieldValues: String? = null        // JSON map of custom field values {fieldId: value}
+    val customFieldValues: String? = null,       // JSON map of custom field values {fieldId: value}
+    // GUI2 Phase 2 fields
+    val invoiceNumber: String = "",              // Human-readable number, unique per business
+    val isActive: Boolean = true,               // Soft-delete flag
+    val createdAt: Long = 0                     // Creation timestamp (ms)
 )
