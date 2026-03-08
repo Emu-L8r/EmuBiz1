@@ -110,10 +110,10 @@ class SnapshotSyncHelper @Inject constructor(
      */
     private suspend fun syncDailyRevenueSnapshot(invoice: InvoiceEntity, businessId: Long) {
         try {
-            val dateString = LocalDate.ofInstant(
-                Instant.ofEpochMilli(invoice.date),
-                ZoneId.systemDefault()
-            ).toString()
+            val dateString = Instant.ofEpochMilli(invoice.date)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+                .toString()
 
             val revenueContribution = if (invoice.status in listOf("PAID", "PARTIALLY_PAID")) {
                 invoice.amountPaid

@@ -32,14 +32,15 @@ fun PrintPreviewScreen(viewModel: InvoicePdfViewModel = hiltViewModel()) {
         }
     ) { padding ->
         // PDF Render logic here...
-
-        if (showSheet) {
-            InvoiceActionHub(
-                onShare = { viewModel.shareInternalFile() },
-                onSaveToDownloads = { viewModel.exportToPublicDownloads() },
-                onPrint = { viewModel.launchSystemPrint() },
-                onDismiss = { showSheet = false }
-            )
+        Box(modifier = Modifier.padding(padding)) {
+            if (showSheet) {
+                InvoiceActionHub(
+                    onShare = { viewModel.shareInternalFile() },
+                    onSaveToDownloads = { viewModel.exportToPublicDownloads() },
+                    onPrint = { viewModel.launchSystemPrint() },
+                    onDismiss = { showSheet = false }
+                )
+            }
         }
     }
 }

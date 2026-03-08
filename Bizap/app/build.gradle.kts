@@ -82,6 +82,12 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
 
+    // Material Design Components (required for layout files)
+    implementation("com.google.android.material:material:1.11.0")
+
+    // CoordinatorLayout (required for activity_traditional_main.xml)
+    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
+
     // Logging & Monitoring (TASK 1)
     implementation(libs.timber)
     implementation(platform(libs.firebase.bom))
