@@ -153,25 +153,25 @@ private fun CustomerCardV2(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            if (!customer.businessName.isNullOrBlank()) {
+            customer.businessName?.takeIf { it.isNotBlank() }?.let {
                 Text(
-                    text = customer.businessName!!,
+                    text = it,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            if (!customer.email.isNullOrBlank()) {
+            customer.email?.takeIf { it.isNotBlank() }?.let {
                 Text(
-                    text = customer.email!!,
+                    text = it,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            if (!customer.phone.isNullOrBlank()) {
+            customer.phone?.takeIf { it.isNotBlank() }?.let {
                 Text(
-                    text = customer.phone!!,
+                    text = it,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
