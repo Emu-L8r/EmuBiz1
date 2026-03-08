@@ -64,7 +64,7 @@ interface InvoiceDaoV2 {
         SELECT COALESCE(SUM(totalAmount), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
-          AND status != 'DRAFT'
+          AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
           AND DATE(date/1000, 'unixepoch') >= DATE('now', 'start of month')
     """)
@@ -74,7 +74,7 @@ interface InvoiceDaoV2 {
         SELECT COALESCE(SUM(totalAmount), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
-          AND status != 'DRAFT'
+          AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
           AND strftime('%Y', date/1000, 'unixepoch') = strftime('%Y', 'now')
     """)
@@ -84,7 +84,7 @@ interface InvoiceDaoV2 {
         SELECT COALESCE(SUM(totalAmount), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
-          AND status != 'DRAFT'
+          AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
           AND DATE(date/1000, 'unixepoch') >= DATE('now', '-7 days')
     """)
@@ -210,4 +210,13 @@ interface InvoiceDaoV2 {
           AND isActive = 1
     """)
     fun observeAverageDaysToPayment(businessId: Long): Flow<Double>
+
+    @Query("""
+        SELECT COALESCE(SUM(totalAmount - amountPaid), 0)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND (status = 'SENT' OR status = 'PARTIALLY_PAID' OR status = 'OVERDUE')
+          AND isActive = 1
+    """)
+    fun observeActualOutstanding(businessId: Long): Flow<Long>
 }

@@ -42,10 +42,10 @@ interface InvoicePaymentDao {
 
     @Query("""
         SELECT 
-            SUM(CASE WHEN ageingBucket = 'CURRENT' THEN outstandingAmount ELSE 0 END) as current,
-            SUM(CASE WHEN ageingBucket = 'PAST_30' THEN outstandingAmount ELSE 0 END) as past30,
-            SUM(CASE WHEN ageingBucket = 'PAST_60' THEN outstandingAmount ELSE 0 END) as past60,
-            SUM(CASE WHEN ageingBucket = 'PAST_90' THEN outstandingAmount ELSE 0 END) as past90
+            SUM(CASE WHEN ageingBucket = 'CURRENT' THEN outstandingAmount ELSE 0 END) / 100.0 as current,
+            SUM(CASE WHEN ageingBucket = 'PAST_30' THEN outstandingAmount ELSE 0 END) / 100.0 as past30,
+            SUM(CASE WHEN ageingBucket = 'PAST_60' THEN outstandingAmount ELSE 0 END) / 100.0 as past60,
+            SUM(CASE WHEN ageingBucket = 'PAST_90' THEN outstandingAmount ELSE 0 END) / 100.0 as past90
         FROM invoice_payment_snapshots
         WHERE businessProfileId = :businessId
     """)
@@ -57,9 +57,9 @@ interface InvoicePaymentDao {
     @Query("""
         SELECT 
             COUNT(*) as totalInvoices,
-            SUM(totalAmount) as totalAmount,
-            SUM(paidAmount) as paidAmount,
-            SUM(outstandingAmount) as outstanding
+            SUM(totalAmount) / 100.0 as totalAmount,
+            SUM(paidAmount) / 100.0 as paidAmount,
+            SUM(outstandingAmount) / 100.0 as outstanding
         FROM invoice_payment_snapshots
         WHERE businessProfileId = :businessId
     """)

@@ -71,6 +71,16 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                 val newAmountPaid = invoice.amountPaid + amount
                 Timber.d("InvoiceDetailViewModelV2: Recording payment of $amount cents")
                 invoiceDao.updateAmountPaid(invoiceId, newAmountPaid)
+
+                // Update status based on payment
+                val newStatus = if (newAmountPaid >= invoice.totalAmount) {
+                    com.emul8r.bizap.domain.model.InvoiceStatus.PAID
+                } else {
+                    com.emul8r.bizap.domain.model.InvoiceStatus.PARTIALLY_PAID
+                }
+                invoiceDao.updateStatus(invoiceId, newStatus)
+                Timber.d("InvoiceDetailViewModelV2: Status updated to $newStatus")
+
                 Timber.d("InvoiceDetailViewModelV2: Payment recorded successfully")
                 _paymentEvent.emit("Payment recorded successfully.")
             } catch (e: Exception) {
