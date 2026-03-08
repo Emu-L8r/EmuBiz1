@@ -4,6 +4,7 @@ import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.validation.ValidationRules
 import io.mockk.coEvery
@@ -23,6 +24,7 @@ import kotlin.test.assertTrue
 class CreateInvoiceViewModelTest : BaseUnitTest() {
 
     private lateinit var invoiceRepository: InvoiceRepository
+    private val customerRepository: CustomerRepository = mockk(relaxed = true)
     private lateinit var viewModel: CreateInvoiceViewModelV2
 
     private val now = System.currentTimeMillis()
@@ -51,7 +53,7 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
     @Before
     fun setUp() {
         invoiceRepository = mockk(relaxed = true)
-        viewModel = CreateInvoiceViewModelV2(invoiceRepository)
+        viewModel = CreateInvoiceViewModelV2(invoiceRepository, customerRepository)
     }
 
     // ── createInvoice_Success ─────────────────────────────────────────────────

@@ -4,9 +4,10 @@ import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
-import io.mockk.coEvery
-import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -60,7 +61,7 @@ class CreateInvoiceViewModelV2Test {
             )
         )
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns mockCustomers
+        every { customerRepository.getAllCustomers() } returns flowOf(mockCustomers)
 
         // When
         viewModel = CreateInvoiceViewModelV2(
@@ -72,13 +73,13 @@ class CreateInvoiceViewModelV2Test {
 
         // Then
         assertEquals(mockCustomers, viewModel.customers.value)
-        coVerify { customerRepository.getCustomersByBusiness(1L) }
+        verify { customerRepository.getAllCustomers() }
     }
 
     @Test
     fun `loadCustomers - should handle empty customer list`() = runTest {
         // Given
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns emptyList()
+        every { customerRepository.getAllCustomers() } returns flowOf(emptyList())
 
         // When
         viewModel = CreateInvoiceViewModelV2(
@@ -96,7 +97,7 @@ class CreateInvoiceViewModelV2Test {
     @Test
     fun `loadCustomers - should handle repository exception`() = runTest {
         // Given
-        coEvery { customerRepository.getCustomersByBusiness(1L) } throws Exception("Database error")
+        every { customerRepository.getAllCustomers() } throws Exception("Database error")
 
         // When
         viewModel = CreateInvoiceViewModelV2(
@@ -126,7 +127,7 @@ class CreateInvoiceViewModelV2Test {
             address = "123 Test St"
         )
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns listOf(customer)
+        every { customerRepository.getAllCustomers() } returns flowOf(listOf(customer))
 
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
@@ -154,7 +155,7 @@ class CreateInvoiceViewModelV2Test {
             address = "123 Test St"
         )
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns listOf(customer)
+        every { customerRepository.getAllCustomers() } returns flowOf(listOf(customer))
 
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
@@ -194,7 +195,7 @@ class CreateInvoiceViewModelV2Test {
             address = "Address 2"
         )
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns listOf(customer1, customer2)
+        every { customerRepository.getAllCustomers() } returns flowOf(listOf(customer1, customer2))
 
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
@@ -220,7 +221,7 @@ class CreateInvoiceViewModelV2Test {
     @Test
     fun `initial state - customers should be empty list`() = runTest {
         // Given
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns emptyList()
+        every { customerRepository.getAllCustomers() } returns flowOf(emptyList())
 
         // When
         viewModel = CreateInvoiceViewModelV2(
@@ -235,7 +236,7 @@ class CreateInvoiceViewModelV2Test {
     @Test
     fun `initial state - selectedCustomer should be null`() = runTest {
         // Given
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns emptyList()
+        every { customerRepository.getAllCustomers() } returns flowOf(emptyList())
 
         // When
         viewModel = CreateInvoiceViewModelV2(
@@ -265,7 +266,7 @@ class CreateInvoiceViewModelV2Test {
             )
         }
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns customers
+        every { customerRepository.getAllCustomers() } returns flowOf(customers)
 
         // When
         viewModel = CreateInvoiceViewModelV2(
@@ -294,7 +295,7 @@ class CreateInvoiceViewModelV2Test {
             )
         }
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns customers
+        every { customerRepository.getAllCustomers() } returns flowOf(customers)
 
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
