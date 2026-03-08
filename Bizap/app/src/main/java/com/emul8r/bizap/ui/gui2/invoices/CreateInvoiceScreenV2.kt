@@ -10,9 +10,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.ui.invoices.CustomerDropdown
 import timber.log.Timber
 
 /**
@@ -26,13 +28,20 @@ fun CreateInvoiceScreenV2(
     onBack: () -> Unit,
     viewModel: CreateInvoiceViewModelV2 = hiltViewModel()
 ) {
-    var selectedCustomer by remember { mutableStateOf<Customer?>(null) }
+    // Observe ViewModel data
+    val customers by viewModel.customers.collectAsStateWithLifecycle()
+    val selectedCustomer by viewModel.selectedCustomer.collectAsStateWithLifecycle()
+
+    // ...existing code...
     var totalAmount by remember { mutableStateOf("") }
     var invoiceDate by remember { mutableStateOf(System.currentTimeMillis()) }
     var dueDate by remember { mutableStateOf(System.currentTimeMillis() + 86400000) }
     var notes by remember { mutableStateOf("") }
     var isSaving by remember { mutableStateOf(false) }
     var totalError by remember { mutableStateOf<String?>(null) }
+    var customerError by remember { mutableStateOf<String?>(null) }
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -54,14 +63,25 @@ fun CreateInvoiceScreenV2(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Customer selection
-            OutlinedTextField(
-                value = selectedCustomer?.name ?: "Select Customer",
-                onValueChange = {},
-                label = { Text("Customer") },
-                modifier = Modifier.fillMaxWidth(),
-                readOnly = true
+            // Customer selection - Replace static TextField with interactive dropdown
+            CustomerDropdown(
+                selectedCustomer = selectedCustomer,
+                customers = customers,
+                onSelect = {
+                    viewModel.selectCustomer(it)
+                    customerError = null // Clear error when customer is selected
+                }
             )
+
+            // Customer error message
+            if (customerError != null) {
+                Text(
+                    text = customerError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                )
+            }
 
             // Total Amount
             OutlinedTextField(
@@ -112,53 +132,100 @@ fun CreateInvoiceScreenV2(
             // Save Button
             Button(
                 onClick = {
-                    if (totalAmount.isBlank()) {
-                        totalError = "Amount is required"
+                    // Reset errors
+                    totalError = null
+                    customerError = null
+
+                    // Validate customer selection
+                    if (selectedCustomer == null) {
+                        customerError = "Please select a customer"
+                        Timber.w("Invoice creation failed: No customer selected")
                         return@Button
                     }
 
-                    val amountCents = (totalAmount.toDoubleOrNull() ?: 0.0) * 100
+                    // Validate amount
+                    if (totalAmount.isBlank()) {
+                        totalError = "Amount is required"
+                        Timber.w("Invoice creation failed: Amount is blank")
+                        return@Button
+                    }
+
+                    // Parse and validate amount
+                    val amount = totalAmount.toDoubleOrNull()
+                    if (amount == null) {
+                        totalError = "Invalid amount format"
+                        Timber.w("Invoice creation failed: Invalid amount format - '$totalAmount'")
+                        return@Button
+                    }
+
+                    val amountCents = (amount * 100).toLong()
                     if (amountCents <= 0) {
-                        totalError = "Amount must be greater than 0"
+                        totalError = "Amount must be greater than $0.00"
+                        Timber.w("Invoice creation failed: Amount not positive - $amount")
+                        return@Button
+                    }
+
+                    // Validate due date is after invoice date
+                    if (dueDate < invoiceDate) {
+                        errorMessage = "Due date cannot be before invoice date"
+                        showErrorDialog = true
+                        Timber.w("Invoice creation failed: Invalid dates")
                         return@Button
                     }
 
                     isSaving = true
-                    viewModel.createInvoice(
-                        invoice = Invoice(
-                            id = 0,
-                            businessProfileId = businessId,
-                            customerId = selectedCustomer?.id ?: 0,
-                            customerName = selectedCustomer?.name ?: "Unknown",
-                            customerAddress = selectedCustomer?.address ?: "",
-                            customerEmail = selectedCustomer?.email ?: "",
-                            items = emptyList(),
-                            totalAmount = amountCents.toLong(),
-                            amountPaid = 0L,
-                            status = InvoiceStatus.DRAFT,
-                            date = invoiceDate,
-                            dueDate = dueDate,
-                            isQuote = false,
-                            currencyCode = "AUD",
-                            taxRate = 0.0,
-                            taxAmount = 0L,
-                            invoiceYear = java.time.Instant.ofEpochMilli(invoiceDate)
-                                .atZone(java.time.ZoneId.systemDefault())
-                                .year,
-                            invoiceSequence = 0,
-                            notes = notes
-                        ),
-                        onSuccess = {
-                            onCreate()
-                        },
-                        onError = {
+                    try {
+                        // Store selectedCustomer in local variable to avoid smart cast issues
+                        val customer = selectedCustomer
+                        if (customer != null) {
+                            viewModel.createInvoice(
+                                invoice = Invoice(
+                                    id = 0,
+                                    businessProfileId = businessId,
+                                    customerId = customer.id,
+                                    customerName = customer.name,
+                                    customerAddress = customer.address ?: "",
+                                    customerEmail = customer.email ?: "",
+                                    items = emptyList(),
+                                    totalAmount = amountCents,
+                                    amountPaid = 0L,
+                                    status = InvoiceStatus.DRAFT,
+                                    date = invoiceDate,
+                                    dueDate = dueDate,
+                                    isQuote = false,
+                                    currencyCode = "AUD",
+                                    taxRate = 0.0,
+                                    taxAmount = 0L,
+                                    invoiceYear = java.time.Instant.ofEpochMilli(invoiceDate)
+                                        .atZone(java.time.ZoneId.systemDefault())
+                                        .year,
+                                    invoiceSequence = 0,
+                                    notes = notes
+                                ),
+                                onSuccess = {
+                                    Timber.d("Invoice created successfully for customer: ${customer.name}")
+                                    onCreate()
+                                },
+                                onError = { error ->
+                                    isSaving = false
+                                    errorMessage = error ?: "Failed to create invoice. Please try again."
+                                    showErrorDialog = true
+                                    Timber.e("Failed to create invoice: $error")
+                                }
+                            )
+                        } else {
                             isSaving = false
-                            Timber.e("Failed to create invoice: $it")
+                            customerError = "Please select a customer"
                         }
-                    )
+                    } catch (e: Exception) {
+                        isSaving = false
+                        errorMessage = "Unexpected error: ${e.message ?: "Unknown error"}"
+                        showErrorDialog = true
+                        Timber.e(e, "Exception during invoice creation")
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isSaving
+                enabled = !isSaving && selectedCustomer != null
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
@@ -169,6 +236,20 @@ fun CreateInvoiceScreenV2(
                 } else {
                     Text("Create Invoice")
                 }
+            }
+
+            // Error Dialog
+            if (showErrorDialog) {
+                AlertDialog(
+                    onDismissRequest = { showErrorDialog = false },
+                    title = { Text("Error") },
+                    text = { Text(errorMessage) },
+                    confirmButton = {
+                        Button(onClick = { showErrorDialog = false }) {
+                            Text("OK")
+                        }
+                    }
+                )
             }
         }
     }
