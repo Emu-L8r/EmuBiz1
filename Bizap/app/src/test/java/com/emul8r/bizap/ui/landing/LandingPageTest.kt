@@ -102,25 +102,25 @@ class LandingPageTest : BaseUnitTest() {
     @Test
     fun `selecting GUI1 persists selection via DataStore`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit(any()) } returns mockk(relaxed = true)
+        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
 
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI1)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) { dataStore.edit(any()) }
+        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
     }
 
     @Test
     fun `selecting GUI2 persists selection via DataStore`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit(any()) } returns mockk(relaxed = true)
+        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
 
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI2)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) { dataStore.edit(any()) }
+        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
     }
 
     @Test
@@ -183,13 +183,13 @@ class LandingPageTest : BaseUnitTest() {
     @Test
     fun `resetMode clears persisted selection so landing screen is shown again`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit(any()) } returns mockk(relaxed = true)
+        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
 
         val viewModel = LandingViewModel(dataStore)
         viewModel.resetMode()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) { dataStore.edit(any()) }
+        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
     }
 
     @Test

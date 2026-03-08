@@ -1,12 +1,8 @@
 [versions]
 # Pinned versions — tested combination that avoids JavaPoet issues
-# AGP 8.5.0 is proven compatible with Hilt 2.51.1
 agp = "8.5.0"
-# Kotlin 2.0.21 is required for KSP compatibility
 kotlin = "2.0.21"
-# KSP version must match the Kotlin prefix (2.0.21)
 ksp = "2.0.21-1.0.26"
-# Hilt 2.51.1 is recommended for Kotlin 2.x
 hilt = "2.51.1"
 hilt-androidx = "1.2.0"
 work = "2.9.0"
@@ -30,12 +26,16 @@ google-services = "4.4.4"
 crashlytics = "3.0.2"
 firebase-bom = "34.9.0"
 timber = "5.0.1"
+coordinatorlayout = "1.2.0"
+mockito = "5.5.0"
+mockito-kotlin = "5.1.0"
 
 [libraries]
 # Core AndroidX
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
+androidx-coordinatorlayout = { group = "androidx.coordinatorlayout", name = "coordinatorlayout", version.ref = "coordinatorlayout" }
 
 # Compose BOM & UI
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
@@ -88,6 +88,8 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-junit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
+mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockito-kotlin" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines-test" }
 arch-core-test = { group = "androidx.arch.core", name = "core-testing", version.ref = "arch-core-test" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
