@@ -2,6 +2,8 @@ package com.emul8r.bizap.di
 
 import com.emul8r.bizap.data.network.ErrorInterceptor
 import com.emul8r.bizap.data.remote.ExchangeRateService
+import com.emul8r.bizap.data.remote.api.CustomerApi
+import com.emul8r.bizap.data.remote.api.InvoiceApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -47,5 +49,17 @@ object NetworkModule {
     @Singleton
     fun provideExchangeRateService(retrofit: Retrofit): ExchangeRateService {
         return retrofit.create(ExchangeRateService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideInvoiceApi(retrofit: Retrofit): InvoiceApi {
+        return retrofit.create(InvoiceApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCustomerApi(retrofit: Retrofit): CustomerApi {
+        return retrofit.create(CustomerApi::class.java)
     }
 }

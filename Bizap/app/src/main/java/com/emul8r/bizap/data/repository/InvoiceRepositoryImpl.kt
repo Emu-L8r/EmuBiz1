@@ -10,6 +10,7 @@ import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.mapper.toDomain
 import com.emul8r.bizap.data.mapper.toEntity
 import com.emul8r.bizap.data.monitoring.PerformanceMetrics
+import com.emul8r.bizap.data.remote.api.InvoiceApi
 import com.emul8r.bizap.domain.error.BizapException
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.model.Invoice
@@ -32,7 +33,8 @@ class InvoiceRepositoryImpl @Inject constructor(
     private val businessProfileRepository: BusinessProfileRepository,
     private val analyticsDao: AnalyticsDao,
     private val paymentDao: InvoicePaymentDao,
-    private val snapshotSyncHelper: SnapshotSyncHelper
+    private val snapshotSyncHelper: SnapshotSyncHelper,
+    private val invoiceApi: InvoiceApi
 ) : InvoiceRepository {
 
     companion object {
@@ -321,6 +323,54 @@ class InvoiceRepositoryImpl @Inject constructor(
         Unit
     }.also { result ->
         result.onFailure { e -> Timber.e(e, "Database operation failed during deleteInvoice") }
+    }
+
+    // --- PHASE 2: Remote Sync ---
+
+    override suspend fun createInvoiceRemote(invoice: Invoice): Result<Invoice> = runCatching {
+        val response = invoiceApi.createInvoice(invoice)
+        if (response.isSuccessful) {
+            response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("API Error: ${response.code()} ${response.message()}")
+        }
+    }
+
+    override suspend fun updateInvoiceRemote(invoice: Invoice): Result<Invoice> = runCatching {
+        val response = invoiceApi.updateInvoice(invoice.id, invoice, invoice.updatedAt)
+        if (response.isSuccessful) {
+            response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("API Error: ${response.code()} ${response.message()}")
+        }
+    }
+
+    override suspend fun deleteInvoiceRemote(id: Long): Result<Unit> = runCatching {
+        val response = invoiceApi.deleteInvoice(id)
+        if (!response.isSuccessful) {
+            throw Exception("API Error: ${response.code()} ${response.message()}")
+        }
+    }
+
+    override suspend fun getInvoiceRemote(id: Long): Result<Invoice> = runCatching {
+        val response = invoiceApi.getInvoice(id)
+        if (response.isSuccessful) {
+            response.body() ?: throw Exception("Empty response body")
+        } else {
+            throw Exception("API Error: ${response.code()} ${response.message()}")
+        }
+    }
+
+    override suspend fun recordPaymentRemote(
+        invoiceId: Long,
+        amount: Long,
+        paymentDate: Long,
+        notes: String?
+    ): Result<Unit> = runCatching {
+        val response = invoiceApi.recordPayment(invoiceId, amount, paymentDate, notes)
+        if (!response.isSuccessful) {
+            throw Exception("API Error: ${response.code()} ${response.message()}")
+        }
     }
 
     // ==================== SNAPSHOT HELPERS ====================

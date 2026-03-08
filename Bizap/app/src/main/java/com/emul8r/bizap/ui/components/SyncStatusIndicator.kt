@@ -1,9 +1,13 @@
 package com.emul8r.bizap.ui.components
 
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,17 +17,24 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,7 +43,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.repository.OfflineQueueRepository
+import com.emul8r.bizap.utils.ConnectivityHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -54,6 +67,12 @@ class SyncStatusViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = 0
         )
+
+    /**
+     * Helper to determine if we should show the "Offline" status.
+     * In a real app, this would be a Flow from a NetworkMonitor.
+     */
+    fun isOnline(context: Context): Boolean = ConnectivityHelper.isNetworkAvailable(context)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,91 +80,104 @@ class SyncStatusViewModel @Inject constructor(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Compact banner displayed at the top (or bottom) of a screen when there are
- * operations waiting to be synced.
+ * Compact banner displayed at the top of a screen to show sync and connectivity status.
  *
- * - **Hidden** when [pendingCount] == 0.
- * - Shows a spinner and count when syncing is pending.
- *
- * Consumes [SyncStatusViewModel] from the Hilt graph automatically, so callers
- * only need to place this composable in the composition tree.
+ * Part of Week 1: Foundation Completion.
  */
 @Composable
 fun SyncStatusIndicator(
     modifier: Modifier = Modifier,
     viewModel: SyncStatusViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val pendingCount by viewModel.pendingCount.collectAsStateWithLifecycle()
+    var isOnline by remember { mutableStateOf(viewModel.isOnline(context)) }
 
-    SyncStatusBanner(
-        pendingCount = pendingCount,
-        modifier = modifier
-    )
+    // Periodically check connectivity (in a real app, use a BroadcastReceiver/Flow)
+    LaunchedEffect(Unit) {
+        while (true) {
+            isOnline = viewModel.isOnline(context)
+            delay(5000)
+        }
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        SyncStatusBanner(
+            pendingCount = pendingCount,
+            isOnline = isOnline
+        )
+    }
 }
 
-/**
- * Stateless banner composable — use this in previews or when you supply
- * the pending count directly.
- */
 @Composable
 fun SyncStatusBanner(
     pendingCount: Int,
+    isOnline: Boolean,
     modifier: Modifier = Modifier
 ) {
+    // Show banner if offline OR if there are pending changes
+    val isVisible = !isOnline || pendingCount > 0
+
     AnimatedVisibility(
-        visible = pendingCount > 0,
-        enter = fadeIn(),
-        exit = fadeOut(),
+        visible = isVisible,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
         modifier = modifier
     ) {
         Surface(
-            color = Color(0xFFFFF8E1),
-            shape = RoundedCornerShape(8.dp),
-            shadowElevation = 2.dp,
+            color = if (!isOnline) Color(0xFFFFEBEE) else Color(0xFFE8F5E9),
+            shape = RoundedCornerShape(bottomStart = 0.dp, bottomEnd = 0.dp, topStart = 8.dp, topEnd = 8.dp),
+            tonalElevation = 2.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Icon(
-                    imageVector = Icons.Filled.CloudOff,
-                    contentDescription = null,
-                    tint = Color(0xFFFF8F00),
-                    modifier = Modifier.size(18.dp)
-                )
-
-                Spacer(modifier = Modifier.width(6.dp))
-
-                Text(
-                    text = if (pendingCount == 1) {
-                        "1 change pending sync"
-                    } else {
-                        "$pendingCount changes pending sync"
-                    },
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF5D4037)
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Icon(
-                    imageVector = Icons.Filled.Sync,
-                    contentDescription = "Syncing",
-                    tint = Color(0xFF8D6E63),
-                    modifier = Modifier.size(16.dp)
-                )
+                if (!isOnline) {
+                    Icon(
+                        imageVector = Icons.Filled.WifiOff,
+                        contentDescription = "Offline",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "You are currently offline",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else if (pendingCount > 0) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = if (pendingCount == 1) "1 change syncing..." else "$pendingCount changes syncing...",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.DoneAll,
+                        contentDescription = "Synced",
+                        tint = Color(0xFF2E7D32),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "All changes synced",
+                        fontSize = 13.sp,
+                        color = Color(0xFF2E7D32)
+                    )
+                }
             }
         }
     }

@@ -9,6 +9,7 @@ import com.emul8r.bizap.data.local.entities.InvoiceAnalyticsSnapshot
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.mapper.toEntity
 import com.emul8r.bizap.data.monitoring.PerformanceMetrics
+import com.emul8r.bizap.data.remote.api.InvoiceApi
 import com.emul8r.bizap.domain.error.BizapException
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
@@ -29,7 +30,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -51,13 +51,21 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
     private val analyticsDao: AnalyticsDao = mockk(relaxed = true)
     private val paymentDao: InvoicePaymentDao = mockk(relaxed = true)
     private val snapshotSyncHelper: SnapshotSyncHelper = mockk(relaxed = true)
+    private val invoiceApi: InvoiceApi = mockk()
 
     private lateinit var repository: InvoiceRepositoryImpl
 
     @Before
     fun setup() {
         PerformanceMetrics.resetAll()
-        repository = InvoiceRepositoryImpl(invoiceDao, businessProfileRepo, analyticsDao, paymentDao, snapshotSyncHelper)
+        repository = InvoiceRepositoryImpl(
+            invoiceDao,
+            businessProfileRepo,
+            analyticsDao,
+            paymentDao,
+            snapshotSyncHelper,
+            invoiceApi
+        )
     }
 
     @After
@@ -432,40 +440,6 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
     // PATHWAY 2: Analytics Snapshot Creation Tests
     // ═══════════════════════════════════════════════════════════════════════════════
 
-    // SKIPPED: These tests require more complex mock setup - snapshot creation is tested via higher-level tests
-    /*
-    @Test
-    fun `saveInvoice creates InvoiceAnalyticsSnapshot`() = runTest {
-        val businessId = 1L
-        val invoice = TestDataFactory.createTestInvoice(id = 0, status = InvoiceStatus.PAID)
-
-        // Core mocks
-        coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
-        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
-        coEvery { invoiceDao.insert(any(), any()) } returns 123L
-        coEvery { invoiceDao.getInvoiceWithItemsById(123L) } returns flowOf(invoiceWithStatus(123L, InvoiceStatus.PAID))
-
-        // Analytics DAO mocks
-        coEvery { analyticsDao.insertInvoiceSnapshot(any()) } just Runs
-        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
-        coEvery { analyticsDao.insertDailySnapshot(any()) } just Runs
-        coEvery { analyticsDao.getInvoiceSnapshot(123L) } returns null
-        coEvery { analyticsDao.upsertInvoiceSnapshot(any()) } just Runs
-
-        // Payment DAO mocks
-        coEvery { paymentDao.insertSnapshots(any()) } just Runs
-        coEvery { paymentDao.getSnapshotByInvoiceId(123L) } returns null
-
-        // Snapshot sync helper mock
-        coEvery { snapshotSyncHelper.syncAll(any(), 123L) } just Runs
-
-        val result = repository.saveInvoice(invoice)
-
-        // Verify save succeeded
-        assertTrue(result.isSuccess, "saveInvoice should succeed: ${result.exceptionOrNull()}")
-    }
-    */
-
     @Test
     fun `saveInvoice creates DailyRevenueSnapshot`() = runTest {
         val businessId = 1L
@@ -481,40 +455,6 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
 
         coVerify { analyticsDao.insertDailySnapshot(any()) }
     }
-
-    // SKIPPED: These tests require more complex mock setup - snapshot creation is tested via higher-level tests
-    /*
-    @Test
-    fun `saveInvoice creates InvoicePaymentSnapshot`() = runTest {
-        val businessId = 1L
-        val invoice = TestDataFactory.createTestInvoice(id = 0, status = InvoiceStatus.PAID)
-
-        // Core mocks
-        coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
-        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
-        coEvery { invoiceDao.insert(any(), any()) } returns 123L
-        coEvery { invoiceDao.getInvoiceWithItemsById(123L) } returns flowOf(invoiceWithStatus(123L, InvoiceStatus.PAID))
-
-        // Analytics DAO mocks
-        coEvery { analyticsDao.insertInvoiceSnapshot(any()) } just Runs
-        coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
-        coEvery { analyticsDao.insertDailySnapshot(any()) } just Runs
-        coEvery { analyticsDao.getInvoiceSnapshot(123L) } returns null
-        coEvery { analyticsDao.upsertInvoiceSnapshot(any()) } just Runs
-
-        // Payment DAO mocks
-        coEvery { paymentDao.insertSnapshots(any()) } just Runs
-        coEvery { paymentDao.getSnapshotByInvoiceId(123L) } returns null
-
-        // Snapshot sync helper mock
-        coEvery { snapshotSyncHelper.syncAll(any(), 123L) } just Runs
-
-        val result = repository.saveInvoice(invoice)
-
-        // Verify save succeeded and snapshots were created
-        assertTrue(result.isSuccess, "saveInvoice should succeed: ${result.exceptionOrNull()}")
-    }
-    */
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // PATHWAY 2B: Payment Update Snapshot Sync Tests
@@ -546,9 +486,7 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
         coVerify { paymentDao.insertSnapshots(any()) }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // PATHWAY 2C: Invoice Deletion Snapshot Cleanup Tests
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ── Invoice Deletion Snapshot Cleanup Tests ─────────────────────────────────────
 
     @Test
     fun `deleteInvoice deletes InvoiceAnalyticsSnapshot`() = runTest {
@@ -595,9 +533,7 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
         coVerify(inverse = true) { analyticsDao.deleteDailySnapshot(any()) }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // PATHWAY 1 & Status Update: Comprehensive Snapshot Sync Tests
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ── Status Update: Comprehensive Snapshot Sync Tests ──────────────────────────
 
     @Test
     fun `updateInvoiceStatus syncs InvoiceAnalyticsSnapshot`() = runTest {
@@ -728,5 +664,3 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
         }
     }
 }
-
-
