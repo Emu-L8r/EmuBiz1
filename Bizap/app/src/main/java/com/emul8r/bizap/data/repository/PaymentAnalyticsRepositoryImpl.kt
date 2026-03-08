@@ -12,6 +12,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlin.math.absoluteValue
 
 /**
  * Repository implementation for payment analytics.
@@ -52,6 +53,13 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
                     val agingPast30 = snapshots.filter { it.ageingBucket == "PAST_30" }.sumOf { it.outstandingAmount.toDouble() }
                     val agingPast60 = snapshots.filter { it.ageingBucket == "PAST_60" }.sumOf { it.outstandingAmount.toDouble() }
                     val agingPast90 = snapshots.filter { it.ageingBucket == "PAST_90" }.sumOf { it.outstandingAmount.toDouble() }
+                    val agingBucketSum = agingCurrent + agingPast30 + agingPast60 + agingPast90
+                    if (outstanding > 0.0 && (agingBucketSum - outstanding).absoluteValue > 0.01) {
+                        Timber.e(
+                            "⚠️ AGING BUCKET MISMATCH: buckets sum=%.2f, total outstanding=%.2f (diff=%.2f)",
+                            agingBucketSum, outstanding, agingBucketSum - outstanding
+                        )
+                    }
                     PaymentAnalyticsSummary(
                         businessProfileId = businessId,
                         totalInvoices = snapshots.size,
@@ -154,6 +162,14 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
 
             val metricsRow = paymentDao.getPaymentMetrics(businessId)
             val agingRow = paymentDao.getOutstandingByAging(businessId)
+
+            val agingBucketSum = agingRow.current + agingRow.past30 + agingRow.past60 + agingRow.past90
+            if (metricsRow.outstanding > 0.0 && (agingBucketSum - metricsRow.outstanding).absoluteValue > 0.01) {
+                Timber.e(
+                    "⚠️ AGING BUCKET MISMATCH in getPaymentAnalytics: buckets sum=%.2f, total outstanding=%.2f (diff=%.2f)",
+                    agingBucketSum, metricsRow.outstanding, agingBucketSum - metricsRow.outstanding
+                )
+            }
 
             return PaymentAnalyticsSummary(
                 businessProfileId = businessId,

@@ -93,11 +93,13 @@ fun InvoiceDetailScreenV2(
                     )
                 }
 
-                // Status Update Menu - TEMPORARILY DISABLED
-                /*
+                // Status Update Menu
                 if (showStatusMenu) {
+                    val currentStatus = runCatching {
+                        InvoiceStatus.valueOf(state.invoice.invoice.status)
+                    }.getOrElse { InvoiceStatus.DRAFT }
                     StatusUpdateMenuV2(
-                        currentStatus = state.invoice.invoice.status,
+                        currentStatus = currentStatus,
                         onStatusSelected = { status: InvoiceStatus ->
                             viewModel.updateInvoiceStatus(status)
                             showStatusMenu = false
@@ -105,7 +107,6 @@ fun InvoiceDetailScreenV2(
                         onDismiss = { showStatusMenu = false }
                     )
                 }
-                */
             }
         }
     }

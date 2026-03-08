@@ -8,6 +8,7 @@ import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
+import com.emul8r.bizap.utils.CentsFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -49,16 +50,32 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                 initialValue = InvoiceDetailUiStateV2.Loading
             )
 
+    private val _paymentEvent = MutableSharedFlow<String>()
+    val paymentEvent: SharedFlow<String> = _paymentEvent.asSharedFlow()
+
     fun recordPayment(amount: Long) {
         viewModelScope.launch {
             try {
                 val invoice = invoiceDao.getInvoiceById(invoiceId) ?: return@launch
+                val remaining = invoice.totalAmount - invoice.amountPaid
+                if (amount <= 0) {
+                    _paymentEvent.emit("Payment amount must be greater than zero.")
+                    return@launch
+                }
+                if (amount > remaining) {
+                    _paymentEvent.emit(
+                        "Payment exceeds the outstanding balance of ${CentsFormatter.formatCents(remaining)}."
+                    )
+                    return@launch
+                }
                 val newAmountPaid = invoice.amountPaid + amount
                 Timber.d("InvoiceDetailViewModelV2: Recording payment of $amount cents")
                 invoiceDao.updateAmountPaid(invoiceId, newAmountPaid)
                 Timber.d("InvoiceDetailViewModelV2: Payment recorded successfully")
+                _paymentEvent.emit("Payment recorded successfully.")
             } catch (e: Exception) {
                 Timber.e(e, "InvoiceDetailViewModelV2: Failed to record payment")
+                _paymentEvent.emit("Failed to record payment: ${e.message}")
             }
         }
     }
