@@ -151,27 +151,27 @@ class NavigationTest : BaseUnitTest() {
     @Test
     fun `selectMode GUI1 calls dataStore edit`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit(any()) } returns mockk(relaxed = true)
+        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
 
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI1)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) { dataStore.edit(any()) }
+        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
     }
 
     @Test
     fun `selectMode GUI2 calls dataStore edit`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit(any()) } returns mockk(relaxed = true)
+        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
 
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI2)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) { dataStore.edit(any()) }
+        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
     }
 
     // -----------------------------------------------------------------------
@@ -181,14 +181,14 @@ class NavigationTest : BaseUnitTest() {
     @Test
     fun `resetMode calls dataStore edit`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit(any()) } returns mockk(relaxed = true)
+        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
 
         val viewModel = LandingViewModel(dataStore)
         viewModel.resetMode()
 
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) { dataStore.edit(any()) }
+        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
     }
 
     // -----------------------------------------------------------------------
