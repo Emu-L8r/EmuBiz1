@@ -127,39 +127,39 @@ private fun CustomerDetailContent(
         }
 
         // Business information
-        if (customer.businessName.isNotBlank()) {
+        if (!customer.businessName.isNullOrBlank()) {
             DetailSection(title = "Business Name") {
                 Text(
-                    text = customer.businessName,
+                    text = customer.businessName!!,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
 
         // Contact information
-        if (customer.email.isNotBlank()) {
+        if (!customer.email.isNullOrBlank()) {
             DetailSection(title = "Email") {
                 Text(
-                    text = customer.email,
+                    text = customer.email!!,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
 
-        if (customer.phone.isNotBlank()) {
+        if (!customer.phone.isNullOrBlank()) {
             DetailSection(title = "Phone") {
                 Text(
-                    text = customer.phone,
+                    text = customer.phone!!,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
 
         // Address
-        if (customer.address.isNotBlank()) {
+        if (!customer.address.isNullOrBlank()) {
             DetailSection(title = "Address") {
                 Text(
-                    text = customer.address,
+                    text = customer.address!!,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }

@@ -1,5 +1,6 @@
 package com.emul8r.bizap.ui.gui2.invoices
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import com.emul8r.bizap.domain.model.InvoiceStatus

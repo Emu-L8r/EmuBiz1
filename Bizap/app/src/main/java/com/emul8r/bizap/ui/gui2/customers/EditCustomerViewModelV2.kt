@@ -53,7 +53,7 @@ class EditCustomerViewModelV2 @Inject constructor(
         viewModelScope.launch {
             try {
                 Timber.d("EditCustomerViewModelV2: Updating customer $customerId")
-                customerRepository.saveCustomer(customer)
+                customerRepository.updateCustomer(customer)
                 Timber.d("EditCustomerViewModelV2: Customer updated successfully")
                 onSuccess()
             } catch (e: Exception) {

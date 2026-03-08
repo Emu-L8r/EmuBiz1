@@ -12,7 +12,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
-import com.emul8r.bizap.domain.model.InvoiceLineItem
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import timber.log.Timber
 

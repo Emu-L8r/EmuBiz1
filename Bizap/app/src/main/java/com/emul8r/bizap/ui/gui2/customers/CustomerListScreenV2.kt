@@ -47,7 +47,7 @@ fun CustomerListScreenV2(
                 title = { Text("Customers") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -153,25 +153,25 @@ private fun CustomerCardV2(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            if (customer.businessName.isNotBlank()) {
+            if (!customer.businessName.isNullOrBlank()) {
                 Text(
-                    text = customer.businessName,
+                    text = customer.businessName!!,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            if (customer.email.isNotBlank()) {
+            if (!customer.email.isNullOrBlank()) {
                 Text(
-                    text = customer.email,
+                    text = customer.email!!,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            if (customer.phone.isNotBlank()) {
+            if (!customer.phone.isNullOrBlank()) {
                 Text(
-                    text = customer.phone,
+                    text = customer.phone!!,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -56,6 +56,16 @@ interface InvoiceDao {
         return id
     }
 
+    @Query("SELECT * FROM invoices WHERE id = :id")
+    suspend fun getInvoiceById(id: Long): InvoiceEntity?
+
+    @Query("UPDATE invoices SET amountPaid = :amountPaid WHERE id = :id")
+    suspend fun updateAmountPaid(id: Long, amountPaid: Long)
+
+    suspend fun updateStatus(id: Long, status: com.emul8r.bizap.domain.model.InvoiceStatus) {
+        updateInvoiceStatus(id, status.name)
+    }
+
     @Transaction
     @Query("SELECT * FROM invoices WHERE id = :id")
     fun getInvoiceWithItemsById(id: Long): Flow<InvoiceWithItems?>
