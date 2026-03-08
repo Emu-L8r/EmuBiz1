@@ -30,7 +30,7 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         PendingOperationEntity::class,
         OfflineOperation::class
     ],
-    version = 30,
+    version = 31,
     exportSchema = true
 )
 @TypeConverters(DocumentStatusConverter::class)
@@ -50,4 +50,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pendingOperationDao(): PendingOperationDao
     abstract fun offlineOperationDao(): OfflineOperationDao
     abstract fun invoiceDaoV2(): InvoiceDaoV2
+    abstract fun customerDaoV2(): CustomerDaoV2
 }
