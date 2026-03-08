@@ -134,8 +134,14 @@ fun RecordPaymentDialogV2(
                                 cal.get(Calendar.MONTH),
                                 cal.get(Calendar.DAY_OF_MONTH)
                             ).also { dialog ->
-                                // Max date = today; min date = invoice date
-                                dialog.datePicker.maxDate = System.currentTimeMillis()
+                                // Max date = end of today so the user can always select today
+                                val endOfToday = Calendar.getInstance().apply {
+                                    set(Calendar.HOUR_OF_DAY, 23)
+                                    set(Calendar.MINUTE, 59)
+                                    set(Calendar.SECOND, 59)
+                                    set(Calendar.MILLISECOND, 999)
+                                }.timeInMillis
+                                dialog.datePicker.maxDate = endOfToday
                                 if (invoiceDate > 0) dialog.datePicker.minDate = invoiceDate
                                 dialog.show()
                             }
@@ -161,6 +167,15 @@ fun RecordPaymentDialogV2(
                             Text("${formState.notes.length}/500")
                         }
                     )
+
+                    // Submission error (shown below the form)
+                    formState.submissionError?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
         },

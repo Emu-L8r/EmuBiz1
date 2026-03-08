@@ -1,5 +1,6 @@
 package com.emul8r.bizap.di
 
+import com.emul8r.bizap.data.local.AppDatabase
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.dao.PaymentDaoV2
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
@@ -47,7 +48,8 @@ object GuiV2Module {
     @Provides
     @Singleton
     fun providePaymentRepositoryV2(
+        database: AppDatabase,
         invoiceDaoV2: InvoiceDaoV2,
         paymentDaoV2: PaymentDaoV2
-    ): PaymentRepositoryV2 = PaymentRepositoryV2(invoiceDaoV2, paymentDaoV2)
+    ): PaymentRepositoryV2 = PaymentRepositoryV2(database, invoiceDaoV2, paymentDaoV2)
 }

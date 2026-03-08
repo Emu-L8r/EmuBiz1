@@ -9,8 +9,11 @@ import javax.inject.Inject
  *
  * Validation rules:
  *  - amount must be > 0 and ≤ outstanding balance.
- *  - paymentDate must not be in the future.
+ *  - paymentDate (midnight of selected day) must be ≤ today's midnight.
  *  - paymentDate must be on or after the invoice date.
+ *
+ * Date comparisons use midnight values to guarantee consistency with the UI,
+ * which always sets paymentDate to midnight of the selected calendar day.
  */
 class RecordPaymentUseCase @Inject constructor(
     private val paymentRepository: PaymentRepositoryV2
@@ -20,7 +23,8 @@ class RecordPaymentUseCase @Inject constructor(
      * @param businessId  Owning business.
      * @param amount      Payment amount in cents (> 0, ≤ [outstanding]).
      * @param outstanding Remaining balance in cents used for amount validation.
-     * @param paymentDate Unix timestamp (ms) — must not be future and must be ≥ [invoiceDate].
+     * @param paymentDate Unix timestamp (ms) of midnight of the selected date.
+     *                    Must be ≤ today's midnight and ≥ [invoiceDate].
      * @param invoiceDate Invoice creation date (ms) used as lower date boundary.
      * @param notes       Optional freeform notes (max 500 chars).
      */
@@ -33,7 +37,8 @@ class RecordPaymentUseCase @Inject constructor(
         invoiceDate: Long,
         notes: String? = null
     ): Result<Unit> {
-        val now = System.currentTimeMillis()
+        // Use midnight of today so comparison is consistent with the UI date picker
+        val todayMidnight = todayMidnightMs()
 
         if (amount <= 0) {
             return Result.failure(
@@ -45,7 +50,7 @@ class RecordPaymentUseCase @Inject constructor(
                 IllegalArgumentException("Payment exceeds the outstanding balance.")
             )
         }
-        if (paymentDate > now) {
+        if (paymentDate > todayMidnight) {
             return Result.failure(
                 IllegalArgumentException("Payment date cannot be in the future.")
             )
@@ -65,5 +70,14 @@ class RecordPaymentUseCase @Inject constructor(
             paymentDate = paymentDate,
             notes = notes
         )
+    }
+
+    private fun todayMidnightMs(): Long {
+        val cal = java.util.Calendar.getInstance()
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        cal.set(java.util.Calendar.MINUTE, 0)
+        cal.set(java.util.Calendar.SECOND, 0)
+        cal.set(java.util.Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
     }
 }
