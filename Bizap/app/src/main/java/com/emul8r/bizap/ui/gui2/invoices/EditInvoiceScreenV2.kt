@@ -75,7 +75,7 @@ private fun EditInvoiceForm(
     var totalAmount by remember(initialInvoice) {
         mutableStateOf((initialInvoice.totalAmount / 100.0).toString())
     }
-    var notes by remember(initialInvoice) { mutableStateOf(initialInvoice.notes) }
+    var notes by remember(initialInvoice) { mutableStateOf(initialInvoice.notes ?: "") }
     var isSaving by remember { mutableStateOf(false) }
 
     Column(

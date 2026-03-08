@@ -35,7 +35,7 @@ class BusinessProfileViewModelV2 @Inject constructor(
         viewModelScope.launch {
             try {
                 Timber.d("BusinessProfileViewModelV2: Updating profile")
-                businessProfileRepository.saveBusinessProfile(profile)
+                businessProfileRepository.updateProfile(profile)
                 Timber.d("BusinessProfileViewModelV2: Profile updated successfully")
             } catch (e: Exception) {
                 Timber.e(e, "BusinessProfileViewModelV2: Failed to update profile")

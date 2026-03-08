@@ -78,10 +78,10 @@ private fun EditCustomerForm(
     modifier: Modifier = Modifier
 ) {
     var name by remember(initialCustomer) { mutableStateOf(initialCustomer.name) }
-    var businessName by remember(initialCustomer) { mutableStateOf(initialCustomer.businessName) }
-    var email by remember(initialCustomer) { mutableStateOf(initialCustomer.email) }
-    var phone by remember(initialCustomer) { mutableStateOf(initialCustomer.phone) }
-    var address by remember(initialCustomer) { mutableStateOf(initialCustomer.address) }
+    var businessName by remember(initialCustomer) { mutableStateOf(initialCustomer.businessName ?: "") }
+    var email by remember(initialCustomer) { mutableStateOf(initialCustomer.email ?: "") }
+    var phone by remember(initialCustomer) { mutableStateOf(initialCustomer.phone ?: "") }
+    var address by remember(initialCustomer) { mutableStateOf(initialCustomer.address ?: "") }
     var notes by remember(initialCustomer) { mutableStateOf(initialCustomer.notes) }
     var isSaving by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf<String?>(null) }
