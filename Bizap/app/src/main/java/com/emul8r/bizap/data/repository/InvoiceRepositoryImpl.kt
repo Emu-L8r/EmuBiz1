@@ -137,7 +137,7 @@ class InvoiceRepositoryImpl @Inject constructor(
                 Timber.d("✅ Updated existing payment snapshot for invoice $invoiceId")
             } else {
                 // ⚠️ Snapshot missing: create it as fallback
-                Timber.w("⚠️ Payment snapshot missing for invoice $invoiceId, creating fallback")
+                Timber.e("⚠️ Payment snapshot missing for invoice $invoiceId, creating fallback")
                 createPaymentSnapshot(updatedEntity)
                 Timber.d("✅ Created missing payment snapshot (fallback) for invoice $invoiceId")
             }

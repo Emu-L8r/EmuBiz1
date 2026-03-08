@@ -104,10 +104,29 @@ class InvoiceDetailViewModel @Inject constructor(
 
     /**
      * PHASE 3A: RECORD PAYMENT
+     * Validates that the payment does not exceed the remaining balance before recording.
      */
     fun recordPayment(amount: Long) {
         val currentState = uiState.value as? InvoiceDetailUiState.Success ?: return
         val invoice = currentState.data
+
+        val remaining = invoice.totalAmount - invoice.amountPaid
+        if (amount <= 0) {
+            viewModelScope.launch {
+                _uiEvent.emit(UiEvent.ShowSnackbar("Payment amount must be greater than zero."))
+            }
+            return
+        }
+        if (amount > remaining) {
+            viewModelScope.launch {
+                _uiEvent.emit(
+                    UiEvent.ShowSnackbar(
+                        "Payment of ${CentsFormatter.formatCents(amount)} exceeds the outstanding balance of ${CentsFormatter.formatCents(remaining)}."
+                    )
+                )
+            }
+            return
+        }
         
         viewModelScope.launch {
             try {
