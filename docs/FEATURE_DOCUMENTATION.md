@@ -1,0 +1,443 @@
+# Feature Documentation — Bizap (EmuBiz1)
+
+**Last Updated:** 2026-03-08  
+**App Package:** `com.emul8r.bizap`
+
+---
+
+## Table of Contents
+
+1. [Phase 1 — Customer Management](#phase-1--customer-management)
+2. [Phase 2 — Invoice Management](#phase-2--invoice-management)
+3. [Phase 3 — Payment Recording](#phase-3--payment-recording)
+4. [Phase 4 — PDF Generation & Polish](#phase-4--pdf-generation--polish)
+5. [Phase 5 — Dashboard Integration & Polish](#phase-5--dashboard-integration--polish)
+6. [Supporting Features](#supporting-features)
+
+---
+
+## Phase 1 — Customer Management
+
+**Status:** ✅ Complete  
+**GUI:** GUI1 + GUI2  
+
+### Overview
+
+Full CRUD customer management with soft-delete, business-scoped isolation, and email uniqueness enforcement.
+
+### Screens
+
+| Screen | File | Description |
+|--------|------|-------------|
+| Customer List | `ui/gui2/customers/CustomerListScreen.kt` | Lists active customers with search/filter |
+| Create Customer | `ui/gui2/customers/CreateCustomerScreen.kt` | Form with real-time validation |
+| Customer Detail | `ui/gui2/customers/CustomerDetailScreen.kt` | View customer info + invoice summary |
+| Edit Customer | `ui/gui2/customers/EditCustomerScreen.kt` | Edit customer details |
+
+### ViewModels
+
+| ViewModel | File | Key State |
+|-----------|------|-----------|
+| `CustomerListViewModelV2` | `ui/gui2/customers/` | `UiState<List<Customer>>` |
+| `CreateCustomerViewModelV2` | `ui/gui2/customers/` | Form state + validation |
+| `CustomerDetailViewModelV2` | `ui/gui2/customers/` | `UiState<Customer>` |
+| `EditCustomerViewModelV2` | `ui/gui2/customers/` | Form state + validation |
+
+### Repositories
+
+| Interface | Implementation | Location |
+|-----------|---------------|----------|
+| `CustomerRepository` | `CustomerRepositoryImpl` | `data/repository/` |
+
+### Database
+
+- **Entity:** `CustomerEntity` (table: `customers`)
+- **DAO:** `CustomerDaoV2`
+- **Soft Delete:** `isActive = 0` flag
+- **Key Queries:**
+  - `getActiveCustomers(businessId)` → `Flow<List<CustomerEntity>>`
+  - `getById(customerId)` → `Flow<CustomerEntity?>`
+  - `getCustomerWithInvoices(customerId)` → `CustomerWithInvoices`
+
+### Validation Rules
+
+| Field | Rules |
+|-------|-------|
+| Name | Required, non-empty |
+| Email | Valid format if provided; unique per business |
+| Phone | Optional |
+| Address | Optional |
+
+### Key Implementation Details
+
+- Customer email uniqueness is enforced at the repository layer by querying existing emails before insert.
+- Deleting a customer performs a soft delete (`isActive = 0`) to preserve historical invoice data.
+- Customer totals (revenue, invoice count) are computed from the `CustomerAnalyticsSnapshot`.
+- Foreign key: `businessProfileId → business_profiles.id` with CASCADE delete.
+- Foreign key: `customerId` on `invoices` is SET NULL on customer delete.
+
+---
+
+## Phase 2 — Invoice Management
+
+**Status:** ✅ Complete  
+**GUI:** GUI1 + GUI2  
+
+### Overview
+
+Full invoice lifecycle management with auto-generated invoice numbers, line item management, tax calculation, and status transitions.
+
+### Screens
+
+| Screen | File | Description |
+|--------|------|-------------|
+| Invoice List | `ui/gui2/invoices/InvoiceListScreen.kt` | Filterable invoice list by status |
+| Create Invoice | `ui/gui2/invoices/CreateInvoiceScreen.kt` | Multi-step form with line items |
+| Invoice Detail | `ui/gui2/invoices/InvoiceDetailScreen.kt` | Invoice view + payment recording |
+| Edit Invoice | `ui/gui2/invoices/EditInvoiceScreen.kt` | Edit draft/sent invoices |
+| Print Preview | `ui/invoices/PrintPreviewScreen.kt` | PDF preview before generation |
+
+### ViewModels
+
+| ViewModel | File | Key State |
+|-----------|------|-----------|
+| `InvoiceListViewModelV2` | `ui/gui2/invoices/` | `UiState<List<Invoice>>` |
+| `CreateInvoiceViewModelV2` | `ui/gui2/invoices/` | Form state, line items |
+| `InvoiceDetailViewModelV2` | `ui/gui2/invoices/` | `UiState<Invoice>`, payment events |
+| `EditInvoiceViewModelV2` | `ui/gui2/invoices/` | Form state |
+
+### Repositories
+
+| Interface | Implementation | Location |
+|-----------|---------------|----------|
+| `InvoiceRepository` | `InvoiceRepositoryImpl` | `data/repository/` |
+
+### Use Cases
+
+| Use Case | Purpose |
+|----------|---------|
+| `SaveInvoiceUseCase` | Validates and saves with offline-first support |
+| `UpdateInvoiceUseCase` | Validates and updates with offline-first support |
+| `DeleteInvoiceUseCase` | Soft-deletes with offline-first support |
+
+### Database
+
+- **Invoice Entity:** `InvoiceEntity` (table: `invoices`)
+- **Line Items (GUI1):** `LineItemEntity` (table: `line_items`)
+- **Line Items (GUI2):** `InvoiceItemEntity` (table: `invoice_items`)
+- **DAOs:** `InvoiceDaoV2`, `InvoiceDao`
+
+### Invoice Number Generation
+
+Format: `INV-YYYY-NNN`
+
+- `YYYY` = invoice year
+- `NNN` = zero-padded sequence within the year (e.g. `001`, `042`)
+- Sequence increments per business per year
+- Generated by `InvoiceRepositoryV2` at creation time
+
+### Tax Calculation
+
+```
+subtotal = Σ(lineItem.quantity × lineItem.unitPrice)
+tax      = subtotal × business.defaultTaxRate
+total    = subtotal + tax
+```
+
+All amounts stored in **integer cents** to avoid floating-point errors.
+
+### Status Transition Rules
+
+Enforced by `StatusTransitionValidator`:
+
+| From | Allowed Transitions |
+|------|-------------------|
+| `DRAFT` | `SENT`, `OVERDUE` |
+| `SENT` | `PAID`, `PARTIALLY_PAID`, `OVERDUE` |
+| `PARTIALLY_PAID` | `PAID`, `OVERDUE` |
+| `OVERDUE` | `PAID`, `PARTIALLY_PAID` |
+| `PAID` | *(terminal — no further transitions)* |
+
+---
+
+## Phase 3 — Payment Recording
+
+**Status:** ✅ Complete  
+**GUI:** GUI2  
+
+### Overview
+
+Atomic payment recording with overpayment prevention, automatic status transitions, and multi-payment support per invoice.
+
+### Screens
+
+| Component | File | Description |
+|-----------|------|-------------|
+| Record Payment Dialog | `ui/gui2/invoices/RecordPaymentDialog.kt` | Bottom sheet payment form |
+| Invoice Detail | `ui/gui2/invoices/InvoiceDetailScreen.kt` | Shows payment history |
+
+### ViewModels
+
+| ViewModel | File | Key State |
+|-----------|------|-----------|
+| `RecordPaymentViewModel` | `ui/gui2/invoices/RecordPaymentViewModel.kt` | `PaymentFormState` |
+| `InvoiceDetailViewModelV2` | `ui/gui2/invoices/` | Payment event `SharedFlow` |
+
+**`PaymentFormState` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `outstanding` | `Long` | Remaining amount owed (cents) |
+| `amountRaw` | `String` | Raw input string |
+| `amountCents` | `Long` | Parsed amount in cents |
+| `amountError` | `String?` | Validation error message |
+| `paymentDate` | `Long` | Selected payment date (ms) |
+| `dateError` | `String?` | Date validation error |
+| `notes` | `String` | Optional notes (max 500 chars) |
+| `isFormValid` | `Boolean` | Combined form validity |
+| `isLoading` | `Boolean` | Submission in progress |
+| `submissionError` | `String?` | Post-submit error message |
+
+### Use Case — `RecordPaymentUseCase`
+
+```kotlin
+suspend operator fun invoke(
+    invoiceId: Long,
+    businessId: Long,
+    amount: Long,          // cents
+    outstanding: Long,     // cents
+    paymentDate: Long,     // Unix ms
+    invoiceDate: Long,     // Unix ms
+    notes: String
+): Result<Unit>
+```
+
+**Validation:**
+- `amount > 0`
+- `amount ≤ outstanding`
+- `paymentDate ≤ todayMidnight`
+- `paymentDate ≥ invoiceDateMidnight`
+
+### Repository — `PaymentRepositoryV2`
+
+```kotlin
+suspend fun recordPayment(
+    invoiceId: Long,
+    businessId: Long,
+    amount: Long,
+    paymentDate: Long,
+    notes: String
+): Result<Unit>
+```
+
+**Atomic Transaction:**
+
+```
+database.withTransaction {
+  1. INSERT INTO payments (invoiceId, amount, paymentDate, notes, ...)
+  2. UPDATE invoices SET amountPaid = amountPaid + amount WHERE id = invoiceId
+  3. Calculate newStatus:
+       if (newAmountPaid >= totalAmount) → PAID
+       else → PARTIALLY_PAID
+  4. UPDATE invoices SET status = newStatus WHERE id = invoiceId
+}
+```
+
+### Database
+
+- **Payment Entity:** `PaymentEntity` (table: `payments`)
+- **DAO:** `PaymentDaoV2`
+- **Key Methods:**
+  - `insert(payment): Long`
+  - `getPaymentsByInvoice(invoiceId): Flow<List<PaymentEntity>>`
+
+### Key Implementation Details
+
+- All payment recording is wrapped in `database.withTransaction {}` — either fully succeeds or fully rolls back.
+- `amountPaid` on `InvoiceEntity` accumulates total payments received.
+- `status` automatically transitions:
+  - `PAID` when `amountPaid >= totalAmount`
+  - `PARTIALLY_PAID` when `0 < amountPaid < totalAmount`
+- Multiple payments per invoice are supported (stored as individual `PaymentEntity` rows).
+- `RecordPaymentViewModel.initFor()` must be called before showing the dialog to initialise the outstanding balance.
+- Date validation uses **midnight comparison** for consistency across timezones.
+
+---
+
+## Phase 4 — PDF Generation & Polish
+
+**Status:** ✅ Complete  
+**GUI:** GUI1 + GUI2  
+
+### Overview
+
+PDF invoice generation using a built-in PDF service, with share/download functionality, empty states, loading states, and animations.
+
+### Screens
+
+| Screen | File | Description |
+|--------|------|-------------|
+| Print Preview | `ui/invoices/PrintPreviewScreen.kt` | Preview PDF before generation |
+| Invoice Detail | `ui/gui2/invoices/InvoiceDetailScreen.kt` | PDF action buttons |
+| Invoice Action Hub | `ui/invoices/InvoiceActionHub.kt` | Share/Download/Print actions |
+
+### ViewModels
+
+| ViewModel | File | Key State |
+|-----------|------|-----------|
+| `PrintPreviewViewModel` | `ui/invoices/PrintPreviewViewModel.kt` | PDF state, share intent |
+
+### Use Case — `GenerateAndSaveInvoiceUseCase`
+
+```kotlin
+suspend operator fun invoke(
+    invoice: Invoice,
+    snapshot: InvoiceSnapshot,
+    isQuote: Boolean,
+    overwriteExisting: Boolean
+): Result<File>
+```
+
+**Process:**
+1. Call `InvoicePdfService.generatePdf(invoice, snapshot)`
+2. On success: save `GeneratedDocumentEntity` to database
+3. On DB failure: delete orphaned PDF file (fail-safe rollback)
+4. Return `Result<File>` with the generated PDF path
+
+### PDF Service — `InvoicePdfService`
+
+Located in `domain/pdf/`. Generates PDF from invoice data using Android's `PdfDocument` API.
+
+**Features:**
+- Business logo rendering
+- Line item table
+- Tax breakdown
+- Payment summary
+- Quote vs Invoice mode
+
+### Document Repository
+
+| Interface | Implementation |
+|-----------|---------------|
+| `DocumentRepository` | `DocumentRepositoryImpl` |
+
+**Key Methods:**
+- `saveDocument(document: GeneratedDocumentEntity): Result<Long>`
+- `getDocumentByInvoiceId(invoiceId: Long): Flow<GeneratedDocumentEntity?>`
+- `deleteDocument(documentId: Long): Result<Unit>`
+
+### Key Implementation Details
+
+- PDF files are stored in the app's private external storage directory.
+- `GeneratedDocumentEntity` records the absolute path for later retrieval.
+- Share functionality uses Android's `FileProvider` + `Intent.ACTION_SEND`.
+- Empty states are shown when no invoices/customers exist.
+- Loading states use Compose `AnimatedVisibility` for smooth transitions.
+- Error recovery: if PDF generation fails, a user-friendly error dialog is shown with a retry option.
+
+---
+
+## Phase 5 — Dashboard Integration & Polish
+
+**Status:** ✅ Complete  
+**GUI:** GUI2  
+
+### Overview
+
+Real-time dashboard with combined revenue, payment, and risk metrics. Animated transitions and navigation polish.
+
+### Screens
+
+| Screen | File | Description |
+|--------|------|-------------|
+| Dashboard (GUI2) | `ui/gui2/dashboard/DashboardScreen.kt` | KPI overview with real-time data |
+| Revenue Analytics | `ui/gui2/analytics/RevenueAnalyticsScreen.kt` | Revenue charts and trends |
+| Payment Analytics | `ui/gui2/analytics/PaymentAnalyticsScreen.kt` | Collection metrics |
+| Risk Analytics | `ui/gui2/analytics/RiskAnalyticsScreen.kt` | Risk classification |
+
+### ViewModels
+
+| ViewModel | File | Dependencies |
+|-----------|------|-------------|
+| `DashboardViewModelV2` | `ui/gui2/dashboard/` | `RevenueRepositoryV2`, `PaymentAnalyticsRepositoryV2`, `RiskAnalyticsRepositoryV2`, `BusinessContextRepositoryV2` |
+| `RevenueAnalyticsViewModelV2` | `ui/gui2/analytics/` | `RevenueRepositoryV2` |
+| `PaymentAnalyticsViewModelV2` | `ui/gui2/analytics/` | `PaymentAnalyticsRepositoryV2` |
+| `RiskAnalyticsViewModelV2` | `ui/gui2/analytics/` | `RiskAnalyticsRepositoryV2` |
+
+### Repositories (GUI2-specific)
+
+| Repository | Key Method | Data Source |
+|------------|-----------|-------------|
+| `RevenueRepositoryV2` | `observeRevenueMetrics(businessId)` | `invoices` table via `InvoiceDaoV2` |
+| `PaymentAnalyticsRepositoryV2` | `observePaymentMetrics(businessId)` | `invoices` table via `InvoiceDaoV2` |
+| `RiskAnalyticsRepositoryV2` | `observeRiskMetrics(businessId)` | `invoices` table via `InvoiceDaoV2` |
+| `BusinessContextRepositoryV2` | `activeContext: Flow<BusinessContextV2>` | `BusinessProfileRepository` |
+
+### Dashboard Data Flow
+
+```
+InvoiceDaoV2 (Room Flow)
+  ├─► RevenueRepositoryV2 → RevenueMetricsV2
+  ├─► PaymentAnalyticsRepositoryV2 → PaymentMetricsV2
+  └─► RiskAnalyticsRepositoryV2 → RiskMetricsV2
+
+BusinessContextRepositoryV2 → BusinessContextV2
+
+DashboardViewModelV2.combine(all 4 flows)
+  └─► DashboardStateV2 → DashboardScreen
+```
+
+### Key Metrics
+
+**Revenue Metrics (`RevenueMetricsV2`):**
+- MTD Revenue (Month-to-Date)
+- YTD Revenue (Year-to-Date)
+- Weekly Revenue
+- Total Paid Revenue
+- 30-Day Revenue Trend
+
+**Payment Metrics (`PaymentMetricsV2`):**
+- Outstanding Amount
+- Collected Amount
+- Invoice Count by Status
+- Overdue Count
+- Average Days to Payment
+
+**Risk Metrics (`RiskMetricsV2`):**
+- High-Risk Invoice Count
+- At-Risk Invoice Count
+- Healthy Invoice Count
+- Overdue Count
+- Outstanding Amount by Risk Tier
+
+---
+
+## Supporting Features
+
+### Offline-First Architecture
+
+All write operations check connectivity. If offline:
+1. Operation queued via `OfflineQueueService` → `OfflineOperation` table
+2. `SyncWorker` runs every 15 minutes
+3. `SyncPendingOperationsUseCase` processes queue in FIFO order
+
+### Multi-Currency Support
+
+- `CurrencyEntity` stores enabled currencies
+- `ExchangeRateEntity` stores rates from OpenExchangeRates API
+- Line items store `currencyCode` for multi-currency invoices
+
+### Invoice Templates
+
+- `InvoiceTemplate` entity stores design configuration
+- `InvoiceCustomField` allows per-template custom fields
+- Three design types: `PROFESSIONAL`, `MINIMAL`, `BRANDED`
+- One template can be set as default per business
+
+### Analytics & Snapshots
+
+Denormalised snapshot entities (`InvoiceAnalyticsSnapshot`, `DailyRevenueSnapshot`, etc.) are maintained alongside live data for fast dashboard queries. Updated atomically when invoices/payments change.
+
+### Dual GUI System
+
+See [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md#6-dual-gui-system) for full details.
