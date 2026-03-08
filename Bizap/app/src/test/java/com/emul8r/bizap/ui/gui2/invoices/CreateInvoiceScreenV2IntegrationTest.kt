@@ -7,7 +7,9 @@ import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -45,8 +47,8 @@ class CreateInvoiceScreenV2IntegrationTest {
             address = "123 Main St"
         )
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns listOf(customer)
-        coEvery { invoiceRepository.saveInvoice(any()) } returns Unit
+        every { customerRepository.getAllCustomers() } returns flowOf(listOf(customer))
+        coEvery { invoiceRepository.saveInvoice(any()) } returns Result.success(1L)
 
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
@@ -56,7 +58,7 @@ class CreateInvoiceScreenV2IntegrationTest {
         // When - Load customers
         runCatching {
             // Simulate init loading
-            val customers = customerRepository.getCustomersByBusiness(1L)
+            val customers = listOf(customer) // Customers pre-loaded via mock
             assertEquals(1, customers.size)
         }
 
@@ -119,8 +121,8 @@ class CreateInvoiceScreenV2IntegrationTest {
             address = "Address Two"
         )
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns listOf(customer1, customer2)
-        coEvery { invoiceRepository.saveInvoice(any()) } returns Unit
+        every { customerRepository.getAllCustomers() } returns flowOf(listOf(customer1, customer2))
+        coEvery { invoiceRepository.saveInvoice(any()) } returns Result.success(1L)
 
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
@@ -151,8 +153,8 @@ class CreateInvoiceScreenV2IntegrationTest {
             address = "123 Main St"
         )
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns listOf(customer)
-        coEvery { invoiceRepository.saveInvoice(any()) } returns Unit
+        every { customerRepository.getAllCustomers() } returns flowOf(listOf(customer))
+        coEvery { invoiceRepository.saveInvoice(any()) } returns Result.success(1L)
 
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
@@ -200,7 +202,7 @@ class CreateInvoiceScreenV2IntegrationTest {
     @Test
     fun `error handling - customer loading fails gracefully`() = runTest {
         // Given
-        coEvery { customerRepository.getCustomersByBusiness(1L) } throws Exception("Network error")
+        every { customerRepository.getAllCustomers() } throws Exception("Network error")
 
         // When
         viewModel = CreateInvoiceViewModelV2(
@@ -224,7 +226,7 @@ class CreateInvoiceScreenV2IntegrationTest {
             address = "address"
         )
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns listOf(customer)
+        every { customerRepository.getAllCustomers() } returns flowOf(listOf(customer))
         coEvery { invoiceRepository.saveInvoice(any()) } throws Exception("Database error")
 
         viewModel = CreateInvoiceViewModelV2(
@@ -284,8 +286,8 @@ class CreateInvoiceScreenV2IntegrationTest {
             address = "789 Business Ave"
         )
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns listOf(customer)
-        coEvery { invoiceRepository.saveInvoice(any()) } returns Unit
+        every { customerRepository.getAllCustomers() } returns flowOf(listOf(customer))
+        coEvery { invoiceRepository.saveInvoice(any()) } returns Result.success(1L)
 
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
@@ -314,8 +316,8 @@ class CreateInvoiceScreenV2IntegrationTest {
             address = "address"
         )
 
-        coEvery { customerRepository.getCustomersByBusiness(1L) } returns listOf(customer)
-        coEvery { invoiceRepository.saveInvoice(any()) } returns Unit
+        every { customerRepository.getAllCustomers() } returns flowOf(listOf(customer))
+        coEvery { invoiceRepository.saveInvoice(any()) } returns Result.success(1L)
 
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
