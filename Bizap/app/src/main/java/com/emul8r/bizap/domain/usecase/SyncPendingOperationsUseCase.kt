@@ -10,15 +10,18 @@ import javax.inject.Inject
  * Orchestrates processing of the offline operation queue.
  *
  * Called by [SyncWorker] once network connectivity is available.
- * For each pending operation the use case attempts to apply the change
- * and marks it completed or failed accordingly.
+ * For each pending operation:
+ * 1. Dispatches to [SyncOperationDispatcher] to handle the sync
+ * 2. Marks operation as SYNCED on success
+ * 3. Marks operation as FAILED with error on error
  *
  * Conflict resolution strategy: **server wins**.
  * If the remote rejects an operation the user is informed via the
- * failed-operation count visible in [SyncStatusIndicator].
+ * failed-operation count visible in the UI.
  */
 class SyncPendingOperationsUseCase @Inject constructor(
-    private val offlineQueueRepository: OfflineQueueRepository
+    private val offlineQueueRepository: OfflineQueueRepository,
+    private val dispatcher: SyncOperationDispatcher
 ) {
     /**
      * Processes all pending operations in FIFO order.
@@ -49,20 +52,33 @@ class SyncPendingOperationsUseCase @Inject constructor(
     /**
      * Applies a single pending operation.
      *
-     * In this initial implementation the queue serves as the foundation for
-     * offline support. Concrete remote-sync logic will be added per entity
-     * type in Phase 2+.  For now each operation is marked completed so the
-     * UI indicator clears correctly after the placeholder sync.
+     * Dispatches to the appropriate handler based on operation type.
+     * Handles retryable vs non-retryable errors appropriately.
+     *
+     * @throws SyncException.Retryable to signal the worker to retry
+     * @throws SyncException.NonRetryable to mark operation as permanently failed
      */
     private suspend fun processOperation(operation: PendingOperation) {
         Timber.d("⚙️ Processing ${operation.operationType} on ${operation.entityType}#${operation.entityId}")
         try {
-            // TODO(Phase 2+): Dispatch to entity-specific remote sync handlers.
-            // e.g., when operationType == CREATE && entityType == "INVOICE" → call remote API
+            // Dispatch to appropriate handler
+            dispatcher.dispatch(operation)
+
+            // Mark as successfully synced
             offlineQueueRepository.markCompleted(operation.id)
-        } catch (e: Exception) {
-            Timber.e(e, "❌ Failed to process operation #${operation.id}")
+            Timber.d("✅ Operation #${operation.id} synced successfully")
+        } catch (e: SyncOperationDispatcher.SyncException.Retryable) {
+            // Retryable error - let SyncWorker handle retry logic
+            Timber.w("⚠️ Retryable error for operation #${operation.id}: ${e.message}")
+            throw e
+        } catch (e: SyncOperationDispatcher.SyncException.NonRetryable) {
+            // Non-retryable error - mark as permanently failed
+            Timber.e("❌ Non-retryable error for operation #${operation.id}: ${e.message}")
             offlineQueueRepository.markFailed(operation.id, e.message ?: "Unknown error")
+        } catch (e: Exception) {
+            // Unexpected error - treat as retryable (network issue)
+            Timber.e(e, "❌ Unexpected error for operation #${operation.id}")
+            throw SyncOperationDispatcher.SyncException.Retryable("Unexpected error: ${e.message}")
         }
     }
 }
