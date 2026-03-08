@@ -36,9 +36,24 @@
 
         <activity
             android:name="com.emul8r.bizap.ui.activities.ModernGUIMainActivity"
-            android:exported="false"
+            android:exported="true"
             android:parentActivityName="com.emul8r.bizap.MainActivity"
-            android:theme="@style/Theme.Bizap" />
+            android:theme="@style/Theme.Bizap">
+            <!-- Deep link: bizap://dashboard -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="bizap" android:host="dashboard" />
+            </intent-filter>
+            <!-- Deep link: bizap://gui2/customer/{id} and bizap://gui2/invoice/{id} -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="bizap" android:host="gui2" />
+            </intent-filter>
+        </activity>
 
         <provider
             android:name="androidx.core.content.FileProvider"
