@@ -107,9 +107,14 @@ class RecordPaymentViewModel @Inject constructor(
 
     fun submit() {
         val state = _formState.value
+        if (invoiceId == -1L) {
+            // ViewModel not yet initialised; should not happen in normal usage
+            Timber.w("RecordPaymentViewModel.submit() called before initFor()")
+            return
+        }
         if (!state.isFormValid || state.amountCents == null) return
 
-        _formState.update { it.copy(isLoading = true) }
+        _formState.update { it.copy(isLoading = true, submissionError = null) }
 
         viewModelScope.launch {
             val result = recordPaymentUseCase(
@@ -130,8 +135,10 @@ class RecordPaymentViewModel @Inject constructor(
                     _events.emit(PaymentEvent.Success)
                 },
                 onFailure = { error ->
+                    val msg = error.message ?: "Payment failed"
                     Timber.e(error, "RecordPaymentViewModel: payment failed")
-                    _events.emit(PaymentEvent.Error(error.message ?: "Payment failed"))
+                    _formState.update { it.copy(submissionError = msg) }
+                    _events.emit(PaymentEvent.Error(msg))
                 }
             )
         }
@@ -147,9 +154,10 @@ class RecordPaymentViewModel @Inject constructor(
     }
 
     private fun dateErrorMessage(dateMs: Long): String? {
-        val now = System.currentTimeMillis()
+        // Normalize both sides to midnight so today is always valid (date-level comparison only)
+        val todayMidnight = todayMidnightMs()
         return when {
-            dateMs > now -> "Payment date cannot be in the future"
+            dateMs > todayMidnight -> "Payment date cannot be in the future"
             invoiceDate > 0 && dateMs < invoiceDate -> "Payment date cannot be before the invoice date"
             else -> null
         }
@@ -188,14 +196,16 @@ data class PaymentFormState(
     /** True when all fields pass validation and the form can be submitted. */
     val isFormValid: Boolean = false,
     /** True while the use-case coroutine is in-flight. */
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    /** Non-null when the last submission attempt returned an error. Cleared on next submit. */
+    val submissionError: String? = null
 )
 
 /**
  * One-shot UI events emitted after a submission attempt.
  */
 sealed class PaymentEvent {
-    object Success : PaymentEvent()
+    data object Success : PaymentEvent()
     data class Error(val message: String) : PaymentEvent()
 }
 
