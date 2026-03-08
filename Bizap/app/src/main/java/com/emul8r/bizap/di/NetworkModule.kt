@@ -1,9 +1,12 @@
 package com.emul8r.bizap.di
 
+import com.emul8r.bizap.data.network.ConnectivityNetworkMonitor
 import com.emul8r.bizap.data.network.ErrorInterceptor
+import com.emul8r.bizap.data.network.NetworkMonitor
 import com.emul8r.bizap.data.remote.ExchangeRateService
 import com.emul8r.bizap.data.remote.api.CustomerApi
 import com.emul8r.bizap.data.remote.api.InvoiceApi
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,49 +20,55 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object NetworkModule {
+interface NetworkModule {
 
-    @Provides
+    @Binds
     @Singleton
-    fun provideJson(): Json {
-        return Json { ignoreUnknownKeys = true }
-    }
+    fun bindNetworkMonitor(networkMonitor: ConnectivityNetworkMonitor): NetworkMonitor
 
-    @Provides
-    @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(ErrorInterceptor())
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build()
-    }
+    companion object {
+        @Provides
+        @Singleton
+        fun provideJson(): Json {
+            return Json { ignoreUnknownKeys = true }
+        }
 
-    @Provides
-    @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl("https://openexchangerates.org/api/")
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-    
-    @Provides
-    @Singleton
-    fun provideExchangeRateService(retrofit: Retrofit): ExchangeRateService {
-        return retrofit.create(ExchangeRateService::class.java)
-    }
+        @Provides
+        @Singleton
+        fun provideOkHttpClient(): OkHttpClient {
+            return OkHttpClient.Builder()
+                .addInterceptor(ErrorInterceptor())
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build()
+        }
 
-    @Provides
-    @Singleton
-    fun provideInvoiceApi(retrofit: Retrofit): InvoiceApi {
-        return retrofit.create(InvoiceApi::class.java)
-    }
+        @Provides
+        @Singleton
+        fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+            return Retrofit.Builder()
+                .baseUrl("https://openexchangerates.org/api/")
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+        }
 
-    @Provides
-    @Singleton
-    fun provideCustomerApi(retrofit: Retrofit): CustomerApi {
-        return retrofit.create(CustomerApi::class.java)
+        @Provides
+        @Singleton
+        fun provideExchangeRateService(retrofit: Retrofit): ExchangeRateService {
+            return retrofit.create(ExchangeRateService::class.java)
+        }
+
+        @Provides
+        @Singleton
+        fun provideInvoiceApi(retrofit: Retrofit): InvoiceApi {
+            return retrofit.create(InvoiceApi::class.java)
+        }
+
+        @Provides
+        @Singleton
+        fun provideCustomerApi(retrofit: Retrofit): CustomerApi {
+            return retrofit.create(CustomerApi::class.java)
+        }
     }
 }

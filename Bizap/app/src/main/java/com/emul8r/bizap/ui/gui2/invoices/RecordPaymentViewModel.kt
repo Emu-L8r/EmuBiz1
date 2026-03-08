@@ -121,7 +121,7 @@ class RecordPaymentViewModel @Inject constructor(
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = state.amountCents,
-                outstanding = state.outstanding,
+                trueOutstanding = state.outstanding,
                 paymentDate = state.paymentDate,
                 invoiceDate = invoiceDate,
                 notes = state.notes.ifBlank { null }
@@ -208,4 +208,3 @@ sealed class PaymentEvent {
     data object Success : PaymentEvent()
     data class Error(val message: String) : PaymentEvent()
 }
-
