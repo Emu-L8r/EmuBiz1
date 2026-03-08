@@ -21,8 +21,8 @@ class RecordPaymentUseCase @Inject constructor(
     /**
      * @param invoiceId   Target invoice.
      * @param businessId  Owning business.
-     * @param amount      Payment amount in cents (> 0, ≤ [outstanding]).
-     * @param outstanding Remaining balance in cents used for amount validation.
+     * @param amount      Payment amount in cents (> 0, ≤ [trueOutstanding]).
+     * @param trueOutstanding Remaining balance in cents (totalAmount - amountPaid).
      * @param paymentDate Unix timestamp (ms) of midnight of the selected date.
      *                    Must be ≤ today's midnight and ≥ [invoiceDate].
      * @param invoiceDate Invoice creation date (ms) used as lower date boundary.
@@ -32,7 +32,7 @@ class RecordPaymentUseCase @Inject constructor(
         invoiceId: Long,
         businessId: Long,
         amount: Long,
-        outstanding: Long,
+        trueOutstanding: Long,
         paymentDate: Long,
         invoiceDate: Long,
         notes: String? = null
@@ -45,11 +45,15 @@ class RecordPaymentUseCase @Inject constructor(
                 IllegalArgumentException("Payment amount must be greater than zero.")
             )
         }
-        if (amount > outstanding) {
+        
+        // ALLOW payments on any invoice with a balance, including DRAFT.
+        // We use trueOutstanding (totalAmount - amountPaid) passed from the caller.
+        if (amount > trueOutstanding) {
             return Result.failure(
                 IllegalArgumentException("Payment exceeds the outstanding balance.")
             )
         }
+
         if (paymentDate > todayMidnight) {
             return Result.failure(
                 IllegalArgumentException("Payment date cannot be in the future.")
