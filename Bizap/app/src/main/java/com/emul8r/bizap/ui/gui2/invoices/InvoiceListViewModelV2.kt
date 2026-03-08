@@ -22,7 +22,7 @@ class InvoiceListViewModelV2 @Inject constructor(
     val businessId: Long = route.businessId
 
     val uiState: StateFlow<InvoiceListUiStateV2> = invoiceRepository
-        .getAllInvoices()
+        .getAllInvoicesWithItems()
         .map { invoices ->
             Timber.d("InvoiceListViewModelV2: Loaded ${invoices.size} invoices")
             InvoiceListUiStateV2.Success(invoices) as InvoiceListUiStateV2
@@ -38,3 +38,9 @@ class InvoiceListViewModelV2 @Inject constructor(
         )
 }
 
+
+sealed interface InvoiceListUiStateV2 {
+    object Loading : InvoiceListUiStateV2
+    data class Error(val message: String) : InvoiceListUiStateV2
+    data class Success(val invoices: List<com.emul8r.bizap.domain.model.Invoice>) : InvoiceListUiStateV2
+}

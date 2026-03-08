@@ -25,7 +25,7 @@ class CreateCustomerViewModelV2 @Inject constructor(
         viewModelScope.launch {
             try {
                 Timber.d("CreateCustomerViewModelV2: Creating customer ${customer.name}")
-                customerRepository.saveCustomer(customer)
+                customerRepository.insert(customer)
                 Timber.d("CreateCustomerViewModelV2: Customer created successfully")
                 onSuccess()
             } catch (e: Exception) {

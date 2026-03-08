@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -165,7 +166,7 @@ private fun SettingsContent(
 
 @Composable
 private fun SettingsCardV2(
-    icon: androidx.compose.material.icons.Icons,
+    icon: ImageVector,
     title: String,
     description: String,
     onClick: () -> Unit

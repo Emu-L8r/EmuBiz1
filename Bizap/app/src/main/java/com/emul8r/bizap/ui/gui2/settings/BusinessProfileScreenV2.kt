@@ -71,10 +71,10 @@ private fun BusinessProfileForm(
     modifier: Modifier = Modifier
 ) {
     var businessName by remember(initialProfile) { mutableStateOf(initialProfile.businessName) }
-    var businessAbn by remember(initialProfile) { mutableStateOf(initialProfile.businessAbn) }
-    var businessAddress by remember(initialProfile) { mutableStateOf(initialProfile.businessAddress) }
-    var businessPhone by remember(initialProfile) { mutableStateOf(initialProfile.businessPhone) }
-    var businessEmail by remember(initialProfile) { mutableStateOf(initialProfile.businessEmail) }
+    var businessAbn by remember(initialProfile) { mutableStateOf(initialProfile.abn) }
+    var businessAddress by remember(initialProfile) { mutableStateOf(initialProfile.address) }
+    var businessPhone by remember(initialProfile) { mutableStateOf(initialProfile.phone) }
+    var businessEmail by remember(initialProfile) { mutableStateOf(initialProfile.email) }
     var isSaving by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf<String?>(null) }
 
@@ -145,10 +145,10 @@ private fun BusinessProfileForm(
                 onSave(
                     initialProfile.copy(
                         businessName = businessName,
-                        businessAbn = businessAbn,
-                        businessAddress = businessAddress,
-                        businessPhone = businessPhone,
-                        businessEmail = businessEmail
+                        abn = businessAbn,
+                        address = businessAddress,
+                        phone = businessPhone,
+                        email = businessEmail
                     )
                 )
             },
