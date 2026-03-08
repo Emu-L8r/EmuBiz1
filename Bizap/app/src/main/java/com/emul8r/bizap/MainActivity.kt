@@ -87,11 +87,16 @@ class MainActivity : ComponentActivity() {
                     )
                     GuiMode.GUI2 -> {
                         val gui2NavController = rememberNavController()
-                        GuiV2NavGraph(
-                            navController = gui2NavController,
-                            startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
-                            onSwitchToGui1 = { landingViewModel.resetMode() }
-                        )
+                        try {
+                            GuiV2NavGraph(
+                                navController = gui2NavController,
+                                startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
+                                onSwitchToGui1 = { landingViewModel.resetMode() }
+                            )
+                        } catch (e: Exception) {
+                            Timber.e(e, "GUI2 failed to load, falling back to GUI1")
+                            landingViewModel.resetMode()
+                        }
                     }
                 }
             }
