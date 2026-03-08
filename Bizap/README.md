@@ -2,6 +2,43 @@
 
 A modern Android invoice management application built with Kotlin and Jetpack Compose.
 
+## ⚠️ CRITICAL BUG - ATTENTION REQUIRED
+
+**GUI2 Invoice Creation**: Users cannot create invoices in GUI2 because the customer dropdown menu is not implemented.
+
+**Status**: 🔴 CRITICAL - Root cause identified, complete solution provided  
+**Location**: See `COMPREHENSIVE_GUI2_CUSTOMER_DROPDOWN_BUG_REPORT.md`  
+**Impact**: GUI2 invoice creation is 100% non-functional  
+**Fix Effort**: 1-2 hours  
+**Fix Complexity**: Easy (straightforward implementation)
+
+**What's the Issue?**
+- User creates a customer ✅
+- User tries to create an invoice ❌
+- No dropdown to select the customer appears
+- Invoice creation blocked at customer selection
+
+**What's the Root Cause?**
+CreateInvoiceViewModelV2 is missing three components:
+1. CustomerRepository not injected
+2. No customer data loading logic
+3. UI uses static text field instead of interactive dropdown
+
+**Where's the Solution?**
+See: `COMPREHENSIVE_GUI2_CUSTOMER_DROPDOWN_BUG_REPORT.md`
+
+This document contains:
+- ✅ Complete root cause analysis
+- ✅ Code evidence from all affected files
+- ✅ Complete implementation path (4 fixes)
+- ✅ Step-by-step instructions
+- ✅ Testing checklist
+- ✅ Reference to working GUI1 implementation
+
+**Next Action**: Read the comprehensive bug report above, then implement the 4 fixes provided.
+
+---
+
 ## Features
 
 - ✅ Create, edit, and manage invoices
