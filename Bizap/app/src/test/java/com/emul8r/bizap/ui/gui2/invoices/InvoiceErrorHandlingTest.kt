@@ -1,5 +1,6 @@
 package com.emul8r.bizap.ui.gui2.invoices
 
+import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import io.mockk.coEvery
@@ -17,7 +18,7 @@ import kotlin.test.assertTrue
  * Error handling tests for invoice creation
  * Ensures graceful error handling and user-friendly messages
  */
-class InvoiceErrorHandlingTest {
+class InvoiceErrorHandlingTest : BaseUnitTest() {
 
     private lateinit var viewModel: CreateInvoiceViewModelV2
     private val invoiceRepository = mockk<InvoiceRepository>()

@@ -1,5 +1,6 @@
 package com.emul8r.bizap.ui.gui2.customers
 
+import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import io.mockk.coEvery
@@ -15,7 +16,7 @@ import kotlin.test.assertTrue
  * Unit tests for CreateCustomerViewModelV2
  * Tests customer creation and validation
  */
-class CreateCustomerViewModelV2Test {
+class CreateCustomerViewModelV2Test : BaseUnitTest() {
 
     private lateinit var viewModel: CreateCustomerViewModelV2
     private val customerRepository = mockk<CustomerRepository>()
@@ -34,14 +35,13 @@ class CreateCustomerViewModelV2Test {
         // Given
         val customer = Customer(
             id = 0L,
-            businessProfileId = 1L,
             name = "Test Customer",
             email = "test@example.com",
             phone = "1234567890",
             address = "123 Test St"
         )
 
-        coEvery { customerRepository.insert(customer) } returns Unit
+        coEvery { customerRepository.insert(customer) } returns Result.success(1L)
 
         var successCalled = false
         var errorCalled = false
@@ -52,6 +52,8 @@ class CreateCustomerViewModelV2Test {
             onSuccess = { successCalled = true },
             onError = { errorCalled = true }
         )
+
+        advanceUntilIdle()
 
         // Then
         coVerify { customerRepository.insert(customer) }
@@ -64,7 +66,6 @@ class CreateCustomerViewModelV2Test {
         // Given
         val customer = Customer(
             id = 0L,
-            businessProfileId = 1L,
             name = "Test Customer",
             email = "test@example.com",
             phone = "1234567890",
@@ -83,6 +84,8 @@ class CreateCustomerViewModelV2Test {
             onError = { error -> errorMessage = error }
         )
 
+        advanceUntilIdle()
+
         // Then
         assertEquals(false, successCalled)
         assertEquals("Database error", errorMessage)
@@ -93,7 +96,6 @@ class CreateCustomerViewModelV2Test {
         // Given
         val customer = Customer(
             id = 0L,
-            businessProfileId = 1L,
             name = "Test Customer",
             email = "test@example.com",
             phone = "1234567890",
@@ -111,6 +113,8 @@ class CreateCustomerViewModelV2Test {
             onError = { error -> errorMessage = error }
         )
 
+        advanceUntilIdle()
+
         // Then
         assertEquals("Unknown error", errorMessage)
     }
@@ -120,14 +124,13 @@ class CreateCustomerViewModelV2Test {
         // Given
         val customer = Customer(
             id = 0L,
-            businessProfileId = 1L,
             name = "Minimal",
-            email = "",
-            phone = "",
-            address = ""
+            email = null,
+            phone = null,
+            address = null
         )
 
-        coEvery { customerRepository.insert(customer) } returns Unit
+        coEvery { customerRepository.insert(customer) } returns Result.success(2L)
 
         var successCalled = false
 
@@ -137,6 +140,8 @@ class CreateCustomerViewModelV2Test {
             onSuccess = { successCalled = true },
             onError = { }
         )
+
+        advanceUntilIdle()
 
         // Then
         assertTrue(successCalled)
