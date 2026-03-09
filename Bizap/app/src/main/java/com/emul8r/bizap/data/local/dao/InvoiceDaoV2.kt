@@ -213,4 +213,112 @@ interface InvoiceDaoV2 {
           AND isActive = 1
     """)
     fun observeAverageDaysToPayment(businessId: Long): Flow<Double>
+
+    // ==================== ACCOUNTING SERVICE QUERIES ====================
+
+    /**
+     * Outstanding amount for specified statuses (parameterized for AccountingService).
+     * Statuses must be passed as their string name (e.g. "SENT", "OVERDUE").
+     */
+    @Query("""
+        SELECT COALESCE(SUM(totalAmount - amountPaid), 0)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status IN (:statuses)
+    """)
+    fun observeOutstandingAmountForStatuses(
+        businessId: Long,
+        statuses: List<String>
+    ): Flow<Long>
+
+    /**
+     * Collected amount (sum of amountPaid) for specified statuses.
+     * Statuses must be passed as their string name.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(amountPaid), 0)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status IN (:statuses)
+    """)
+    fun observeCollectedAmountForStatuses(
+        businessId: Long,
+        statuses: List<String>
+    ): Flow<Long>
+
+    /**
+     * Billed amount (sum of totalAmount) excluding specified statuses.
+     * Statuses must be passed as their string name.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(totalAmount), 0)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status NOT IN (:excludeStatuses)
+    """)
+    fun observeBilledAmount(
+        businessId: Long,
+        excludeStatuses: List<String>
+    ): Flow<Long>
+
+    /**
+     * Combined billed/collected metrics for collection rate calculation.
+     * Excludes DRAFT invoices.
+     */
+    @Query("""
+        SELECT
+            COALESCE(SUM(totalAmount), 0)  AS billedAmount,
+            COALESCE(SUM(amountPaid), 0)   AS collectedAmount
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status NOT IN ('DRAFT')
+    """)
+    fun observeCollectionMetrics(businessId: Long): Flow<CollectionSummary>
+
+    /**
+     * Revenue (sum of amountPaid) within a date range for a single status.
+     * Uses invoice.date field (creation date, stored as epoch millis).
+     * Status must be passed as its string name.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(amountPaid), 0)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND date >= :startDateMillis
+          AND date <= :endDateMillis
+          AND status = :status
+    """)
+    fun observeRevenueInDateRange(
+        businessId: Long,
+        startDateMillis: Long,
+        endDateMillis: Long,
+        status: String
+    ): Flow<Long>
+
+    /**
+     * Invoice count for the specified set of statuses.
+     * Statuses must be passed as their string name.
+     */
+    @Query("""
+        SELECT COUNT(*)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status IN (:statuses)
+    """)
+    fun observeInvoiceCountForStatuses(
+        businessId: Long,
+        statuses: List<String>
+    ): Flow<Int>
+
+    /** Result type returned by [observeCollectionMetrics]. */
+    data class CollectionSummary(
+        @androidx.room.ColumnInfo(name = "billedAmount")   val billedAmount: Long,
+        @androidx.room.ColumnInfo(name = "collectedAmount") val collectedAmount: Long
+    )
 }
