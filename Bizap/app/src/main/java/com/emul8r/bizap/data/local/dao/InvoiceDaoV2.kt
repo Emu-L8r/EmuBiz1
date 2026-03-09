@@ -141,11 +141,17 @@ interface InvoiceDaoV2 {
 
     // ==================== STATUS BREAKDOWN ====================
 
+    /**
+     * Invoice count by status, EXCLUDING DRAFT invoices.
+     * DRAFT invoices are works-in-progress and should not be included in financial metrics.
+     * Returns counts for: PAID, PARTIALLY_PAID, SENT, OVERDUE, CANCELLED only.
+     */
     @Query("""
         SELECT status, COUNT(*) AS count
         FROM invoices
         WHERE businessProfileId = :businessId
           AND isActive = 1
+          AND status IN ('PAID', 'PARTIALLY_PAID', 'SENT', 'OVERDUE', 'CANCELLED')
         GROUP BY status
     """)
     fun observeInvoiceCountByStatus(businessId: Long): Flow<List<InvoiceStatusCountV2>>
