@@ -103,10 +103,6 @@ interface InvoiceDao {
 
     // ==================== DIRECT REVENUE QUERIES ====================
 
-    /**
-     * Revenue trend data class for direct-from-invoices queries.
-     * Represents one row per (date, currency) combination from the invoices table.
-     */
     data class DailyRevenueTrend(
         val dateString: String,
         val revenue: Long,
@@ -117,47 +113,47 @@ interface InvoiceDao {
 
     @Query("""
         SELECT 
-            COALESCE(SUM(totalAmount), 0) as mtdRevenue
+            COALESCE(SUM(amountPaid), 0) as mtdRevenue
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND status = 'PAID'
+        AND status IN ('PAID', 'PARTIALLY_PAID')
         AND DATE(date/1000, 'unixepoch') >= date('now', 'start of month')
     """)
     fun observeMTDRevenue(businessId: Long): Flow<Long>
 
     @Query("""
         SELECT 
-            COALESCE(SUM(totalAmount), 0) as ytdRevenue
+            COALESCE(SUM(amountPaid), 0) as ytdRevenue
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND status = 'PAID'
+        AND status IN ('PAID', 'PARTIALLY_PAID')
         AND strftime('%Y', date/1000, 'unixepoch') = strftime('%Y', 'now')
     """)
     fun observeYTDRevenue(businessId: Long): Flow<Long>
 
     @Query("""
         SELECT 
-            COALESCE(SUM(totalAmount), 0) as weeklyRevenue
+            COALESCE(SUM(amountPaid), 0) as weeklyRevenue
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND status = 'PAID'
+        AND status IN ('PAID', 'PARTIALLY_PAID')
         AND DATE(date/1000, 'unixepoch') >= date('now', '-7 days')
     """)
     fun observeWeeklyRevenue(businessId: Long): Flow<Long>
 
     @Query("""
         SELECT 
-            COALESCE(SUM(totalAmount), 0) as totalPaidRevenue
+            COALESCE(SUM(amountPaid), 0) as totalPaidRevenue
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND status = 'PAID'
+        AND status IN ('PAID', 'PARTIALLY_PAID')
     """)
     fun observeTotalPaidRevenue(businessId: Long): Flow<Long>
 
     @Query("""
         SELECT 
             DATE(date/1000, 'unixepoch') as dateString,
-            COALESCE(SUM(CASE WHEN status = 'PAID' THEN totalAmount ELSE 0 END), 0) as revenue,
+            COALESCE(SUM(CASE WHEN status IN ('PAID', 'PARTIALLY_PAID') THEN amountPaid ELSE 0 END), 0) as revenue,
             COUNT(*) as invoiceCount,
             COUNT(CASE WHEN status = 'PAID' THEN 1 END) as paidCount,
             currencyCode
@@ -171,30 +167,14 @@ interface InvoiceDao {
 
     // ==================== HEALTH CHECK QUERIES ====================
 
-    /**
-     * Count total number of invoices.
-     * Used for snapshot consistency checks.
-     */
     @Query("SELECT COUNT(*) FROM invoices")
     suspend fun count(): Int
 
-    /**
-     * Count distinct customers across all invoices.
-     * Used to verify customer analytics snapshot coverage.
-     */
     @Query("SELECT COUNT(DISTINCT customerId) FROM invoices")
     suspend fun countDistinctCustomers(): Int
 
     // ==================== VALIDATION TEST QUERY ====================
 
-    /**
-     * Calculate payment metrics directly from invoices table.
-     * Used to compare against snapshot-based calculations.
-     * This helps validate whether snapshots are stale or accurate.
-     *
-     * IMPORTANT: Only counts OFFICIAL invoices (PAID, PARTIALLY_PAID, SENT, OVERDUE).
-     * DRAFT invoices are excluded because they are not yet official financial records.
-     */
     @Query("""
         SELECT 
             COUNT(*) as totalInvoices,
