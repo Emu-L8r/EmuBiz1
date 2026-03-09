@@ -191,12 +191,15 @@ interface InvoiceDao {
      * Calculate payment metrics directly from invoices table.
      * Used to compare against snapshot-based calculations.
      * This helps validate whether snapshots are stale or accurate.
+     *
+     * IMPORTANT: Only counts OFFICIAL invoices (PAID, PARTIALLY_PAID, SENT, OVERDUE).
+     * DRAFT invoices are excluded because they are not yet official financial records.
      */
     @Query("""
         SELECT 
             COUNT(*) as totalInvoices,
             SUM(CASE WHEN status = 'PAID' THEN 1 ELSE 0 END) as paidInvoices,
-            SUM(CASE WHEN status != 'PAID' THEN 1 ELSE 0 END) as unpaidInvoices,
+            SUM(CASE WHEN status IN ('SENT', 'PARTIALLY_PAID', 'OVERDUE') THEN 1 ELSE 0 END) as unpaidInvoices,
             SUM(totalAmount) as totalAmount,
             SUM(amountPaid) as paidAmount,
             SUM(totalAmount - amountPaid) as totalOutstanding,
@@ -206,6 +209,8 @@ interface InvoiceDao {
             END as collectionRate
         FROM invoices
         WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status IN ('PAID', 'PARTIALLY_PAID', 'SENT', 'OVERDUE')
     """)
     suspend fun calculatePaymentMetrics(businessId: Long): CalculatedMetrics?
 
