@@ -3,6 +3,8 @@ package com.emul8r.bizap.ui.gui2.dashboard
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.entities.InvoiceStatusCountV2
+import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
+import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
@@ -36,9 +38,11 @@ class DashboardViewModelTest : BaseUnitTest() {
 
     @Before
     fun setUp() {
-        revenueRepository = RevenueRepositoryV2(dao)
-        paymentRepository = PaymentAnalyticsRepositoryV2(dao)
-        riskRepository = RiskAnalyticsRepositoryV2(dao)
+        val calculator = AnalyticsCalculator()
+        val validator = AnalyticsValidator()
+        revenueRepository = RevenueRepositoryV2(dao, calculator, validator)
+        paymentRepository = PaymentAnalyticsRepositoryV2(dao, calculator, validator)
+        riskRepository = RiskAnalyticsRepositoryV2(dao, calculator)
     }
 
     // ── loadMetrics_Success ───────────────────────────────────────────────────

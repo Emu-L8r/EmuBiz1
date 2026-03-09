@@ -3,6 +3,8 @@ package com.emul8r.bizap.ui.gui2.integration
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.entities.InvoiceStatusCountV2
+import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
+import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
@@ -34,9 +36,11 @@ class EndToEndJourneyTest : BaseUnitTest() {
 
     @Before
     fun setup() {
-        revenueRepo = RevenueRepositoryV2(dao)
-        paymentRepo = PaymentAnalyticsRepositoryV2(dao)
-        riskRepo = RiskAnalyticsRepositoryV2(dao)
+        val calculator = AnalyticsCalculator()
+        val validator = AnalyticsValidator()
+        revenueRepo = RevenueRepositoryV2(dao, calculator, validator)
+        paymentRepo = PaymentAnalyticsRepositoryV2(dao, calculator, validator)
+        riskRepo = RiskAnalyticsRepositoryV2(dao, calculator)
     }
 
     // ── Journey 1: Create customer → create invoice → record payment ──────────
