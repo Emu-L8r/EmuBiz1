@@ -47,7 +47,7 @@ interface NetworkModule {
         @Singleton
         fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
             return Retrofit.Builder()
-                .baseUrl("https://openexchangerates.org/api/")
+                .baseUrl("https://api.bizap.emul8r.com/v1/")
                 .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()

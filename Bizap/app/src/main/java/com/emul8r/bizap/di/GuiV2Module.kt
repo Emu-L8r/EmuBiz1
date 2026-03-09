@@ -3,6 +3,7 @@ package com.emul8r.bizap.di
 import com.emul8r.bizap.data.local.AppDatabase
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.dao.PaymentDaoV2
+import com.emul8r.bizap.data.repository.AccountingRepository
 import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
 import com.emul8r.bizap.data.repository.analytics.AnalyticsDiagnostics
 import com.emul8r.bizap.data.repository.analytics.AnalyticsEventBus
@@ -76,6 +77,14 @@ object GuiV2Module {
         businessProfileRepository: BusinessProfileRepository
     ): BusinessContextRepositoryV2 =
         BusinessContextRepositoryV2(businessProfileRepository)
+
+    @Provides
+    @Singleton
+    fun provideAccountingRepository(
+        invoiceDaoV2: InvoiceDaoV2,
+        calculator: AnalyticsCalculator,
+        validator: AnalyticsValidator
+    ): AccountingRepository = AccountingRepository(invoiceDaoV2, calculator, validator)
 
     @Provides
     @Singleton
