@@ -2,6 +2,7 @@ package com.emul8r.bizap.consistency
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
+import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
 import io.mockk.every
 import io.mockk.mockk
@@ -34,7 +35,7 @@ class RiskClassificationTest : BaseUnitTest() {
 
     @Before
     fun setup() {
-        riskRepo = RiskAnalyticsRepositoryV2(dao)
+        riskRepo = RiskAnalyticsRepositoryV2(dao, AnalyticsCalculator())
     }
 
     // ── healthy tier ─────────────────────────────────────────────────────────

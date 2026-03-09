@@ -28,6 +28,16 @@ class BusinessContextRepositoryV2 @Inject constructor(
         }
 
     /**
+     * Reactive stream of the active business ID.
+     * Use this in ViewModels to avoid hardcoded business ID defaults.
+     */
+    fun observeActiveBusinessId(): Flow<Long> =
+        businessProfileRepository.activeProfile.map { profile ->
+            Timber.d("BusinessContextRepositoryV2: active businessId = ${profile.id}")
+            profile.id
+        }
+
+    /**
      * All business profiles as contexts.
      */
     val allContexts: Flow<List<BusinessContextV2>> =

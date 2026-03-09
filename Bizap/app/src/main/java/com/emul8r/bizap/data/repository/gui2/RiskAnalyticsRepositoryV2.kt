@@ -1,6 +1,7 @@
 package com.emul8r.bizap.data.repository.gui2
 
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
+import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
 import com.emul8r.bizap.domain.model.gui2.RiskMetricsV2
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -11,10 +12,14 @@ import javax.inject.Singleton
 /**
  * GUI2 risk analytics repository.
  * Classifies invoices into risk tiers (high-risk, at-risk, healthy).
+ *
+ * Calculation logic is delegated to [AnalyticsCalculator] so that formulas are
+ * defined in exactly one place.
  */
 @Singleton
 class RiskAnalyticsRepositoryV2 @Inject constructor(
-    private val invoiceDaoV2: InvoiceDaoV2
+    private val invoiceDaoV2: InvoiceDaoV2,
+    private val calculator: AnalyticsCalculator
 ) {
     /**
      * Observe risk metrics for the given business.
@@ -28,13 +33,13 @@ class RiskAnalyticsRepositoryV2 @Inject constructor(
             invoiceDaoV2.observeOutstandingAmount(businessId)
         ) { highRisk, atRisk, healthy, overdue, outstanding ->
             Timber.d("RiskAnalyticsRepositoryV2: highRisk=$highRisk atRisk=$atRisk healthy=$healthy overdue=$overdue")
-            RiskMetricsV2(
-                businessProfileId = businessId,
-                highRiskCount = highRisk,
-                atRiskCount = atRisk,
-                healthyCount = healthy,
-                overdueCount = overdue,
-                totalOutstandingCents = outstanding
+            calculator.combineRiskMetrics(
+                businessId = businessId,
+                highRisk = highRisk,
+                atRisk = atRisk,
+                healthy = healthy,
+                overdue = overdue,
+                outstanding = outstanding
             )
         }
     }
