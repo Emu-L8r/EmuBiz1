@@ -21,27 +21,23 @@ class PaymentAnalyticsRepositoryV2 @Inject constructor(
 ) {
     /**
      * Observe comprehensive payment metrics for the given business.
+     * Collection rate is computed as: (collected / (collected + outstanding)) × 100
      */
-    @Suppress("UNCHECKED_CAST")
     fun observePaymentMetrics(businessId: Long): Flow<PaymentMetricsV2> {
         return combine(
             invoiceDaoV2.observeOutstandingAmount(businessId),
             invoiceDaoV2.observeCollectedAmount(businessId),
-            invoiceDaoV2.observeMTDRevenue(businessId),
             invoiceDaoV2.observeInvoiceCountByStatus(businessId),
             invoiceDaoV2.observeOverdueCount(businessId),
             invoiceDaoV2.observeAverageDaysToPayment(businessId)
-        ) { args: Array<Any?> ->
-            val outstanding = args[0] as Long
-            val collected = args[1] as Long
-            val totalBilled = args[2] as Long
-            val statusCounts = args[3] as List<InvoiceStatusCountV2>
-            val overdueCount = args[4] as Int
-            val avgDays = args[5] as Double
-
+        ) { outstanding, collected, statusCounts, overdueCount, avgDays ->
             val countMap = statusCounts.associate { it.status to it.count }
-            
-            Timber.d("PaymentAnalyticsRepositoryV2: businessId=$businessId outstanding=$outstanding collected=$collected billed=$totalBilled")
+
+            val collectionRate = if (collected + outstanding > 0L) {
+                (collected * 100.0 / (collected + outstanding)).coerceIn(0.0, 100.0)
+            } else 0.0
+
+            Timber.d("PaymentAnalyticsRepositoryV2: businessId=$businessId outstanding=$outstanding collected=$collected collectionRate=${"%.1f".format(collectionRate)}%")
 
             PaymentMetricsV2(
                 businessProfileId = businessId,
@@ -53,6 +49,7 @@ class PaymentAnalyticsRepositoryV2 @Inject constructor(
                 draftCount = countMap["DRAFT"] ?: 0,
                 outstandingAmount = outstanding,
                 collectedAmount = collected,
+                collectionRate = collectionRate,
                 averageDaysToPayment = avgDays,
                 statusBreakdown = statusCounts.map { StatusBreakdownV2(it.status, it.count) }
             )

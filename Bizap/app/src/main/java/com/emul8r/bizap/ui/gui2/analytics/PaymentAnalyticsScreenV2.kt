@@ -87,6 +87,12 @@ private fun PaymentAnalyticsContentV2(
         }
 
         MetricCardV2(
+            label = "Collection Rate",
+            value = "%.1f%%".format(metrics.collectionRate),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        MetricCardV2(
             label = "Avg Days to Payment",
             value = "%.1f days".format(metrics.averageDaysToPayment),
             modifier = Modifier.fillMaxWidth()

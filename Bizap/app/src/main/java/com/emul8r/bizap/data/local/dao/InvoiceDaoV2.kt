@@ -61,7 +61,7 @@ interface InvoiceDaoV2 {
     // ==================== REVENUE QUERIES ====================
 
     @Query("""
-        SELECT COALESCE(SUM(totalAmount), 0)
+        SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
           AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
@@ -71,7 +71,7 @@ interface InvoiceDaoV2 {
     fun observeMTDRevenue(businessId: Long): Flow<Long>
 
     @Query("""
-        SELECT COALESCE(SUM(totalAmount), 0)
+        SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
           AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
@@ -81,7 +81,7 @@ interface InvoiceDaoV2 {
     fun observeYTDRevenue(businessId: Long): Flow<Long>
 
     @Query("""
-        SELECT COALESCE(SUM(totalAmount), 0)
+        SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
           AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
@@ -94,6 +94,7 @@ interface InvoiceDaoV2 {
         SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
+          AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
     """)
     fun observeTotalPaidRevenue(businessId: Long): Flow<Long>
@@ -116,14 +117,15 @@ interface InvoiceDaoV2 {
     // ==================== OUTSTANDING / COLLECTED ====================
 
     /**
-     * Total outstanding amount (Billed - Paid) across all issued invoices.
-     * Accrual Basis logic: Any non-draft invoice with a balance remaining is outstanding.
+     * Total outstanding amount (balance remaining) across all invoices that are
+     * actively outstanding: SENT, PARTIALLY_PAID, or OVERDUE.
+     * DRAFT, PAID, CANCELLED, and DELETED invoices are excluded.
      */
     @Query("""
         SELECT COALESCE(SUM(totalAmount - amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
-          AND status != 'DRAFT'
+          AND (status = 'SENT' OR status = 'PARTIALLY_PAID' OR status = 'OVERDUE')
           AND isActive = 1
     """)
     fun observeOutstandingAmount(businessId: Long): Flow<Long>
@@ -132,6 +134,7 @@ interface InvoiceDaoV2 {
         SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
+          AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
     """)
     fun observeCollectedAmount(businessId: Long): Flow<Long>
@@ -210,13 +213,4 @@ interface InvoiceDaoV2 {
           AND isActive = 1
     """)
     fun observeAverageDaysToPayment(businessId: Long): Flow<Double>
-
-    @Query("""
-        SELECT COALESCE(SUM(totalAmount - amountPaid), 0)
-        FROM invoices
-        WHERE businessProfileId = :businessId
-          AND (status = 'SENT' OR status = 'PARTIALLY_PAID' OR status = 'OVERDUE')
-          AND isActive = 1
-    """)
-    fun observeActualOutstanding(businessId: Long): Flow<Long>
 }
