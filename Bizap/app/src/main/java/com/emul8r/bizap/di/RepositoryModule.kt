@@ -7,6 +7,7 @@ import com.emul8r.bizap.data.repository.CurrencyRepositoryImpl
 import com.emul8r.bizap.data.repository.CustomerAnalyticsRepositoryImpl
 import com.emul8r.bizap.data.repository.DocumentRepositoryImpl
 import com.emul8r.bizap.data.repository.InvoiceRepositoryImpl
+import com.emul8r.bizap.data.repository.NoteRepositoryImpl
 import com.emul8r.bizap.data.repository.OfflineQueueRepositoryImpl
 import com.emul8r.bizap.data.repository.PaymentAnalyticsRepositoryImpl
 import com.emul8r.bizap.data.repository.PDFRepositoryImpl
@@ -20,6 +21,7 @@ import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.domain.repository.NoteRepository
 import com.emul8r.bizap.domain.repository.OfflineQueueRepository
 import com.emul8r.bizap.domain.repository.PDFRepository
 import com.emul8r.bizap.domain.repository.PrefilledItemRepository
@@ -121,4 +123,10 @@ abstract class RepositoryModule {
     abstract fun bindOfflineQueueRepository(
         impl: OfflineQueueRepositoryImpl
     ): OfflineQueueRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindNoteRepository(
+        impl: NoteRepositoryImpl
+    ): NoteRepository
 }

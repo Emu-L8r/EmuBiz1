@@ -64,6 +64,7 @@ object DatabaseModule {
     @Provides fun provideInvoiceDaoV2(db: AppDatabase): InvoiceDaoV2 = db.invoiceDaoV2()
     @Provides fun provideCustomerDaoV2(db: AppDatabase): CustomerDaoV2 = db.customerDaoV2()
     @Provides fun providePaymentDaoV2(db: AppDatabase): PaymentDaoV2 = db.paymentDaoV2()
+    @Provides fun provideNoteDao(db: AppDatabase): NoteDao = db.noteDao()
 
     @Provides
     @Singleton
