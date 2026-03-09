@@ -2,6 +2,7 @@ package com.emul8r.bizap.ui.dashboard
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -58,112 +59,118 @@ fun DashboardScreen(
         BusinessSwitcherDialog(onDismiss = { showSwitcher = false })
     }
 
-    Column(modifier = Modifier.padding(16.dp)) {
-        // --- PHASE 3B: GLOBAL IDENTITY HEADER ---
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = activeBusiness.businessName.ifEmpty { "Default Business" },
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "ABN: ${activeBusiness.abn.ifEmpty { "Not Set" }}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            IconButton(onClick = { showSwitcher = true }) {
-                Icon(
-                    imageVector = Icons.Default.SwapHoriz,
-                    contentDescription = "Switch Business",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+    LazyColumn(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = activeBusiness.businessName.ifEmpty { "Default Business" },
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "ABN: ${activeBusiness.abn.ifEmpty { "Not Set" }}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                IconButton(onClick = { showSwitcher = true }) {
+                    Icon(
+                        imageVector = Icons.Default.SwapHoriz,
+                        contentDescription = "Switch Business",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            ElevatedCard(
-                modifier = Modifier.weight(1f),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.People, contentDescription = null)
-                    Text("Total Clients", style = MaterialTheme.typography.labelMedium)
-                    Text("${customers.size}", style = MaterialTheme.typography.headlineMedium)
-                }
-            }
-
-            ElevatedCard(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { navController.navigate(Screen.RevenueDashboard) },
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.AttachMoney, contentDescription = null)
-                    Text("Revenue", style = MaterialTheme.typography.labelMedium)
-                    val mtdText = when (val s = revenueState) {
-                        is RevenueDashboardUiState.Success -> CentsFormatter.formatCents(s.metrics.totalPaidRevenue)
-                        else -> "$0.00"
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                ElevatedCard(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Icon(Icons.Default.People, contentDescription = null)
+                        Text("Total Clients", style = MaterialTheme.typography.labelMedium)
+                        Text("${customers.size}", style = MaterialTheme.typography.headlineMedium)
                     }
-                    Text(mtdText, style = MaterialTheme.typography.headlineMedium)
+                }
+
+                ElevatedCard(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { navController.navigate(Screen.RevenueDashboard) },
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Icon(Icons.Default.AttachMoney, contentDescription = null)
+                        Text("Revenue", style = MaterialTheme.typography.labelMedium)
+                        val mtdText = when (val s = revenueState) {
+                            is RevenueDashboardUiState.Success -> CentsFormatter.formatCents(s.metrics.totalPaidRevenue)
+                            else -> "$0.00"
+                        }
+                        Text(mtdText, style = MaterialTheme.typography.headlineMedium)
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // --- INVOICE STATUS PIE CHART ---
-        ElevatedCard(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "Invoice Status Overview",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                InvoiceStatusPieChart(
-                    statusCounts = statusCounts,
-                    modifier = Modifier.fillMaxWidth()
-                )
+        item {
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "Invoice Status Overview",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    InvoiceStatusPieChart(
+                        statusCounts = statusCounts,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        item {
+            NotesCard(
+                currentNotesCount = currentNotesCount,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate(Screen.Notes) }
+            )
+        }
 
-        // Notes Card
-        NotesCard(
-            currentNotesCount = currentNotesCount,
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { navController.navigate(Screen.Notes) }
-        )
+        item {
+            Text("Recent Invoices", style = MaterialTheme.typography.titleMedium)
+        }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text("Recent Invoices", style = MaterialTheme.typography.titleMedium)
-
-        InvoiceList(
-            modifier = Modifier.fillMaxWidth(),
-            onInvoiceClick = { invoiceId ->
-                navController.navigate(Screen.InvoiceDetail(invoiceId))
-            }
-        )
+        item {
+            InvoiceList(
+                modifier = Modifier.fillMaxWidth(),
+                onInvoiceClick = { invoiceId ->
+                    navController.navigate(Screen.InvoiceDetail(invoiceId))
+                }
+            )
+        }
     }
 }

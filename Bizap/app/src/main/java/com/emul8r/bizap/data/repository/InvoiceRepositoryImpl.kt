@@ -130,6 +130,9 @@ class InvoiceRepositoryImpl @Inject constructor(
         Timber.d("✅ Payment recorded for invoice $invoiceId: amount=$amount cents")
 
         // Step 2: Sync payment snapshots (with fallback to create if missing)
+        // ✅ IMPORTANT: This is now non-blocking. Payment is already recorded in invoices table.
+        // UI always reads from invoices table (via PaymentAnalyticsRepositoryV2), so snapshot
+        // staleness is invisible to users. If snapshot sync fails, operation succeeds anyway.
         try {
             val existingPaymentSnapshot = paymentDao.getSnapshotByInvoiceId(invoiceId)
 
@@ -139,14 +142,16 @@ class InvoiceRepositoryImpl @Inject constructor(
                 Timber.d("✅ Updated existing payment snapshot for invoice $invoiceId")
             } else {
                 // ⚠️ Snapshot missing: create it as fallback
-                Timber.e("⚠️ Payment snapshot missing for invoice $invoiceId, creating fallback")
+                Timber.w("⚠️ Payment snapshot missing for invoice $invoiceId, creating fallback")
                 createPaymentSnapshot(updatedEntity)
                 Timber.d("✅ Created missing payment snapshot (fallback) for invoice $invoiceId")
             }
         } catch (e: Exception) {
-            // 🚨 CRITICAL: Expose the exception so we can debug outstanding amount calculation
-            Timber.e(e, "❌ CRITICAL: Failed to sync payment snapshots for invoice $invoiceId")
-            throw e  // ← Re-throw to expose the actual error in logs
+            // ✅ NON-BLOCKING: Log but don't fail
+            // Payment is already recorded in invoices table (step 1).
+            // Snapshot is optional cache only. UI reads from invoices table.
+            Timber.w(e, "⚠️ Snapshot sync failed (non-blocking, operation continues): ${e.message}")
+            // DO NOT re-throw - snapshot is optional cache only
         }
 
         Unit
