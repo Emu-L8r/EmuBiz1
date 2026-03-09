@@ -71,6 +71,35 @@ interface InvoiceDaoV2 {
     fun observeMTDRevenue(businessId: Long): Flow<Long>
 
     @Query("""
+        SELECT 
+            id,
+            status,
+            totalAmount,
+            amountPaid,
+            date,
+            DATE(date/1000, 'unixepoch') as dateFormatted,
+            isActive
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        ORDER BY date DESC
+        LIMIT 20
+    """)
+    suspend fun debugAllInvoices(businessId: Long): List<Map<String, Any?>>
+
+    @Query("""
+        SELECT 
+            status,
+            COUNT(*) as count,
+            SUM(totalAmount) as totalBilled,
+            SUM(amountPaid) as totalPaid
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+        GROUP BY status
+    """)
+    suspend fun debugInvoicesByStatus(businessId: Long): List<Map<String, Any?>>
+
+    @Query("""
         SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
@@ -102,7 +131,7 @@ interface InvoiceDaoV2 {
     @Query("""
         SELECT
             DATE(date/1000, 'unixepoch')                                           AS dateString,
-            COALESCE(SUM(CASE WHEN status != 'DRAFT' THEN totalAmount ELSE 0 END), 0) AS revenue,
+            COALESCE(SUM(CASE WHEN status IN ('PAID', 'PARTIALLY_PAID') THEN amountPaid ELSE 0 END), 0) AS revenue,
             COUNT(*)                                                               AS invoiceCount,
             COUNT(CASE WHEN status = 'PAID' THEN 1 END)                           AS paidCount
         FROM invoices

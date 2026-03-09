@@ -45,6 +45,8 @@ object DatabaseModule {
             MIGRATION_31_32,
             MIGRATION_32_33
         )
+        // Allow fallback for development (will delete old DB and start fresh)
+        .fallbackToDestructiveMigration()
         .build()
     }
 
