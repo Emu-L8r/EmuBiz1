@@ -3,6 +3,7 @@ package com.emul8r.bizap.data.repository
 import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
 import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot
+import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.domain.invoice.model.*
 import com.emul8r.bizap.domain.invoice.repository.PaymentAnalyticsRepository
 import kotlinx.coroutines.flow.Flow
@@ -16,76 +17,42 @@ import kotlin.math.absoluteValue
 
 /**
  * Repository implementation for payment analytics.
+ *
+ * PHASE 3B FIX: Now delegates to PaymentAnalyticsRepositoryV2 to ensure GUI1 and GUI2
+ * use the same data source (invoices table, not stale snapshots).
  */
 class PaymentAnalyticsRepositoryImpl @Inject constructor(
     private val paymentDao: InvoicePaymentDao,
-    private val invoiceDao: InvoiceDao
+    private val invoiceDao: InvoiceDao,
+    private val repositoryV2: PaymentAnalyticsRepositoryV2
 ) : PaymentAnalyticsRepository {
 
     override fun observePaymentAnalytics(businessId: Long): Flow<PaymentAnalyticsSummary> {
-        return paymentDao.observeAllSnapshots(businessId)
-            .map { snapshots ->
-                Timber.d("PaymentAnalyticsRepositoryImpl: Reactive update with ${snapshots.size} snapshots")
-                if (snapshots.isEmpty()) {
-                    PaymentAnalyticsSummary(
-                        businessProfileId = businessId,
-                        totalInvoices = 0,
-                        paidInvoices = 0,
-                        unpaidInvoices = 0,
-                        overdueInvoices = 0,
-                        totalInvoiceAmount = 0.0,
-                        totalPaidAmount = 0.0,
-                        totalOutstandingAmount = 0.0,
-                        collectionRate = 0.0,
-                        averagePaymentTime = 0.0,
-                        outstandingByAging = OutstandingByAging(0.0, 0.0, 0.0, 0.0, 0.0),
-                        riskInvoices = emptyList(),
-                        cashFlowForecast = emptyList()
-                    )
-                } else {
-                    val totalAmount = snapshots.sumOf { it.totalAmount.toDouble() }
-                    val paidAmount = snapshots.sumOf { it.paidAmount.toDouble() }
-                    val outstanding = snapshots.sumOf { it.outstandingAmount.toDouble() }
-                    val paidCount = snapshots.count { it.paymentStatus == "PAID" }
-                    val unpaidCount = snapshots.count { it.paymentStatus == "UNPAID" }
-                    val overdueCount = snapshots.count { it.paymentStatus == "OVERDUE" }
-                    val agingCurrent = snapshots.filter { it.ageingBucket == "CURRENT" }.sumOf { it.outstandingAmount.toDouble() }
-                    val agingPast30 = snapshots.filter { it.ageingBucket == "PAST_30" }.sumOf { it.outstandingAmount.toDouble() }
-                    val agingPast60 = snapshots.filter { it.ageingBucket == "PAST_60" }.sumOf { it.outstandingAmount.toDouble() }
-                    val agingPast90 = snapshots.filter { it.ageingBucket == "PAST_90" }.sumOf { it.outstandingAmount.toDouble() }
-                    val agingBucketSum = agingCurrent + agingPast30 + agingPast60 + agingPast90
-                    if (outstanding > 0.0 && (agingBucketSum - outstanding).absoluteValue > 0.01) {
-                        Timber.e(
-                            "⚠️ AGING BUCKET MISMATCH: buckets sum=%.2f, total outstanding=%.2f (diff=%.2f)",
-                            agingBucketSum, outstanding, agingBucketSum - outstanding
-                        )
-                    }
-                    // Collection rate: amount-based (paid / (paid + outstanding)) × 100
-                    val collectionRate = if (paidAmount + outstanding > 0.0) {
-                        (paidAmount / (paidAmount + outstanding) * 100.0).coerceIn(0.0, 100.0)
-                    } else 0.0
-                    PaymentAnalyticsSummary(
-                        businessProfileId = businessId,
-                        totalInvoices = snapshots.size,
-                        paidInvoices = paidCount,
-                        unpaidInvoices = unpaidCount,
-                        overdueInvoices = overdueCount,
-                        totalInvoiceAmount = totalAmount,
-                        totalPaidAmount = paidAmount,
-                        totalOutstandingAmount = outstanding,
-                        collectionRate = collectionRate,
-                        averagePaymentTime = 0.0,
-                        outstandingByAging = OutstandingByAging(
-                            current = agingCurrent,
-                            past30 = agingPast30,
-                            past60 = agingPast60,
-                            past90 = agingPast90,
-                            totalOutstanding = outstanding
-                        ),
-                        riskInvoices = snapshots.filter { it.isAtRisk }.map { it.toDomain() },
-                        cashFlowForecast = emptyList()
-                    )
-                }
+        // PHASE 3B FIX: Delegate to V2 repository to ensure single source of truth
+        // V2 queries invoices table directly and excludes DRAFT invoices
+        return repositoryV2.observePaymentMetrics(businessId)
+            .map { metricsV2 ->
+                Timber.d("PaymentAnalyticsRepositoryImpl: Using V2 metrics for business $businessId (collection rate: ${metricsV2.collectionRate}%)")
+
+                // Calculate unpaid count: SENT + PARTIALLY_PAID + OVERDUE
+                val unpaidCount = metricsV2.sentCount + metricsV2.partiallyPaidCount + metricsV2.overdueCount
+
+                // Convert PaymentMetricsV2 to PaymentAnalyticsSummary for backwards compatibility
+                PaymentAnalyticsSummary(
+                    businessProfileId = businessId,
+                    totalInvoices = metricsV2.totalInvoices,
+                    paidInvoices = metricsV2.paidCount,
+                    unpaidInvoices = unpaidCount,
+                    overdueInvoices = metricsV2.overdueCount,
+                    totalInvoiceAmount = (metricsV2.outstandingAmount + metricsV2.collectedAmount).toDouble() / 100.0,
+                    totalPaidAmount = metricsV2.collectedAmount.toDouble() / 100.0,
+                    totalOutstandingAmount = metricsV2.outstandingAmount.toDouble() / 100.0,
+                    collectionRate = metricsV2.collectionRate,
+                    averagePaymentTime = metricsV2.averageDaysToPayment,
+                    outstandingByAging = OutstandingByAging(0.0, 0.0, 0.0, 0.0, metricsV2.outstandingAmount.toDouble() / 100.0),
+                    riskInvoices = emptyList(),
+                    cashFlowForecast = emptyList()
+                )
             }
     }
 
