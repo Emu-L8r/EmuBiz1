@@ -1,9 +1,9 @@
 package com.emul8r.bizap.data.repository.gui2
 
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
-import com.emul8r.bizap.data.local.entities.InvoiceStatusCountV2
+import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
+import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.domain.model.gui2.PaymentMetricsV2
-import com.emul8r.bizap.domain.model.gui2.StatusBreakdownV2
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import timber.log.Timber
@@ -14,10 +14,16 @@ import javax.inject.Singleton
  * GUI2 payment analytics repository.
  * Bypasses stale snapshots and pulls directly from the invoices table (Option C).
  * Ensures 100% consistency with the dashboard and invoice list.
+ *
+ * Calculation logic is delegated to [AnalyticsCalculator] so that formulas are
+ * defined in exactly one place. [AnalyticsValidator] guards against data corruption
+ * before metrics reach the UI.
  */
 @Singleton
 class PaymentAnalyticsRepositoryV2 @Inject constructor(
-    private val invoiceDaoV2: InvoiceDaoV2
+    private val invoiceDaoV2: InvoiceDaoV2,
+    private val calculator: AnalyticsCalculator,
+    private val validator: AnalyticsValidator
 ) {
     /**
      * Observe comprehensive payment metrics for the given business.
@@ -31,28 +37,27 @@ class PaymentAnalyticsRepositoryV2 @Inject constructor(
             invoiceDaoV2.observeOverdueCount(businessId),
             invoiceDaoV2.observeAverageDaysToPayment(businessId)
         ) { outstanding, collected, statusCounts, overdueCount, avgDays ->
-            val countMap = statusCounts.associate { it.status to it.count }
+            val totalBilled = outstanding + collected
+            val validation = validator.validatePaymentMetrics(outstanding, collected, totalBilled)
+            if (!validation.isValid) {
+                Timber.w("PaymentAnalyticsRepositoryV2: validation failed — ${validation.error}")
+            }
 
-            val collectionRate = if (collected + outstanding > 0L) {
-                (collected * 100.0 / (collected + outstanding)).coerceIn(0.0, 100.0)
-            } else 0.0
-
-            Timber.d("PaymentAnalyticsRepositoryV2: businessId=$businessId outstanding=$outstanding collected=$collected collectionRate=${"%.1f".format(collectionRate)}%")
-
-            PaymentMetricsV2(
-                businessProfileId = businessId,
-                totalInvoices = statusCounts.sumOf { it.count },
-                paidCount = countMap["PAID"] ?: 0,
-                sentCount = countMap["SENT"] ?: 0,
+            val metrics = calculator.combinePaymentMetrics(
+                businessId = businessId,
+                outstanding = outstanding,
+                collected = collected,
+                statusCounts = statusCounts,
                 overdueCount = overdueCount,
-                partiallyPaidCount = countMap["PARTIALLY_PAID"] ?: 0,
-                draftCount = countMap["DRAFT"] ?: 0,
-                outstandingAmount = outstanding,
-                collectedAmount = collected,
-                collectionRate = collectionRate,
-                averageDaysToPayment = avgDays,
-                statusBreakdown = statusCounts.map { StatusBreakdownV2(it.status, it.count) }
+                avgDays = avgDays
             )
+
+            Timber.d(
+                "PaymentAnalyticsRepositoryV2: businessId=$businessId outstanding=$outstanding " +
+                    "collected=$collected collectionRate=${"%.1f".format(metrics.collectionRate)}%"
+            )
+
+            metrics
         }
     }
 }

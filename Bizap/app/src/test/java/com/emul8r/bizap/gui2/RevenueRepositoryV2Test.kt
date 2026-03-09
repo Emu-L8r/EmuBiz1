@@ -4,6 +4,8 @@ import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.entities.DailyRevenueTrendV2
 import com.emul8r.bizap.data.local.entities.InvoiceStatusCountV2
+import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
+import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
@@ -31,9 +33,11 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
 
     @Before
     fun setup() {
-        revenueRepository = RevenueRepositoryV2(daoV2)
-        paymentRepository = PaymentAnalyticsRepositoryV2(daoV2)
-        riskRepository = RiskAnalyticsRepositoryV2(daoV2)
+        val calculator = AnalyticsCalculator()
+        val validator = AnalyticsValidator()
+        revenueRepository = RevenueRepositoryV2(daoV2, calculator, validator)
+        paymentRepository = PaymentAnalyticsRepositoryV2(daoV2, calculator, validator)
+        riskRepository = RiskAnalyticsRepositoryV2(daoV2, calculator)
     }
 
     // ── RevenueRepositoryV2 ───────────────────────────────────────────────────
