@@ -1,6 +1,6 @@
 package com.emul8r.bizap.ui.gui2.invoices
 
-import androidx.lifecycle.viewModelScope
+import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
@@ -8,7 +8,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -20,15 +19,15 @@ import kotlin.test.assertTrue
  * Unit tests for CreateInvoiceViewModelV2
  * Tests customer loading and selection functionality
  */
-class CreateInvoiceViewModelV2Test {
+class CreateInvoiceViewModelV2Test : BaseUnitTest() {
 
     private lateinit var viewModel: CreateInvoiceViewModelV2
     private val invoiceRepository = mockk<InvoiceRepository>()
     private val customerRepository = mockk<CustomerRepository>()
-    private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
+        every { customerRepository.getAllCustomers() } returns flowOf(emptyList())
         viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
             customerRepository = customerRepository
@@ -45,7 +44,6 @@ class CreateInvoiceViewModelV2Test {
         val mockCustomers = listOf(
             Customer(
                 id = 1L,
-                businessProfileId = 1L,
                 name = "Test Customer 1",
                 email = "customer1@example.com",
                 phone = "1234567890",
@@ -53,7 +51,6 @@ class CreateInvoiceViewModelV2Test {
             ),
             Customer(
                 id = 2L,
-                businessProfileId = 1L,
                 name = "Test Customer 2",
                 email = "customer2@example.com",
                 phone = "0987654321",
@@ -120,7 +117,6 @@ class CreateInvoiceViewModelV2Test {
         // Given
         val customer = Customer(
             id = 1L,
-            businessProfileId = 1L,
             name = "Test Customer",
             email = "test@example.com",
             phone = "1234567890",
@@ -148,7 +144,6 @@ class CreateInvoiceViewModelV2Test {
         // Given
         val customer = Customer(
             id = 1L,
-            businessProfileId = 1L,
             name = "Test Customer",
             email = "test@example.com",
             phone = "1234567890",
@@ -179,7 +174,6 @@ class CreateInvoiceViewModelV2Test {
         // Given
         val customer1 = Customer(
             id = 1L,
-            businessProfileId = 1L,
             name = "Customer 1",
             email = "c1@example.com",
             phone = "1111111111",
@@ -188,7 +182,6 @@ class CreateInvoiceViewModelV2Test {
 
         val customer2 = Customer(
             id = 2L,
-            businessProfileId = 1L,
             name = "Customer 2",
             email = "c2@example.com",
             phone = "2222222222",
@@ -258,7 +251,6 @@ class CreateInvoiceViewModelV2Test {
         val customers = (1..5).map { id ->
             Customer(
                 id = id.toLong(),
-                businessProfileId = 1L,
                 name = "Customer $id",
                 email = "customer$id@example.com",
                 phone = "123456789$id",
@@ -287,7 +279,6 @@ class CreateInvoiceViewModelV2Test {
         val customers = (1..3).map { id ->
             Customer(
                 id = id.toLong(),
-                businessProfileId = 1L,
                 name = "Customer $id",
                 email = "customer$id@example.com",
                 phone = "phone$id",
