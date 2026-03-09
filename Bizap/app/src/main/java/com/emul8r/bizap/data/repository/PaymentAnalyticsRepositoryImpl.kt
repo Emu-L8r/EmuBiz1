@@ -60,6 +60,10 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
                             agingBucketSum, outstanding, agingBucketSum - outstanding
                         )
                     }
+                    // Collection rate: amount-based (paid / (paid + outstanding)) × 100
+                    val collectionRate = if (paidAmount + outstanding > 0.0) {
+                        (paidAmount / (paidAmount + outstanding) * 100.0).coerceIn(0.0, 100.0)
+                    } else 0.0
                     PaymentAnalyticsSummary(
                         businessProfileId = businessId,
                         totalInvoices = snapshots.size,
@@ -69,7 +73,7 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
                         totalInvoiceAmount = totalAmount,
                         totalPaidAmount = paidAmount,
                         totalOutstandingAmount = outstanding,
-                        collectionRate = if (totalAmount > 0.0) ((paidAmount / totalAmount) * 100.0).coerceIn(0.0, 100.0) else 0.0,
+                        collectionRate = collectionRate,
                         averagePaymentTime = 0.0,
                         outstandingByAging = OutstandingByAging(
                             current = agingCurrent,
