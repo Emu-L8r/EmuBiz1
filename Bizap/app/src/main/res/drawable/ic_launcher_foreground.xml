@@ -1,20 +1,10 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Background -->
-    <item android:drawable="@drawable/ic_launcher_background" />
-
-    <!-- Logo centered in the foreground -->
+    <!-- Company logo with proper padding to avoid zooming -->
     <item
+        android:drawable="@drawable/company_logo"
         android:gravity="center"
-        android:width="72dp"
-        android:height="72dp">
-        <inset
-            android:insetLeft="18dp"
-            android:insetTop="18dp"
-            android:insetRight="18dp"
-            android:insetBottom="18dp">
-            <bitmap
-                android:src="@drawable/company_logo"
-                android:gravity="center" />
-        </inset>
-    </item>
+        android:left="24dp"
+        android:right="24dp"
+        android:top="24dp"
+        android:bottom="24dp" />
 </layer-list>
