@@ -1,5 +1,6 @@
 package com.emul8r.bizap.ui.gui2.invoices
 
+import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
@@ -19,7 +20,7 @@ import kotlin.test.assertNotNull
 /**
  * Integration tests for GUI2 invoice creation with customer selection
  */
-class CreateInvoiceScreenV2IntegrationTest {
+class CreateInvoiceScreenV2IntegrationTest : BaseUnitTest() {
 
     private lateinit var viewModel: CreateInvoiceViewModelV2
     private val invoiceRepository = mockk<InvoiceRepository>()
@@ -40,7 +41,6 @@ class CreateInvoiceScreenV2IntegrationTest {
         // Given - Setup customers
         val customer = Customer(
             id = 1L,
-            businessProfileId = 1L,
             name = "John Doe",
             email = "john@example.com",
             phone = "1234567890",
@@ -68,7 +68,6 @@ class CreateInvoiceScreenV2IntegrationTest {
         // When - Create invoice with selected customer
         val invoice = Invoice(
             id = 0,
-            businessProfileId = 1L,
             customerId = customer.id,
             customerName = customer.name,
             customerAddress = customer.address,
@@ -105,7 +104,6 @@ class CreateInvoiceScreenV2IntegrationTest {
         // Given
         val customer1 = Customer(
             id = 1L,
-            businessProfileId = 1L,
             name = "Customer One",
             email = "one@example.com",
             phone = "111",
@@ -114,7 +112,6 @@ class CreateInvoiceScreenV2IntegrationTest {
 
         val customer2 = Customer(
             id = 2L,
-            businessProfileId = 1L,
             name = "Customer Two",
             email = "two@example.com",
             phone = "222",
@@ -146,7 +143,6 @@ class CreateInvoiceScreenV2IntegrationTest {
         // Given
         val customer = Customer(
             id = 1L,
-            businessProfileId = 1L,
             name = "John Doe",
             email = "john@example.com",
             phone = "1234567890",
@@ -164,7 +160,6 @@ class CreateInvoiceScreenV2IntegrationTest {
         // When - Create invoice WITHOUT selecting customer
         val invoice = Invoice(
             id = 0,
-            businessProfileId = 1L,
             customerId = 0L,
             customerName = "Unknown",
             customerAddress = "",
@@ -219,7 +214,6 @@ class CreateInvoiceScreenV2IntegrationTest {
         // Given
         val customer = Customer(
             id = 1L,
-            businessProfileId = 1L,
             name = "Test Customer",
             email = "test@example.com",
             phone = "phone",
@@ -239,7 +233,6 @@ class CreateInvoiceScreenV2IntegrationTest {
 
         val invoice = Invoice(
             id = 0,
-            businessProfileId = 1L,
             customerId = customer.id,
             customerName = customer.name,
             customerAddress = customer.address,
@@ -279,7 +272,6 @@ class CreateInvoiceScreenV2IntegrationTest {
         // Given
         val customer = Customer(
             id = 42L,
-            businessProfileId = 1L,
             name = "Acme Corporation",
             email = "billing@acme.com",
             phone = "555-1234",
@@ -309,7 +301,6 @@ class CreateInvoiceScreenV2IntegrationTest {
         // Given
         val customer = Customer(
             id = 1L,
-            businessProfileId = 1L,
             name = "Regular Customer",
             email = "regular@example.com",
             phone = "phone",
@@ -330,7 +321,6 @@ class CreateInvoiceScreenV2IntegrationTest {
         // When - Create first invoice
         val invoice1 = Invoice(
             id = 0,
-            businessProfileId = 1L,
             customerId = customer.id,
             customerName = customer.name,
             customerAddress = customer.address,

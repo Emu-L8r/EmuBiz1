@@ -75,7 +75,7 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = io.mockk.any(),
-                outstanding = io.mockk.any(),
+                trueOutstanding = io.mockk.any(),
                 paymentDate = io.mockk.any(),
                 invoiceDate = io.mockk.any(),
                 notes = io.mockk.any()
@@ -91,7 +91,7 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = io.mockk.any(),
-                outstanding = io.mockk.any(),
+                trueOutstanding = io.mockk.any(),
                 paymentDate = io.mockk.any(),
                 invoiceDate = io.mockk.any(),
                 notes = io.mockk.any()
