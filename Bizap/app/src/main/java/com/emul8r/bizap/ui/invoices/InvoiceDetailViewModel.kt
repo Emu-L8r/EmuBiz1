@@ -169,7 +169,12 @@ class InvoiceDetailViewModel @Inject constructor(
                 invoiceRepo.updateInvoiceStatus(invoiceId, status)
                     .onSuccess {
                         Timber.d("✅ Invoice status updated to $newStatus")
-                        _uiEvent.emit(UiEvent.ShowSnackbar("Status updated to $newStatus"))
+                        val message = if (status == InvoiceStatus.PAID) {
+                            "Invoice marked as paid and payment auto-recorded."
+                        } else {
+                            "Status updated to $newStatus"
+                        }
+                        _uiEvent.emit(UiEvent.ShowSnackbar(message))
                     }
                     .onFailure { e ->
                         Timber.e(e, "❌ Failed to update status")

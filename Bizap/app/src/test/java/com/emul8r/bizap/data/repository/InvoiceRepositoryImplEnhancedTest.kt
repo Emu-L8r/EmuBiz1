@@ -90,6 +90,7 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
         val iwi = invoiceWithStatus(invoiceId, status)
         coEvery { invoiceDao.getInvoiceWithItemsById(invoiceId) } returns flowOf(iwi)
         coEvery { invoiceDao.updateInvoiceStatus(invoiceId, any()) } just Runs
+        coEvery { invoiceDao.updateAmountPaid(invoiceId, any()) } just Runs
     }
 
     private fun makeDailySnapshot(
@@ -661,6 +662,81 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
             analyticsDao.updateInvoiceSnapshot(any())
             analyticsDao.updateDailySnapshotWithOptimisticLock(any(), any(), any(), any(), any())
             paymentDao.updateSnapshot(any())
+        }
+    }
+
+    // ── Auto-payment recording when PAID ─────────────────────────────────────────
+
+    @Test
+    fun `updateInvoiceStatus auto-updates amountPaid when transitioning to PAID`() = runTest {
+        val invoiceId = 1L
+        mockInvoice(invoiceId = invoiceId, status = InvoiceStatus.SENT)
+
+        val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID)
+
+        assertTrue(result.isSuccess)
+        coVerify { invoiceDao.updateAmountPaid(invoiceId, any()) }
+    }
+
+    @Test
+    fun `updateInvoiceStatus auto-records payment entry when transitioning to PAID`() = runTest {
+        val invoiceId = 1L
+        mockInvoice(invoiceId = invoiceId, status = InvoiceStatus.SENT)
+
+        val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID)
+
+        assertTrue(result.isSuccess)
+        coVerify { paymentDao.insertPayment(any()) }
+    }
+
+    @Test
+    fun `updateInvoiceStatus does NOT auto-record payment when transitioning to SENT`() = runTest {
+        val invoiceId = 1L
+        mockInvoice(invoiceId = invoiceId, status = InvoiceStatus.DRAFT)
+
+        val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.SENT)
+
+        assertTrue(result.isSuccess)
+        coVerify(inverse = true) { invoiceDao.updateAmountPaid(any(), any()) }
+        coVerify(inverse = true) { paymentDao.insertPayment(any()) }
+    }
+
+    @Test
+    fun `updateInvoiceStatus does NOT auto-record payment when already fully paid`() = runTest {
+        val invoiceId = 1L
+        // Create an invoice that is already fully paid
+        val fullyPaidEntity = TestDataFactory.createTestInvoice(
+            id = invoiceId,
+            status = InvoiceStatus.PARTIALLY_PAID,
+            total = 100000L
+        ).toEntity().copy(amountPaid = 100000L)
+        val iwi = InvoiceWithItems(fullyPaidEntity, emptyList())
+        coEvery { invoiceDao.getInvoiceWithItemsById(invoiceId) } returns flowOf(iwi)
+        coEvery { invoiceDao.updateInvoiceStatus(invoiceId, any()) } just Runs
+
+        val result = repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID)
+
+        assertTrue(result.isSuccess)
+        // amountPaid should not be updated since it already equals totalAmount
+        coVerify(inverse = true) { invoiceDao.updateAmountPaid(any(), any()) }
+        coVerify(inverse = true) { paymentDao.insertPayment(any()) }
+    }
+
+    @Test
+    fun `updateInvoiceStatus payment snapshot shows zero outstanding when PAID`() = runTest {
+        val invoiceId = 1L
+        mockInvoice(invoiceId = invoiceId, status = InvoiceStatus.SENT)
+
+        val existingPaymentSnapshot = mockk<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>(relaxed = true)
+        coEvery { paymentDao.getSnapshotByInvoiceId(invoiceId) } returns existingPaymentSnapshot
+        coEvery { paymentDao.updateSnapshot(any()) } just Runs
+
+        repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID).getOrThrow()
+
+        coVerify {
+            paymentDao.updateSnapshot(
+                match { snapshot -> snapshot.outstandingAmount == 0L }
+            )
         }
     }
 }

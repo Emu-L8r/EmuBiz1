@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
+import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import com.emul8r.bizap.utils.CentsFormatter
@@ -22,7 +23,8 @@ import javax.inject.Inject
 @HiltViewModel
 class InvoiceDetailViewModelV2 @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val invoiceDao: InvoiceDao
+    private val invoiceDao: InvoiceDao,
+    private val paymentRepositoryV2: PaymentRepositoryV2
 ) : ViewModel() {
 
     private val route: ScreenV2.InvoiceDetail = savedStateHandle.toRoute()
@@ -93,10 +95,22 @@ class InvoiceDetailViewModelV2 @Inject constructor(
     fun updateInvoiceStatus(newStatus: com.emul8r.bizap.domain.model.InvoiceStatus) {
         viewModelScope.launch {
             try {
-                val invoice = invoiceDao.getInvoiceById(invoiceId) ?: return@launch
                 Timber.d("InvoiceDetailViewModelV2: Updating status to $newStatus")
-                invoiceDao.updateStatus(invoiceId, newStatus)
-                Timber.d("InvoiceDetailViewModelV2: Status updated successfully")
+                if (newStatus == InvoiceStatus.PAID) {
+                    paymentRepositoryV2.markInvoiceAsPaid(invoiceId, businessId)
+                        .onSuccess {
+                            Timber.d("InvoiceDetailViewModelV2: Invoice marked as paid and payment auto-recorded")
+                            _paymentEvent.emit("Invoice marked as paid and payment auto-recorded.")
+                        }
+                        .onFailure { e ->
+                            Timber.e(e, "InvoiceDetailViewModelV2: Failed to mark invoice as paid")
+                            _paymentEvent.emit("Failed to mark invoice as paid: ${e.message}")
+                        }
+                } else {
+                    invoiceDao.updateStatus(invoiceId, newStatus)
+                    Timber.d("InvoiceDetailViewModelV2: Status updated successfully")
+                    _paymentEvent.emit("Status updated to ${newStatus.name}.")
+                }
             } catch (e: Exception) {
                 Timber.e(e, "InvoiceDetailViewModelV2: Failed to update status")
             }

@@ -5,6 +5,7 @@ import com.emul8r.bizap.data.local.dao.AnalyticsDao
 import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
 import com.emul8r.bizap.data.local.entities.InvoiceAnalyticsSnapshot
 import com.emul8r.bizap.data.local.entities.DailyRevenueSnapshot
+import com.emul8r.bizap.data.local.entities.InvoicePaymentEntity
 import com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.mapper.toDomain
@@ -223,6 +224,30 @@ class InvoiceRepositoryImpl @Inject constructor(
 
             Timber.d("✅ Invoice $invoiceId updated in database ($currentStatus → ${status.name})")
 
+            // ── Step 1b: Auto-update amountPaid and record payment when PAID ──────
+            val effectiveAmountPaid: Long
+            if (status == InvoiceStatus.PAID && invoiceEntity.amountPaid < invoiceEntity.totalAmount) {
+                val outstandingAmount = invoiceEntity.totalAmount - invoiceEntity.amountPaid
+                retryOnFailure(operationName = "invoiceDao.updateAmountPaid") {
+                    invoiceDao.updateAmountPaid(invoiceId, invoiceEntity.totalAmount)
+                }
+                val autoPayment = InvoicePaymentEntity(
+                    invoiceId = invoiceId,
+                    amountPaid = outstandingAmount,
+                    paymentDate = System.currentTimeMillis(),
+                    paymentMethod = "AUTO",
+                    transactionReference = "auto-${invoiceId}-${System.currentTimeMillis()}",
+                    notes = "Auto-recorded when invoice marked as PAID"
+                )
+                retryOnFailure(operationName = "paymentDao.insertPayment") {
+                    paymentDao.insertPayment(autoPayment)
+                }
+                effectiveAmountPaid = invoiceEntity.totalAmount
+                Timber.d("✅ Auto-recorded payment of $outstandingAmount cents for invoice $invoiceId")
+            } else {
+                effectiveAmountPaid = invoiceEntity.amountPaid
+            }
+
             // ── Step 2: Sync InvoiceAnalyticsSnapshot ────────────────────────────
             val analyticsSnapshot = analyticsDao.getInvoiceSnapshot(invoiceId)
             if (analyticsSnapshot != null) {
@@ -269,8 +294,8 @@ class InvoiceRepositoryImpl @Inject constructor(
                 paymentDao.updateSnapshot(
                     paymentSnapshot.copy(
                         totalAmount = invoiceEntity.totalAmount,
-                        paidAmount = invoiceEntity.amountPaid,
-                        outstandingAmount = invoiceEntity.totalAmount - invoiceEntity.amountPaid,
+                        paidAmount = effectiveAmountPaid,
+                        outstandingAmount = invoiceEntity.totalAmount - effectiveAmountPaid,
                         paymentStatus = updatedPaymentStatus,
                         daysOverdue = daysOverdue,
                         isAtRisk = invoiceEntity.dueDate < System.currentTimeMillis() &&

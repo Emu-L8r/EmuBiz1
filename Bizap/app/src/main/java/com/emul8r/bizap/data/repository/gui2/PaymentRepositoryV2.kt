@@ -79,5 +79,42 @@ class PaymentRepositoryV2 @Inject constructor(
      */
     fun observePaymentsByInvoice(invoiceId: Long): Flow<List<PaymentEntity>> =
         paymentDaoV2.observePaymentsForInvoice(invoiceId)
+
+    /**
+     * Atomically marks an invoice as PAID, setting amountPaid to totalAmount and
+     * recording a payment entry for any outstanding balance.
+     *
+     * If the invoice is already fully paid, only the status is updated.
+     *
+     * @param invoiceId  Invoice to mark as paid.
+     * @param businessId Owning business (denormalised onto the payment row).
+     */
+    suspend fun markInvoiceAsPaid(invoiceId: Long, businessId: Long): Result<Unit> = runCatching {
+        database.withTransaction {
+            val invoice = invoiceDaoV2.getById(invoiceId)
+                ?: error("Invoice $invoiceId not found")
+
+            val outstanding = invoice.totalAmount - invoice.amountPaid
+            val now = System.currentTimeMillis()
+
+            if (outstanding > 0) {
+                val payment = PaymentEntity(
+                    businessId = businessId,
+                    invoiceId = invoiceId,
+                    amount = outstanding,
+                    paymentDate = now,
+                    notes = "Auto-recorded when invoice marked as PAID"
+                )
+                paymentDaoV2.insert(payment)
+                invoiceDaoV2.updateAmountPaid(invoiceId, invoice.totalAmount, now)
+            }
+
+            invoiceDaoV2.updateStatus(invoiceId, InvoiceStatus.PAID.name, now)
+
+            Timber.d("✅ Invoice $invoiceId marked as PAID, auto-recorded outstanding=$outstanding cents")
+        }
+    }.also { result ->
+        result.onFailure { Timber.e(it, "❌ markInvoiceAsPaid failed for invoice $invoiceId") }
+    }
 }
 
