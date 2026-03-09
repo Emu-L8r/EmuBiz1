@@ -3,6 +3,10 @@ package com.emul8r.bizap.di
 import com.emul8r.bizap.data.local.AppDatabase
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.dao.PaymentDaoV2
+import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
+import com.emul8r.bizap.data.repository.analytics.AnalyticsDiagnostics
+import com.emul8r.bizap.data.repository.analytics.AnalyticsEventBus
+import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
@@ -25,18 +29,46 @@ object GuiV2Module {
 
     @Provides
     @Singleton
-    fun provideRevenueRepositoryV2(invoiceDaoV2: InvoiceDaoV2): RevenueRepositoryV2 =
-        RevenueRepositoryV2(invoiceDaoV2)
+    fun provideAnalyticsValidator(): AnalyticsValidator = AnalyticsValidator()
 
     @Provides
     @Singleton
-    fun providePaymentAnalyticsRepositoryV2(invoiceDaoV2: InvoiceDaoV2): PaymentAnalyticsRepositoryV2 =
-        PaymentAnalyticsRepositoryV2(invoiceDaoV2)
+    fun provideAnalyticsCalculator(): AnalyticsCalculator = AnalyticsCalculator()
 
     @Provides
     @Singleton
-    fun provideRiskAnalyticsRepositoryV2(invoiceDaoV2: InvoiceDaoV2): RiskAnalyticsRepositoryV2 =
-        RiskAnalyticsRepositoryV2(invoiceDaoV2)
+    fun provideAnalyticsEventBus(): AnalyticsEventBus = AnalyticsEventBus()
+
+    @Provides
+    @Singleton
+    fun provideAnalyticsDiagnostics(
+        invoiceDaoV2: InvoiceDaoV2,
+        calculator: AnalyticsCalculator,
+        validator: AnalyticsValidator
+    ): AnalyticsDiagnostics = AnalyticsDiagnostics(invoiceDaoV2, calculator, validator)
+
+    @Provides
+    @Singleton
+    fun provideRevenueRepositoryV2(
+        invoiceDaoV2: InvoiceDaoV2,
+        calculator: AnalyticsCalculator,
+        validator: AnalyticsValidator
+    ): RevenueRepositoryV2 = RevenueRepositoryV2(invoiceDaoV2, calculator, validator)
+
+    @Provides
+    @Singleton
+    fun providePaymentAnalyticsRepositoryV2(
+        invoiceDaoV2: InvoiceDaoV2,
+        calculator: AnalyticsCalculator,
+        validator: AnalyticsValidator
+    ): PaymentAnalyticsRepositoryV2 = PaymentAnalyticsRepositoryV2(invoiceDaoV2, calculator, validator)
+
+    @Provides
+    @Singleton
+    fun provideRiskAnalyticsRepositoryV2(
+        invoiceDaoV2: InvoiceDaoV2,
+        calculator: AnalyticsCalculator
+    ): RiskAnalyticsRepositoryV2 = RiskAnalyticsRepositoryV2(invoiceDaoV2, calculator)
 
     @Provides
     @Singleton
