@@ -48,6 +48,7 @@ import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.landing.LandingScreen
 import com.emul8r.bizap.ui.landing.LandingViewModel
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
+import com.emul8r.bizap.ui.notes.NotesScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -153,6 +154,7 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 currentDestination?.hasRoute<Screen.EditTemplate>() == true -> "Edit Template"
                 currentDestination?.hasRoute<Screen.CustomerSegments>() == true -> "Customer Segments"
                 currentDestination?.hasRoute<Screen.CustomerAnalytics>() == true -> "Customer Analytics"
+                currentDestination?.hasRoute<Screen.Notes>() == true -> "Notes"
                 else -> "Bizap"
             }
 
@@ -310,6 +312,9 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
             // is the primary customer analytics view in the app.
             composable<Screen.CustomerAnalytics> {
                 CustomerSegmentationScreen()
+            }
+            composable<Screen.Notes> {
+                NotesScreen(navController)
             }
         }
 
