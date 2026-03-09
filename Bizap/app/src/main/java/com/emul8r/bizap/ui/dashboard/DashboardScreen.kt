@@ -14,7 +14,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.emul8r.bizap.ui.customers.CustomerViewModel
+import com.emul8r.bizap.ui.dashboard.components.InvoiceStatusPieChart
 import com.emul8r.bizap.ui.invoices.InvoiceList
+import com.emul8r.bizap.ui.invoices.InvoiceListUiState
+import com.emul8r.bizap.ui.invoices.InvoiceListViewModel
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.revenue.RevenueDashboardUiState
 import com.emul8r.bizap.ui.revenue.RevenueDashboardViewModel
@@ -27,12 +30,25 @@ fun DashboardScreen(
     navController: NavController,
     customerViewModel: CustomerViewModel = hiltViewModel(),
     businessViewModel: BusinessProfileViewModel = hiltViewModel(),
-    revenueViewModel: RevenueDashboardViewModel = hiltViewModel()
+    revenueViewModel: RevenueDashboardViewModel = hiltViewModel(),
+    invoiceViewModel: InvoiceListViewModel = hiltViewModel()
 ) {
     val customers by customerViewModel.uiState.collectAsStateWithLifecycle()
     val activeBusiness by businessViewModel.profileState.collectAsStateWithLifecycle()
     val revenueState by revenueViewModel.uiState.collectAsStateWithLifecycle()
+    val invoiceState by invoiceViewModel.uiState.collectAsStateWithLifecycle()
     var showSwitcher by remember { mutableStateOf(false) }
+
+    // Calculate status breakdown from invoices
+    val statusCounts: Map<String, Int> = remember(invoiceState) {
+        when (invoiceState) {
+            is InvoiceListUiState.Success -> {
+                val invoices = (invoiceState as InvoiceListUiState.Success).invoices
+                invoices.groupBy { it.status }.mapValues { it.value.size } as Map<String, Int>
+            }
+            else -> emptyMap<String, Int>()
+        }
+    }
 
     if (showSwitcher) {
         BusinessSwitcherDialog(onDismiss = { showSwitcher = false })
@@ -103,6 +119,26 @@ fun DashboardScreen(
                     }
                     Text(mtdText, style = MaterialTheme.typography.headlineMedium)
                 }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- INVOICE STATUS PIE CHART ---
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    "Invoice Status Overview",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                InvoiceStatusPieChart(
+                    statusCounts = statusCounts,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 
