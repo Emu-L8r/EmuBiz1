@@ -322,48 +322,6 @@ interface InvoiceDaoV2 {
         statuses: List<String>
     ): Flow<Int>
 
-    // ==================== REVENUE CALCULATIONS ====================
-
-    /**
-     * Observe total paid amount (revenue) in a date range for a specific status.
-     * Used by RevenueCalculator to compute MTD, YTD, and custom period revenue.
-     * IMPORTANT: Only counts PAID invoices for financial accuracy.
-     * Unit: CENTS (Long)
-     */
-    @Query("""
-        SELECT COALESCE(SUM(amountPaid), 0)
-        FROM invoices
-        WHERE businessProfileId = :businessId
-          AND isActive = 1
-          AND status = :status
-          AND date >= :startDateMillis
-          AND date <= :endDateMillis
-    """)
-    fun observeRevenueInDateRange(
-        businessId: Long,
-        startDateMillis: Long,
-        endDateMillis: Long,
-        status: String
-    ): Flow<Long>
-
-    /**
-     * Observe total paid amount for a specific customer.
-     * Used to calculate individual customer revenue/LTV.
-     * Unit: CENTS (Long)
-     */
-    @Query("""
-        SELECT COALESCE(SUM(amountPaid), 0)
-        FROM invoices
-        WHERE customerId = :customerId
-          AND businessProfileId = :businessId
-          AND isActive = 1
-          AND status = 'PAID'
-    """)
-    fun observeCustomerPaidAmount(
-        customerId: Long,
-        businessId: Long
-    ): Flow<Long>
-
     /** Result type returned by [observeCollectionMetrics]. */
     data class CollectionSummary(
         @androidx.room.ColumnInfo(name = "billedAmount")   val billedAmount: Long,
