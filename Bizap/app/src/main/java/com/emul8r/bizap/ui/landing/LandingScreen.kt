@@ -18,10 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.R
 
-// Import for Window Insets
-private val WindowInsets.Companion.safeDrawing: WindowInsets
-    get() = WindowInsets.safeDrawing
-
 /**
  * Landing screen that lets the user choose between GUI1 (legacy) and GUI2 (new).
  * Shown only when no GUI preference has been saved yet — or when the user explicitly
@@ -207,15 +203,6 @@ fun LandingScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = "You can change this at any time in Settings.",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
