@@ -15,10 +15,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.emul8r.bizap.ui.customers.CustomerViewModel
 import com.emul8r.bizap.ui.dashboard.components.InvoiceStatusPieChart
+import com.emul8r.bizap.ui.dashboard.components.NotesCard
 import com.emul8r.bizap.ui.invoices.InvoiceList
 import com.emul8r.bizap.ui.invoices.InvoiceListUiState
 import com.emul8r.bizap.ui.invoices.InvoiceListViewModel
 import com.emul8r.bizap.ui.navigation.Screen
+import com.emul8r.bizap.ui.notes.NotesViewModel
 import com.emul8r.bizap.ui.revenue.RevenueDashboardUiState
 import com.emul8r.bizap.ui.revenue.RevenueDashboardViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
@@ -31,12 +33,14 @@ fun DashboardScreen(
     customerViewModel: CustomerViewModel = hiltViewModel(),
     businessViewModel: BusinessProfileViewModel = hiltViewModel(),
     revenueViewModel: RevenueDashboardViewModel = hiltViewModel(),
-    invoiceViewModel: InvoiceListViewModel = hiltViewModel()
+    invoiceViewModel: InvoiceListViewModel = hiltViewModel(),
+    notesViewModel: NotesViewModel = hiltViewModel()
 ) {
     val customers by customerViewModel.uiState.collectAsStateWithLifecycle()
     val activeBusiness by businessViewModel.profileState.collectAsStateWithLifecycle()
     val revenueState by revenueViewModel.uiState.collectAsStateWithLifecycle()
     val invoiceState by invoiceViewModel.uiState.collectAsStateWithLifecycle()
+    val currentNotesCount by notesViewModel.currentNotesCount.collectAsStateWithLifecycle()
     var showSwitcher by remember { mutableStateOf(false) }
 
     // Calculate status breakdown from invoices
@@ -44,7 +48,7 @@ fun DashboardScreen(
         when (invoiceState) {
             is InvoiceListUiState.Success -> {
                 val invoices = (invoiceState as InvoiceListUiState.Success).invoices
-                invoices.groupBy { it.status }.mapValues { it.value.size } as Map<String, Int>
+                invoices.groupBy { it.status.name }.mapValues { it.value.size } as Map<String, Int>
             }
             else -> emptyMap<String, Int>()
         }
@@ -141,6 +145,15 @@ fun DashboardScreen(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Notes Card
+        NotesCard(
+            currentNotesCount = currentNotesCount,
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { navController.navigate(Screen.Notes) }
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
         

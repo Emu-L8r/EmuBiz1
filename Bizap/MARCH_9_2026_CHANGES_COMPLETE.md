@@ -246,17 +246,18 @@ val statusCounts: Map<String, Int> = remember(invoiceState) {
     when (invoiceState) {
         is InvoiceListUiState.Success -> {
             val invoices = (invoiceState as InvoiceListUiState.Success).invoices
-            invoices.groupBy { it.status }.mapValues { it.value.size } as Map<String, Int>
+            invoices.groupBy { it.status.name }.mapValues { it.value.size } as Map<String, Int>
         }
         else -> emptyMap<String, Int>()
     }
 }
 ```
 
-**Type Inference Fix:**
-- Added explicit `as Map<String, Int>` cast to `mapValues` result
+**Type & Enum Conversion Fixes:**
+- Added `.name` to convert `InvoiceStatus` enum to `String` (prevents ClassCastException)
+- Added explicit `as Map<String, Int>` cast to `mapValues` result for type safety
 - Changed `emptyMap()` to `emptyMap<String, Int>()` for type safety
-- This ensures the when expression properly infers the return type in both branches
+- This ensures the pie chart receives Map<String, Int> and the when expression properly infers return types
 
 3. **Added Pie Chart Card to Layout:**
 ```kotlin
@@ -434,6 +435,7 @@ adb shell am start -n com.emul8r.bizap/com.emul8r.bizap.MainActivity
 3. **Visual Enhancement:** Dashboard now provides at-a-glance invoice status overview
 
 **Status:** Ready for testing on emulator and deployment.
+
 
 
 
