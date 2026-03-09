@@ -28,13 +28,43 @@ interface InvoicePaymentDao {
     @Update
     suspend fun updateSnapshot(snapshot: InvoicePaymentSnapshot)
 
-    @Query("SELECT * FROM invoice_payment_snapshots WHERE businessProfileId = :businessId ORDER BY dueDate ASC")
+    /**
+     * Observe all payment snapshots for a business, EXCLUDING DRAFT invoices.
+     * DRAFT invoices are works-in-progress and should not be included in financial metrics.
+     * Filters by paymentStatus field which reflects the invoice status.
+     */
+    @Query("""
+        SELECT * FROM invoice_payment_snapshots
+        WHERE businessProfileId = :businessId
+          AND paymentStatus IN ('PAID', 'UNPAID', 'OVERDUE')
+        ORDER BY dueDate ASC
+    """)
     fun observeAllSnapshots(businessId: Long): Flow<List<InvoicePaymentSnapshot>>
 
-    @Query("SELECT * FROM invoice_payment_snapshots WHERE businessProfileId = :businessId AND isAtRisk = 1 ORDER BY riskScore DESC LIMIT :limit")
+    /**
+     * Observe risky payment snapshots, EXCLUDING DRAFT invoices.
+     * Risk analysis focuses on official invoices (PAID, UNPAID, OVERDUE).
+     * Filters by paymentStatus which excludes DRAFT invoices.
+     */
+    @Query("""
+        SELECT * FROM invoice_payment_snapshots
+        WHERE businessProfileId = :businessId
+          AND isAtRisk = 1
+          AND paymentStatus IN ('PAID', 'UNPAID', 'OVERDUE')
+        ORDER BY riskScore DESC LIMIT :limit
+    """)
     fun observeRiskInvoices(businessId: Long, limit: Int = 10): Flow<List<InvoicePaymentSnapshot>>
 
-    @Query("SELECT * FROM invoice_payment_snapshots WHERE businessProfileId = :businessId ORDER BY dueDate ASC")
+    /**
+     * Get all payment snapshots for a business (suspend version), EXCLUDING DRAFT invoices.
+     * DRAFT invoices are works-in-progress and should not be included in financial metrics.
+     */
+    @Query("""
+        SELECT * FROM invoice_payment_snapshots
+        WHERE businessProfileId = :businessId
+          AND paymentStatus IN ('PAID', 'UNPAID', 'OVERDUE')
+        ORDER BY dueDate ASC
+    """)
     suspend fun getAllSnapshots(businessId: Long): List<InvoicePaymentSnapshot>
 
     @Query("SELECT COUNT(*) FROM invoice_payment_snapshots WHERE businessProfileId = :businessId AND paymentStatus = :status")
