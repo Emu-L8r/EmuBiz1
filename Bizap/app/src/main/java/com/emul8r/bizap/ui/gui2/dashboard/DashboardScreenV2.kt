@@ -99,7 +99,8 @@ private fun DashboardContentV2(
             color = MaterialTheme.colorScheme.primary
         )
 
-        // ── Quick Actions ──
+        // ── Quick Actions (Silenced for review) ──
+        /*
         SectionHeaderV2(title = "Quick Actions")
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -124,6 +125,7 @@ private fun DashboardContentV2(
         }
 
         HorizontalDivider()
+        */
 
         // ── Revenue section ──
         SectionHeaderV2(title = "Revenue")
