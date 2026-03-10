@@ -153,4 +153,5 @@ class LandingPageTest : BaseUnitTest() {
         // The DataStore stores the enum NAME (not ordinal), so names must be stable.
         assertEquals("GUI1", GuiMode.GUI1.name)
         assertEquals("GUI2", GuiMode.GUI2.name)
+    }
 }

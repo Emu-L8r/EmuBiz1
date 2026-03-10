@@ -375,4 +375,5 @@ class OfflineOperationDaoComprehensiveTest {
             assertTrue("🟢 GREEN LIGHT - All criteria met", true)
         }
     }
+    }
 }

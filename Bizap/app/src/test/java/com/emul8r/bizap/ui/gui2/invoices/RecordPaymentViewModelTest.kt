@@ -167,4 +167,6 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
 
     // ── helper ─────────────────────────────────────────────────────────────────
     private fun anyLong(): Long = any()
+    }
+    }
 }
