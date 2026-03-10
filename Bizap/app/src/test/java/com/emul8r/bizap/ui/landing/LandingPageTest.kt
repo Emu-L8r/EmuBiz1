@@ -94,7 +94,6 @@ class LandingPageTest : BaseUnitTest() {
     }
 
     @Test
-        viewModel.selectMode(GuiMode.GUI2)
     fun `selection persists across ViewModel recreations`() = runTest {
         every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)

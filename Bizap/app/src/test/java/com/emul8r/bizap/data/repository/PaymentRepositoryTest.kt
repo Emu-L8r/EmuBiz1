@@ -1,7 +1,9 @@
 package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.BaseUnitTest
-import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
+import com.emul8r.bizap.data.local.AppDatabase
+import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
+import com.emul8r.bizap.data.local.dao.PaymentDaoV2
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -20,7 +22,9 @@ import kotlin.test.assertTrue
  */
 class PaymentRepositoryTest : BaseUnitTest() {
 
-    private val paymentDao: InvoicePaymentDao = mockk(relaxed = true)
+    private val database: AppDatabase = mockk(relaxed = true)
+    private val invoiceDaoV2: InvoiceDaoV2 = mockk(relaxed = true)
+    private val paymentDaoV2: PaymentDaoV2 = mockk(relaxed = true)
     private lateinit var paymentRepository: PaymentRepositoryV2
 
     private val invoiceId = 1L
@@ -30,7 +34,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
 
     @Before
     fun setUp() {
-        paymentRepository = PaymentRepositoryV2(paymentDao)
+        paymentRepository = PaymentRepositoryV2(database, invoiceDaoV2, paymentDaoV2)
     }
 
     // ── recordPayment_Atomic ──────────────────────────────────────────────────
