@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.emul8r.bizap.BaseUnitTest
+import io.mockk.any
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -13,12 +14,12 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertNotNull
-
 /**
  * Unit tests for the landing-page navigation system:
  * LandingViewModel (DataStore persistence) and GuiMode routing.
@@ -35,20 +36,15 @@ import kotlin.test.assertNotNull
  * - Navigation paths enumeration
  */
 class NavigationTest : BaseUnitTest() {
-
     private lateinit var dataStore: DataStore<Preferences>
     private lateinit var mockPreferences: Preferences
-
     @Before
     fun setUp() {
         dataStore = mockk(relaxed = true)
         mockPreferences = mockk(relaxed = true)
     }
-
     // -----------------------------------------------------------------------
     // GuiMode enum contract
-    // -----------------------------------------------------------------------
-
     @Test
     fun `GuiMode has exactly two variants`() {
         assertEquals(2, GuiMode.entries.size)
@@ -85,38 +81,27 @@ class NavigationTest : BaseUnitTest() {
         assertEquals(true, threw)
     }
 
-    // -----------------------------------------------------------------------
     // LandingViewModel — initial state (no stored preference)
-    // -----------------------------------------------------------------------
-
     @Test
     fun `selectedMode is null when DataStore has no gui_mode key`() = runTest {
         // Arrange — DataStore returns preferences with no "gui_mode" entry
         val emptyPrefs = emptyPreferences()
         every { dataStore.data } returns flowOf(emptyPrefs)
-
         val viewModel = LandingViewModel(dataStore)
-
         // Act
         val result = viewModel.selectedMode.first()
-
         // Assert — null signals "first launch, show landing screen"
         assertNull(result)
     }
 
-    // -----------------------------------------------------------------------
     // LandingViewModel — reading persisted mode
-    // -----------------------------------------------------------------------
-
     @Test
     fun `selectedMode emits GUI1 when DataStore contains GUI1`() = runTest {
         val prefs = mockk<Preferences>()
         every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
-
         val viewModel = LandingViewModel(dataStore)
         val result = viewModel.selectedMode.first()
-
         assertEquals(GuiMode.GUI1, result)
     }
 
@@ -125,10 +110,8 @@ class NavigationTest : BaseUnitTest() {
         val prefs = mockk<Preferences>()
         every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
-
         val viewModel = LandingViewModel(dataStore)
         val result = viewModel.selectedMode.first()
-
         assertEquals(GuiMode.GUI2, result)
     }
 
@@ -137,28 +120,20 @@ class NavigationTest : BaseUnitTest() {
         val prefs = mockk<Preferences>()
         every { prefs[stringPreferencesKey("gui_mode")] } returns "LEGACY_V1"
         every { dataStore.data } returns flowOf(prefs)
-
         val viewModel = LandingViewModel(dataStore)
         val result = viewModel.selectedMode.first()
-
         // Unrecognised values are treated as "no selection" → null
         assertNull(result)
     }
 
-    // -----------------------------------------------------------------------
     // LandingViewModel — persisting the selection
-    // -----------------------------------------------------------------------
-
     @Test
     fun `selectMode GUI1 calls dataStore edit`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
         coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
-
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI1)
-
         testDispatcher.scheduler.advanceUntilIdle()
-
         coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
     }
 
@@ -166,36 +141,24 @@ class NavigationTest : BaseUnitTest() {
     fun `selectMode GUI2 calls dataStore edit`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
         coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
-
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI2)
-
         testDispatcher.scheduler.advanceUntilIdle()
-
         coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
     }
 
-    // -----------------------------------------------------------------------
     // LandingViewModel — resetting the selection
-    // -----------------------------------------------------------------------
-
     @Test
     fun `resetMode calls dataStore edit`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit(any()) } returns emptyPreferences()
-
+        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
         val viewModel = LandingViewModel(dataStore)
         viewModel.resetMode()
-
         testDispatcher.scheduler.advanceUntilIdle()
-
-        coVerify(exactly = 1) { dataStore.edit(any()) }
+        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
     }
 
-    // -----------------------------------------------------------------------
     // Navigation routing paths
-    // -----------------------------------------------------------------------
-
     @Test
     fun `null selectedMode maps to landing screen route`() {
         // When no GUI is selected, the app should show the landing screen.
@@ -229,7 +192,6 @@ class NavigationTest : BaseUnitTest() {
      * Keeps the test free of Android framework dependencies.
      */
     private enum class Route { LANDING, GUI1_MAIN, GUI2_MAIN }
-
     private fun resolveRoute(mode: GuiMode?): Route = when (mode) {
         null -> Route.LANDING
         GuiMode.GUI1 -> Route.GUI1_MAIN
