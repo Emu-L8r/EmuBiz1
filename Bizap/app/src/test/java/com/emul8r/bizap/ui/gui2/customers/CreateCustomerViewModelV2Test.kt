@@ -54,7 +54,7 @@ class CreateCustomerViewModelV2Test : BaseUnitTest() {
             onError = { errorCalled = true }
         )
 
-        testDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
 
         // Then
         coVerify { customerRepository.insert(customer) }
@@ -85,7 +85,7 @@ class CreateCustomerViewModelV2Test : BaseUnitTest() {
             onError = { error -> errorMessage = error }
         )
 
-        testDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
 
         // Then
         assertEquals(false, successCalled)
@@ -114,7 +114,7 @@ class CreateCustomerViewModelV2Test : BaseUnitTest() {
             onError = { error -> errorMessage = error }
         )
 
-        testDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
 
         // Then
         assertEquals("Unknown error", errorMessage)
@@ -142,7 +142,7 @@ class CreateCustomerViewModelV2Test : BaseUnitTest() {
             onError = { }
         )
 
-        testDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
 
         // Then
         assertTrue(successCalled)
