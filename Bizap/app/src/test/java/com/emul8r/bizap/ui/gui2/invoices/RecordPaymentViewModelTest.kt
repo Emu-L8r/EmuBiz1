@@ -50,9 +50,18 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
         initViewModel()
         val state = viewModel.formState.value
         assertEquals(invoiceTotal - amountPaid, state.outstanding)
+    }
+
+    @Test
     fun `recordPayment_initialState - form is not valid initially`() {
+        initViewModel()
+        val state = viewModel.formState.value
+        val state = viewModel.formState.value
         assertFalse(state.isFormValid, "Form should not be valid before entering amount")
+    }
+
     // ── recordPayment_Success ─────────────────────────────────────────────────
+    @Test
     fun `recordPayment_Success - valid payment delegates to use case`() = runTest {
         coEvery {
             recordPaymentUseCase(
@@ -69,27 +78,48 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
         viewModel.submit()
         advanceUntilIdle()
         coVerify {
-        }
-    fun `recordPayment_Success - payment event Success emitted on success`() = runTest {
             recordPaymentUseCase(any(), any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `recordPayment_Success - payment event Success emitted on success`() = runTest {
+        initViewModel()
+        coEvery {
+            recordPaymentUseCase(any(), any(), any(), any(), any(), any(), any())
+        } returns Result.success(Unit)
         viewModel.onAmountChanged("50.00")
+        viewModel.submit()
+        advanceUntilIdle()
+        val state = viewModel.formState.value
         // Verify no submission error
         assertNull(state.submissionError)
+    }
+
     // ── recordPayment_Overpayment ─────────────────────────────────────────────
+    @Test
     fun `recordPayment_Overpayment - amount exceeding outstanding triggers error`() {
+        initViewModel()
         // Outstanding is 100000 cents ($1000), enter $1001
         viewModel.onAmountChanged("1001.00")
+        val state = viewModel.formState.value
         assertTrue(state.amountError != null, "Overpayment should show amount error")
         assertFalse(state.isFormValid)
-    fun `recordPayment_Overpayment - exact outstanding amount is valid`() {
+    }
+
+    @Test
         viewModel.onAmountChanged("1000.00")  // Exact outstanding
         assertNull(state.amountError, "Exact outstanding amount should be valid")
     // ── recordPayment_InvalidDate ─────────────────────────────────────────────
     fun `recordPayment_InvalidDate - future date triggers validation error`() {
+        initViewModel()
         val futureDate = now + 86_400_000L  // Tomorrow
         viewModel.onDateChanged(futureDate)
+        val state = viewModel.formState.value
         assertTrue(state.dateError != null, "Future date should trigger validation error")
-    fun `recordPayment_InvalidDate - today's date is valid`() {
+    }
+
+    @Test
         val todayMidnight = run {
             val cal = java.util.Calendar.getInstance()
             cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
@@ -107,20 +137,34 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
         val newAmountPaid = amountPaid + payment
         val expectPaid = newAmountPaid >= partiallyPaidInvoice
         assertTrue(expectPaid, "Full payment should result in PAID status")
+    }
+
+    @Test
     fun `recordPayment_StatusTransition - partial payment keeps outstanding balance`() {
+        initViewModel()
         val partialPayment = 50000L  // $500
         val newAmountPaid = amountPaid + partialPayment
         val remaining = invoiceTotal - newAmountPaid
         assertEquals(50000L, remaining, "Remaining balance should be $500 after partial payment")
         assertTrue(remaining > 0, "Partial payment should leave outstanding balance")
+    }
+
     // ── onNotesChanged ────────────────────────────────────────────────────────
+    @Test
     fun `onNotesChanged - notes are stored in form state`() {
+        initViewModel()
         viewModel.onNotesChanged("Payment via bank transfer")
         assertEquals("Payment via bank transfer", viewModel.formState.value.notes)
+    }
+
+    @Test
     fun `onNotesChanged - notes are truncated at 500 characters`() {
+        initViewModel()
         val longNotes = "A".repeat(600)
         viewModel.onNotesChanged(longNotes)
         assertEquals(500, viewModel.formState.value.notes.length)
+    }
+
     // ── helper ─────────────────────────────────────────────────────────────────
     private fun anyLong(): Long = any()
 }
