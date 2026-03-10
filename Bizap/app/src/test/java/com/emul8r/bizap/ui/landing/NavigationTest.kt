@@ -97,9 +97,9 @@ class NavigationTest : BaseUnitTest() {
         viewModel.selectMode(GuiMode.GUI2)
     // LandingViewModel — resetting the selection
     fun `resetMode calls dataStore edit`() = runTest {
-        coEvery { dataStore.edit(any()) } returns emptyPreferences()
+        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
         viewModel.resetMode()
-        coVerify(exactly = 1) { dataStore.edit(any()) }
+        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
     // Navigation routing paths
     fun `null selectedMode maps to landing screen route`() {
         // When no GUI is selected, the app should show the landing screen.
