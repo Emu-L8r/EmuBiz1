@@ -28,6 +28,7 @@ import com.emul8r.bizap.ui.documents.DocumentVaultScreen
 import com.emul8r.bizap.ui.dunning.DunningNoticesScreen
 import com.emul8r.bizap.ui.invoices.*
 import com.emul8r.bizap.ui.components.BizapTopAppBar
+import com.emul8r.bizap.ui.components.SyncStatusIndicator
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.revenue.RevenueDashboardScreen
 import com.emul8r.bizap.ui.risk.RiskDashboardScreen
@@ -126,7 +127,12 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
         currentDestination?.hasRoute(item.screen::class) == true 
     }
 
-    Scaffold(
+    // Global Sync and Offline Status Indicator
+    androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxSize()) {
+        SyncStatusIndicator()
+        
+        Scaffold(
+            modifier = Modifier.weight(1f),
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
@@ -336,5 +342,6 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 )
             }
         }
+    }
     }
 }
