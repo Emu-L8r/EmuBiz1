@@ -48,53 +48,107 @@ class LandingPageTest : BaseUnitTest() {
         onSelectGui2()
         assertTrue("GUI1 callback must be invokable", gui1Called[0])
         assertTrue("GUI2 callback must be invokable", gui2Called[0])
+    }
+
+    @Test
     fun `GUI1 and GUI2 callbacks are independent`() {
         var gui1Count = 0
         var gui2Count = 0
         val onSelectGui1: () -> Unit = { gui1Count++ }
         val onSelectGui2: () -> Unit = { gui2Count++ }
+        onSelectGui1()
+        onSelectGui1()
+        onSelectGui2()
         assertEquals("GUI1 should be triggered twice", 2, gui1Count)
         assertEquals("GUI2 should be triggered once", 1, gui2Count)
+    }
+
     // Loading state — null selectedMode
+    @Test
     fun `loading state is null on first emission before DataStore reads`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
         val viewModel = LandingViewModel(dataStore)
         val result = viewModel.selectedMode.first()
         assertNull("Initial emission should be null (loading/unset)", result)
+    }
+
+    @Test
     fun `loading state completes — selectedMode is not stuck at null`() = runTest {
         val prefs = mockk<Preferences>()
         every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
+        val viewModel = LandingViewModel(dataStore)
+        val result = viewModel.selectedMode.first()
         assertNotNull("After DataStore emits a valid value, state must not be null", result)
+    }
+
     // GUI selection persistence
+    @Test
     fun `selecting GUI1 persists selection via DataStore`() = runTest {
+        every { dataStore.data } returns flowOf(emptyPreferences())
+        val viewModel = LandingViewModel(dataStore)
         coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
         viewModel.selectMode(GuiMode.GUI1)
         testDispatcher.scheduler.advanceUntilIdle()
         coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
-    fun `selecting GUI2 persists selection via DataStore`() = runTest {
+    }
+
+    @Test
         viewModel.selectMode(GuiMode.GUI2)
     fun `selection persists across ViewModel recreations`() = runTest {
         every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI1"
+        every { dataStore.data } returns flowOf(prefs)
+        val viewModel = LandingViewModel(dataStore)
         // Simulate a second ViewModel instance (e.g. after process death + restore)
         val viewModel2 = LandingViewModel(dataStore)
         val result = viewModel2.selectedMode.first()
         assertEquals(GuiMode.GUI1, result)
+    }
+
     // App restart restores selection
+    @Test
     fun `app restart restores GUI1 selection from DataStore`() = runTest {
+        val prefs = mockk<Preferences>()
+        every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI1"
+        every { dataStore.data } returns flowOf(prefs)
+        val viewModel = LandingViewModel(dataStore)
         assertEquals(GuiMode.GUI1, viewModel.selectedMode.first())
+    }
+
+    @Test
     fun `app restart restores GUI2 selection from DataStore`() = runTest {
+        val prefs = mockk<Preferences>()
+        every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI2"
+        every { dataStore.data } returns flowOf(prefs)
+        val viewModel = LandingViewModel(dataStore)
         assertEquals(GuiMode.GUI2, viewModel.selectedMode.first())
+    }
+
     // Error handling on save fail
+    @Test
     fun `selectMode does not return a value that would break callers`() {
+        every { dataStore.data } returns flowOf(emptyPreferences())
+        val viewModel = LandingViewModel(dataStore)
         // selectMode is a fire-and-forget function (Unit return type).
         // Verify the API contract at compile-time: calling it does not throw synchronously.
+        viewModel.selectMode(GuiMode.GUI1)
         // If this call were to throw synchronously, the test would fail.
         // Reaching here confirms no synchronous exception was thrown.
         assertTrue(true)
+    }
+
     // Settings — reset clears selection
+    @Test
     fun `resetMode clears persisted selection so landing screen is shown again`() = runTest {
+        every { dataStore.data } returns flowOf(emptyPreferences())
+        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
+        val viewModel = LandingViewModel(dataStore)
         viewModel.resetMode()
+        testDispatcher.scheduler.advanceUntilIdle()
+        coVerify(atLeast = 1) { dataStore.edit<Preferences>(any()) }
+    }
+
+    @Test
     fun `GuiMode ordinal values are stable for DataStore serialization`() {
         // The DataStore stores the enum NAME (not ordinal), so names must be stable.
         assertEquals("GUI1", GuiMode.GUI1.name)
