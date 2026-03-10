@@ -2,6 +2,7 @@ package com.emul8r.bizap.domain.usecase
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
+import io.mockk.any
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -85,11 +86,11 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
     fun `validPayment_Success - exact outstanding amount is accepted`() = runTest {
         coEvery {
             paymentRepository.recordPayment(
-                invoiceId = io.mockk.any(),
-                businessId = io.mockk.any(),
-                amount = io.mockk.any(),
-                paymentDate = io.mockk.any(),
-                notes = io.mockk.any()
+                invoiceId = any(),
+                businessId = any(),
+                amount = any(),
+                paymentDate = any(),
+                notes = any()
             )
         } returns Result.success(Unit)
 
@@ -137,11 +138,11 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
 
         coVerify(exactly = 0) {
             paymentRepository.recordPayment(
-                invoiceId = io.mockk.any(),
-                businessId = io.mockk.any(),
-                amount = io.mockk.any(),
-                paymentDate = io.mockk.any(),
-                notes = io.mockk.any()
+                invoiceId = any(),
+                businessId = any(),
+                amount = any(),
+                paymentDate = any(),
+                notes = any()
             )
         }
     }
@@ -225,11 +226,11 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
     fun `snapshotUpdates_Atomic - successful payment calls repository exactly once`() = runTest {
         coEvery {
             paymentRepository.recordPayment(
-                invoiceId = io.mockk.any(),
-                businessId = io.mockk.any(),
-                amount = io.mockk.any(),
-                paymentDate = io.mockk.any(),
-                notes = io.mockk.any()
+                invoiceId = any(),
+                businessId = any(),
+                amount = any(),
+                paymentDate = any(),
+                notes = any()
             )
         } returns Result.success(Unit)
 
@@ -244,11 +245,11 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
 
         coVerify(exactly = 1) {
             paymentRepository.recordPayment(
-                invoiceId = io.mockk.any(),
-                businessId = io.mockk.any(),
-                amount = io.mockk.any(),
-                paymentDate = io.mockk.any(),
-                notes = io.mockk.any()
+                invoiceId = any(),
+                businessId = any(),
+                amount = any(),
+                paymentDate = any(),
+                notes = any()
             )
         }
     }
@@ -258,10 +259,10 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
         val notes = "Bank transfer reference: TXN123"
         coEvery {
             paymentRepository.recordPayment(
-                invoiceId = io.mockk.any(),
-                businessId = io.mockk.any(),
-                amount = io.mockk.any(),
-                paymentDate = io.mockk.any(),
+                invoiceId = any(),
+                businessId = any(),
+                amount = any(),
+                paymentDate = any(),
                 notes = io.mockk.eq(notes)
             )
         } returns Result.success(Unit)
@@ -278,10 +279,10 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
 
         coVerify {
             paymentRepository.recordPayment(
-                invoiceId = io.mockk.any(),
-                businessId = io.mockk.any(),
-                amount = io.mockk.any(),
-                paymentDate = io.mockk.any(),
+                invoiceId = any(),
+                businessId = any(),
+                amount = any(),
+                paymentDate = any(),
                 notes = io.mockk.eq(notes)
             )
         }
