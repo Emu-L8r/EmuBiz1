@@ -2,6 +2,7 @@ package com.emul8r.bizap.ui.gui2.invoices
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.usecase.RecordPaymentUseCase
+import io.mockk.any
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -74,11 +75,11 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
             recordPaymentUseCase(
                 invoiceId = invoiceId,
                 businessId = businessId,
-                amount = io.mockk.any(),
-                trueOutstanding = io.mockk.any(),
-                paymentDate = io.mockk.any(),
-                invoiceDate = io.mockk.any(),
-                notes = io.mockk.any()
+                amount = any(),
+                trueOutstanding = any(),
+                paymentDate = any(),
+                invoiceDate = any(),
+                notes = any()
             )
         } returns Result.success(Unit)
 
@@ -90,11 +91,11 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
             recordPaymentUseCase(
                 invoiceId = invoiceId,
                 businessId = businessId,
-                amount = io.mockk.any(),
-                trueOutstanding = io.mockk.any(),
-                paymentDate = io.mockk.any(),
-                invoiceDate = io.mockk.any(),
-                notes = io.mockk.any()
+                amount = any(),
+                trueOutstanding = any(),
+                paymentDate = any(),
+                invoiceDate = any(),
+                notes = any()
             )
         }
     }
@@ -103,7 +104,7 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
     fun `recordPayment_Success - payment event Success emitted on success`() = runTest {
         initViewModel()
         coEvery {
-            recordPaymentUseCase(io.mockk.any(), io.mockk.any(), io.mockk.any(), io.mockk.any(), io.mockk.any(), io.mockk.any(), io.mockk.any())
+            recordPaymentUseCase(any(), any(), any(), any(), any(), any(), any())
         } returns Result.success(Unit)
 
         viewModel.onAmountChanged("50.00")
@@ -210,5 +211,5 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
 
     // ── helper ─────────────────────────────────────────────────────────────────
 
-    private fun anyLong(): Long = io.mockk.any()
+    private fun anyLong(): Long = any()
 }
