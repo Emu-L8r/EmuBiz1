@@ -341,6 +341,3 @@ class OfflineQueueServiceSuite4Test {
         }
     }
 }
-
-
-}
