@@ -83,8 +83,8 @@ class DashboardViewModelTest : BaseUnitTest() {
     @Test
     fun `metricsUpdate_OnDataChange - payment metrics reflect outstanding invoices`() = runTest {
         val statusCounts = listOf(
-            InvoiceStatusCountV2(status = "SENT", count = 3, totalAmount = 30000L),
-            InvoiceStatusCountV2(status = "PAID", count = 5, totalAmount = 50000L)
+            InvoiceStatusCountV2(status = "SENT", count = 3),
+            InvoiceStatusCountV2(status = "PAID", count = 5)
         )
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(30000L)
         every { dao.observeCollectedAmount(businessId) } returns flowOf(50000L)
