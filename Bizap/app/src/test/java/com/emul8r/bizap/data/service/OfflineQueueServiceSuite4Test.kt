@@ -340,5 +340,4 @@ class OfflineQueueServiceSuite4Test {
             assertTrue("🟢 GREEN LIGHT FOR WEEK 2 - All criteria met", allCriteriaMet)
         }
     }
-    }
 }

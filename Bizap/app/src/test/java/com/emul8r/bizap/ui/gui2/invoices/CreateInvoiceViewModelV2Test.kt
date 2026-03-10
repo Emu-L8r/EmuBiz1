@@ -44,6 +44,7 @@ class CreateInvoiceViewModelV2Test : BaseUnitTest() {
                 phone = "1234567890",
                 address = "123 Test St"
             ),
+            Customer(
                 id = 2L,
                 name = "Test Customer 2",
                 email = "customer2@example.com",
@@ -130,11 +131,13 @@ class CreateInvoiceViewModelV2Test : BaseUnitTest() {
     @Test
     fun `loadCustomers - should load multiple customers`() = runTest {
         val customers = (1..5).map { id ->
+            Customer(
                 id = id.toLong(),
                 name = "Customer $id",
                 email = "customer$id@example.com",
                 phone = "123456789$id",
                 address = "Address $id"
+            )
         }
         every { customerRepository.getAllCustomers() } returns flowOf(customers)
         assertEquals(5, viewModel.customers.value.size)
