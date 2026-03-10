@@ -87,14 +87,15 @@ class LandingPageTest : BaseUnitTest() {
     fun `selecting GUI1 persists selection via DataStore`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
         val viewModel = LandingViewModel(dataStore)
-        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
+        coEvery { dataStore.edit(any()) } returns emptyPreferences()
         viewModel.selectMode(GuiMode.GUI1)
         testDispatcher.scheduler.advanceUntilIdle()
-        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
+        coVerify(exactly = 1) { dataStore.edit(any()) }
     }
 
     @Test
     fun `selection persists across ViewModel recreations`() = runTest {
+        val prefs = mockk<Preferences>()
         every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
@@ -140,11 +141,11 @@ class LandingPageTest : BaseUnitTest() {
     @Test
     fun `resetMode clears persisted selection so landing screen is shown again`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
+        coEvery { dataStore.edit(any()) } returns emptyPreferences()
         val viewModel = LandingViewModel(dataStore)
         viewModel.resetMode()
         testDispatcher.scheduler.advanceUntilIdle()
-        coVerify(atLeast = 1) { dataStore.edit<Preferences>(any()) }
+        coVerify(atLeast = 1) { dataStore.edit(any()) }
     }
 
     @Test
