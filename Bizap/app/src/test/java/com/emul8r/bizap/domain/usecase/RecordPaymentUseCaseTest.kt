@@ -5,6 +5,7 @@ import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import io.mockk.any
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.eq
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -263,7 +264,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
                 businessId = any(),
                 amount = any(),
                 paymentDate = any(),
-                notes = io.mockk.eq(notes)
+                notes = eq(notes)
             )
         } returns Result.success(Unit)
 
@@ -283,7 +284,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
                 businessId = any(),
                 amount = any(),
                 paymentDate = any(),
-                notes = io.mockk.eq(notes)
+                notes = eq(notes)
             )
         }
     }
