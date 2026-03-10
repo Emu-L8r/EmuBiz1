@@ -142,6 +142,9 @@ class CreateInvoiceViewModelV2Test : BaseUnitTest() {
         every { customerRepository.getAllCustomers() } returns flowOf(customers)
         assertEquals(5, viewModel.customers.value.size)
         assertEquals(customers, viewModel.customers.value)
+    }
+
+    @Test
     fun `selectCustomer - should work with any customer from loaded list`() = runTest {
         val customers = (1..3).map { id ->
             Customer(
@@ -158,6 +161,5 @@ class CreateInvoiceViewModelV2Test : BaseUnitTest() {
         viewModel.selectCustomer(middleCustomer)
         assertEquals(middleCustomer, viewModel.selectedCustomer.value)
         assertEquals("Customer 2", viewModel.selectedCustomer.value?.name)
-    }
     }
 }
