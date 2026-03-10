@@ -7,6 +7,7 @@ import com.emul8r.bizap.data.local.entities.InvoiceCustomField
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
+import io.mockk.any
 import io.mockk.MockKAnnotations
 import io.mockk.Runs
 import io.mockk.coEvery
