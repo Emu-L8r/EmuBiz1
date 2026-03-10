@@ -182,14 +182,14 @@ class NavigationTest : BaseUnitTest() {
     @Test
     fun `resetMode calls dataStore edit`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
+        coEvery { dataStore.edit(any()) } returns emptyPreferences()
 
         val viewModel = LandingViewModel(dataStore)
         viewModel.resetMode()
 
         testDispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
+        coVerify(exactly = 1) { dataStore.edit(any()) }
     }
 
     // -----------------------------------------------------------------------

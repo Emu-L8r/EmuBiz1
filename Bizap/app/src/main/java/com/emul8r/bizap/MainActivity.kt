@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -128,220 +129,219 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
     }
 
     // Global Sync and Offline Status Indicator
-    androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize()) {
         SyncStatusIndicator()
         
         Scaffold(
             modifier = Modifier.weight(1f),
-        modifier = Modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets.safeDrawing,
-        topBar = {
-            val title = when {
-                currentDestination?.hasRoute<Screen.Dashboard>() == true -> "Dashboard"
-                currentDestination?.hasRoute<Screen.Customers>() == true -> "Customers"
-                currentDestination?.hasRoute<Screen.CustomerDetail>() == true -> "Customer Detail"
-                currentDestination?.hasRoute<Screen.Invoices>() == true -> "Invoices"
-                currentDestination?.hasRoute<Screen.DocumentVault>() == true -> "Document Vault"
-                currentDestination?.hasRoute<Screen.SettingsHub>() == true -> "Settings"
-                currentDestination?.hasRoute<Screen.BusinessProfile>() == true -> "Business Profile"
-                currentDestination?.hasRoute<Screen.ThemeSettings>() == true -> "Theme Settings"
-                currentDestination?.hasRoute<Screen.PrefilledItems>() == true -> "Prefilled Items"
-                currentDestination?.hasRoute<Screen.CreateInvoice>() == true -> "Create Invoice"
-                currentDestination?.hasRoute<Screen.EditInvoice>() == true -> "Edit Invoice"
-                currentDestination?.hasRoute<Screen.InvoiceDetail>() == true -> "Invoice Detail"
-                currentDestination?.hasRoute<Screen.InvoicePdf>() == true -> "PDF Preview"
-                currentDestination?.hasRoute<Screen.RevenueDashboard>() == true -> "Revenue Dashboard"
-                currentDestination?.hasRoute<Screen.RiskDashboard>() == true -> "Risk Dashboard"
-                currentDestination?.hasRoute<Screen.PaymentAnalytics>() == true -> "Payment Analytics"
-                currentDestination?.hasRoute<Screen.BackupRestore>() == true -> "Backup & Restore"
-                currentDestination?.hasRoute<Screen.DunningNotices>() == true -> "Dunning Notices"
-                currentDestination?.hasRoute<Screen.InvoiceTemplates>() == true -> "Invoice Templates"
-                currentDestination?.hasRoute<Screen.CreateTemplate>() == true -> "Create Template"
-                currentDestination?.hasRoute<Screen.EditTemplate>() == true -> "Edit Template"
-                currentDestination?.hasRoute<Screen.CustomerSegments>() == true -> "Customer Segments"
-                currentDestination?.hasRoute<Screen.CustomerAnalytics>() == true -> "Customer Analytics"
-                currentDestination?.hasRoute<Screen.Notes>() == true -> "Notes"
-                else -> "Bizap"
-            }
+            contentWindowInsets = WindowInsets.safeDrawing,
+            topBar = {
+                val title = when {
+                    currentDestination?.hasRoute<Screen.Dashboard>() == true -> "Dashboard"
+                    currentDestination?.hasRoute<Screen.Customers>() == true -> "Customers"
+                    currentDestination?.hasRoute<Screen.CustomerDetail>() == true -> "Customer Detail"
+                    currentDestination?.hasRoute<Screen.Invoices>() == true -> "Invoices"
+                    currentDestination?.hasRoute<Screen.DocumentVault>() == true -> "Document Vault"
+                    currentDestination?.hasRoute<Screen.SettingsHub>() == true -> "Settings"
+                    currentDestination?.hasRoute<Screen.BusinessProfile>() == true -> "Business Profile"
+                    currentDestination?.hasRoute<Screen.ThemeSettings>() == true -> "Theme Settings"
+                    currentDestination?.hasRoute<Screen.PrefilledItems>() == true -> "Prefilled Items"
+                    currentDestination?.hasRoute<Screen.CreateInvoice>() == true -> "Create Invoice"
+                    currentDestination?.hasRoute<Screen.EditInvoice>() == true -> "Edit Invoice"
+                    currentDestination?.hasRoute<Screen.InvoiceDetail>() == true -> "Invoice Detail"
+                    currentDestination?.hasRoute<Screen.InvoicePdf>() == true -> "PDF Preview"
+                    currentDestination?.hasRoute<Screen.RevenueDashboard>() == true -> "Revenue Dashboard"
+                    currentDestination?.hasRoute<Screen.RiskDashboard>() == true -> "Risk Dashboard"
+                    currentDestination?.hasRoute<Screen.PaymentAnalytics>() == true -> "Payment Analytics"
+                    currentDestination?.hasRoute<Screen.BackupRestore>() == true -> "Backup & Restore"
+                    currentDestination?.hasRoute<Screen.DunningNotices>() == true -> "Dunning Notices"
+                    currentDestination?.hasRoute<Screen.InvoiceTemplates>() == true -> "Invoice Templates"
+                    currentDestination?.hasRoute<Screen.CreateTemplate>() == true -> "Create Template"
+                    currentDestination?.hasRoute<Screen.EditTemplate>() == true -> "Edit Template"
+                    currentDestination?.hasRoute<Screen.CustomerSegments>() == true -> "Customer Segments"
+                    currentDestination?.hasRoute<Screen.CustomerAnalytics>() == true -> "Customer Analytics"
+                    currentDestination?.hasRoute<Screen.Notes>() == true -> "Notes"
+                    else -> "Bizap"
+                }
 
-            val showLogo = currentDestination?.hasRoute<Screen.Dashboard>() == true
+                val showLogo = currentDestination?.hasRoute<Screen.Dashboard>() == true
 
-            BizapTopAppBar(
-                title = title,
-                logoBase64 = businessProfile.logoBase64,
-                showLogo = showLogo,
-                showBackButton = !isTopLevelScreen,
-                onBackClick = { navController.popBackStack() },
-                onActionClick = onSwitchGui,
-                actionButtonLabel = "Switch to Modern UI"
-            )
-        },
-        bottomBar = {
-            if (isTopLevelScreen) {
-                NavigationBar {
-                    bottomNavItems.forEach { item ->
-                        NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = null) },
-                            label = { Text(item.title) },
-                            selected = currentDestination?.hierarchy?.any { it.hasRoute(item.screen::class) } == true,
-                            onClick = {
-                                navController.navigate(item.screen) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                BizapTopAppBar(
+                    title = title,
+                    logoBase64 = businessProfile.logoBase64,
+                    showLogo = showLogo,
+                    showBackButton = !isTopLevelScreen,
+                    onBackClick = { navController.popBackStack() },
+                    onActionClick = onSwitchGui,
+                    actionButtonLabel = "Switch to Modern UI"
+                )
+            },
+            bottomBar = {
+                if (isTopLevelScreen) {
+                    NavigationBar {
+                        bottomNavItems.forEach { item ->
+                            NavigationBarItem(
+                                icon = { Icon(item.icon, contentDescription = null) },
+                                label = { Text(item.title) },
+                                selected = currentDestination?.hierarchy?.any { it.hasRoute(item.screen::class) } == true,
+                                onClick = {
+                                    navController.navigate(item.screen) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
-                            }
-                        )
-                    }
-                }
-            }
-        },
-        floatingActionButton = {
-            when {
-                currentDestination?.hasRoute<Screen.Customers>() == true -> {
-                    FloatingActionButton(
-                        onClick = { showBottomSheet = true },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Customer")
-                    }
-                }
-                currentDestination?.hasRoute<Screen.Invoices>() == true -> {
-                    FloatingActionButton(
-                        onClick = { navController.navigate(Screen.CreateInvoice) },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ) {
-                        Icon(Icons.Default.Receipt, contentDescription = "Create Invoice")
-                    }
-                }
-            }
-        }
-    ) { innerPadding ->
-        NavHost(
-            navController,
-            startDestination = Screen.Dashboard,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable<Screen.Dashboard> { DashboardScreen(navController) }
-            composable<Screen.Customers> {
-                CustomerListScreen(
-                    onCustomerClick = { customerId ->
-                        navController.navigate(Screen.CustomerDetail(customerId))
-                    },
-                    onViewSegments = { navController.navigate(Screen.CustomerSegments) },
-                    onViewAnalytics = { navController.navigate(Screen.CustomerAnalytics) }
-                )
-            }
-            composable<Screen.Invoices> {
-                InvoiceListScreen(
-                    onInvoiceClick = { invoiceId ->
-                        navController.navigate(Screen.InvoiceDetail(invoiceId))
-                    },
-                    onViewAnalytics = { navController.navigate(Screen.RevenueDashboard) }
-                )
-            }
-            composable<Screen.DocumentVault> { DocumentVaultScreen() }
-            composable<Screen.SettingsHub> { SettingsHubScreen(onNavigate = { screen -> navController.navigate(screen) }) }
-            composable<Screen.BusinessProfile> { BusinessProfileScreen() }
-            composable<Screen.ThemeSettings> { ThemeSettingsScreen() }
-            composable<Screen.PrefilledItems> { PrefilledItemsScreen() }
-            composable<Screen.CreateInvoice> { CreateInvoiceScreen(onInvoiceSaved = { navController.popBackStack() }) }
-            composable<Screen.EditInvoice> { backStackEntry ->
-                val detail: Screen.EditInvoice = backStackEntry.toRoute()
-                EditInvoiceScreen(onInvoiceUpdated = { navController.popBackStack() })
-            }
-            composable<Screen.InvoiceDetail> { backStackEntry ->
-                val detail: Screen.InvoiceDetail = backStackEntry.toRoute()
-                InvoiceDetailScreen(
-                    invoiceId = detail.invoiceId,
-                    onEdit = { navController.navigate(Screen.EditInvoice(detail.invoiceId)) },
-                    // ✅ FIX 3: Pass businessId context to payment analytics
-                    onNavigateToRevenue = { navController.navigate(Screen.RevenueDashboard) },
-                    onNavigateToPayments = { navController.navigate(Screen.PaymentAnalytics()) }
-                )
-            }
-            composable<Screen.CustomerDetail> { backStackEntry ->
-                val detail: Screen.CustomerDetail = backStackEntry.toRoute()
-                CustomerDetailScreen(customerId = detail.customerId)
-            }
-            composable<Screen.InvoicePdf> { backStackEntry ->
-                val detail: Screen.InvoicePdf = backStackEntry.toRoute()
-                InvoicePdfScreen(invoiceId = detail.invoiceId, isQuote = detail.isQuote)
-            }
-            composable<Screen.RevenueDashboard> { RevenueDashboardScreen() }
-            composable<Screen.RiskDashboard> { RiskDashboardScreen(onBackClick = { navController.popBackStack() }) }
-            composable<Screen.PaymentAnalytics> { backStackEntry ->
-                val route: Screen.PaymentAnalytics = backStackEntry.toRoute()
-                val viewModel: PaymentAnalyticsViewModel = hiltViewModel()
-
-                // ✅ FIX 3: Apply business context if passed from navigation
-                LaunchedEffect(route.businessId) {
-                    route.businessId?.let { viewModel.setBusinessId(it) }
-                }
-
-                PaymentAnalyticsScreen()
-            }
-            composable<Screen.BackupRestore> { BackupRestoreScreen(onBack = { navController.popBackStack() }) }
-            composable<Screen.DunningNotices> { DunningNoticesScreen(onBackClick = { navController.popBackStack() }) }
-            composable<Screen.InvoiceTemplates> { backStackEntry ->
-                val route: Screen.InvoiceTemplates = backStackEntry.toRoute()
-                TemplateListScreen(
-                    businessProfileId = route.businessProfileId,
-                    onNavigateToCreate = { bpId -> navController.navigate(Screen.CreateTemplate(bpId)) },
-                    onNavigateToEdit = { templateId -> navController.navigate(Screen.EditTemplate(templateId)) }
-                )
-            }
-            composable<Screen.CreateTemplate> { backStackEntry ->
-                val route: Screen.CreateTemplate = backStackEntry.toRoute()
-                CreateTemplateScreen(
-                    businessProfileId = route.businessProfileId,
-                    onNavigateBack = { navController.popBackStack() },
-                    onTemplateCreated = { navController.popBackStack() }
-                )
-            }
-            composable<Screen.EditTemplate> { backStackEntry ->
-                val route: Screen.EditTemplate = backStackEntry.toRoute()
-                EditTemplateScreen(
-                    templateId = route.templateId,
-                    onNavigateBack = { navController.popBackStack() },
-                    onTemplateUpdated = { navController.popBackStack() }
-                )
-            }
-            composable<Screen.CustomerSegments> {
-                CustomerSegmentationScreen()
-            }
-            // CustomerAnalytics routes to the same segmentation screen as it
-            // is the primary customer analytics view in the app.
-            composable<Screen.CustomerAnalytics> {
-                CustomerSegmentationScreen()
-            }
-            composable<Screen.Notes> {
-                NotesScreen(navController)
-            }
-        }
-
-        if (showBottomSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { showBottomSheet = false },
-                sheetState = sheetState
-            ) {
-                val customerViewModel: CustomerViewModel = hiltViewModel()
-                AddCustomerForm(
-                    viewModel = customerViewModel,
-                    onCustomerSaved = {
-                        scope.launch { sheetState.hide() }.invokeOnCompletion {
-                            if (!sheetState.isVisible) {
-                                showBottomSheet = false
-                            }
+                            )
                         }
                     }
-                )
+                }
+            },
+            floatingActionButton = {
+                when {
+                    currentDestination?.hasRoute<Screen.Customers>() == true -> {
+                        FloatingActionButton(
+                            onClick = { showBottomSheet = true },
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Add Customer")
+                        }
+                    }
+                    currentDestination?.hasRoute<Screen.Invoices>() == true -> {
+                        FloatingActionButton(
+                            onClick = { navController.navigate(Screen.CreateInvoice) },
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ) {
+                            Icon(Icons.Default.Receipt, contentDescription = "Create Invoice")
+                        }
+                    }
+                }
+            }
+        ) { innerPadding ->
+            NavHost(
+                navController,
+                startDestination = Screen.Dashboard,
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable<Screen.Dashboard> { DashboardScreen(navController) }
+                composable<Screen.Customers> {
+                    CustomerListScreen(
+                        onCustomerClick = { customerId ->
+                            navController.navigate(Screen.CustomerDetail(customerId))
+                        },
+                        onViewSegments = { navController.navigate(Screen.CustomerSegments) },
+                        onViewAnalytics = { navController.navigate(Screen.CustomerAnalytics) }
+                    )
+                }
+                composable<Screen.Invoices> {
+                    InvoiceListScreen(
+                        onInvoiceClick = { invoiceId ->
+                            navController.navigate(Screen.InvoiceDetail(invoiceId))
+                        },
+                        onViewAnalytics = { navController.navigate(Screen.RevenueDashboard) }
+                    )
+                }
+                composable<Screen.DocumentVault> { DocumentVaultScreen() }
+                composable<Screen.SettingsHub> { SettingsHubScreen(onNavigate = { screen -> navController.navigate(screen) }) }
+                composable<Screen.BusinessProfile> { BusinessProfileScreen() }
+                composable<Screen.ThemeSettings> { ThemeSettingsScreen() }
+                composable<Screen.PrefilledItems> { PrefilledItemsScreen() }
+                composable<Screen.CreateInvoice> { CreateInvoiceScreen(onInvoiceSaved = { navController.popBackStack() }) }
+                composable<Screen.EditInvoice> { backStackEntry ->
+                    val detail: Screen.EditInvoice = backStackEntry.toRoute()
+                    EditInvoiceScreen(onInvoiceUpdated = { navController.popBackStack() })
+                }
+                composable<Screen.InvoiceDetail> { backStackEntry ->
+                    val detail: Screen.InvoiceDetail = backStackEntry.toRoute()
+                    InvoiceDetailScreen(
+                        invoiceId = detail.invoiceId,
+                        onEdit = { navController.navigate(Screen.EditInvoice(detail.invoiceId)) },
+                        // ✅ FIX 3: Pass businessId context to payment analytics
+                        onNavigateToRevenue = { navController.navigate(Screen.RevenueDashboard) },
+                        onNavigateToPayments = { navController.navigate(Screen.PaymentAnalytics()) }
+                    )
+                }
+                composable<Screen.CustomerDetail> { backStackEntry ->
+                    val detail: Screen.CustomerDetail = backStackEntry.toRoute()
+                    CustomerDetailScreen(customerId = detail.customerId)
+                }
+                composable<Screen.InvoicePdf> { backStackEntry ->
+                    val detail: Screen.InvoicePdf = backStackEntry.toRoute()
+                    InvoicePdfScreen(invoiceId = detail.invoiceId, isQuote = detail.isQuote)
+                }
+                composable<Screen.RevenueDashboard> { RevenueDashboardScreen() }
+                composable<Screen.RiskDashboard> { RiskDashboardScreen(onBackClick = { navController.popBackStack() }) }
+                composable<Screen.PaymentAnalytics> { backStackEntry ->
+                    val route: Screen.PaymentAnalytics = backStackEntry.toRoute()
+                    val viewModel: PaymentAnalyticsViewModel = hiltViewModel()
+
+                    // ✅ FIX 3: Apply business context if passed from navigation
+                    LaunchedEffect(route.businessId) {
+                        route.businessId?.let { viewModel.setBusinessId(it) }
+                    }
+
+                    PaymentAnalyticsScreen()
+                }
+                composable<Screen.BackupRestore> { BackupRestoreScreen(onBack = { navController.popBackStack() }) }
+                composable<Screen.DunningNotices> { DunningNoticesScreen(onBackClick = { navController.popBackStack() }) }
+                composable<Screen.InvoiceTemplates> { backStackEntry ->
+                    val route: Screen.InvoiceTemplates = backStackEntry.toRoute()
+                    TemplateListScreen(
+                        businessProfileId = route.businessProfileId,
+                        onNavigateToCreate = { bpId -> navController.navigate(Screen.CreateTemplate(bpId)) },
+                        onNavigateToEdit = { templateId -> navController.navigate(Screen.EditTemplate(templateId)) }
+                    )
+                }
+                composable<Screen.CreateTemplate> { backStackEntry ->
+                    val route: Screen.CreateTemplate = backStackEntry.toRoute()
+                    CreateTemplateScreen(
+                        businessProfileId = route.businessProfileId,
+                        onNavigateBack = { navController.popBackStack() },
+                        onTemplateCreated = { navController.popBackStack() }
+                    )
+                }
+                composable<Screen.EditTemplate> { backStackEntry ->
+                    val route: Screen.EditTemplate = backStackEntry.toRoute()
+                    EditTemplateScreen(
+                        templateId = route.templateId,
+                        onNavigateBack = { navController.popBackStack() },
+                        onTemplateUpdated = { navController.popBackStack() }
+                    )
+                }
+                composable<Screen.CustomerSegments> {
+                    CustomerSegmentationScreen()
+                }
+                // CustomerAnalytics routes to the same segmentation screen as it
+                // is the primary customer analytics view in the app.
+                composable<Screen.CustomerAnalytics> {
+                    CustomerSegmentationScreen()
+                }
+                composable<Screen.Notes> {
+                    NotesScreen(navController)
+                }
+            }
+
+            if (showBottomSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showBottomSheet = false },
+                    sheetState = sheetState
+                ) {
+                    val customerViewModel: CustomerViewModel = hiltViewModel()
+                    AddCustomerForm(
+                        viewModel = customerViewModel,
+                        onCustomerSaved = {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                if (!sheetState.isVisible) {
+                                    showBottomSheet = false
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
-    }
     }
 }

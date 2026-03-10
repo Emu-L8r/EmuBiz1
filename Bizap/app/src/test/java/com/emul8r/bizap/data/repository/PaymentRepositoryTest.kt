@@ -1,8 +1,8 @@
 package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.BaseUnitTest
+import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
-import io.mockk.any
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -20,6 +20,7 @@ import kotlin.test.assertTrue
  */
 class PaymentRepositoryTest : BaseUnitTest() {
 
+    private val paymentDao: InvoicePaymentDao = mockk(relaxed = true)
     private lateinit var paymentRepository: PaymentRepositoryV2
 
     private val invoiceId = 1L
@@ -29,7 +30,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
 
     @Before
     fun setUp() {
-        paymentRepository = mockk(relaxed = true)
+        paymentRepository = PaymentRepositoryV2(paymentDao)
     }
 
     // ── recordPayment_Atomic ──────────────────────────────────────────────────
@@ -37,14 +38,14 @@ class PaymentRepositoryTest : BaseUnitTest() {
     @Test
     fun `recordPayment_Atomic - payment recorded returns success`() = runTest {
         coEvery {
-            paymentRepository.recordPayment(
+            paymentDao.recordPayment(
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = paymentAmount,
                 paymentDate = paymentDate,
                 notes = null
             )
-        } returns Result.success(Unit)
+        }
 
         val result = paymentRepository.recordPayment(
             invoiceId = invoiceId,
@@ -60,14 +61,14 @@ class PaymentRepositoryTest : BaseUnitTest() {
     @Test
     fun `recordPayment_Atomic - repository is called with correct parameters`() = runTest {
         coEvery {
-            paymentRepository.recordPayment(
-                invoiceId = io.mockk.any(),
-                businessId = io.mockk.any(),
-                amount = io.mockk.any(),
-                paymentDate = io.mockk.any(),
-                notes = io.mockk.any()
+            paymentDao.recordPayment(
+                invoiceId = invoiceId,
+                businessId = businessId,
+                amount = paymentAmount,
+                paymentDate = paymentDate,
+                notes = null
             )
-        } returns Result.success(Unit)
+        }
 
         paymentRepository.recordPayment(
             invoiceId = invoiceId,
@@ -77,8 +78,8 @@ class PaymentRepositoryTest : BaseUnitTest() {
             notes = null
         )
 
-        coVerify {
-            paymentRepository.recordPayment(
+        coVerify(exactly = 1) {
+            paymentDao.recordPayment(
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = paymentAmount,
@@ -121,14 +122,14 @@ class PaymentRepositoryTest : BaseUnitTest() {
     @Test
     fun `recordPayment_UpdatesSnapshots - repository failure propagates as failure result`() = runTest {
         coEvery {
-            paymentRepository.recordPayment(
-                invoiceId = io.mockk.any(),
-                businessId = io.mockk.any(),
-                amount = io.mockk.any(),
-                paymentDate = io.mockk.any(),
-                notes = io.mockk.any()
+            paymentDao.recordPayment(
+                invoiceId = 999L,
+                businessId = businessId,
+                amount = paymentAmount,
+                paymentDate = paymentDate,
+                notes = null
             )
-        } returns Result.failure(Exception("Invoice not found"))
+        } throws Exception("Invoice not found")
 
         val result = paymentRepository.recordPayment(
             invoiceId = 999L,
@@ -146,14 +147,14 @@ class PaymentRepositoryTest : BaseUnitTest() {
     fun `recordPayment_UpdatesSnapshots - notes are passed to repository`() = runTest {
         val notes = "Paid via EFT"
         coEvery {
-            paymentRepository.recordPayment(
-                invoiceId = io.mockk.any(),
-                businessId = io.mockk.any(),
-                amount = io.mockk.any(),
-                paymentDate = io.mockk.any(),
-                notes = io.mockk.eq(notes)
+            paymentDao.recordPayment(
+                invoiceId = invoiceId,
+                businessId = businessId,
+                amount = paymentAmount,
+                paymentDate = paymentDate,
+                notes = notes
             )
-        } returns Result.success(Unit)
+        }
 
         paymentRepository.recordPayment(
             invoiceId = invoiceId,
@@ -164,7 +165,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
         )
 
         coVerify {
-            paymentRepository.recordPayment(
+            paymentDao.recordPayment(
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = paymentAmount,

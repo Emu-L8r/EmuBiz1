@@ -6,6 +6,7 @@ import com.emul8r.bizap.data.local.dao.AnalyticsDao
 import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.repository.SnapshotSyncHelper
+import com.emul8r.bizap.data.remote.api.InvoiceApi
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
@@ -33,11 +34,12 @@ class InvoiceRepositoryTest : BaseUnitTest() {
     private val analyticsDao: AnalyticsDao = mockk(relaxed = true)
     private val paymentDao: InvoicePaymentDao = mockk(relaxed = true)
     private val snapshotSyncHelper: SnapshotSyncHelper = mockk(relaxed = true)
+    private val invoiceApi: InvoiceApi = mockk(relaxed = true)
     private lateinit var repository: InvoiceRepository
     
     @Before
     fun setup() {
-        repository = InvoiceRepositoryImpl(invoiceDao, businessProfileRepo, analyticsDao, paymentDao, snapshotSyncHelper)
+        repository = InvoiceRepositoryImpl(invoiceDao, businessProfileRepo, analyticsDao, paymentDao, snapshotSyncHelper, invoiceApi)
     }
     
     @Test
