@@ -196,4 +196,5 @@ class NavigationTest : BaseUnitTest() {
         null -> Route.LANDING
         GuiMode.GUI1 -> Route.GUI1_MAIN
         GuiMode.GUI2 -> Route.GUI2_MAIN
+    }
 }

@@ -156,4 +156,5 @@ class CreateInvoiceViewModelV2Test : BaseUnitTest() {
         assertEquals(middleCustomer, viewModel.selectedCustomer.value)
         assertEquals("Customer 2", viewModel.selectedCustomer.value?.name)
     }
+    }
 }
