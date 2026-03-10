@@ -6,6 +6,7 @@ import com.emul8r.bizap.domain.repository.CustomerRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -53,7 +54,7 @@ class CreateCustomerViewModelV2Test : BaseUnitTest() {
             onError = { errorCalled = true }
         )
 
-        advanceUntilIdle()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
         coVerify { customerRepository.insert(customer) }
@@ -84,7 +85,7 @@ class CreateCustomerViewModelV2Test : BaseUnitTest() {
             onError = { error -> errorMessage = error }
         )
 
-        advanceUntilIdle()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
         assertEquals(false, successCalled)
@@ -113,7 +114,7 @@ class CreateCustomerViewModelV2Test : BaseUnitTest() {
             onError = { error -> errorMessage = error }
         )
 
-        advanceUntilIdle()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
         assertEquals("Unknown error", errorMessage)
@@ -141,7 +142,7 @@ class CreateCustomerViewModelV2Test : BaseUnitTest() {
             onError = { }
         )
 
-        advanceUntilIdle()
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
         assertTrue(successCalled)
