@@ -44,6 +44,8 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
             amountPaid = amountPaid,
             invoiceDate = invoiceDate
         )
+    }
+
     // ── initFor ───────────────────────────────────────────────────────────────
     @Test
     fun `recordPayment_initialState - outstanding equals total minus amountPaid`() {
@@ -55,7 +57,6 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
     @Test
     fun `recordPayment_initialState - form is not valid initially`() {
         initViewModel()
-        val state = viewModel.formState.value
         val state = viewModel.formState.value
         assertFalse(state.isFormValid, "Form should not be valid before entering amount")
     }
@@ -108,9 +109,15 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
     }
 
     @Test
+    fun `recordPayment_Overpayment - exact outstanding amount is valid`() {
+        initViewModel()
         viewModel.onAmountChanged("1000.00")  // Exact outstanding
+        val state = viewModel.formState.value
         assertNull(state.amountError, "Exact outstanding amount should be valid")
+    }
+
     // ── recordPayment_InvalidDate ─────────────────────────────────────────────
+    @Test
     fun `recordPayment_InvalidDate - future date triggers validation error`() {
         initViewModel()
         val futureDate = now + 86_400_000L  // Tomorrow
@@ -120,6 +127,8 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
     }
 
     @Test
+    fun `recordPayment_InvalidDate - today date is valid`() {
+        initViewModel()
         val todayMidnight = run {
             val cal = java.util.Calendar.getInstance()
             cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
@@ -127,9 +136,14 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
             cal.set(java.util.Calendar.SECOND, 0)
             cal.set(java.util.Calendar.MILLISECOND, 0)
             cal.timeInMillis
+        }
         viewModel.onDateChanged(todayMidnight)
+        val state = viewModel.formState.value
         assertNull(state.dateError, "Today's date should be valid")
+    }
+
     // ── recordPayment_StatusTransition ────────────────────────────────────────
+    @Test
     fun `recordPayment_StatusTransition - full payment results in PAID status in use case`() = runTest {
         val partiallyPaidInvoice = invoiceTotal
         val remaining = partiallyPaidInvoice - amountPaid  // 100000 cents
@@ -163,10 +177,5 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
         val longNotes = "A".repeat(600)
         viewModel.onNotesChanged(longNotes)
         assertEquals(500, viewModel.formState.value.notes.length)
-    }
-
-    // ── helper ─────────────────────────────────────────────────────────────────
-    private fun anyLong(): Long = any()
-    }
     }
 }

@@ -42,7 +42,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
     @Test
     fun `recordPayment_Atomic - payment recorded returns success`() = runTest {
         coEvery {
-            paymentDao.recordPayment(
+            paymentDaoV2.recordPayment(
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = paymentAmount,
@@ -65,7 +65,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
     @Test
     fun `recordPayment_Atomic - repository is called with correct parameters`() = runTest {
         coEvery {
-            paymentDao.recordPayment(
+            paymentDaoV2.recordPayment(
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = paymentAmount,
@@ -83,7 +83,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
         )
 
         coVerify(exactly = 1) {
-            paymentDao.recordPayment(
+            paymentDaoV2.recordPayment(
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = paymentAmount,
@@ -126,7 +126,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
     @Test
     fun `recordPayment_UpdatesSnapshots - repository failure propagates as failure result`() = runTest {
         coEvery {
-            paymentDao.recordPayment(
+            paymentDaoV2.recordPayment(
                 invoiceId = 999L,
                 businessId = businessId,
                 amount = paymentAmount,
@@ -151,7 +151,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
     fun `recordPayment_UpdatesSnapshots - notes are passed to repository`() = runTest {
         val notes = "Paid via EFT"
         coEvery {
-            paymentDao.recordPayment(
+            paymentDaoV2.recordPayment(
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = paymentAmount,
@@ -169,7 +169,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
         )
 
         coVerify {
-            paymentDao.recordPayment(
+            paymentDaoV2.recordPayment(
                 invoiceId = invoiceId,
                 businessId = businessId,
                 amount = paymentAmount,
