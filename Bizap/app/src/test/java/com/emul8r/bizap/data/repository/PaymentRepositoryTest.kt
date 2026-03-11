@@ -48,7 +48,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
                 paymentDate = paymentDate,
                 notes = null
             )
-        }
+        } returns Unit
 
         val result = paymentRepository.recordPayment(
             invoiceId = invoiceId,
@@ -71,7 +71,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
                 paymentDate = paymentDate,
                 notes = null
             )
-        }
+        } returns Unit
 
         paymentRepository.recordPayment(
             invoiceId = invoiceId,
@@ -157,7 +157,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
                 paymentDate = paymentDate,
                 notes = notes
             )
-        }
+        } returns Unit
 
         paymentRepository.recordPayment(
             invoiceId = invoiceId,
