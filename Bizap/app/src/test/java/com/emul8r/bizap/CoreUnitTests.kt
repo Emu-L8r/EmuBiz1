@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.ui.invoices
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
@@ -16,10 +17,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.Assert.*
-import io.mockk.MockKAnnotations
-import io.mockk.coEvery
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 
 /**
  * CORE UNIT TESTS FOR BIZAP - WEEK 3

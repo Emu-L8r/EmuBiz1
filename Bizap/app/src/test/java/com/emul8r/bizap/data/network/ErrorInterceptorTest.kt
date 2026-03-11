@@ -1,9 +1,8 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.data.network
 
 import com.emul8r.bizap.BaseUnitTest
-import io.mockk.any
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
