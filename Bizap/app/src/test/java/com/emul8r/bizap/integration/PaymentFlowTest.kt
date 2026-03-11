@@ -1,12 +1,10 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.integration
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import com.emul8r.bizap.domain.usecase.RecordPaymentUseCase
-import io.mockk.any
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test

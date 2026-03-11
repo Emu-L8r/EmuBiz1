@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.domain.usecase
 
 import android.content.Context
@@ -7,7 +8,6 @@ import com.emul8r.bizap.data.repository.SnapshotSyncHelper
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.util.TestDataFactory
 import com.emul8r.bizap.utils.ConnectivityHelper
-import io.mockk.any
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Before

@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.domain.usecase
 
 import com.emul8r.bizap.BaseUnitTest
@@ -6,9 +7,7 @@ import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.model.LineItem
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.validation.ValidationRules
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
