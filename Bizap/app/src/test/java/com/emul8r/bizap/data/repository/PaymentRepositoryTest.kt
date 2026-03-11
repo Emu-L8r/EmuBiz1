@@ -5,6 +5,7 @@ import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.AppDatabase
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.dao.PaymentDaoV2
+import com.emul8r.bizap.data.local.entities.InvoiceEntity
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
@@ -31,8 +32,29 @@ class PaymentRepositoryTest : BaseUnitTest() {
     private val paymentAmount = 50000L
     private val paymentDate = System.currentTimeMillis()
 
+    /** Reusable test invoice entity with enough balance to accept payments. */
+    private val testInvoiceEntity = InvoiceEntity(
+        id = invoiceId,
+        businessProfileId = businessId,
+        customerId = 1L,
+        customerName = "Test Customer",
+        date = System.currentTimeMillis(),
+        totalAmount = 100000L,
+        isQuote = false,
+        status = "SENT",
+        amountPaid = 0L
+    )
+
     @Before
     fun setUp() {
+        // Room's withTransaction is a suspend inline extension function and cannot be mocked
+        // via a regular mockk() proxy. mockkStatic intercepts the JVM static call so that
+        // the lambda block executes immediately, enabling DAO mock verification within tests.
+        mockkStatic("androidx.room.RoomDatabaseKt")
+        coEvery { database.withTransaction(any()) } coAnswers {
+            @Suppress("UNCHECKED_CAST")
+            (firstArg<suspend () -> Any?>())()
+        }
         paymentRepository = PaymentRepositoryV2(database, invoiceDaoV2, paymentDaoV2)
     }
 
@@ -40,15 +62,10 @@ class PaymentRepositoryTest : BaseUnitTest() {
 
     @Test
     fun `recordPayment_Atomic - payment recorded returns success`() = runTest {
-        coEvery {
-            paymentDaoV2.recordPayment(
-                invoiceId = invoiceId,
-                businessId = businessId,
-                amount = paymentAmount,
-                paymentDate = paymentDate,
-                notes = null
-            )
-        } returns Unit
+        coEvery { invoiceDaoV2.getById(invoiceId) } returns testInvoiceEntity
+        coEvery { paymentDaoV2.insert(any()) } returns 1L
+        coEvery { invoiceDaoV2.updateAmountPaid(any(), any(), any()) } just Runs
+        coEvery { invoiceDaoV2.updateStatus(any(), any(), any()) } just Runs
 
         val result = paymentRepository.recordPayment(
             invoiceId = invoiceId,
@@ -63,15 +80,10 @@ class PaymentRepositoryTest : BaseUnitTest() {
 
     @Test
     fun `recordPayment_Atomic - repository is called with correct parameters`() = runTest {
-        coEvery {
-            paymentDaoV2.recordPayment(
-                invoiceId = invoiceId,
-                businessId = businessId,
-                amount = paymentAmount,
-                paymentDate = paymentDate,
-                notes = null
-            )
-        } returns Unit
+        coEvery { invoiceDaoV2.getById(invoiceId) } returns testInvoiceEntity
+        coEvery { paymentDaoV2.insert(any()) } returns 1L
+        coEvery { invoiceDaoV2.updateAmountPaid(any(), any(), any()) } just Runs
+        coEvery { invoiceDaoV2.updateStatus(any(), any(), any()) } just Runs
 
         paymentRepository.recordPayment(
             invoiceId = invoiceId,
@@ -81,15 +93,8 @@ class PaymentRepositoryTest : BaseUnitTest() {
             notes = null
         )
 
-        coVerify(exactly = 1) {
-            paymentDaoV2.recordPayment(
-                invoiceId = invoiceId,
-                businessId = businessId,
-                amount = paymentAmount,
-                paymentDate = paymentDate,
-                notes = null
-            )
-        }
+        coVerify(exactly = 1) { paymentDaoV2.insert(any()) }
+        coVerify(exactly = 1) { invoiceDaoV2.updateAmountPaid(invoiceId, paymentAmount, any()) }
     }
 
     // ── recordPayment_UpdatesInvoice ──────────────────────────────────────────
@@ -124,15 +129,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
 
     @Test
     fun `recordPayment_UpdatesSnapshots - repository failure propagates as failure result`() = runTest {
-        coEvery {
-            paymentDaoV2.recordPayment(
-                invoiceId = 999L,
-                businessId = businessId,
-                amount = paymentAmount,
-                paymentDate = paymentDate,
-                notes = null
-            )
-        } throws Exception("Invoice not found")
+        coEvery { invoiceDaoV2.getById(999L) } returns null
 
         val result = paymentRepository.recordPayment(
             invoiceId = 999L,
@@ -149,15 +146,10 @@ class PaymentRepositoryTest : BaseUnitTest() {
     @Test
     fun `recordPayment_UpdatesSnapshots - notes are passed to repository`() = runTest {
         val notes = "Paid via EFT"
-        coEvery {
-            paymentDaoV2.recordPayment(
-                invoiceId = invoiceId,
-                businessId = businessId,
-                amount = paymentAmount,
-                paymentDate = paymentDate,
-                notes = notes
-            )
-        } returns Unit
+        coEvery { invoiceDaoV2.getById(invoiceId) } returns testInvoiceEntity
+        coEvery { paymentDaoV2.insert(any()) } returns 1L
+        coEvery { invoiceDaoV2.updateAmountPaid(any(), any(), any()) } just Runs
+        coEvery { invoiceDaoV2.updateStatus(any(), any(), any()) } just Runs
 
         paymentRepository.recordPayment(
             invoiceId = invoiceId,
@@ -168,13 +160,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
         )
 
         coVerify {
-            paymentDaoV2.recordPayment(
-                invoiceId = invoiceId,
-                businessId = businessId,
-                amount = paymentAmount,
-                paymentDate = paymentDate,
-                notes = notes
-            )
+            paymentDaoV2.insert(match { it.notes == notes })
         }
     }
 }
