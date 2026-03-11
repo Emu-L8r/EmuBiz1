@@ -125,13 +125,13 @@ class DualGUINavigationTest : BaseUnitTest() {
     @Test
     fun `resetMode allows re-selection from landing screen`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
+        coEvery { dataStore.edit(any<suspend (MutablePreferences) -> Unit>()) } returns emptyPreferences()
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI2)
         viewModel.resetMode()
         testDispatcher.scheduler.advanceUntilIdle()
         // edit() must be called at least twice (once for select, once for reset)
-        coVerify(atLeast = 2) { dataStore.edit<Preferences>(any()) }
+        coVerify(atLeast = 2) { dataStore.edit(any<suspend (MutablePreferences) -> Unit>()) }
     }
 
     @Test
