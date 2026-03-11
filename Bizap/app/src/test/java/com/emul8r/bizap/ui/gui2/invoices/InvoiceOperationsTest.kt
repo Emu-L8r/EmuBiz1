@@ -228,7 +228,7 @@ class InvoiceOperationsTest {
         )
 
         // When
-        val isValid = invoice.totalAmount > 0 && invoice.customerId > 0
+        val isValid = invoice.totalAmount > 0 && (invoice.customerId ?: 0L) > 0
 
         // Then
         assertTrue(isValid)
@@ -292,7 +292,7 @@ class InvoiceOperationsTest {
         )
 
         // When
-        val isValid = invoice.customerId > 0
+        val isValid = (invoice.customerId ?: 0L) > 0
 
         // Then
         assertFalse(isValid)
