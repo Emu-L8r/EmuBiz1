@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.ui.invoices
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
@@ -7,9 +8,7 @@ import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Before
 import org.junit.Rule

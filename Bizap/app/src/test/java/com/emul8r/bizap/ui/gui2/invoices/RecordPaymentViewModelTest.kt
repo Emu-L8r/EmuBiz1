@@ -1,11 +1,9 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.ui.gui2.invoices
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.usecase.RecordPaymentUseCase
-import io.mockk.any
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.advanceUntilIdle

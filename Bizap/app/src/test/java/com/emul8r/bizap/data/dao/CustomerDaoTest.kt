@@ -1,12 +1,10 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.data.dao
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.CustomerDao
 import com.emul8r.bizap.data.local.entities.CustomerEntity
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
