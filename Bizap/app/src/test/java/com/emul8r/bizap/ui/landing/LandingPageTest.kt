@@ -2,7 +2,9 @@
 package com.emul8r.bizap.ui.landing
 
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.emul8r.bizap.BaseUnitTest
@@ -84,10 +86,10 @@ class LandingPageTest : BaseUnitTest() {
     fun `selecting GUI1 persists selection via DataStore`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
         val viewModel = LandingViewModel(dataStore)
-        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
+        coEvery { dataStore.edit(any<suspend (MutablePreferences) -> Unit>()) } returns emptyPreferences()
         viewModel.selectMode(GuiMode.GUI1)
         testDispatcher.scheduler.advanceUntilIdle()
-        coVerify(exactly = 1) { dataStore.edit<Preferences>(any()) }
+        coVerify(exactly = 1) { dataStore.edit(any<suspend (MutablePreferences) -> Unit>()) }
     }
 
     @Test
@@ -138,11 +140,11 @@ class LandingPageTest : BaseUnitTest() {
     @Test
     fun `resetMode clears persisted selection so landing screen is shown again`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.edit<Preferences>(any()) } returns emptyPreferences()
+        coEvery { dataStore.edit(any<suspend (MutablePreferences) -> Unit>()) } returns emptyPreferences()
         val viewModel = LandingViewModel(dataStore)
         viewModel.resetMode()
         testDispatcher.scheduler.advanceUntilIdle()
-        coVerify(atLeast = 1) { dataStore.edit<Preferences>(any()) }
+        coVerify(atLeast = 1) { dataStore.edit(any<suspend (MutablePreferences) -> Unit>()) }
     }
 
     @Test
