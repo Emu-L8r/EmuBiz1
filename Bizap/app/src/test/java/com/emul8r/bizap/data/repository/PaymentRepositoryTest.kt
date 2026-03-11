@@ -85,7 +85,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
         coEvery { invoiceDaoV2.updateAmountPaid(any(), any(), any()) } just Runs
         coEvery { invoiceDaoV2.updateStatus(any(), any(), any()) } just Runs
 
-        paymentRepository.recordPayment(
+        val result = paymentRepository.recordPayment(
             invoiceId = invoiceId,
             businessId = businessId,
             amount = paymentAmount,
@@ -152,7 +152,7 @@ class PaymentRepositoryTest : BaseUnitTest() {
         coEvery { invoiceDaoV2.updateAmountPaid(any(), any(), any()) } just Runs
         coEvery { invoiceDaoV2.updateStatus(any(), any(), any()) } just Runs
 
-        paymentRepository.recordPayment(
+        val result = paymentRepository.recordPayment(
             invoiceId = invoiceId,
             businessId = businessId,
             amount = paymentAmount,
