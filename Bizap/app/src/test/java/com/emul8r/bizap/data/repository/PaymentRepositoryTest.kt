@@ -40,6 +40,16 @@ class PaymentRepositoryTest : BaseUnitTest() {
 
     @Test
     fun `recordPayment_Atomic - payment recorded returns success`() = runTest {
+        coEvery {
+            paymentDaoV2.recordPayment(
+                invoiceId = invoiceId,
+                businessId = businessId,
+                amount = paymentAmount,
+                paymentDate = paymentDate,
+                notes = null
+            )
+        } returns Unit
+
         val result = paymentRepository.recordPayment(
             invoiceId = invoiceId,
             businessId = businessId,
@@ -53,7 +63,17 @@ class PaymentRepositoryTest : BaseUnitTest() {
 
     @Test
     fun `recordPayment_Atomic - repository is called with correct parameters`() = runTest {
-        val result = paymentRepository.recordPayment(
+        coEvery {
+            paymentDaoV2.recordPayment(
+                invoiceId = invoiceId,
+                businessId = businessId,
+                amount = paymentAmount,
+                paymentDate = paymentDate,
+                notes = null
+            )
+        } returns Unit
+
+        paymentRepository.recordPayment(
             invoiceId = invoiceId,
             businessId = businessId,
             amount = paymentAmount,
@@ -115,8 +135,17 @@ class PaymentRepositoryTest : BaseUnitTest() {
     @Test
     fun `recordPayment_UpdatesSnapshots - notes are passed to repository`() = runTest {
         val notes = "Paid via EFT"
+        coEvery {
+            paymentDaoV2.recordPayment(
+                invoiceId = invoiceId,
+                businessId = businessId,
+                amount = paymentAmount,
+                paymentDate = paymentDate,
+                notes = notes
+            )
+        } returns Unit
 
-        val result = paymentRepository.recordPayment(
+        paymentRepository.recordPayment(
             invoiceId = invoiceId,
             businessId = businessId,
             amount = paymentAmount,
