@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.BaseUnitTest
@@ -5,9 +6,7 @@ import com.emul8r.bizap.data.local.AppDatabase
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.dao.PaymentDaoV2
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test

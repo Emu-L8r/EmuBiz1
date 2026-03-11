@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.navigation
 
 import android.app.Application
@@ -12,11 +13,7 @@ import com.emul8r.bizap.ui.activities.ModernGUIMainActivity
 import com.emul8r.bizap.ui.activities.TraditionalGUIMainActivity
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.landing.LandingViewModel
-import io.mockk.any
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest

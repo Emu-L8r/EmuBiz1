@@ -1,12 +1,11 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.consistency
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.dao.AnalyticsDao
 import com.emul8r.bizap.data.consistency.DataConsistencyValidator
-import io.mockk.coEvery
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before

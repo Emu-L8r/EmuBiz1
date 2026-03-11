@@ -1,11 +1,10 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.ui.gui2.customers
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before

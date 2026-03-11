@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.ui.gui2.dashboard
 
 import com.emul8r.bizap.BaseUnitTest
@@ -10,8 +11,7 @@ import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
