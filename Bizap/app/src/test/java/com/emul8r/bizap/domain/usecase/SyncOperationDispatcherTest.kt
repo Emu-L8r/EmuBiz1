@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.domain.usecase
 
 import com.emul8r.bizap.BaseUnitTest
@@ -8,11 +9,7 @@ import com.emul8r.bizap.domain.model.PendingOperation
 import com.emul8r.bizap.domain.model.PendingOperationStatus
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
-import io.mockk.any
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

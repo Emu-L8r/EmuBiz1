@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.data.worker
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -6,10 +7,7 @@ import androidx.work.WorkerParameters
 import com.emul8r.bizap.data.local.dao.OfflineOperationDao
 import com.emul8r.bizap.data.local.entities.OfflineOperation
 import com.emul8r.bizap.domain.usecase.SyncPendingOperationsUseCase
-import io.mockk.any
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before

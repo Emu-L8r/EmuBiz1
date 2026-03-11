@@ -1,13 +1,11 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.data.service
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.emul8r.bizap.data.local.dao.OfflineOperationDao
 import com.emul8r.bizap.data.local.entities.OfflineOperation
 import com.emul8r.bizap.data.local.offline.OfflineQueueService
-import io.mockk.any
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

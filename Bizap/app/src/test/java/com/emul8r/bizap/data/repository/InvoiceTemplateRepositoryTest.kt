@@ -1,3 +1,4 @@
+@file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.data.local.dao.InvoiceTemplateDao
@@ -7,12 +8,7 @@ import com.emul8r.bizap.data.local.entities.InvoiceCustomField
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
-import io.mockk.any
-import io.mockk.MockKAnnotations
-import io.mockk.Runs
-import io.mockk.coEvery
-import io.mockk.just
-import io.mockk.mockk
+import io.mockk.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
