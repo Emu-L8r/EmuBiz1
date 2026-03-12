@@ -41,7 +41,11 @@ class DualGUINavigationTest : BaseUnitTest() {
     private lateinit var dataStore: DataStore<Preferences>
     @Before
     fun setUp() {
-        dataStore = mockk(relaxed = true)
+        dataStore = mockk()
+        // Setup dataStore.data to return emptyPreferences by default
+        every { dataStore.data } returns flowOf(emptyPreferences())
+        // Setup dataStore.edit() to return emptyPreferences by default
+        coEvery { dataStore.edit(any<suspend (MutablePreferences) -> Unit>()) } returns emptyPreferences()
     }
     // -----------------------------------------------------------------------
     // Landing page navigates to the correct activity class
