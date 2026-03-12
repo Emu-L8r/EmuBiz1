@@ -47,10 +47,10 @@ class PINStorageTest {
         }
         every { mockEditor.apply() } just Runs
 
-        // Setup prefs to read from backing map and handle contains
+        // Setup prefs to read from backing map - handle both null and default parameters
         every { mockPrefs.getString(any(), any()) } answers {
             val key = firstArg<String>()
-            prefData[key]
+            prefData[key]  // Return stored value or null
         }
         every { mockPrefs.contains(any()) } answers {
             prefData.containsKey(firstArg<String>())
