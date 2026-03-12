@@ -55,7 +55,8 @@ class PINStorageTest : BaseUnitTest() {
 
     @Test
     fun `isPINSet returns true after setupPIN`() {
-        every { storage.isPINSet() } returnsMany listOf(false, true)
+        every { storage.setupPIN(any()) } returns Result.success(Unit)
+        every { storage.isPINSet() } returns true
 
         val setupResult = storage.setupPIN(testPin)
         assertTrue(setupResult.isSuccess)

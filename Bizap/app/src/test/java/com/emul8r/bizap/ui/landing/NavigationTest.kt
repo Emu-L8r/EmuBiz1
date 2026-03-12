@@ -102,6 +102,7 @@ class NavigationTest : BaseUnitTest() {
         every { prefs[any<Preferences.Key<*>>()] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
+        testDispatcher.scheduler.advanceUntilIdle()
         val result = viewModel.selectedMode.first()
         assertEquals(GuiMode.GUI1, result)
     }
@@ -112,6 +113,7 @@ class NavigationTest : BaseUnitTest() {
         every { prefs[any<Preferences.Key<*>>()] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
+        testDispatcher.scheduler.advanceUntilIdle()
         val result = viewModel.selectedMode.first()
         assertEquals(GuiMode.GUI2, result)
     }
