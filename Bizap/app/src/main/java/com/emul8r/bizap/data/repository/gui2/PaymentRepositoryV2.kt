@@ -5,6 +5,7 @@ import com.emul8r.bizap.data.local.AppDatabase
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.dao.PaymentDaoV2
 import com.emul8r.bizap.data.local.entities.PaymentEntity
+import com.emul8r.bizap.data.repository.SnapshotSyncHelper
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
@@ -13,7 +14,7 @@ import javax.inject.Inject
 /**
  * GUI2 repository for recording payment transactions.
  *
- * All three database writes (insert payment, update amountPaid, update status)
+ * All database writes (insert payment, update amountPaid, update status, sync snapshots)
  * execute inside a single Room transaction to guarantee atomicity.
  *
  * All monetary values are in cents (Long).
@@ -21,7 +22,8 @@ import javax.inject.Inject
 class PaymentRepositoryV2 @Inject constructor(
     private val database: AppDatabase,
     private val invoiceDaoV2: InvoiceDaoV2,
-    private val paymentDaoV2: PaymentDaoV2
+    private val paymentDaoV2: PaymentDaoV2,
+    private val snapshotSyncHelper: SnapshotSyncHelper
 ) {
 
     /**
@@ -69,6 +71,13 @@ class PaymentRepositoryV2 @Inject constructor(
             invoiceDaoV2.updateStatus(invoiceId, newStatus, now)
 
             Timber.d("✅ Payment recorded: invoice=$invoiceId amount=$amount newStatus=$newStatus")
+
+            // Sync snapshots to keep analytics data consistent
+            // This must happen INSIDE the transaction to ensure atomicity
+            val updatedInvoice = invoiceDaoV2.getById(invoiceId)
+                ?: error("Failed to reload invoice after payment")
+            snapshotSyncHelper.syncAllSnapshots(updatedInvoice, businessId)
+            Timber.d("✅ Snapshots synced after payment for invoice=$invoiceId")
         }
     }.also { result ->
         result.onFailure { Timber.e(it, "❌ recordPayment failed for invoice $invoiceId") }
