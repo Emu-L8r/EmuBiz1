@@ -88,10 +88,10 @@ class LandingPageTest : BaseUnitTest() {
     @Test
     fun `selecting GUI1 persists selection via DataStore`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
+        coEvery { dataStore.updateData(any()) } returns emptyPreferences()
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI1)
         testDispatcher.scheduler.advanceUntilIdle()
-        // Note: updateData() is called internally, but we don't need to mock or verify it
     }
 
     @Test
@@ -142,10 +142,10 @@ class LandingPageTest : BaseUnitTest() {
     @Test
     fun `resetMode clears persisted selection so landing screen is shown again`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
+        coEvery { dataStore.updateData(any()) } returns emptyPreferences()
         val viewModel = LandingViewModel(dataStore)
         viewModel.resetMode()
         testDispatcher.scheduler.advanceUntilIdle()
-        // Note: updateData() is called internally, but we don't need to mock or verify it
     }
 
     @Test
