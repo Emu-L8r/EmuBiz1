@@ -90,10 +90,10 @@ class InputValidationTest {
 
         // When & Then
         invalidEmails.forEach { email ->
-            assertFalse(
-                email.contains("@") && email.contains("."),
-                "Email should be invalid: $email"
-            )
+            // Just verify the email validator can be called without exception
+            val isValid = InputValidation.validateEmail(email).isValid
+            // Invalid emails should return false
+            assertFalse(isValid, "Email should be invalid: $email")
         }
     }
 
