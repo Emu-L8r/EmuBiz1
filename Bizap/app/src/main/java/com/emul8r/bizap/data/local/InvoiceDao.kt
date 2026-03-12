@@ -11,6 +11,7 @@ import com.emul8r.bizap.data.local.entities.InvoiceEntity
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.local.entities.LineItemEntity
 import kotlinx.coroutines.flow.Flow
+import java.util.Calendar
 
 /**
  * Data class for calculated payment metrics.
@@ -117,9 +118,24 @@ interface InvoiceDao {
         FROM invoices
         WHERE businessProfileId = :businessId
         AND status IN ('PAID', 'PARTIALLY_PAID')
-        AND DATE(date/1000, 'unixepoch') >= date('now', 'start of month')
+        AND date >= :startDateMillis
+        AND date <= :endDateMillis
     """)
-    fun observeMTDRevenue(businessId: Long): Flow<Long>
+    fun observeMTDRevenue(businessId: Long, startDateMillis: Long, endDateMillis: Long): Flow<Long>
+
+    // Convenience overload for backward compatibility - queries from month start to now
+    fun observeMTDRevenue(businessId: Long): Flow<Long> {
+        val today = System.currentTimeMillis()
+        val calendar = Calendar.getInstance().apply { timeInMillis = today }
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val monthStartMillis = calendar.timeInMillis
+
+        return observeMTDRevenue(businessId, monthStartMillis, today)
+    }
 
     @Query("""
         SELECT 
@@ -127,9 +143,24 @@ interface InvoiceDao {
         FROM invoices
         WHERE businessProfileId = :businessId
         AND status IN ('PAID', 'PARTIALLY_PAID')
-        AND strftime('%Y', date/1000, 'unixepoch') = strftime('%Y', 'now')
+        AND date >= :startDateMillis
+        AND date <= :endDateMillis
     """)
-    fun observeYTDRevenue(businessId: Long): Flow<Long>
+    fun observeYTDRevenue(businessId: Long, startDateMillis: Long, endDateMillis: Long): Flow<Long>
+
+    // Convenience overload for backward compatibility - queries from year start to now
+    fun observeYTDRevenue(businessId: Long): Flow<Long> {
+        val today = System.currentTimeMillis()
+        val calendar = Calendar.getInstance().apply { timeInMillis = today }
+        calendar.set(Calendar.DAY_OF_YEAR, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val yearStartMillis = calendar.timeInMillis
+
+        return observeYTDRevenue(businessId, yearStartMillis, today)
+    }
 
     @Query("""
         SELECT 
@@ -137,9 +168,18 @@ interface InvoiceDao {
         FROM invoices
         WHERE businessProfileId = :businessId
         AND status IN ('PAID', 'PARTIALLY_PAID')
-        AND DATE(date/1000, 'unixepoch') >= date('now', '-7 days')
+        AND date >= :startDateMillis
+        AND date <= :endDateMillis
     """)
-    fun observeWeeklyRevenue(businessId: Long): Flow<Long>
+    fun observeWeeklyRevenue(businessId: Long, startDateMillis: Long, endDateMillis: Long): Flow<Long>
+
+    // Convenience overload for backward compatibility - queries from 7 days ago to now
+    fun observeWeeklyRevenue(businessId: Long): Flow<Long> {
+        val today = System.currentTimeMillis()
+        val weekAgoMillis = today - (7 * 24 * 60 * 60 * 1000)
+
+        return observeWeeklyRevenue(businessId, weekAgoMillis, today)
+    }
 
     @Query("""
         SELECT 

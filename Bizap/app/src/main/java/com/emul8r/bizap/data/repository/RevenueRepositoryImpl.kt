@@ -30,7 +30,17 @@ class RevenueRepositoryImpl @Inject constructor(
             invoiceDao.observeTotalPaidRevenue(businessProfileId),
             invoiceDao.observeLast30DaysRevenueTrend(businessProfileId)
         ) { mtd, ytd, weekly, totalPaid, trend ->
-            Timber.d("RevenueRepository: Reactive update - mtd=$mtd, ytd=$ytd, weekly=$weekly, totalPaid=$totalPaid cents for business $businessProfileId")
+            Timber.d("🔍 RevenueRepository: Revenue metrics received:")
+            Timber.d("   MTD: $mtd cents (${mtd/100}.${mtd%100} ${if(mtd==0L) "⚠️ ZERO!" else "✅"})")
+            Timber.d("   YTD: $ytd cents")
+            Timber.d("   Weekly: $weekly cents")
+            Timber.d("   Total Paid: $totalPaid cents")
+            Timber.d("   Trend points: ${trend.size} days")
+
+            if (mtd == 0L) {
+                Timber.w("⚠️⚠️⚠️ RevenueRepository: MTD is ZERO - check if PAID invoices exist!")
+            }
+
             RevenueMetrics(
                 mtdRevenue = mtd,
                 ytdRevenue = ytd,
