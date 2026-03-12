@@ -92,6 +92,8 @@ class CreateInvoiceScreenV2IntegrationTest : BaseUnitTest() {
             onError = { }
         )
 
+        testDispatcher.scheduler.advanceUntilIdle()
+
         // Then
         assertEquals(customer, viewModel.selectedCustomer.value)
         coVerify { invoiceRepository.saveInvoice(invoice) }
@@ -183,6 +185,8 @@ class CreateInvoiceScreenV2IntegrationTest : BaseUnitTest() {
             onError = { }
         )
 
+        testDispatcher.scheduler.advanceUntilIdle()
+
         // Then
         assertEquals("Unknown", invoice.customerName)
         coVerify { invoiceRepository.saveInvoice(invoice) }
@@ -256,6 +260,8 @@ class CreateInvoiceScreenV2IntegrationTest : BaseUnitTest() {
             onSuccess = { },
             onError = { error -> errorMessage = error }
         )
+
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then - Should handle error gracefully
         assertNotNull(errorMessage)
@@ -352,6 +358,8 @@ class CreateInvoiceScreenV2IntegrationTest : BaseUnitTest() {
             onSuccess = { },
             onError = { }
         )
+
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then - Verify both calls made
         coVerify(exactly = 2) { invoiceRepository.saveInvoice(any()) }

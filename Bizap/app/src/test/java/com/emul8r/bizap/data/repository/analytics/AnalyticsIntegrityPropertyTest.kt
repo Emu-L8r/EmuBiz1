@@ -71,7 +71,6 @@ class AnalyticsIntegrityPropertyTest : BaseUnitTest() {
                 result.isValid,
                 "Iteration $iteration: expected validation failure for outstanding=$outstanding collected=$collected badTotal=$badTotal"
             )
-            assertNull(result.error.also { }, "Error message should be present on failure")
             assertTrue(result.error != null, "Error message should be present when invalid")
         }
     }

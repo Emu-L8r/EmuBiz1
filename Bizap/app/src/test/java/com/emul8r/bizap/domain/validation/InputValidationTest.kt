@@ -1,5 +1,6 @@
 package com.emul8r.bizap.domain.validation
 
+import com.emul8r.bizap.domain.validation.InputValidator
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -91,9 +92,9 @@ class InputValidationTest {
         // When & Then
         invalidEmails.forEach { email ->
             // Just verify the email validator can be called without exception
-            val isValid = InputValidation.validateEmail(email).isValid
-            // Invalid emails should return false
-            assertFalse(isValid, "Email should be invalid: $email")
+            val result = InputValidator.validateEmail(email)
+            // Invalid emails should return failure
+            assertTrue(result.isFailure(), "Email should be invalid: $email")
         }
     }
 
