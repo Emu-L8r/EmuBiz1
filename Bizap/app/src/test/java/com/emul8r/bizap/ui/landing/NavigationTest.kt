@@ -38,8 +38,12 @@ class NavigationTest : BaseUnitTest() {
     private lateinit var mockPreferences: Preferences
     @Before
     fun setUp() {
-        dataStore = mockk(relaxed = true)
-        mockPreferences = mockk(relaxed = true)
+        dataStore = mockk()
+        mockPreferences = mockk()
+        // Setup dataStore.data to return emptyPreferences by default
+        every { dataStore.data } returns flowOf(emptyPreferences())
+        // Setup dataStore.edit() to return emptyPreferences by default
+        coEvery { dataStore.edit(any<suspend (MutablePreferences) -> Unit>()) } returns emptyPreferences()
     }
     // -----------------------------------------------------------------------
     // GuiMode enum contract
