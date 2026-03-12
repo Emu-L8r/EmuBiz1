@@ -51,10 +51,18 @@ class PaymentRepositoryTest {
         database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
+
+        // Create SnapshotSyncHelper with necessary DAOs
+        val snapshotSyncHelper = SnapshotSyncHelper(
+            analyticsDao = database.analyticsDao(),
+            paymentDao = database.invoicePaymentDao()
+        )
+
         paymentRepository = PaymentRepositoryV2(
             database = database,
             invoiceDaoV2 = database.invoiceDaoV2(),
-            paymentDaoV2 = database.paymentDaoV2()
+            paymentDaoV2 = database.paymentDaoV2(),
+            snapshotSyncHelper = snapshotSyncHelper
         )
     }
 
