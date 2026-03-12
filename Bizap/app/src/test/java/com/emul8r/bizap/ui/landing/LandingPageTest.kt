@@ -80,6 +80,7 @@ class LandingPageTest : BaseUnitTest() {
         every { prefs[any<Preferences.Key<*>>()] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
+        testDispatcher.scheduler.advanceUntilIdle()
         val result = viewModel.selectedMode.first()
         assertNotNull("After DataStore emits a valid value, state must not be null", result)
     }
@@ -100,8 +101,8 @@ class LandingPageTest : BaseUnitTest() {
         every { prefs[any<Preferences.Key<*>>()] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
-        // Simulate a second ViewModel instance (e.g. after process death + restore)
         val viewModel2 = LandingViewModel(dataStore)
+        testDispatcher.scheduler.advanceUntilIdle()
         val result = viewModel2.selectedMode.first()
         assertEquals(GuiMode.GUI1, result)
     }
@@ -113,6 +114,7 @@ class LandingPageTest : BaseUnitTest() {
         every { prefs[any<Preferences.Key<*>>()] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
+        testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(GuiMode.GUI1, viewModel.selectedMode.first())
     }
 
@@ -122,6 +124,7 @@ class LandingPageTest : BaseUnitTest() {
         every { prefs[any<Preferences.Key<*>>()] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
+        testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(GuiMode.GUI2, viewModel.selectedMode.first())
     }
 
