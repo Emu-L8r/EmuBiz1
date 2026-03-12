@@ -27,12 +27,14 @@ class PINStorageTest {
 
     @Before
     fun setUp() {
-        mockPrefs = mockk(relaxed = true)
-        mockEditor = mockk(relaxed = true)
-        mockContext = mockk(relaxed = true)
+        mockPrefs = mockk()
+        mockEditor = mockk()
+        mockContext = mockk()
 
         every { mockContext.getSharedPreferences(any(), any()) } returns mockPrefs
         every { mockPrefs.edit() } returns mockEditor
+
+        // Setup editor to modify backing map and return itself for chaining
         every { mockEditor.putString(any(), any()) } answers {
             val key = firstArg<String>()
             val value = secondArg<String?>()
@@ -45,8 +47,14 @@ class PINStorageTest {
         }
         every { mockEditor.apply() } just Runs
 
-        every { mockPrefs.getString(any(), null) } answers { prefData[firstArg<String>()] }
-        every { mockPrefs.contains(any()) } answers { prefData.containsKey(firstArg<String>()) }
+        // Setup prefs to read from backing map and handle contains
+        every { mockPrefs.getString(any(), any()) } answers {
+            val key = firstArg<String>()
+            prefData[key]
+        }
+        every { mockPrefs.contains(any()) } answers {
+            prefData.containsKey(firstArg<String>())
+        }
 
         storage = PINStorage(mockContext)
     }
