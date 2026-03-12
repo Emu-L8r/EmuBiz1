@@ -47,14 +47,6 @@ class PaymentRepositoryTest : BaseUnitTest() {
 
     @Before
     fun setUp() {
-        // Room's withTransaction is a suspend inline extension function and cannot be mocked
-        // via a regular mockk() proxy. mockkStatic intercepts the JVM static call so that
-        // the lambda block executes immediately, enabling DAO mock verification within tests.
-        mockkStatic("androidx.room.RoomDatabaseKt")
-        coEvery { database.withTransaction(any()) } coAnswers {
-            @Suppress("UNCHECKED_CAST")
-            (firstArg<suspend () -> Any?>())()
-        }
         paymentRepository = PaymentRepositoryV2(database, invoiceDaoV2, paymentDaoV2)
     }
 
