@@ -34,7 +34,7 @@ class AuthenticationManagerTest {
 
     @Test
     fun `setupInitialPIN stores PIN and starts session`() = runTest {
-        every { authRepo.setupPIN("1234") } coAnswers { Result.success(Unit) }
+        coEvery { authRepo.setupPIN("1234") } returns Result.success(Unit)
 
         val result = manager.setupInitialPIN("1234")
 
@@ -56,7 +56,7 @@ class AuthenticationManagerTest {
 
     @Test
     fun `authenticate returns Authenticated for correct PIN`() = runTest {
-        every { authRepo.verifyPIN("1234") } coAnswers { Result.success(true) }
+        coEvery { authRepo.verifyPIN("1234") } returns Result.success(true)
 
         val result = manager.authenticate("1234")
 
@@ -67,7 +67,7 @@ class AuthenticationManagerTest {
 
     @Test
     fun `authenticate returns InvalidPIN for wrong PIN`() = runTest {
-        every { authRepo.verifyPIN("9999") } coAnswers { Result.success(false) }
+        coEvery { authRepo.verifyPIN("9999") } returns Result.success(false)
 
         val result = manager.authenticate("9999")
 
@@ -78,7 +78,7 @@ class AuthenticationManagerTest {
 
     @Test
     fun `authenticate increments failed attempt counter`() = runTest {
-        every { authRepo.verifyPIN(any()) } coAnswers { Result.success(false) }
+        coEvery { authRepo.verifyPIN(any()) } returns Result.success(false)
 
         // 4 failures → still InvalidPIN
         for (i in 0 until AuthenticationManager.MAX_FAILED_ATTEMPTS - 1) {
@@ -93,22 +93,22 @@ class AuthenticationManagerTest {
 
     @Test
     fun `authenticate returns LockedOut after max failures`() = runTest {
-        every { authRepo.verifyPIN(any()) } coAnswers { Result.success(false) }
+        coEvery { authRepo.verifyPIN(any()) } returns Result.success(false)
 
         for (i in 0 until AuthenticationManager.MAX_FAILED_ATTEMPTS) {
             manager.authenticate("9999")
         }
 
         // Now locked out — even correct PIN should return LockedOut
-        every { authRepo.verifyPIN("1234") } coAnswers { Result.success(true) }
+        coEvery { authRepo.verifyPIN("1234") } returns Result.success(true)
         val state = manager.authenticate("1234").getOrThrow()
         assertIs<AuthState.LockedOut>(state)
     }
 
     @Test
     fun `successful authenticate resets failed attempt counter`() = runTest {
-        every { authRepo.verifyPIN("9999") } coAnswers { Result.success(false) }
-        every { authRepo.verifyPIN("1234") } coAnswers { Result.success(true) }
+        coEvery { authRepo.verifyPIN("9999") } returns Result.success(false)
+        coEvery { authRepo.verifyPIN("1234") } returns Result.success(true)
 
         // 2 failures
         for (i in 0 until 2) {
