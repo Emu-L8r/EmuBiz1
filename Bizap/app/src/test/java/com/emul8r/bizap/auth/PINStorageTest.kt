@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
  *
  * Uses Mockk to stub [SharedPreferences] so no Android framework is needed.
  */
-class PINStorageTest {
+class PINStorageTest : BaseUnitTest() {
 
     private lateinit var mockPrefs: SharedPreferences
     private lateinit var mockEditor: SharedPreferences.Editor
