@@ -68,6 +68,7 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
         coEvery { invoiceRepository.saveInvoice(invoice) } returns Result.success(2L)
         var successInvoked = false
         viewModel.createInvoice(invoice, onSuccess = { successInvoked = true }, onError = {})
+        advanceUntilIdle()
         assertTrue(successInvoked)
     }
 

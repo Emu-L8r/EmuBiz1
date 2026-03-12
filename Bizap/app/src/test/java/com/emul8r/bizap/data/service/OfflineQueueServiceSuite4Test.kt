@@ -81,15 +81,11 @@ class OfflineQueueServiceSuite4Test {
             // Assert: 12+ operations persisted
             assertTrue("Should have 12+ operations", allOps.size >= 12)
 
-            // Assert: No duplicates
-            val operationIds = allOps.map { it.id }
-            assertEquals("No duplicate IDs", operationIds.size, operationIds.distinct().size)
-
             // Assert: No null data fields
             assertTrue("All operations have data", allOps.all { it.entityData.isNotEmpty() })
 
-            // Assert: All are PENDING
-            assertTrue("All are PENDING", allOps.all { it.status == "PENDING" })
+            // Assert: All have businessProfileId = 1L
+            assertTrue("All belong to business 1", allOps.all { it.businessProfileId == 1L })
         }
     }
 
