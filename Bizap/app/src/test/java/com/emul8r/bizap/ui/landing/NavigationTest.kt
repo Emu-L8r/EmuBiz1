@@ -38,6 +38,7 @@ class NavigationTest : BaseUnitTest() {
     private lateinit var mockPreferences: Preferences
     @Before
     fun setUp() {
+        setupBase()  // Call parent setup first
         dataStore = mockk()
         mockPreferences = mockk()
         // Setup dataStore.data to return emptyPreferences by default

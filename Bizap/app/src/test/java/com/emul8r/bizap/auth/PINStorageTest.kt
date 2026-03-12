@@ -27,6 +27,7 @@ class PINStorageTest {
 
     @Before
     fun setUp() {
+        setupBase()  // Call parent setup first
         mockPrefs = mockk()
         mockEditor = mockk()
         mockContext = mockk()
