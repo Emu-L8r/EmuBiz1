@@ -98,8 +98,8 @@ class NavigationTest : BaseUnitTest() {
     // LandingViewModel — reading persisted mode
     @Test
     fun `selectedMode emits GUI1 when DataStore contains GUI1`() = runTest {
-        val prefs = mockk<Preferences>()
-        every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI1"
+        val prefs = mockk<Preferences>(relaxed = true)
+        every { prefs[any<Preferences.Key<*>>()] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
         val result = viewModel.selectedMode.first()
@@ -108,8 +108,8 @@ class NavigationTest : BaseUnitTest() {
 
     @Test
     fun `selectedMode emits GUI2 when DataStore contains GUI2`() = runTest {
-        val prefs = mockk<Preferences>()
-        every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI2"
+        val prefs = mockk<Preferences>(relaxed = true)
+        every { prefs[any<Preferences.Key<*>>()] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
         val result = viewModel.selectedMode.first()
