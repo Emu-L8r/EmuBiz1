@@ -34,8 +34,8 @@ class LandingPageTest : BaseUnitTest() {
         dataStore = mockk()
         // Setup dataStore.data to return emptyPreferences by default
         every { dataStore.data } returns flowOf(emptyPreferences())
-        // Setup dataStore.edit() to return emptyPreferences
-        coEvery { dataStore.edit(any<suspend (MutablePreferences) -> Unit>()) } returns emptyPreferences()
+        // Setup dataStore.updateData() to return emptyPreferences
+        coEvery { dataStore.updateData(any<suspend (MutablePreferences) -> Unit>()) } returns emptyPreferences()
     }
     // -----------------------------------------------------------------------
     // LandingScreen composable contract (structural)

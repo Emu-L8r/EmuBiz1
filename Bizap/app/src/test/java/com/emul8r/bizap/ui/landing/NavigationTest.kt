@@ -43,8 +43,8 @@ class NavigationTest : BaseUnitTest() {
         mockPreferences = mockk()
         // Setup dataStore.data to return emptyPreferences by default
         every { dataStore.data } returns flowOf(emptyPreferences())
-        // Setup dataStore.edit() to return emptyPreferences by default
-        coEvery { dataStore.edit(any<suspend (MutablePreferences) -> Unit>()) } returns emptyPreferences()
+        // Setup dataStore.updateData() to return emptyPreferences by default
+        coEvery { dataStore.updateData(any<suspend (MutablePreferences) -> Unit>()) } returns emptyPreferences()
     }
     // -----------------------------------------------------------------------
     // GuiMode enum contract
