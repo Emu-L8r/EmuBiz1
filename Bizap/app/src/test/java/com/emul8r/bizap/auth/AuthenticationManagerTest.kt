@@ -81,7 +81,7 @@ class AuthenticationManagerTest {
         every { authRepo.verifyPIN(any()) } coAnswers { Result.success(false) }
 
         // 4 failures → still InvalidPIN
-        repeat(AuthenticationManager.MAX_FAILED_ATTEMPTS - 1) {
+        for (i in 0 until AuthenticationManager.MAX_FAILED_ATTEMPTS - 1) {
             val state = manager.authenticate("9999").getOrThrow()
             assertIs<AuthState.InvalidPIN>(state)
         }
@@ -95,7 +95,7 @@ class AuthenticationManagerTest {
     fun `authenticate returns LockedOut after max failures`() = runTest {
         every { authRepo.verifyPIN(any()) } coAnswers { Result.success(false) }
 
-        repeat(AuthenticationManager.MAX_FAILED_ATTEMPTS) {
+        for (i in 0 until AuthenticationManager.MAX_FAILED_ATTEMPTS) {
             manager.authenticate("9999")
         }
 
@@ -111,13 +111,15 @@ class AuthenticationManagerTest {
         every { authRepo.verifyPIN("1234") } coAnswers { Result.success(true) }
 
         // 2 failures
-        repeat(2) { manager.authenticate("9999") }
+        for (i in 0 until 2) {
+            manager.authenticate("9999")
+        }
 
         // Successful login resets counter
         manager.authenticate("1234")
 
         // Now 4 more failures should not trigger lockout (counter was reset)
-        repeat(AuthenticationManager.MAX_FAILED_ATTEMPTS - 1) {
+        for (i in 0 until AuthenticationManager.MAX_FAILED_ATTEMPTS - 1) {
             val state = manager.authenticate("9999").getOrThrow()
             assertIs<AuthState.InvalidPIN>(state)
         }
