@@ -30,6 +30,7 @@ class LandingPageTest : BaseUnitTest() {
     private lateinit var dataStore: DataStore<Preferences>
     @Before
     fun setUp() {
+        setupBase()  // Call parent setup first
         dataStore = mockk()
         // Setup dataStore.data to return emptyPreferences by default
         every { dataStore.data } returns flowOf(emptyPreferences())
