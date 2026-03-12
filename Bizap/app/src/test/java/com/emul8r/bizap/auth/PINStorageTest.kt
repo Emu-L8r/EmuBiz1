@@ -2,6 +2,7 @@ package com.emul8r.bizap.auth
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.PINStorage
 import io.mockk.*
 import org.junit.Before
