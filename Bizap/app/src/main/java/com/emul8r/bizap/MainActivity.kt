@@ -1,6 +1,7 @@
 package com.emul8r.bizap
 
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -23,6 +24,12 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import androidx.navigation.toRoute
+import com.emul8r.bizap.domain.model.AuthState
+import com.emul8r.bizap.domain.service.AuthenticationManager
+import com.emul8r.bizap.ui.auth.AuthViewModel
+import com.emul8r.bizap.ui.auth.LoginScreen
+import com.emul8r.bizap.ui.auth.PINSetupScreen
+import javax.inject.Inject
 import com.emul8r.bizap.ui.customers.*
 import com.emul8r.bizap.ui.dashboard.DashboardScreen
 import com.emul8r.bizap.ui.documents.DocumentVaultScreen
@@ -64,6 +71,17 @@ data class NavigationItem(
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    @Inject
+    lateinit var authManager: AuthenticationManager
+
+    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+        // Guard against calls before Hilt injection completes
+        if (::authManager.isInitialized) {
+            authManager.updateLastInteraction()
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -75,25 +93,43 @@ class MainActivity : ComponentActivity() {
             Timber.d("🎨 Theme recomposed: seedColorHex = ${config.seedColorHex}")
 
             BizapTheme(themeConfig = config) {
-                val landingViewModel: LandingViewModel = hiltViewModel()
-                val selectedMode by landingViewModel.selectedMode.collectAsStateWithLifecycle()
-                val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
-                val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
+                val authViewModel: AuthViewModel = hiltViewModel()
+                val authState by authViewModel.authState.collectAsStateWithLifecycle()
 
-                when (selectedMode) {
-                    null -> LandingScreen(
-                        onSelectGui1 = { landingViewModel.selectMode(GuiMode.GUI1) },
-                        onSelectGui2 = { landingViewModel.selectMode(GuiMode.GUI2) }
-                    )
-                    GuiMode.GUI1 -> MainScreen(
-                        onSwitchGui = { landingViewModel.resetMode() }
-                    )
-                    GuiMode.GUI2 -> {
-                        val gui2NavController = rememberNavController()
-                        GuiV2NavGraph(
-                            navController = gui2NavController,
-                            startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
-                            onSwitchToGui1 = { landingViewModel.resetMode() }
+                when (authState) {
+                    is AuthState.NotInitialized -> {
+                        PINSetupScreen(
+                            onSetupComplete = { authViewModel.refreshAuthState() }
+                        )
+                    }
+                    is AuthState.Authenticated -> {
+                        val landingViewModel: LandingViewModel = hiltViewModel()
+                        val selectedMode by landingViewModel.selectedMode.collectAsStateWithLifecycle()
+                        val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
+                        val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
+
+                        when (selectedMode) {
+                            null -> LandingScreen(
+                                onSelectGui1 = { landingViewModel.selectMode(GuiMode.GUI1) },
+                                onSelectGui2 = { landingViewModel.selectMode(GuiMode.GUI2) }
+                            )
+                            GuiMode.GUI1 -> MainScreen(
+                                onSwitchGui = { landingViewModel.resetMode() }
+                            )
+                            GuiMode.GUI2 -> {
+                                val gui2NavController = rememberNavController()
+                                GuiV2NavGraph(
+                                    navController = gui2NavController,
+                                    startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
+                                    onSwitchToGui1 = { landingViewModel.resetMode() }
+                                )
+                            }
+                        }
+                    }
+                    else -> {
+                        // SessionExpired, LockedOut, or InvalidPIN — show login screen
+                        LoginScreen(
+                            onAuthenticated = { authViewModel.refreshAuthState() }
                         )
                     }
                 }
