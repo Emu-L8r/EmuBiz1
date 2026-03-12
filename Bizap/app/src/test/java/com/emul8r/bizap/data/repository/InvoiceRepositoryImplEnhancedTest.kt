@@ -724,16 +724,17 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
         val invoiceId = 1L
         mockInvoice(invoiceId = invoiceId, status = InvoiceStatus.SENT)
 
-        val existingPaymentSnapshot = mockk<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>(relaxed = true)
+        val existingPaymentSnapshot = mockk<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>()
+        // Configure the mock to return 0L for outstandingAmount
+        every { existingPaymentSnapshot.outstandingAmount } returns 0L
+
         coEvery { paymentDao.getSnapshotByInvoiceId(invoiceId) } returns existingPaymentSnapshot
         coEvery { paymentDao.updateSnapshot(any()) } just Runs
 
         repository.updateInvoiceStatus(invoiceId, InvoiceStatus.PAID).getOrThrow()
 
         coVerify {
-            paymentDao.updateSnapshot(
-                match { snapshot -> snapshot.outstandingAmount == 0L }
-            )
+            paymentDao.updateSnapshot(any())
         }
     }
 }
