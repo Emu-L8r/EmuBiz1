@@ -105,10 +105,7 @@ fun LoginScreen(
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = uiState.errorMessage!!,
-                    color = if (uiState.lockoutSecondsRemaining > 0)
-                        MaterialTheme.colorScheme.error
-                    else
-                        MaterialTheme.colorScheme.error,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center
                 )
