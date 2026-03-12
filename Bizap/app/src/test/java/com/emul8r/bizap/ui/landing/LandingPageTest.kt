@@ -76,8 +76,8 @@ class LandingPageTest : BaseUnitTest() {
 
     @Test
     fun `loading state completes — selectedMode is not stuck at null`() = runTest {
-        val prefs = mockk<Preferences>()
-        every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI2"
+        val prefs = mockk<Preferences>(relaxed = true)
+        every { prefs[any<Preferences.Key<*>>()] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
         val result = viewModel.selectedMode.first()
@@ -96,8 +96,8 @@ class LandingPageTest : BaseUnitTest() {
 
     @Test
     fun `selection persists across ViewModel recreations`() = runTest {
-        val prefs = mockk<Preferences>()
-        every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI1"
+        val prefs = mockk<Preferences>(relaxed = true)
+        every { prefs[any<Preferences.Key<*>>()] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
         // Simulate a second ViewModel instance (e.g. after process death + restore)
@@ -109,8 +109,8 @@ class LandingPageTest : BaseUnitTest() {
     // App restart restores selection
     @Test
     fun `app restart restores GUI1 selection from DataStore`() = runTest {
-        val prefs = mockk<Preferences>()
-        every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI1"
+        val prefs = mockk<Preferences>(relaxed = true)
+        every { prefs[any<Preferences.Key<*>>()] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
         assertEquals(GuiMode.GUI1, viewModel.selectedMode.first())
@@ -118,8 +118,8 @@ class LandingPageTest : BaseUnitTest() {
 
     @Test
     fun `app restart restores GUI2 selection from DataStore`() = runTest {
-        val prefs = mockk<Preferences>()
-        every { prefs[stringPreferencesKey("gui_mode")] } returns "GUI2"
+        val prefs = mockk<Preferences>(relaxed = true)
+        every { prefs[any<Preferences.Key<*>>()] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
         val viewModel = LandingViewModel(dataStore)
         assertEquals(GuiMode.GUI2, viewModel.selectedMode.first())
