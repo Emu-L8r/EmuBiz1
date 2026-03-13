@@ -93,15 +93,15 @@ class InvoicePdfService @Inject constructor(
         canvas.drawLine(40f, 110f, 555f, 110f, Paint().apply { color = colors.secondary; strokeWidth = 1f })
 
         bodyPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText("BILL TO:", 40f, 140f, labelPaint)
+        canvas.drawText("BILL TO:", 40f, 130f, labelPaint)
         canvas.drawText(snapshot.customerName, 40f, 145f, headerPaint)
-        canvas.drawText(snapshot.customerAddress, 40f, 160f, bodyPaint)
-        snapshot.customerEmail?.let { canvas.drawText(it, 40f, 175f, bodyPaint) }
+        canvas.drawText(snapshot.customerAddress, 40f, 162f, bodyPaint)
+        snapshot.customerEmail?.let { canvas.drawText(it, 40f, 178f, bodyPaint) }
 
-        canvas.drawText(fileType.uppercase(), 400f, 140f, labelPaint)
-        canvas.drawText("# ${snapshot.invoiceNumber}", 400f, 145f, headerPaint)
-        canvas.drawText("Date: ${formatDate(snapshot.date)}", 400f, 170f, bodyPaint)
-        canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 400f, 185f, bodyPaint)
+        canvas.drawText(fileType.uppercase(), 400f, 130f, labelPaint)
+        canvas.drawText(snapshot.displayName.ifBlank { snapshot.invoiceNumber }, 400f, 145f, headerPaint)
+        canvas.drawText("Date: ${formatDate(snapshot.date)}", 400f, 162f, bodyPaint)
+        canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 400f, 178f, bodyPaint)
 
         var currentY = 220f
 

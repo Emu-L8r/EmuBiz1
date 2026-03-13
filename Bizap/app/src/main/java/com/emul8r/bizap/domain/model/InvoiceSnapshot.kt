@@ -7,6 +7,7 @@ package com.emul8r.bizap.domain.model
 data class InvoiceSnapshot(
     val invoiceId: Long,
     val invoiceNumber: String,
+    val displayName: String = "",
     val customerName: String,
     val customerAddress: String,
     val customerEmail: String?,

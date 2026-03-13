@@ -242,4 +242,12 @@ interface InvoiceDao {
           AND isActive = 1
     """)
     suspend fun getTotalRevenueForCustomers(businessId: Long): Double
+
+    @Query("""
+        SELECT COUNT(*)
+        FROM invoices
+        WHERE DATE(createdAt/1000, 'unixepoch') = DATE(:dateMillis/1000, 'unixepoch')
+          AND isActive = 1
+    """)
+    suspend fun countInvoicesOnDate(dateMillis: Long): Int
 }
