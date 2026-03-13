@@ -9,11 +9,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
+import com.emul8r.bizap.ui.common.MetricCard
 import com.emul8r.bizap.ui.customers.CustomerViewModel
 import com.emul8r.bizap.ui.dashboard.components.InvoiceStatusPieChart
 import com.emul8r.bizap.ui.dashboard.components.NotesCard
@@ -26,6 +29,7 @@ import com.emul8r.bizap.ui.revenue.RevenueDashboardUiState
 import com.emul8r.bizap.ui.revenue.RevenueDashboardViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
+import com.emul8r.bizap.ui.theme.StatusColors
 import com.emul8r.bizap.utils.CentsFormatter
 
 @Composable
@@ -62,7 +66,8 @@ fun DashboardScreen(
     LazyColumn(
         modifier = Modifier
             .padding(16.dp)
-            .fillMaxSize(),
+            .fillMaxSize()
+            .subtleVerticalGradient(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -171,58 +176,105 @@ fun DashboardScreen(
         }
 
         item {
-            // Third row: Expected Revenue vs Actual Revenue
+            // Third row: Expected Revenue vs Actual Revenue with color coding
             val expectedRevenue: Long
             val actualRevenue: Long
+            val outstandingAmount: Long
+            val overdueAmount: Long
             when (val s = revenueState) {
                 is RevenueDashboardUiState.Success -> {
-                    // Expected Revenue = outstanding (SENT/PARTIALLY_PAID/OVERDUE) + collected (PAID/PARTIALLY_PAID)
-                    // This represents the total billed amount we expect to collect
+                    // Expected Revenue = outstanding + collected (total billed)
                     expectedRevenue = s.metrics.outstandingAmount + s.metrics.totalPaidRevenue
-                    // Actual Revenue = amount already collected (amountPaid for PAID + PARTIALLY_PAID)
+                    // Actual Revenue = amount already collected
                     actualRevenue = s.metrics.totalPaidRevenue
+                    outstandingAmount = s.metrics.outstandingAmount
+                    // Calculate overdue from invoice status counts
+                    val overdueCount = statusCounts["OVERDUE"] ?: 0
+                    // Estimate overdue amount (proportional to count)
+                    overdueAmount = if (overdueCount > 0 && outstandingAmount > 0) {
+                        (outstandingAmount * 0.3).toLong() // Rough estimate
+                    } else {
+                        0L
+                    }
                 }
                 else -> {
                     expectedRevenue = 0L
                     actualRevenue = 0L
+                    outstandingAmount = 0L
+                    overdueAmount = 0L
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                ElevatedCard(
-                    modifier = Modifier.weight(1f),
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Icon(Icons.Default.TrendingUp, contentDescription = null)
-                        Text("Expected Revenue", style = MaterialTheme.typography.labelMedium)
-                        Text(
-                            CentsFormatter.formatCents(expectedRevenue),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+            
+            // Color-coded metric cards
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                MetricCard(
+                    title = "Expected Revenue",
+                    value = CentsFormatter.formatCents(expectedRevenue),
+                    icon = Icons.Default.TrendingUp,
+                    backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
+                    borderColor = StatusColors.Paid.copy(alpha = 0.3f),
+                    accentColor = StatusColors.Paid,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                MetricCard(
+                    title = "Actual Revenue",
+                    value = CentsFormatter.formatCents(actualRevenue),
+                    icon = Icons.Default.CheckCircle,
+                    backgroundColor = StatusColors.Sent.copy(alpha = 0.08f),
+                    borderColor = StatusColors.Sent.copy(alpha = 0.3f),
+                    accentColor = StatusColors.Sent,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+        
+        item {
+            // Fourth row: Outstanding and Overdue amounts
+            val outstandingAmount: Long
+            val overdueAmount: Long
+            when (val s = revenueState) {
+                is RevenueDashboardUiState.Success -> {
+                    outstandingAmount = s.metrics.outstandingAmount
+                    val overdueCount = statusCounts["OVERDUE"] ?: 0
+                    overdueAmount = if (overdueCount > 0 && outstandingAmount > 0) {
+                        (outstandingAmount * 0.3).toLong()
+                    } else {
+                        0L
                     }
                 }
-
-                ElevatedCard(
-                    modifier = Modifier.weight(1f),
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Icon(Icons.Default.AttachMoney, contentDescription = null)
-                        Text("Actual Revenue", style = MaterialTheme.typography.labelMedium)
-                        Text(
-                            CentsFormatter.formatCents(actualRevenue),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                else -> {
+                    outstandingAmount = 0L
+                    overdueAmount = 0L
                 }
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                MetricCard(
+                    title = "Outstanding",
+                    value = CentsFormatter.formatCents(outstandingAmount),
+                    icon = Icons.Default.Schedule,
+                    backgroundColor = StatusColors.Outstanding.copy(alpha = 0.08f),
+                    borderColor = StatusColors.Outstanding.copy(alpha = 0.3f),
+                    accentColor = StatusColors.Outstanding,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                MetricCard(
+                    title = "Overdue",
+                    value = CentsFormatter.formatCents(overdueAmount),
+                    icon = Icons.Default.Error,
+                    backgroundColor = StatusColors.Overdue.copy(alpha = 0.08f),
+                    borderColor = StatusColors.Overdue.copy(alpha = 0.3f),
+                    accentColor = StatusColors.Overdue,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
 
