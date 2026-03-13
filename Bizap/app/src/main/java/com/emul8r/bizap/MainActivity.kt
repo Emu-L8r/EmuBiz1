@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
-                } // end else (splashComplete)
+                }
             }
         }
     }
