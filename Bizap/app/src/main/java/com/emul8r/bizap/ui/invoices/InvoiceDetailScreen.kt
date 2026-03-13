@@ -87,6 +87,18 @@ fun InvoiceDetailScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.csvExportEvent.collectLatest { file ->
+            val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/csv"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(intent, "Share CSV"))
+        }
+    }
+
     Scaffold(
         topBar = {},  // MainActivity provides the header
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -159,7 +171,7 @@ fun InvoiceDetailScreen(
 
                             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                                 Column(Modifier.padding(16.dp)) {
-                                    Text(invoice.invoiceNumber, style = MaterialTheme.typography.headlineSmall)
+                                    Text(invoice.displayName.ifBlank { invoice.invoiceNumber }, style = MaterialTheme.typography.headlineSmall)
                                     Text(formatDate(invoice.date), style = MaterialTheme.typography.bodyMedium)
                                     Text("Customer: ${invoice.customerName}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
 
@@ -397,6 +409,26 @@ fun InvoiceDetailScreen(
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
+                                }
+
+                                // TERTIARY ACTION: Export as CSV
+                                OutlinedButton(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
+                                    onClick = { viewModel.exportAsCsv() }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.TableChart,
+                                        contentDescription = "Export CSV",
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Export as CSV",
+                                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
                                 }
                             }
                         }

@@ -95,7 +95,7 @@ fun InvoiceList(
                     colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                     overlineContent = { 
                         Text(
-                            "INV-${invoice.id}", 
+                            invoice.displayName.ifBlank { invoice.invoiceNumber }, 
                             color = MaterialTheme.colorScheme.primary
                         ) 
                     },

@@ -327,4 +327,99 @@ interface InvoiceDaoV2 {
         @androidx.room.ColumnInfo(name = "billedAmount")   val billedAmount: Long,
         @androidx.room.ColumnInfo(name = "collectedAmount") val collectedAmount: Long
     )
+
+    // ==================== DISPLAY NAME / DAILY COUNTER ====================
+
+    /**
+     * Count how many invoices (for any customer) were created on the same UTC date
+     * as [dateMillis]. Used to compute the daily reset counter for new invoice display names.
+     */
+    @Query("""
+        SELECT COUNT(*)
+        FROM invoices
+        WHERE DATE(createdAt/1000, 'unixepoch') = DATE(:dateMillis/1000, 'unixepoch')
+          AND isActive = 1
+    """)
+    suspend fun countInvoicesOnDate(dateMillis: Long): Int
+
+    // ==================== INVOICE ANALYTICS TIME SERIES ====================
+
+    /**
+     * Invoices grouped by week (ISO week string YYYY-WW) for the last [months] months.
+     * Returns counts split by whether the invoice is completed (PAID) or not.
+     */
+    @Query("""
+        SELECT
+            strftime('%Y-W%W', date/1000, 'unixepoch') AS periodLabel,
+            COUNT(*) AS totalCount,
+            COUNT(CASE WHEN status = 'PAID' THEN 1 END) AS paidCount,
+            COUNT(CASE WHEN status != 'PAID' AND status != 'DRAFT' THEN 1 END) AS sentCount
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status != 'DRAFT'
+          AND date >= strftime('%s', 'now', '-' || :months || ' months') * 1000
+        GROUP BY periodLabel
+        ORDER BY periodLabel ASC
+    """)
+    suspend fun getWeeklyInvoiceTrend(businessId: Long, months: Int): List<InvoicePeriodStat>
+
+    /**
+     * Invoices grouped by month (YYYY-MM) for the last [months] months.
+     */
+    @Query("""
+        SELECT
+            strftime('%Y-%m', date/1000, 'unixepoch') AS periodLabel,
+            COUNT(*) AS totalCount,
+            COUNT(CASE WHEN status = 'PAID' THEN 1 END) AS paidCount,
+            COUNT(CASE WHEN status != 'PAID' AND status != 'DRAFT' THEN 1 END) AS sentCount
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status != 'DRAFT'
+          AND date >= strftime('%s', 'now', '-' || :months || ' months') * 1000
+        GROUP BY periodLabel
+        ORDER BY periodLabel ASC
+    """)
+    suspend fun getMonthlyInvoiceTrend(businessId: Long, months: Int): List<InvoicePeriodStat>
+
+    // ==================== DASHBOARD INVOICE COUNTS ====================
+
+    /** Total count of all active invoices (any status except DRAFT). */
+    @Query("""
+        SELECT COUNT(*)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status != 'DRAFT'
+    """)
+    fun observeTotalInvoiceCount(businessId: Long): Flow<Int>
+
+    /** Count of invoices with PAID status. */
+    @Query("""
+        SELECT COUNT(*)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status = 'PAID'
+    """)
+    fun observePaidInvoiceCount(businessId: Long): Flow<Int>
+
+    /** Count of invoices with SENT status (pending payment). */
+    @Query("""
+        SELECT COUNT(*)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status = 'SENT'
+    """)
+    fun observeSentInvoiceCount(businessId: Long): Flow<Int>
 }
+
+/** Aggregated invoice stats for one time period (week or month). */
+data class InvoicePeriodStat(
+    @androidx.room.ColumnInfo(name = "periodLabel") val periodLabel: String,
+    @androidx.room.ColumnInfo(name = "totalCount")  val totalCount: Int,
+    @androidx.room.ColumnInfo(name = "paidCount")   val paidCount: Int,
+    @androidx.room.ColumnInfo(name = "sentCount")   val sentCount: Int
+)

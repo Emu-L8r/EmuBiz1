@@ -83,12 +83,22 @@ class InvoiceRepositoryImpl @Inject constructor(
             // NEW invoice: INSERT with auto-generated ID
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
             val nextSequence = invoiceDao.getMaxSequenceForYear(currentYear, activeBusinessId) + 1
+
+            // ── Daily counter & display name (v1.0.1) ──────────────────────────
+            val nowMillis = System.currentTimeMillis()
+            val existingCountToday = invoiceDao.countInvoicesOnDate(nowMillis)
+            val dailyCounter = existingCountToday + 1
+            val displayName = buildDisplayName(invoiceToSave.customerName, nowMillis, dailyCounter)
+            // ─────────────────────────────────────────────────────────────────────
+
             invoiceToSave = invoiceToSave.copy(
                 invoiceYear = currentYear,
                 invoiceSequence = nextSequence,
-                version = 1
+                version = 1,
+                dailyCounter = dailyCounter,
+                displayName = displayName
             )
-            Timber.i("🔢 Assigning scoped invoice number: INV-$currentYear-${nextSequence.toString().padStart(6, '0')} for business $activeBusinessId")
+            Timber.i("🔢 Invoice display name: $displayName (counter=$dailyCounter) for business $activeBusinessId")
 
             val invoiceEntity = invoiceToSave.toEntity()
             val lineItemEntities = invoiceToSave.items.map { it.toEntity(invoiceToSave.id) }
@@ -780,6 +790,30 @@ class InvoiceRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Failed to regenerate analytics snapshot for invoice ${invoiceWithItems.invoice.id}")
         }
+    }
+
+    // ==================== DISPLAY NAME GENERATION ====================
+
+    /**
+     * Builds a human-readable invoice display name in the format:
+     *   `customername-ddMMyyyy-01`
+     *
+     * Rules:
+     * - Customer name is lowercased and stripped to alphanumeric characters only.
+     * - If the name is blank, "invoice" is used as the fallback.
+     * - Date is formatted as ddMMyyyy from [dateMillis].
+     * - [counter] is zero-padded to at least 2 digits.
+     */
+    private fun buildDisplayName(customerName: String, dateMillis: Long, counter: Int): String {
+        val sanitized = customerName
+            .lowercase()
+            .replace(Regex("[^a-z0-9]"), "")
+            .take(20)
+            .ifBlank { "invoice" }
+        val datePart = java.text.SimpleDateFormat("ddMMyyyy", java.util.Locale.getDefault())
+            .format(java.util.Date(dateMillis))
+        val counterPart = counter.toString().padStart(2, '0')
+        return "$sanitized-$datePart-$counterPart"
     }
 }
 
