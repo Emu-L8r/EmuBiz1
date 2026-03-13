@@ -29,6 +29,7 @@ import com.emul8r.bizap.domain.service.AuthenticationManager
 import com.emul8r.bizap.ui.auth.AuthViewModel
 import com.emul8r.bizap.ui.auth.LoginScreen
 import com.emul8r.bizap.ui.auth.PINSetupScreen
+import com.emul8r.bizap.ui.splash.SplashScreen
 import javax.inject.Inject
 import com.emul8r.bizap.ui.customers.*
 import com.emul8r.bizap.ui.dashboard.DashboardScreen
@@ -96,7 +97,13 @@ class MainActivity : ComponentActivity() {
                 val authViewModel: AuthViewModel = hiltViewModel()
                 val authState by authViewModel.authState.collectAsStateWithLifecycle()
 
-                when (authState) {
+                // Show splash screen on first launch
+                var splashComplete by remember { mutableStateOf(false) }
+
+                if (!splashComplete) {
+                    SplashScreen(onSplashComplete = { splashComplete = true })
+                } else {
+                    when (authState) {
                     is AuthState.NotInitialized -> {
                         PINSetupScreen(
                             onSetupComplete = { authViewModel.refreshAuthState() }
@@ -133,6 +140,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+                } // end else (splashComplete)
             }
         }
     }

@@ -55,4 +55,14 @@
     <color name="material_blue_500">#FF2196F3</color>
     <color name="material_blue_700">#FF1976D2</color>
     <color name="material_blue_900">#FF0D47A1</color>
+
+    <!-- Bizap Brand Colors -->
+    <color name="colorPrimaryBrand">#5B3BA0</color>
+    <color name="colorSecondaryBrand">#F59E0B</color>
+    <color name="colorSurfaceLight">#FFFFFF</color>
+    <color name="colorSurfaceVariant">#F3F0FA</color>
+    <color name="colorOnSurface">#1F1F3D</color>
+    <color name="colorOnSurfaceVariant">#6B7280</color>
+    <color name="gradientPurpleStart">#5B3BA0</color>
+    <color name="gradientLavenderEnd">#E8E5F0</color>
 </resources>
