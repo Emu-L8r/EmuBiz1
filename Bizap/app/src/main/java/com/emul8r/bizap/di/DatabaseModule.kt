@@ -26,7 +26,7 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
-        return Room.databaseBuilder(
+        val builder = Room.databaseBuilder(
             context,
             AppDatabase::class.java,
             "bizap-db"
@@ -46,9 +46,14 @@ object DatabaseModule {
             MIGRATION_32_33,
             MIGRATION_33_34
         )
-        // Allow fallback for development (will delete old DB and start fresh)
-        .fallbackToDestructiveMigration()
-        .build()
+
+        // ✅ PRODUCTION SAFE: Only allow destructive fallback in DEBUG builds
+        // In RELEASE: fail loudly if migration missing (don't silently delete user data)
+        if (com.emul8r.bizap.BuildConfig.DEBUG) {
+            builder.fallbackToDestructiveMigration()
+        }
+
+        return builder.build()
     }
 
     @Provides fun provideCustomerDao(db: AppDatabase): CustomerDao = db.customerDao()
