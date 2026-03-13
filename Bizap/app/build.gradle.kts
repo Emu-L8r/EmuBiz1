@@ -116,6 +116,10 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    // SQLCipher - encrypted database (passphrase stored in Android Keystore)
+    implementation("net.zetetic:sqlcipher-android:4.13.0@aar")
+    implementation("androidx.sqlite:sqlite-ktx:2.4.0")
+
     // WorkManager
     implementation(libs.androidx.work.ktx)
     implementation("androidx.startup:startup-runtime:1.1.1")
