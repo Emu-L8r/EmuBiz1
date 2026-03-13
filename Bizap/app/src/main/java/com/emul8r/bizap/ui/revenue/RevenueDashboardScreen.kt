@@ -83,8 +83,36 @@ private fun RevenueDashboardContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            RevenueSummaryCard(label = "MTD", amountCents = metrics.mtdRevenue, modifier = Modifier.weight(1f))
-            RevenueSummaryCard(label = "YTD", amountCents = metrics.ytdRevenue, modifier = Modifier.weight(1f))
+            RevenueSummaryCard(label = "MTD Collected", amountCents = metrics.mtdRevenue, modifier = Modifier.weight(1f))
+            RevenueSummaryCard(label = "YTD Collected", amountCents = metrics.ytdRevenue, modifier = Modifier.weight(1f))
+        }
+
+        if (metrics.outstandingAmount > 0L) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Outstanding (Expected)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Text(
+                        text = CentsFormatter.formatCents(metrics.outstandingAmount),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Text(
+                        text = "Amount billed but not yet collected",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
         }
 
         Text(text = "Revenue by Currency", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
