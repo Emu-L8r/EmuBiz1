@@ -15,6 +15,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
+import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
 import com.emul8r.bizap.ui.common.MetricCard
 import com.emul8r.bizap.ui.gui2.common.*
 import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
@@ -93,19 +94,25 @@ private fun DashboardContentV2(
     onCreateInvoice: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .subtleVerticalGradient()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = state.businessContext.businessName,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background watermark
+        ImagePlaceholderBackground(
+            alpha = 0.08f
         )
+
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .subtleVerticalGradient()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = state.businessContext.businessName,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
 
         // ── Quick Actions (Silenced for review) ──
         /*
@@ -317,5 +324,6 @@ private fun DashboardContentV2(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 }
