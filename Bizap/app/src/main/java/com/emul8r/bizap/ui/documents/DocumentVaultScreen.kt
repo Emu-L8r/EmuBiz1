@@ -111,7 +111,7 @@ fun DocumentVaultScreen(viewModel: DocumentVaultViewModel = hiltViewModel()) {
                                         ) {
                                             ListItem(
                                                 colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                                                headlineContent = { Text("${item.fileType} #${item.invoice.id}") },
+                                                headlineContent = { Text(item.invoice.displayName.ifBlank { item.invoice.invoiceNumber }) },
                                                 supportingContent = {
                                                     val statusText = when (item.status) {
                                                         DocumentStatus.DRAFT -> "Draft"
