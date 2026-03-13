@@ -56,6 +56,11 @@ import com.emul8r.bizap.ui.templates.TemplateListScreen
 import com.emul8r.bizap.ui.theme.BizapTheme
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
 import com.emul8r.bizap.ui.notes.NotesScreen
+import com.emul8r.bizap.ui.landing.LandingScreen
+import com.emul8r.bizap.ui.landing.LandingViewModel
+import com.emul8r.bizap.ui.landing.GuiMode
+import com.emul8r.bizap.ui.activities.TraditionalGUIMainActivity
+import com.emul8r.bizap.ui.activities.ModernGUIMainActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -101,28 +106,55 @@ class MainActivity : ComponentActivity() {
                     SplashScreen(onSplashComplete = { splashComplete = true })
                 } else {
                     when (authState) {
-                    is AuthState.NotInitialized -> {
-                        PINSetupScreen(
-                            onSetupComplete = { authViewModel.refreshAuthState() }
-                        )
-                    }
-                    is AuthState.Authenticated -> {
-                        val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
-                        val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
+                        is AuthState.NotInitialized -> {
+                            PINSetupScreen(
+                                onSetupComplete = { authViewModel.refreshAuthState() }
+                            )
+                        }
+                        is AuthState.Authenticated -> {
+                            // After authentication, check if user has selected a GUI mode
+                            val landingViewModel: LandingViewModel = hiltViewModel()
+                            val selectedGuiMode by landingViewModel.selectedMode.collectAsStateWithLifecycle()
 
-                        val gui2NavController = rememberNavController()
-                        GuiV2NavGraph(
-                            navController = gui2NavController,
-                            startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L
-                        )
+                            when (selectedGuiMode) {
+                                null -> {
+                                    // No GUI mode selected yet — show Landing Screen
+                                    LandingScreen(
+                                        onSelectGui1 = {
+                                            landingViewModel.selectMode(GuiMode.GUI1)
+                                            // Launch GUI1 activity
+                                            startActivity(TraditionalGUIMainActivity.createIntent(this@MainActivity))
+                                            finish()
+                                        },
+                                        onSelectGui2 = {
+                                            landingViewModel.selectMode(GuiMode.GUI2)
+                                            // Launch GUI2 activity
+                                            startActivity(ModernGUIMainActivity.createIntent(this@MainActivity))
+                                            finish()
+                                        }
+                                    )
+                                }
+                                else -> {
+                                    // GUI mode already selected, launch appropriate activity
+                                    val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
+                                    val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
+
+                                    val gui2NavController = rememberNavController()
+                                    GuiV2NavGraph(
+                                        navController = gui2NavController,
+                                        startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
+                                        onSwitchToGui1 = { landingViewModel.resetMode() }
+                                    )
+                                }
+                            }
+                        }
+                        else -> {
+                            // SessionExpired, LockedOut, or InvalidPIN — show login screen
+                            LoginScreen(
+                                onAuthenticated = { authViewModel.refreshAuthState() }
+                            )
+                        }
                     }
-                    else -> {
-                        // SessionExpired, LockedOut, or InvalidPIN — show login screen
-                        LoginScreen(
-                            onAuthenticated = { authViewModel.refreshAuthState() }
-                        )
-                    }
-                }
                 }
             }
         }
