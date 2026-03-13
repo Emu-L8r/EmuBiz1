@@ -64,6 +64,7 @@ fun GuiV2NavGraph(
                     onNavigateToInvoiceAnalytics = { navController.navigateToInvoiceAnalyticsV2(route.businessId) },
                     onCreateCustomer = { navController.navigateToCreateCustomerV2(route.businessId) },
                     onCreateInvoice = { navController.navigateToCreateInvoiceV2(route.businessId) },
+                    onNavigateToSettings = { navController.navigateToSettingsV2(route.businessId) },
                     onSwitchToGui1 = onSwitchToGui1
                 )
             }

@@ -38,6 +38,7 @@ fun DashboardScreenV2(
     onNavigateToInvoiceAnalytics: () -> Unit = {},
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     onSwitchToGui1: () -> Unit = {},
     viewModel: DashboardViewModelV2 = hiltViewModel()
 ) {
@@ -46,7 +47,12 @@ fun DashboardScreenV2(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dashboard") }
+                title = { Text("Dashboard") },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                }
             )
         }
     ) { paddingValues ->
