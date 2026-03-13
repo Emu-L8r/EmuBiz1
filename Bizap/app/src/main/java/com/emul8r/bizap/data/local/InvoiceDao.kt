@@ -192,6 +192,15 @@ interface InvoiceDao {
 
     @Query("""
         SELECT 
+            COALESCE(SUM(totalAmount - amountPaid), 0)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND status IN ('SENT', 'PARTIALLY_PAID', 'OVERDUE')
+    """)
+    fun observeOutstandingAmount(businessId: Long): Flow<Long>
+
+    @Query("""
+        SELECT 
             DATE(date/1000, 'unixepoch') as dateString,
             COALESCE(SUM(CASE WHEN status IN ('PAID', 'PARTIALLY_PAID') THEN amountPaid ELSE 0 END), 0) as revenue,
             COUNT(*) as invoiceCount,
