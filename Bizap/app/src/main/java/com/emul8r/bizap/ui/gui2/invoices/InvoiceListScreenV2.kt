@@ -133,39 +133,54 @@ private fun InvoiceCardV2(
     invoice: Invoice,
     onClick: () -> Unit
 ) {
-    OutlinedCard(
+    val statusColor = invoice.status.getStatusColor()
+    val backgroundColor = invoice.status.getBackgroundColor()
+    
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = backgroundColor
+        ),
+        border = BorderStroke(2.dp, statusColor.copy(alpha = 0.3f)),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Header row with customer name and status badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = invoice.customerName,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f)
                 )
-                Text(
-                    text = invoice.displayName.ifBlank { invoice.invoiceNumber },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = invoice.status.name,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                StatusBadge(status = invoice.status)
             }
+            
+            // Invoice number
+            Text(
+                text = invoice.displayName.ifBlank { invoice.invoiceNumber },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            // Amount
             Text(
                 text = formatCents(invoice.totalAmount),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = statusColor
             )
         }
     }
