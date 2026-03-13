@@ -1,10 +1,13 @@
 package com.emul8r.bizap.ui.risk
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -17,8 +20,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.invoice.model.InvoicePaymentStatus
+import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
+import com.emul8r.bizap.ui.common.MetricCard
+import com.emul8r.bizap.ui.theme.StatusColors
 import com.emul8r.bizap.ui.theme.riskHigh
 import com.emul8r.bizap.ui.theme.riskMedium
+import com.emul8r.bizap.utils.CentsFormatter
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,6 +76,7 @@ fun RiskDashboardScreen(
                     LazyColumn(
                         modifier = modifier
                             .fillMaxSize()
+                            .subtleVerticalGradient()
                             .padding(paddingValues)
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -100,47 +108,64 @@ fun RiskDashboardScreen(
 
 @Composable
 fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
-    Card(
+    val totalAtRisk = riskInvoices.sumOf { it.outstandingAmount }
+    val criticalCount = riskInvoices.count { it.daysOverdue > 60 }
+    val mediumCount = riskInvoices.count { it.daysOverdue in 30..60 }
+    
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+        // Total at risk card with red/orange accent
+        MetricCard(
+            title = "Total at Risk",
+            value = "$${String.format(Locale.getDefault(), "%.2f", totalAtRisk)}",
+            icon = Icons.Default.Error,
+            backgroundColor = StatusColors.Overdue.copy(alpha = 0.08f),
+            borderColor = StatusColors.Overdue.copy(alpha = 0.3f),
+            accentColor = StatusColors.Overdue,
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        // Critical and medium risk counts
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Risk Summary", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            val totalAtRisk = riskInvoices.sumOf { it.outstandingAmount }
-            val criticalCount = riskInvoices.count { it.daysOverdue > 60 }
-            val mediumCount = riskInvoices.count { it.daysOverdue in 30..60 }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text("Total at Risk", fontSize = 12.sp, color = Color.Gray)
-                    Text("$${String.format(Locale.getDefault(), "%.2f", totalAtRisk)}", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                }
-                Column {
-                    Text("Critical", fontSize = 12.sp, color = Color.Gray)
-                    Text("$criticalCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.riskHigh)
-                }
-                Column {
-                    Text("Medium", fontSize = 12.sp, color = Color.Gray)
-                    Text("$mediumCount", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.riskMedium)
-                }
-            }
+            MetricCard(
+                title = "Critical (60+ days)",
+                value = "$criticalCount",
+                icon = Icons.Default.Error,
+                backgroundColor = StatusColors.Overdue.copy(alpha = 0.12f),
+                borderColor = StatusColors.Overdue.copy(alpha = 0.4f),
+                accentColor = StatusColors.Overdue,
+                modifier = Modifier.weight(1f)
+            )
+            MetricCard(
+                title = "At Risk (30-59 days)",
+                value = "$mediumCount",
+                icon = Icons.Default.Warning,
+                backgroundColor = StatusColors.Outstanding.copy(alpha = 0.12f),
+                borderColor = StatusColors.Outstanding.copy(alpha = 0.4f),
+                accentColor = StatusColors.Outstanding,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
 
 @Composable
 fun RiskInvoiceCard(invoice: InvoicePaymentStatus) {
+    val isHighRisk = invoice.daysOverdue > 60
+    val accentColor = if (isHighRisk) StatusColors.Overdue else StatusColors.Outstanding
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = accentColor.copy(alpha = 0.08f)
+        ),
+        border = BorderStroke(2.dp, accentColor.copy(alpha = 0.3f)),
+        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -154,29 +179,69 @@ fun RiskInvoiceCard(invoice: InvoicePaymentStatus) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(invoice.invoiceNumber, fontWeight = FontWeight.Bold)
-                    Text(invoice.customerName, fontSize = 12.sp, color = Color.Gray)
+                    Text(
+                        invoice.invoiceNumber,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        invoice.customerName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Icon(
-                    Icons.Default.Warning,
-                    "Risk",
-                    tint = if (invoice.daysOverdue > 60) MaterialTheme.colorScheme.riskHigh else MaterialTheme.colorScheme.riskMedium
+                    if (isHighRisk) Icons.Default.Error else Icons.Default.Warning,
+                    "Risk Level",
+                    tint = accentColor,
+                    modifier = Modifier.size(32.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Progress bar showing overdue percentage (max 90 days = 100%)
+            val progress = (invoice.daysOverdue.toFloat() / 90f).coerceIn(0f, 1f)
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                color = accentColor,
+                trackColor = accentColor.copy(alpha = 0.2f)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Outstanding", fontSize = 12.sp, color = Color.Gray)
-                    Text("$${String.format(Locale.getDefault(), "%.2f", invoice.outstandingAmount)}", fontWeight = FontWeight.Bold)
+                    Text(
+                        "Outstanding",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "$${String.format(Locale.getDefault(), "%.2f", invoice.outstandingAmount)}",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = accentColor
+                    )
                 }
-                Column {
-                    Text("Days Overdue", fontSize = 12.sp, color = Color.Gray)
-                    Text("${invoice.daysOverdue}", fontWeight = FontWeight.Bold)
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        "Days Overdue",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "${invoice.daysOverdue}",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = accentColor
+                    )
                 }
             }
         }

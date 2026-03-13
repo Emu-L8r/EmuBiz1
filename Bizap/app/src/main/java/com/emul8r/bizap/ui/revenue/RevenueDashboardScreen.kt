@@ -4,16 +4,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
+import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
+import com.emul8r.bizap.ui.common.MetricCard
+import com.emul8r.bizap.ui.theme.StatusColors
 import com.emul8r.bizap.utils.CentsFormatter
 
 @Composable
@@ -67,6 +75,7 @@ private fun RevenueDashboardContent(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .subtleVerticalGradient()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -79,40 +88,42 @@ private fun RevenueDashboardContent(
             )
         }
 
+        // Color-coded MTD and YTD revenue cards
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            RevenueSummaryCard(label = "MTD Collected", amountCents = metrics.mtdRevenue, modifier = Modifier.weight(1f))
-            RevenueSummaryCard(label = "YTD Collected", amountCents = metrics.ytdRevenue, modifier = Modifier.weight(1f))
+            MetricCard(
+                title = "MTD Collected",
+                value = CentsFormatter.formatCents(metrics.mtdRevenue),
+                icon = Icons.Default.CheckCircle,
+                backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
+                borderColor = StatusColors.Paid.copy(alpha = 0.3f),
+                accentColor = StatusColors.Paid,
+                modifier = Modifier.weight(1f)
+            )
+            MetricCard(
+                title = "YTD Collected",
+                value = CentsFormatter.formatCents(metrics.ytdRevenue),
+                icon = Icons.Default.AttachMoney,
+                backgroundColor = StatusColors.Sent.copy(alpha = 0.08f),
+                borderColor = StatusColors.Sent.copy(alpha = 0.3f),
+                accentColor = StatusColors.Sent,
+                modifier = Modifier.weight(1f)
+            )
         }
 
+        // Outstanding amount with orange accent
         if (metrics.outstandingAmount > 0L) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Outstanding (Expected)",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        text = CentsFormatter.formatCents(metrics.outstandingAmount),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        text = "Amount billed but not yet collected",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
+            MetricCard(
+                title = "Outstanding (Expected)",
+                value = CentsFormatter.formatCents(metrics.outstandingAmount),
+                icon = Icons.Default.Schedule,
+                backgroundColor = StatusColors.Outstanding.copy(alpha = 0.08f),
+                borderColor = StatusColors.Outstanding.copy(alpha = 0.3f),
+                accentColor = StatusColors.Outstanding,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         Text(text = "Revenue by Currency", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
