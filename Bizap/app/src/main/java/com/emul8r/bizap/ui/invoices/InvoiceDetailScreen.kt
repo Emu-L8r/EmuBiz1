@@ -416,7 +416,7 @@ fun InvoiceDetailScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(48.dp),
-                                    onClick = { viewModel.exportAsCsv() }
+                                    onClick = { viewModel.exportToCsv() }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.TableChart,

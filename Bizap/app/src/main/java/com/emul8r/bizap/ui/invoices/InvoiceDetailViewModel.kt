@@ -365,4 +365,21 @@ class InvoiceDetailViewModel @Inject constructor(
                 }
         }
     }
+
+    fun exportToCsv() {
+        val currentState = uiState.value as? InvoiceDetailUiState.Success ?: return
+        val invoice = currentState.data
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val csvFile = csvExportService.exportSingleInvoice(invoice)
+                _csvExportEvent.emit(csvFile)
+                _uiEvent.emit(UiEvent.ShowSnackbar("CSV exported successfully"))
+                Timber.d("✅ CSV exported: ${csvFile.name}")
+            } catch (e: Exception) {
+                _uiEvent.emit(UiEvent.ShowSnackbar("Failed to export CSV: ${e.message}"))
+                Timber.e(e, "❌ CSV export failed")
+            }
+        }
+    }
 }
