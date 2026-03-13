@@ -5,9 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,8 +14,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
+import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
+import com.emul8r.bizap.ui.common.MetricCard
 import com.emul8r.bizap.ui.gui2.common.*
 import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
+import com.emul8r.bizap.ui.theme.StatusColors
 
 /**
  * GUI2 main dashboard screen.
@@ -89,6 +90,7 @@ private fun DashboardContentV2(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .subtleVerticalGradient()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -127,24 +129,45 @@ private fun DashboardContentV2(
         HorizontalDivider()
         */
 
-        // ── Revenue section: Expected vs Actual ──
+        // ── Revenue section: Expected vs Actual with color coding ──
         SectionHeaderV2(title = "Revenue")
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Expected Revenue = outstanding (not yet collected) + collected (already paid)
+            // Expected Revenue = outstanding + collected
             val expectedRevenue = state.paymentMetrics.outstandingAmount + state.paymentMetrics.collectedAmount
             val actualRevenue = state.paymentMetrics.collectedAmount
-            MetricCardV2(
-                label = "Expected Revenue",
+            MetricCard(
+                title = "Expected Revenue",
                 value = com.emul8r.bizap.utils.CentsFormatter.formatCents(expectedRevenue),
+                icon = Icons.Default.TrendingUp,
+                backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
+                borderColor = StatusColors.Paid.copy(alpha = 0.3f),
+                accentColor = StatusColors.Paid,
                 modifier = Modifier.weight(1f)
             )
-            MetricCardV2(
-                label = "Actual Revenue",
+            MetricCard(
+                title = "Actual Revenue",
                 value = com.emul8r.bizap.utils.CentsFormatter.formatCents(actualRevenue),
+                icon = Icons.Default.CheckCircle,
+                backgroundColor = StatusColors.Sent.copy(alpha = 0.08f),
+                borderColor = StatusColors.Sent.copy(alpha = 0.3f),
+                accentColor = StatusColors.Sent,
                 modifier = Modifier.weight(1f)
+            )
+        }
+        
+        // Outstanding amount card
+        if (state.paymentMetrics.outstandingAmount > 0L) {
+            MetricCard(
+                title = "Outstanding",
+                value = com.emul8r.bizap.utils.CentsFormatter.formatCents(state.paymentMetrics.outstandingAmount),
+                icon = Icons.Default.Schedule,
+                backgroundColor = StatusColors.Outstanding.copy(alpha = 0.08f),
+                borderColor = StatusColors.Outstanding.copy(alpha = 0.3f),
+                accentColor = StatusColors.Outstanding,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
@@ -183,20 +206,28 @@ private fun DashboardContentV2(
 
         HorizontalDivider()
 
-        // ── Payments section ──
+        // ── Payments section with color coding ──
         SectionHeaderV2(title = "Payments")
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            MetricCardV2(
-                label = "Paid",
+            MetricCard(
+                title = "Paid",
                 value = "${state.paymentMetrics.paidCount}",
+                icon = Icons.Default.CheckCircle,
+                backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
+                borderColor = StatusColors.Paid.copy(alpha = 0.3f),
+                accentColor = StatusColors.Paid,
                 modifier = Modifier.weight(1f)
             )
-            MetricCardV2(
-                label = "Overdue",
+            MetricCard(
+                title = "Overdue",
                 value = "${state.paymentMetrics.overdueCount}",
+                icon = Icons.Default.Error,
+                backgroundColor = StatusColors.Overdue.copy(alpha = 0.08f),
+                borderColor = StatusColors.Overdue.copy(alpha = 0.3f),
+                accentColor = StatusColors.Overdue,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -211,25 +242,37 @@ private fun DashboardContentV2(
 
         HorizontalDivider()
 
-        // ── Risk section ──
+        // ── Risk section with color coding ──
         SectionHeaderV2(title = "Risk Overview")
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            MetricCardV2(
-                label = "High Risk",
+            MetricCard(
+                title = "High Risk",
                 value = "${state.riskMetrics.highRiskCount}",
+                icon = Icons.Default.Error,
+                backgroundColor = StatusColors.Overdue.copy(alpha = 0.08f),
+                borderColor = StatusColors.Overdue.copy(alpha = 0.3f),
+                accentColor = StatusColors.Overdue,
                 modifier = Modifier.weight(1f)
             )
-            MetricCardV2(
-                label = "At Risk",
+            MetricCard(
+                title = "At Risk",
                 value = "${state.riskMetrics.atRiskCount}",
+                icon = Icons.Default.Warning,
+                backgroundColor = StatusColors.Outstanding.copy(alpha = 0.08f),
+                borderColor = StatusColors.Outstanding.copy(alpha = 0.3f),
+                accentColor = StatusColors.Outstanding,
                 modifier = Modifier.weight(1f)
             )
-            MetricCardV2(
-                label = "Healthy",
+            MetricCard(
+                title = "Healthy",
                 value = "${state.riskMetrics.healthyCount}",
+                icon = Icons.Default.CheckCircle,
+                backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
+                borderColor = StatusColors.Paid.copy(alpha = 0.3f),
+                accentColor = StatusColors.Paid,
                 modifier = Modifier.weight(1f)
             )
         }

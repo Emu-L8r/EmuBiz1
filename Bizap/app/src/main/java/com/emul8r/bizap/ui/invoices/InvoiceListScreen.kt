@@ -1,17 +1,21 @@
 package com.emul8r.bizap.ui.invoices
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Receipt
@@ -20,12 +24,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.utils.CentsFormatter
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.Invoice
-import com.emul8r.bizap.ui.shared.InvoiceStatusChip
+import com.emul8r.bizap.ui.common.StatusBadge
+import com.emul8r.bizap.ui.theme.getStatusColor
+import com.emul8r.bizap.ui.theme.getBackgroundColor
 import com.emul8r.bizap.ui.utils.formatDate
 import java.util.Locale
 
@@ -83,30 +90,63 @@ fun InvoiceList(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(invoices) { invoice ->
-            ElevatedCard(
+            val statusColor = invoice.status.getStatusColor()
+            val backgroundColor = invoice.status.getBackgroundColor()
+            
+            Card(
                 onClick = { onInvoiceClick(invoice.id) },
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                colors = CardDefaults.cardColors(
+                    containerColor = backgroundColor
+                ),
+                border = BorderStroke(2.dp, statusColor.copy(alpha = 0.3f)),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                ListItem(
-                    colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                    overlineContent = { 
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    // Top accent line
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .padding(bottom = 8.dp)
+                    )
+                    
+                    // Header row with invoice number and status badge
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            invoice.displayName.ifBlank { invoice.invoiceNumber }, 
+                            text = invoice.displayName.ifBlank { invoice.invoiceNumber },
+                            style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.primary
-                        ) 
-                    },
-                    headlineContent = { Text(invoice.customerName) },
-                    supportingContent = {
-                        Text("Total: ${CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode)} | ${formatDate(invoice.date)}")
-                    },
-                    trailingContent = {
-                        InvoiceStatusChip(invoice.status.name)
+                        )
+                        StatusBadge(status = invoice.status)
                     }
-                )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Customer name
+                    Text(
+                        text = invoice.customerName,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // Amount and date
+                    Text(
+                        text = "Total: ${CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode)} | ${formatDate(invoice.date)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
