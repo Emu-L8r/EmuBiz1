@@ -82,11 +82,18 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         // Arrange
         val businessId = 1L
         val expectedRowId = 42L
-        val invoice = TestDataFactory.createTestInvoice(id = 0)
+        val testDate = System.currentTimeMillis()
+        val invoice = TestDataFactory.createTestInvoice(id = 0).copy(
+            date = testDate,
+            dailyCounter = 1,
+            displayName = "testcustomer-11032026-01"
+        )
 
         coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
         coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
+        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 0  // ← ADD THIS
         coEvery { invoiceDao.insert(any(), any()) } returns expectedRowId
+        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs  // ← ADD THIS
 
         // Act
         val result = repository.saveInvoice(invoice)
@@ -100,11 +107,17 @@ class InvoiceRepositoryTest : BaseUnitTest() {
     fun `saveInvoice returns failure result when database throws`() = runTest {
         // Arrange
         val businessId = 1L
-        val invoice = TestDataFactory.createTestInvoice(id = 0)
+        val testDate = System.currentTimeMillis()
+        val invoice = TestDataFactory.createTestInvoice(id = 0).copy(
+            date = testDate,
+            dailyCounter = 1,
+            displayName = "testcustomer-11032026-01"
+        )
         val dbException = RuntimeException("Database error")
 
         coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
         coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
+        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 0  // ← ADD THIS
         coEvery { invoiceDao.insert(any(), any()) } throws dbException
 
         // Act
