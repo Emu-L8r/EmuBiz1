@@ -1,9 +1,11 @@
 package com.emul8r.bizap.ui.gui2.invoices
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -21,6 +23,8 @@ import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.formatCents
+import com.emul8r.bizap.ui.gui2.invoices.InvoiceListViewModelV2
+import com.emul8r.bizap.ui.gui2.invoices.InvoiceListUiStateV2
 
 /**
  * GUI2 Invoice List Screen
@@ -133,9 +137,9 @@ private fun InvoiceCardV2(
     invoice: Invoice,
     onClick: () -> Unit
 ) {
-    val statusColor = invoice.status.getStatusColor()
-    val backgroundColor = invoice.status.getBackgroundColor()
-    
+    val statusColor = MaterialTheme.colorScheme.primary
+    val backgroundColor = MaterialTheme.colorScheme.primaryContainer
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -165,7 +169,10 @@ private fun InvoiceCardV2(
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f)
                 )
-                StatusBadge(status = invoice.status)
+                Text(
+                    text = invoice.status.toString(),
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
             
             // Invoice number
