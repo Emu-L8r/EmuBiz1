@@ -72,3 +72,7 @@ fun NavHostController.navigateToBusinessProfileV2(businessId: Long) {
 fun NavHostController.navigateToThemeSettingsV2(businessId: Long) {
     navigate(ScreenV2.ThemeSettings(businessId))
 }
+
+fun NavHostController.navigateToInvoiceAnalyticsV2(businessId: Long) {
+    navigate(ScreenV2.InvoiceAnalytics(businessId))
+}

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.DocumentManager
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
+import com.emul8r.bizap.data.service.CsvExportService
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.data.service.PrintService
 import com.emul8r.bizap.domain.model.Invoice
@@ -47,6 +48,7 @@ sealed interface InvoiceDetailEvent {
 class InvoiceDetailViewModel @Inject constructor(
     private val invoiceRepo: InvoiceRepository,
     private val pdfService: InvoicePdfService,
+    private val csvExportService: CsvExportService,
     private val businessProfileRepository: BusinessProfileRepository,
     private val printService: PrintService,
     private val documentManager: DocumentManager,
@@ -82,6 +84,9 @@ class InvoiceDetailViewModel @Inject constructor(
 
     private val _exportEvent = MutableSharedFlow<File>()
     val exportEvent = _exportEvent.asSharedFlow()
+
+    private val _csvExportEvent = MutableSharedFlow<File>()
+    val csvExportEvent = _csvExportEvent.asSharedFlow()
 
     private val _uiEvent = MutableSharedFlow<UiEvent>()
     val uiEvent = _uiEvent.asSharedFlow()
@@ -195,6 +200,19 @@ class InvoiceDetailViewModel @Inject constructor(
         checkAndProceedWithPdfGeneration(share = false)
     }
 
+    fun exportAsCsv() {
+        val invoice = (uiState.value as? InvoiceDetailUiState.Success)?.data ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val csvFile = csvExportService.exportSingleInvoice(invoice)
+                _csvExportEvent.emit(csvFile)
+            } catch (e: Exception) {
+                Timber.e(e, "CSV export failed")
+                _uiEvent.emit(UiEvent.ShowSnackbar("CSV export failed: ${e.message}"))
+            }
+        }
+    }
+
     private fun checkAndProceedWithPdfGeneration(share: Boolean) {
         val invoiceData = (uiState.value as? InvoiceDetailUiState.Success)?.data ?: return
 
@@ -289,6 +307,7 @@ class InvoiceDetailViewModel @Inject constructor(
         return InvoiceSnapshot(
             invoiceId = invoice.id,
             invoiceNumber = invoice.getFormattedInvoiceNumber(),
+            displayName = invoice.displayName,
             customerName = invoice.customerName,
             customerAddress = invoice.customerAddress,
             customerEmail = invoice.customerEmail,

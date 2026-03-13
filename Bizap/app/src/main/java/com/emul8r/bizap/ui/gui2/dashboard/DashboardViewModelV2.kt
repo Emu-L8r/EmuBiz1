@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
+import com.emul8r.bizap.data.repository.gui2.InvoiceMetricsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
@@ -25,7 +26,8 @@ class DashboardViewModelV2 @Inject constructor(
     private val revenueRepository: RevenueRepositoryV2,
     private val paymentRepository: PaymentAnalyticsRepositoryV2,
     private val riskRepository: RiskAnalyticsRepositoryV2,
-    private val businessContextRepository: BusinessContextRepositoryV2
+    private val businessContextRepository: BusinessContextRepositoryV2,
+    private val invoiceMetricsRepository: InvoiceMetricsRepositoryV2
 ) : ViewModel() {
 
     private val route: ScreenV2.Dashboard = savedStateHandle.toRoute()
@@ -35,8 +37,9 @@ class DashboardViewModelV2 @Inject constructor(
         businessContextRepository.activeContext,
         revenueRepository.observeRevenueMetrics(businessId),
         paymentRepository.observePaymentMetrics(businessId),
-        riskRepository.observeRiskMetrics(businessId)
-    ) { context, revenue, payment, risk ->
+        riskRepository.observeRiskMetrics(businessId),
+        invoiceMetricsRepository.observeInvoiceMetrics(businessId)
+    ) { context, revenue, payment, risk, invoiceMetrics ->
         Timber.d("DashboardViewModelV2: state updated for businessId=$businessId")
         DashboardUiStateV2.Success(
             DashboardStateV2(
@@ -46,7 +49,8 @@ class DashboardViewModelV2 @Inject constructor(
                     collectedAmount = payment.collectedAmount
                 ),
                 paymentMetrics = payment,
-                riskMetrics = risk
+                riskMetrics = risk,
+                invoiceMetrics = invoiceMetrics
             )
         ) as DashboardUiStateV2
     }

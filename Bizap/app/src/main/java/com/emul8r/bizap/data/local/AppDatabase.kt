@@ -34,7 +34,7 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         PaymentEntity::class,
         Note::class
     ],
-    version = 33,
+    version = 34,
     exportSchema = true
 )
 @TypeConverters(DocumentStatusConverter::class)

@@ -61,5 +61,8 @@ data class InvoiceEntity(
     // GUI2 Phase 2 fields
     val invoiceNumber: String = "",              // Human-readable number, unique per business
     val isActive: Boolean = true,               // Soft-delete flag
-    val createdAt: Long = 0                     // Creation timestamp (ms)
+    val createdAt: Long = 0,                    // Creation timestamp (ms)
+    // v1.0.1 display name fields
+    val dailyCounter: Int = 0,                  // Daily reset counter (1, 2, 3…)
+    val displayName: String = ""                // Computed display name: customername-ddMMyyyy-01
 )
