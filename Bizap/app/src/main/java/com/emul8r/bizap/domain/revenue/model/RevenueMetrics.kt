@@ -7,10 +7,11 @@ import java.time.LocalDate
  * All amounts are stored as Long (cents).
  */
 data class RevenueMetrics(
-    val mtdRevenue: Long,               // Month-to-date, in cents
-    val ytdRevenue: Long,               // Year-to-date, in cents
-    val weeklyRevenue: Long,            // Weekly, in cents
+    val mtdRevenue: Long,               // Month-to-date, in cents (PAID invoices)
+    val ytdRevenue: Long,               // Year-to-date, in cents (PAID invoices)
+    val weeklyRevenue: Long,            // Weekly, in cents (PAID invoices)
     val totalPaidRevenue: Long,         // All-time total of all PAID invoices, in cents
+    val outstandingAmount: Long = 0L,   // Outstanding amount from SENT/OVERDUE invoices, in cents
     val dailyTrend: List<DailyRevenuePoint>,
     val topPerformers: List<RevenueByCurrency>
 )

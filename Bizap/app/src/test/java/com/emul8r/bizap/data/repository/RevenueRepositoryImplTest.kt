@@ -48,6 +48,7 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
         every { invoiceDao.observeYTDRevenue(businessId) } returns flowOf(150000L)
         every { invoiceDao.observeWeeklyRevenue(businessId) } returns flowOf(150000L)
         every { invoiceDao.observeTotalPaidRevenue(businessId) } returns flowOf(150000L)
+        every { invoiceDao.observeOutstandingAmount(businessId) } returns flowOf(0L)
         every { invoiceDao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
 
         // Act
@@ -70,6 +71,7 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
         every { invoiceDao.observeYTDRevenue(businessId) } returns flowOf(0L)
         every { invoiceDao.observeWeeklyRevenue(businessId) } returns flowOf(0L)
         every { invoiceDao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
+        every { invoiceDao.observeOutstandingAmount(businessId) } returns flowOf(0L)
         every { invoiceDao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
         // Act
@@ -110,6 +112,7 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
         every { invoiceDao.observeYTDRevenue(businessId) } returns flowOf(100000L)
         every { invoiceDao.observeWeeklyRevenue(businessId) } returns flowOf(100000L)
         every { invoiceDao.observeTotalPaidRevenue(businessId) } returns flowOf(100000L)
+        every { invoiceDao.observeOutstandingAmount(businessId) } returns flowOf(0L)
         every { invoiceDao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
 
         // Act
