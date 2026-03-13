@@ -152,7 +152,7 @@ private fun InvoiceCardV2(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = invoice.invoiceNumber,
+                    text = invoice.displayName.ifBlank { invoice.invoiceNumber },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

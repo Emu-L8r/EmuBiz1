@@ -34,7 +34,9 @@ data class Invoice(
     val version: Int = 1,
     val invoiceYear: Int = 0,
     val invoiceSequence: Int = 0,
-    val currencyCode: String = "AUD"
+    val currencyCode: String = "AUD",
+    val dailyCounter: Int = 0,
+    val displayName: String = ""
 ) {
     val invoiceId: Long get() = id
     val total: Long get() = totalAmount

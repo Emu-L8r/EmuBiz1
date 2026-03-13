@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.emul8r.bizap.ui.components.SyncStatusIndicator
+import com.emul8r.bizap.ui.gui2.analytics.InvoiceAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.PaymentAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.RevenueAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.RiskAnalyticsScreenV2
@@ -61,6 +62,7 @@ fun GuiV2NavGraph(
                     },
                     onNavigateToCustomers = { navController.navigateToCustomersV2(route.businessId) },
                     onNavigateToInvoices = { navController.navigateToInvoicesV2(route.businessId) },
+                    onNavigateToInvoiceAnalytics = { navController.navigateToInvoiceAnalyticsV2(route.businessId) },
                     onCreateCustomer = { navController.navigateToCreateCustomerV2(route.businessId) },
                     onCreateInvoice = { navController.navigateToCreateInvoiceV2(route.businessId) },
                     onSwitchToGui1 = onSwitchToGui1
@@ -202,6 +204,14 @@ fun GuiV2NavGraph(
             composable<ScreenV2.ThemeSettings> { backStackEntry ->
                 val route: ScreenV2.ThemeSettings = backStackEntry.toRoute()
                 ThemeSettingsScreenV2(
+                    businessId = route.businessId,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable<ScreenV2.InvoiceAnalytics> { backStackEntry ->
+                val route: ScreenV2.InvoiceAnalytics = backStackEntry.toRoute()
+                InvoiceAnalyticsScreenV2(
                     businessId = route.businessId,
                     onBack = { navController.popBackStack() }
                 )

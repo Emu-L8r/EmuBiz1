@@ -34,6 +34,7 @@ fun DashboardScreenV2(
     onNavigateToInvoice: (Long) -> Unit,
     onNavigateToCustomers: () -> Unit,
     onNavigateToInvoices: () -> Unit,
+    onNavigateToInvoiceAnalytics: () -> Unit = {},
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
     onSwitchToGui1: () -> Unit,
@@ -66,6 +67,7 @@ fun DashboardScreenV2(
                 onNavigateToRisk = onNavigateToRisk,
                 onNavigateToCustomers = onNavigateToCustomers,
                 onNavigateToInvoices = onNavigateToInvoices,
+                onNavigateToInvoiceAnalytics = onNavigateToInvoiceAnalytics,
                 onCreateCustomer = onCreateCustomer,
                 onCreateInvoice = onCreateInvoice,
                 modifier = Modifier.padding(paddingValues)
@@ -82,6 +84,7 @@ private fun DashboardContentV2(
     onNavigateToRisk: () -> Unit,
     onNavigateToCustomers: () -> Unit,
     onNavigateToInvoices: () -> Unit,
+    onNavigateToInvoiceAnalytics: () -> Unit = {},
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
     modifier: Modifier = Modifier
@@ -127,43 +130,33 @@ private fun DashboardContentV2(
         HorizontalDivider()
         */
 
-        // ── Revenue section ──
-        SectionHeaderV2(title = "Revenue")
+        // ── Invoice Metrics section (replaces old Revenue section) ──
+        SectionHeaderV2(title = "Invoices Sent")
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             MetricCardV2(
-                label = "MTD Revenue",
-                value = formatCents(state.revenueMetrics.mtdRevenue),
+                label = "Total Invoices",
+                value = "${state.invoiceMetrics.totalInvoices}",
                 modifier = Modifier.weight(1f)
             )
             MetricCardV2(
-                label = "YTD Revenue",
-                value = formatCents(state.revenueMetrics.ytdRevenue),
-                modifier = Modifier.weight(1f)
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            MetricCardV2(
-                label = "Outstanding",
-                value = formatCents(state.paymentMetrics.outstandingAmount),
+                label = "Paid",
+                value = "${state.invoiceMetrics.paidCount}",
                 modifier = Modifier.weight(1f)
             )
             MetricCardV2(
-                label = "Total Paid",
-                value = formatCents(state.revenueMetrics.totalPaidRevenue),
+                label = "Pending",
+                value = "${state.invoiceMetrics.pendingCount}",
                 modifier = Modifier.weight(1f)
             )
         }
         OutlinedButton(
-            onClick = onNavigateToRevenue,
+            onClick = onNavigateToInvoiceAnalytics,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("View Revenue Analytics")
+            Text("View Invoice Analytics")
             Spacer(Modifier.width(4.dp))
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
         }

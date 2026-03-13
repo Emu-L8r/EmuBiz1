@@ -8,5 +8,6 @@ data class DashboardStateV2(
     val businessContext: BusinessContextV2,
     val revenueMetrics: RevenueMetricsV2,
     val paymentMetrics: PaymentMetricsV2,
-    val riskMetrics: RiskMetricsV2
+    val riskMetrics: RiskMetricsV2,
+    val invoiceMetrics: InvoiceMetricsV2 = InvoiceMetricsV2(0, 0, 0, 0)
 )
