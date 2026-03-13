@@ -24,7 +24,11 @@ data class InvoiceSnapshot(
     val businessPhone: String,
     val businessAddress: String,
     val logoBase64: String?,
-    val currencyCode: String = "AUD"
+    val currencyCode: String = "AUD",
+    val headerText: String = "",
+    val subheaderText: String = "",
+    val footerText: String = "",
+    val notes: String = ""
 )
 
 data class LineItemSnapshot(
