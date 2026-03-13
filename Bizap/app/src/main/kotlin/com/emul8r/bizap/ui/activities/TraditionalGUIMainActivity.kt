@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import com.emul8r.bizap.MainActivity
 import com.emul8r.bizap.MainScreen
 import com.emul8r.bizap.ui.landing.LandingViewModel
 import com.emul8r.bizap.ui.settings.ThemeViewModel
@@ -58,7 +59,14 @@ class TraditionalGUIMainActivity : ComponentActivity() {
 
             BizapTheme(themeConfig = config) {
                 val landingViewModel: LandingViewModel = hiltViewModel()
-                MainScreen(onSwitchGui = { landingViewModel.resetMode() })
+                MainScreen(
+                    onSwitchGui = {
+                        landingViewModel.resetMode()
+                        // After clearing the GUI mode, launch MainActivity to show Landing Screen
+                        startActivity(Intent(this@TraditionalGUIMainActivity, MainActivity::class.java))
+                        finish()
+                    }
+                )
             }
         }
     }
