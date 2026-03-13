@@ -1,5 +1,5 @@
-# ProGuard configuration for Bizap v1.0 release build
-# Minification enabled: R8/ProGuard will shrink unused code
+# ProGuard/R8 configuration for Bizap v1.0 release build
+# Minification enabled: R8 will shrink unused code
 # Resource shrinking enabled: Unused resources removed
 
 # Preserve line numbers for crash reporting (Firebase Crashlytics)
@@ -166,10 +166,32 @@
     public static <fields>;
 }
 
-# ===== OPTIMIZATION =====
-# Optimization: remove logging calls (already handled above for Timber)
--optimizationpasses 5
--verbose
+# ===== SQLCIPHER =====
+# SQLCipher has native JNI methods - keep all classes and native methods
+-keep class net.zetetic.** { *; }
+-keep interface net.zetetic.** { *; }
 
-# Don't optimize if there are any issues
--dontoptimize
+# ===== ANDROID KEYSTORE & SECURITY CRYPTO =====
+# Used by DatabasePassphraseManager to protect the database passphrase
+-keep class android.security.keystore.** { *; }
+-keep class androidx.security.crypto.** { *; }
+
+# ===== KOTLIN COROUTINES =====
+# Coroutines use reflection and suspend functions that can be broken by R8
+-keep class kotlinx.coroutines.** { *; }
+-keep interface kotlinx.coroutines.** { *; }
+-keep class kotlin.coroutines.** { *; }
+
+# ===== WORKMANAGER =====
+# WorkManager workers must be kept so they can be instantiated by reflection
+-keep class * extends androidx.work.Worker { *; }
+-keep class * extends androidx.work.CoroutineWorker { *; }
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+
+# ===== OPTIMIZATION =====
+-optimizationpasses 3
+-verbose
+-dontnote
+-dontwarn
