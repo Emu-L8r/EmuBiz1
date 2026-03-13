@@ -37,7 +37,7 @@ fun DashboardScreenV2(
     onNavigateToInvoiceAnalytics: () -> Unit = {},
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
-    onSwitchToGui1: () -> Unit,
+    onSwitchToGui1: () -> Unit = {},
     viewModel: DashboardViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
