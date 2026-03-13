@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
+import com.emul8r.bizap.MainActivity
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
 import com.emul8r.bizap.ui.landing.LandingViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
@@ -75,7 +76,12 @@ class ModernGUIMainActivity : ComponentActivity() {
                 GuiV2NavGraph(
                     navController = navController,
                     startBusinessId = resolvedBusinessId,
-                    onSwitchToGui1 = { landingViewModel.resetMode() }
+                    onSwitchToGui1 = {
+                        landingViewModel.resetMode()
+                        // After clearing the GUI mode, launch MainActivity to show Landing Screen
+                        startActivity(Intent(this@ModernGUIMainActivity, MainActivity::class.java))
+                        finish()
+                    }
                 )
             }
         }
