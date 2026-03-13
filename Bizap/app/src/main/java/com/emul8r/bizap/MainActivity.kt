@@ -54,9 +54,6 @@ import com.emul8r.bizap.ui.templates.CreateTemplateScreen
 import com.emul8r.bizap.ui.templates.EditTemplateScreen
 import com.emul8r.bizap.ui.templates.TemplateListScreen
 import com.emul8r.bizap.ui.theme.BizapTheme
-import com.emul8r.bizap.ui.landing.GuiMode
-import com.emul8r.bizap.ui.landing.LandingScreen
-import com.emul8r.bizap.ui.landing.LandingViewModel
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
 import com.emul8r.bizap.ui.notes.NotesScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -110,28 +107,14 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     is AuthState.Authenticated -> {
-                        val landingViewModel: LandingViewModel = hiltViewModel()
-                        val selectedMode by landingViewModel.selectedMode.collectAsStateWithLifecycle()
                         val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
                         val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
 
-                        when (selectedMode) {
-                            null -> LandingScreen(
-                                onSelectGui1 = { landingViewModel.selectMode(GuiMode.GUI1) },
-                                onSelectGui2 = { landingViewModel.selectMode(GuiMode.GUI2) }
-                            )
-                            GuiMode.GUI1 -> MainScreen(
-                                onSwitchGui = { landingViewModel.resetMode() }
-                            )
-                            GuiMode.GUI2 -> {
-                                val gui2NavController = rememberNavController()
-                                GuiV2NavGraph(
-                                    navController = gui2NavController,
-                                    startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
-                                    onSwitchToGui1 = { landingViewModel.resetMode() }
-                                )
-                            }
-                        }
+                        val gui2NavController = rememberNavController()
+                        GuiV2NavGraph(
+                            navController = gui2NavController,
+                            startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L
+                        )
                     }
                     else -> {
                         // SessionExpired, LockedOut, or InvalidPIN — show login screen
