@@ -4,6 +4,9 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.pdf.PdfDocument
 import android.os.Build
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
 import androidx.annotation.RequiresApi
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.repository.DocumentRepository
@@ -103,7 +106,26 @@ class InvoicePdfService @Inject constructor(
         canvas.drawText("Date: ${formatDate(snapshot.date)}", 400f, 162f, bodyPaint)
         canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 400f, 178f, bodyPaint)
 
-        var currentY = 220f
+        var currentY = 200f
+
+        val separatorPaint = Paint().apply { color = colors.secondary; strokeWidth = 0.5f; style = Paint.Style.STROKE }
+        val sectionHeaderPaint = Paint().apply { typeface = boldTypeface; textSize = 11f; color = colors.primary; isAntiAlias = true }
+        val subheaderBodyPaint = Paint().apply { typeface = italicTypeface; textSize = 10f; color = colors.textLight; isAntiAlias = true }
+        val footerBodyPaint = Paint().apply { typeface = italicTypeface; textSize = 9f; color = Color.GRAY; isAntiAlias = true }
+
+        // Render header and subheader if present
+        if (snapshot.headerText.isNotBlank()) {
+            currentY += 15f
+            canvas.drawLine(40f, currentY, 555f, currentY, separatorPaint)
+            currentY += 12f
+            currentY = drawWrappedText(canvas, snapshot.headerText, 40f, currentY, 515f, sectionHeaderPaint)
+        }
+        if (snapshot.subheaderText.isNotBlank()) {
+            currentY += 4f
+            currentY = drawWrappedText(canvas, snapshot.subheaderText, 40f, currentY, 515f, subheaderBodyPaint)
+        }
+
+        currentY += 15f
 
         if (!hideLineItems) {
             val tableRenderer = PdfTableRenderer(
@@ -153,11 +175,52 @@ class InvoicePdfService @Inject constructor(
         val formattedAmount = String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount / 100.0)
         canvas.drawText(formattedAmount, rightX, currentY, totalLabelPaint)
 
+        // Render notes and footer below totals
+        bodyPaint.textAlign = Paint.Align.LEFT
+        if (snapshot.notes.isNotBlank()) {
+            currentY += 30f
+            canvas.drawLine(40f, currentY, 555f, currentY, separatorPaint)
+            currentY += 12f
+            canvas.drawText("NOTES", 40f, currentY, labelPaint)
+            currentY += 14f
+            currentY = drawWrappedText(canvas, snapshot.notes, 40f, currentY, 515f, bodyPaint)
+        }
+        if (snapshot.footerText.isNotBlank()) {
+            currentY += 20f
+            canvas.drawLine(40f, currentY, 555f, currentY, separatorPaint)
+            currentY += 12f
+            currentY = drawWrappedText(canvas, snapshot.footerText, 40f, currentY, 515f, footerBodyPaint)
+        }
+
         pdfDocument.finishPage(page)
         file.outputStream().use { pdfDocument.writeTo(it) }
         pdfDocument.close()
 
         return file
+    }
+
+    /**
+     * Draws wrapped text using StaticLayout and returns the Y position after the drawn text.
+     */
+    private fun drawWrappedText(
+        canvas: Canvas,
+        text: String,
+        x: Float,
+        y: Float,
+        maxWidth: Float,
+        paint: Paint
+    ): Float {
+        val textPaint = TextPaint(paint)
+        val layout = StaticLayout.Builder
+            .obtain(text, 0, text.length, textPaint, maxWidth.toInt())
+            .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+            .setLineSpacing(0f, 1.2f)
+            .build()
+        canvas.save()
+        canvas.translate(x, y)
+        layout.draw(canvas)
+        canvas.restore()
+        return y + layout.height
     }
 
     private fun getCurrencySymbol(code: String): String {

@@ -235,7 +235,11 @@ class CreateInvoiceViewModel @Inject constructor(
                         businessPhone = businessProfile.phone,
                         businessAddress = businessProfile.address,
                         logoBase64 = businessProfile.logoBase64,
-                        currencyCode = state.selectedCurrencyCode
+                        currencyCode = state.selectedCurrencyCode,
+                        headerText = state.header,
+                        subheaderText = state.subheader,
+                        footerText = state.footer,
+                        notes = state.notes
                     ),
                     isQuote = false,
                     overwriteExisting = true
