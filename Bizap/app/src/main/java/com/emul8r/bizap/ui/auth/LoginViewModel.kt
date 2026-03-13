@@ -3,12 +3,16 @@ package com.emul8r.bizap.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.model.AuthState
+import com.emul8r.bizap.domain.model.BusinessProfile
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.service.AuthenticationManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -26,8 +30,16 @@ data class LoginUiState(
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authManager: AuthenticationManager
+    private val authManager: AuthenticationManager,
+    private val businessProfileRepository: BusinessProfileRepository
 ) : ViewModel() {
+
+    val businessProfile: StateFlow<BusinessProfile> = businessProfileRepository.activeProfile
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = BusinessProfile()
+        )
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
