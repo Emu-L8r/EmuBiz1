@@ -113,8 +113,7 @@ class MainActivity : ComponentActivity() {
                         val gui2NavController = rememberNavController()
                         GuiV2NavGraph(
                             navController = gui2NavController,
-                            startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
-                            onSwitchToGui1 = {}
+                            startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L
                         )
                     }
                     else -> {
