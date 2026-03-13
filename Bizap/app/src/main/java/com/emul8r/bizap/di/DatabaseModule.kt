@@ -15,6 +15,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -25,12 +26,22 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+    fun provideAppDatabase(
+        @ApplicationContext context: Context,
+        passphraseManager: DatabasePassphraseManager
+    ): AppDatabase {
+        // Load SQLCipher native libraries before opening any encrypted database
+        System.loadLibrary("sqlcipher")
+
+        val passphrase = passphraseManager.getOrCreatePassphrase()
+        val factory = SupportOpenHelperFactory(passphrase)
+
         val builder = Room.databaseBuilder(
             context,
             AppDatabase::class.java,
             "bizap-db"
         )
+        .openHelperFactory(factory)
         .addMigrations(
             MIGRATION_21_22,
             MIGRATION_22_23,
