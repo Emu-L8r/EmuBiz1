@@ -75,7 +75,11 @@ class InvoicePdfViewModel @Inject constructor(
                     businessEmail = profile.email,
                     businessPhone = profile.phone,    // FIXED
                     businessAddress = profile.address, // FIXED
-                    logoBase64 = profile.logoBase64
+                    logoBase64 = profile.logoBase64,
+                    headerText = invoice.header ?: "",
+                    subheaderText = invoice.subheader ?: "",
+                    footerText = invoice.footer ?: "",
+                    notes = invoice.notes ?: ""
                 )
 
                 // Generate PDF to a temporary file first

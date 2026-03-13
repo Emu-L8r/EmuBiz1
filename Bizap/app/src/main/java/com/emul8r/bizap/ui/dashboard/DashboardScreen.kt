@@ -108,6 +108,17 @@ fun DashboardScreen(
             }
 
             item {
+                InvoiceStatusPieChart(statusCounts = statusCounts)
+            }
+
+            item {
+                NotesCard(
+                    currentNotesCount = currentNotesCount,
+                    onClick = { navController.navigate(Screen.Notes) }
+                )
+            }
+
+            item {
                 // First row: Total Clients and Total Invoices
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     ElevatedCard(
