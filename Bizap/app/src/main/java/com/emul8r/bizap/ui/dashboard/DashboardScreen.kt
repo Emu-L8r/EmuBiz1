@@ -171,6 +171,62 @@ fun DashboardScreen(
         }
 
         item {
+            // Third row: Expected Revenue vs Actual Revenue
+            val expectedRevenue: Long
+            val actualRevenue: Long
+            when (val s = revenueState) {
+                is RevenueDashboardUiState.Success -> {
+                    // Expected Revenue = outstanding (SENT/PARTIALLY_PAID/OVERDUE) + collected (PAID/PARTIALLY_PAID)
+                    // This represents the total billed amount we expect to collect
+                    expectedRevenue = s.metrics.outstandingAmount + s.metrics.totalPaidRevenue
+                    // Actual Revenue = amount already collected (amountPaid for PAID + PARTIALLY_PAID)
+                    actualRevenue = s.metrics.totalPaidRevenue
+                }
+                else -> {
+                    expectedRevenue = 0L
+                    actualRevenue = 0L
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                ElevatedCard(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Icon(Icons.Default.TrendingUp, contentDescription = null)
+                        Text("Expected Revenue", style = MaterialTheme.typography.labelMedium)
+                        Text(
+                            CentsFormatter.formatCents(expectedRevenue),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                ElevatedCard(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Icon(Icons.Default.AttachMoney, contentDescription = null)
+                        Text("Actual Revenue", style = MaterialTheme.typography.labelMedium)
+                        Text(
+                            CentsFormatter.formatCents(actualRevenue),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth()
             ) {

@@ -31,14 +31,13 @@ import com.emul8r.bizap.ui.gui2.settings.ThemeSettingsScreenV2
  *
  * @param navController  The NavHostController for GUI2.
  * @param startBusinessId  The businessId to use as the root screen argument.
- * @param onSwitchToGui1  Callback to return to GUI1 (landing screen reset).
  * @param modifier  Optional modifier for the nav host.
  */
 @Composable
 fun GuiV2NavGraph(
     navController: NavHostController,
     startBusinessId: Long,
-    onSwitchToGui1: () -> Unit,
+    onSwitchToGui1: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {

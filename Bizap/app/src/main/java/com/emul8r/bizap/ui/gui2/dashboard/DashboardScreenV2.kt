@@ -37,7 +37,7 @@ fun DashboardScreenV2(
     onNavigateToInvoiceAnalytics: () -> Unit = {},
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
-    onSwitchToGui1: () -> Unit,
+    onSwitchToGui1: () -> Unit = {},
     viewModel: DashboardViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -45,10 +45,7 @@ fun DashboardScreenV2(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dashboard") },
-                actions = {
-                    TextButton(onClick = onSwitchToGui1) { Text("Switch to Classic") }
-                }
+                title = { Text("Dashboard") }
             )
         }
     ) { paddingValues ->
@@ -129,6 +126,29 @@ private fun DashboardContentV2(
 
         HorizontalDivider()
         */
+
+        // ── Revenue section: Expected vs Actual ──
+        SectionHeaderV2(title = "Revenue")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Expected Revenue = outstanding (not yet collected) + collected (already paid)
+            val expectedRevenue = state.paymentMetrics.outstandingAmount + state.paymentMetrics.collectedAmount
+            val actualRevenue = state.paymentMetrics.collectedAmount
+            MetricCardV2(
+                label = "Expected Revenue",
+                value = com.emul8r.bizap.utils.CentsFormatter.formatCents(expectedRevenue),
+                modifier = Modifier.weight(1f)
+            )
+            MetricCardV2(
+                label = "Actual Revenue",
+                value = com.emul8r.bizap.utils.CentsFormatter.formatCents(actualRevenue),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        HorizontalDivider()
 
         // ── Invoice Metrics section (replaces old Revenue section) ──
         SectionHeaderV2(title = "Invoices Sent")
