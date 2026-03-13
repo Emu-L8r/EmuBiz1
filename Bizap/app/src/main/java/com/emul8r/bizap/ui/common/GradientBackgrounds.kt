@@ -1,14 +1,21 @@
 package com.emul8r.bizap.ui.common
 
+import androidx.compose.foundation.Image
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.emul8r.bizap.R
 
 /**
- * Gradient background modifiers for consistent visual depth across screens.
+ * Background modifiers for consistent visual depth across screens.
  */
 object GradientBackgrounds {
     
@@ -26,6 +33,25 @@ object GradientBackgrounds {
                     colorScheme.surfaceVariant.copy(alpha = 0.3f)
                 )
             )
+        )
+    }
+
+    /**
+     * Adds a faded image as a background placeholder.
+     * Note: Wrap your content in a Box when using this if you want it to sit behind.
+     */
+    @Composable
+    fun ImagePlaceholderBackground(
+        drawableId: Int = R.drawable.thswalogo,
+        alpha: Float = 0.08f
+    ) {
+        Image(
+            painter = painterResource(id = drawableId),
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(alpha),
+            contentScale = ContentScale.Inside
         )
     }
     
