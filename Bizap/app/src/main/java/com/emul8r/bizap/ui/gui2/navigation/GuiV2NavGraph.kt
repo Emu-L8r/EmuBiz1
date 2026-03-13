@@ -190,7 +190,8 @@ fun GuiV2NavGraph(
                     onThemeSettingsClick = {
                         navController.navigateToThemeSettingsV2(route.businessId)
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onSwitchToGui1 = onSwitchToGui1
                 )
             }
 

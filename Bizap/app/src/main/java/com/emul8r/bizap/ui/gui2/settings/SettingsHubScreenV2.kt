@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.AutoAwesomeMotion
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,6 +34,7 @@ fun SettingsHubScreenV2(
     onBusinessProfileClick: () -> Unit,
     onThemeSettingsClick: () -> Unit,
     onBack: () -> Unit,
+    onSwitchToGui1: () -> Unit = {},
     viewModel: SettingsHubViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -64,6 +66,7 @@ fun SettingsHubScreenV2(
                     businessProfile = state.businessProfile,
                     onBusinessProfileClick = onBusinessProfileClick,
                     onThemeSettingsClick = onThemeSettingsClick,
+                    onSwitchToGui1 = onSwitchToGui1,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -76,6 +79,7 @@ private fun SettingsContent(
     businessProfile: BusinessProfile,
     onBusinessProfileClick: () -> Unit,
     onThemeSettingsClick: () -> Unit,
+    onSwitchToGui1: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -159,6 +163,24 @@ private fun SettingsContent(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // GUI Switch Section
+        Divider()
+        Text(
+            text = "Interface",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        SettingsCardV2(
+            icon = Icons.Default.AutoAwesomeMotion,
+            title = "Switch to GUI1",
+            description = "Go back to the traditional interface",
+            onClick = onSwitchToGui1
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
     }
