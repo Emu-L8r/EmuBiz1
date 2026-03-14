@@ -1,5 +1,8 @@
 package com.emul8r.bizap.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.dao.AnalyticsDao
 import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
@@ -8,6 +11,7 @@ import com.emul8r.bizap.data.local.entities.DailyRevenueSnapshot
 import com.emul8r.bizap.data.local.entities.InvoicePaymentEntity
 import com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
+import com.emul8r.bizap.data.local.paging.InvoicePagingSource
 import com.emul8r.bizap.data.mapper.toDomain
 import com.emul8r.bizap.data.mapper.toEntity
 import com.emul8r.bizap.data.monitoring.PerformanceMetrics
@@ -61,6 +65,17 @@ class InvoiceRepositoryImpl @Inject constructor(
 
     override fun getInvoiceWithItemsById(id: Long): Flow<Invoice?> {
         return invoiceDao.getInvoiceWithItemsById(id).map { it?.toDomain() }
+    }
+
+    override fun getInvoicesPaged(businessId: Long): Flow<PagingData<Invoice>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false,
+                prefetchDistance = 5
+            ),
+            pagingSourceFactory = { InvoicePagingSource(invoiceDao, businessId) }
+        ).flow
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
