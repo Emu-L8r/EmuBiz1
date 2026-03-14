@@ -3,11 +3,14 @@ package com.emul8r.bizap.ui.notes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.model.Note
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.NoteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -16,16 +19,30 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NotesViewModel @Inject constructor(
-    private val noteRepository: NoteRepository
+    private val noteRepository: NoteRepository,
+    private val businessProfileRepository: BusinessProfileRepository
 ) : ViewModel() {
 
-    // TODO: Get businessId from context or preferences instead of hardcoding
-    private val businessId: Long = 1L
-
-    val currentNotesCount: StateFlow<Int> = noteRepository.getCurrentNotesCount(businessId)
+    private val activeBusinessId: StateFlow<Long> = businessProfileRepository.activeProfile
+        .map { it.id }
         .catch { e ->
-            Timber.e(e, "Error observing current notes count")
-            emit(0)
+            Timber.e(e, "Error observing active business profile")
+            emit(1L)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 1L
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val currentNotesCount: StateFlow<Int> = activeBusinessId
+        .flatMapLatest { businessId ->
+            noteRepository.getCurrentNotesCount(businessId)
+                .catch { e ->
+                    Timber.e(e, "Error observing current notes count")
+                    emit(0)
+                }
         }
         .stateIn(
             scope = viewModelScope,
@@ -33,14 +50,18 @@ class NotesViewModel @Inject constructor(
             initialValue = 0
         )
 
-    val allNotes: StateFlow<NotesUiState> = noteRepository.getAllNotes(businessId)
-        .map { notes ->
-            if (notes.isEmpty()) NotesUiState.Empty
-            else NotesUiState.Success(notes)
-        }
-        .catch { e ->
-            Timber.e(e, "Error observing notes")
-            emit(NotesUiState.Error(e.message ?: "Unknown error"))
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val allNotes: StateFlow<NotesUiState> = activeBusinessId
+        .flatMapLatest { businessId ->
+            noteRepository.getAllNotes(businessId)
+                .map { notes ->
+                    if (notes.isEmpty()) NotesUiState.Empty
+                    else NotesUiState.Success(notes)
+                }
+                .catch { e ->
+                    Timber.e(e, "Error observing notes")
+                    emit(NotesUiState.Error(e.message ?: "Unknown error"))
+                }
         }
         .stateIn(
             scope = viewModelScope,
@@ -52,7 +73,7 @@ class NotesViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val note = Note(
-                    businessProfileId = businessId,
+                    businessProfileId = activeBusinessId.value,
                     title = title,
                     content = content,
                     customerId = customerId,
@@ -72,7 +93,7 @@ class NotesViewModel @Inject constructor(
             try {
                 val note = Note(
                     id = noteId,
-                    businessProfileId = businessId,
+                    businessProfileId = activeBusinessId.value,
                     title = title,
                     content = content,
                     isCurrent = isCurrent,
