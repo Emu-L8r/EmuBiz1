@@ -7,6 +7,7 @@ import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.domain.usecase.CalculateInvoiceMetricsUseCase
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
 import io.mockk.*
 import kotlinx.coroutines.flow.flowOf
@@ -29,6 +30,7 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
     private lateinit var customerRepository: CustomerRepository
     private lateinit var businessProfileRepository: BusinessProfileRepository
     private lateinit var generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase
+    private val calculateMetricsUseCase = CalculateInvoiceMetricsUseCase()
 
     @Before
     fun setup() {
@@ -53,7 +55,8 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
             customerRepository,
             businessProfileRepository,
             mockk(), // CurrencyRepository
-            generateAndSaveInvoiceUseCase
+            generateAndSaveInvoiceUseCase,
+            calculateMetricsUseCase
         )
     }
 
