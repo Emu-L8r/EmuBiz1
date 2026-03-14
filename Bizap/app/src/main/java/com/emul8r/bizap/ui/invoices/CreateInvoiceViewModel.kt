@@ -7,11 +7,12 @@ import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.model.Currency
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
+import com.emul8r.bizap.domain.model.InvoiceMetrics
 import com.emul8r.bizap.domain.model.InvoiceStatus
-import com.emul8r.bizap.domain.model.calculateTotal
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.domain.usecase.CalculateInvoiceMetricsUseCase
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
 import com.emul8r.bizap.domain.test.TestDataProvider
 import com.emul8r.bizap.domain.validation.ValidationRules
@@ -32,6 +33,8 @@ data class CreateInvoiceUiState(
     val photoUris: List<String> = emptyList(),
     val currencies: List<Currency> = emptyList(),
     val selectedCurrencyCode: String = "AUD",
+    val taxRate: Double = 0.0,
+    val isTaxRegistered: Boolean = false,
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
     val error: String? = null
@@ -43,7 +46,8 @@ class CreateInvoiceViewModel @Inject constructor(
     private val customerRepository: CustomerRepository,
     private val businessProfileRepository: BusinessProfileRepository,
     private val currencyRepository: CurrencyRepository,
-    private val generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase
+    private val generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase,
+    private val calculateMetricsUseCase: CalculateInvoiceMetricsUseCase
 ) : ViewModel() {
 
     private val TAG = "CreateInvoiceViewModel"
@@ -64,6 +68,16 @@ class CreateInvoiceViewModel @Inject constructor(
             // Observe currencies
             currencyRepository.getEnabledCurrencies().onEach { currencies ->
                 _uiState.update { it.copy(currencies = currencies) }
+            }.launchIn(this)
+
+            // Observe business profile to keep tax settings in sync
+            businessProfileRepository.activeProfile.onEach { profile ->
+                _uiState.update {
+                    it.copy(
+                        isTaxRegistered = profile.isTaxRegistered,
+                        taxRate = if (profile.isTaxRegistered) profile.defaultTaxRate.toDouble() else 0.0
+                    )
+                }
             }.launchIn(this)
         }
     }
@@ -143,6 +157,25 @@ class CreateInvoiceViewModel @Inject constructor(
         _uiState.update { it.copy(photoUris = it.photoUris + uri) }
     }
 
+    /**
+     * Returns calculated invoice metrics (subtotal, tax, total) for the current UI state.
+     * Uses [CalculateInvoiceMetricsUseCase] as single source of truth for all calculations.
+     */
+    fun getInvoiceMetrics(): InvoiceMetrics {
+        val state = _uiState.value
+        val invoiceForCalculation = Invoice(
+            customerId = state.selectedCustomer?.id,
+            customerName = state.selectedCustomer?.name ?: "",
+            date = System.currentTimeMillis(),
+            totalAmount = 0L,  // Placeholder — overridden by metrics
+            items = state.items.map { it.toDomain() },
+            isQuote = false,
+            status = InvoiceStatus.DRAFT,
+            taxRate = state.taxRate
+        )
+        return calculateMetricsUseCase(invoiceForCalculation)
+    }
+
     fun onSaveClicked() {
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
@@ -156,13 +189,20 @@ class CreateInvoiceViewModel @Inject constructor(
                 val lineItems = state.items.map { it.toDomain() }
                 Timber.d("✅ Line items mapped: ${lineItems.size} items")
 
-                // Calculate subtotal in cents: sum of (unitPrice * quantity) for each item
-                val subtotal: Long = lineItems.sumOf { it.calculateTotal() }
-                Timber.d("✅ Subtotal calculated: $subtotal cents")
-
-                // TAX REGISTRATION TOGGLE: Only apply tax if business is registered
+                // Use CalculateInvoiceMetricsUseCase as single source of truth for all calculations
                 val taxRate: Double = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
-                val taxAmount: Long = if (businessProfile.isTaxRegistered) (subtotal.toDouble() * taxRate).toLong() else 0
+                val tempInvoice = Invoice(
+                    customerId = customer.id,
+                    customerName = customer.name,
+                    date = System.currentTimeMillis(),  // Placeholder for metrics calculation only
+                    totalAmount = 0L,  // Placeholder — metrics will provide the real value
+                    items = lineItems,
+                    isQuote = false,
+                    status = InvoiceStatus.DRAFT,
+                    taxRate = taxRate
+                )
+                val metrics = calculateMetricsUseCase(tempInvoice)
+                Timber.d("✅ Metrics calculated: subtotal=${metrics.subtotal}, tax=${metrics.taxAmount}, total=${metrics.totalAmount} cents")
                 val createdAt = System.currentTimeMillis()
                 val dueDate = createdAt + (30L * 24 * 60 * 60 * 1000)
 
@@ -173,7 +213,7 @@ class CreateInvoiceViewModel @Inject constructor(
                     customerEmail = customer.email,
                     date = createdAt,
                     dueDate = dueDate,
-                    totalAmount = subtotal + taxAmount,
+                    totalAmount = metrics.totalAmount,
                     items = lineItems,
                     isQuote = false,
                     status = InvoiceStatus.DRAFT,
@@ -183,7 +223,7 @@ class CreateInvoiceViewModel @Inject constructor(
                     footer = state.footer.ifBlank { null },
                     photoUris = state.photoUris,
                     taxRate = taxRate,
-                    taxAmount = taxAmount,
+                    taxAmount = metrics.taxAmount,
                     companyLogoPath = businessProfile.logoBase64,
                     updatedAt = createdAt,
                     currencyCode = state.selectedCurrencyCode
@@ -225,9 +265,9 @@ class CreateInvoiceViewModel @Inject constructor(
                                 total = itemTotal
                             )
                         },
-                        subtotal = subtotal,
+                        subtotal = metrics.subtotal,
                         taxRate = taxRate,
-                        taxAmount = taxAmount,
+                        taxAmount = metrics.taxAmount,
                         totalAmount = invoiceWithId.totalAmount,
                         businessName = businessProfile.businessName,
                         businessAbn = businessProfile.abn,
