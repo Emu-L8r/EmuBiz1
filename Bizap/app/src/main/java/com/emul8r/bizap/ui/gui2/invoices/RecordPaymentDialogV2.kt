@@ -34,6 +34,7 @@ fun RecordPaymentDialogV2(
     invoiceTotal: Long,
     amountPaid: Long,
     invoiceDate: Long,
+    invoiceStatus: com.emul8r.bizap.domain.model.InvoiceStatus,
     onDismiss: () -> Unit,
     onSuccess: () -> Unit,
     viewModel: RecordPaymentViewModel = hiltViewModel()
@@ -49,7 +50,8 @@ fun RecordPaymentDialogV2(
             businessId = businessId,
             invoiceTotal = invoiceTotal,
             amountPaid = amountPaid,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = invoiceStatus
         )
     }
 
@@ -67,12 +69,34 @@ fun RecordPaymentDialogV2(
     }
 
     val isFullyPaid = (invoiceTotal - amountPaid) <= 0
+    val isDraft = invoiceStatus == com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT
 
     AlertDialog(
         onDismissRequest = { if (!formState.isLoading) onDismiss() },
         title = { Text("Record Payment") },
         text = {
-            if (isFullyPaid) {
+            if (isDraft) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                "⚠️ Cannot Record Payment on Draft Invoice",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "You must send this invoice before recording payments. Change the status to SENT first.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                }
+            } else if (isFullyPaid) {
                 Text(
                     "✅ This invoice is already fully paid.",
                     color = MaterialTheme.colorScheme.primary,
@@ -185,15 +209,15 @@ fun RecordPaymentDialogV2(
             } else {
                 Button(
                     onClick = {
-                        if (isFullyPaid) {
+                        if (isDraft || isFullyPaid) {
                             onDismiss()
                         } else {
                             viewModel.submit()
                         }
                     },
-                    enabled = isFullyPaid || formState.isFormValid
+                    enabled = isDraft || isFullyPaid || formState.isFormValid
                 ) {
-                    Text(if (isFullyPaid) "OK" else "Record Payment")
+                    Text(if (isDraft || isFullyPaid) "OK" else "Record Payment")
                 }
             }
         },

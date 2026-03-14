@@ -3,6 +3,7 @@ package com.emul8r.bizap.domain.usecase
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -48,7 +49,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
     // ── validPayment_Success ──────────────────────────────────────────────────
 
     @Test
-    fun `validPayment_Success - valid payment delegates to repository`() = runTest {
+    fun `validPayment_Success - valid payment on SENT invoice delegates to repository`() = runTest {
         coEvery {
             paymentRepository.recordPayment(
                 invoiceId = invoiceId,
@@ -65,7 +66,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertTrue(result.isSuccess)
@@ -98,7 +100,127 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = outstanding,  // Exact outstanding
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
+        )
+
+        assertTrue(result.isSuccess)
+    }
+
+    // ── invoiceStatus_Validation ──────────────────────────────────────────────
+
+    @Test
+    fun `invoiceStatus_Validation - DRAFT invoice payment returns failure`() = runTest {
+        val result = useCase(
+            invoiceId = invoiceId,
+            businessId = businessId,
+            amount = 50000L,
+            trueOutstanding = outstanding,
+            paymentDate = todayMidnight,
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.DRAFT
+        )
+
+        assertFalse(result.isSuccess)
+        val error = result.exceptionOrNull()
+        assertNotNull(error)
+        assertTrue(error.message?.contains("draft", ignoreCase = true) == true)
+    }
+
+    @Test
+    fun `invoiceStatus_Validation - DRAFT invoice payment does not call repository`() = runTest {
+        useCase(
+            invoiceId = invoiceId,
+            businessId = businessId,
+            amount = 50000L,
+            trueOutstanding = outstanding,
+            paymentDate = todayMidnight,
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.DRAFT
+        )
+
+        coVerify(exactly = 0) {
+            paymentRepository.recordPayment(
+                invoiceId = any(),
+                businessId = any(),
+                amount = any(),
+                paymentDate = any(),
+                notes = any()
+            )
+        }
+    }
+
+    @Test
+    fun `invoiceStatus_Validation - SENT invoice accepts payment`() = runTest {
+        coEvery {
+            paymentRepository.recordPayment(any(), any(), any(), any(), any())
+        } returns Result.success(Unit)
+
+        val result = useCase(
+            invoiceId = invoiceId,
+            businessId = businessId,
+            amount = 50000L,
+            trueOutstanding = outstanding,
+            paymentDate = todayMidnight,
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
+        )
+
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `invoiceStatus_Validation - PARTIALLY_PAID invoice accepts payment`() = runTest {
+        coEvery {
+            paymentRepository.recordPayment(any(), any(), any(), any(), any())
+        } returns Result.success(Unit)
+
+        val result = useCase(
+            invoiceId = invoiceId,
+            businessId = businessId,
+            amount = 50000L,
+            trueOutstanding = outstanding,
+            paymentDate = todayMidnight,
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.PARTIALLY_PAID
+        )
+
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `invoiceStatus_Validation - OVERDUE invoice accepts payment`() = runTest {
+        coEvery {
+            paymentRepository.recordPayment(any(), any(), any(), any(), any())
+        } returns Result.success(Unit)
+
+        val result = useCase(
+            invoiceId = invoiceId,
+            businessId = businessId,
+            amount = 50000L,
+            trueOutstanding = outstanding,
+            paymentDate = todayMidnight,
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.OVERDUE
+        )
+
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `invoiceStatus_Validation - PAID invoice accepts payment (for edge cases)`() = runTest {
+        coEvery {
+            paymentRepository.recordPayment(any(), any(), any(), any(), any())
+        } returns Result.success(Unit)
+
+        val result = useCase(
+            invoiceId = invoiceId,
+            businessId = businessId,
+            amount = 50000L,
+            trueOutstanding = outstanding,
+            paymentDate = todayMidnight,
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.PAID
         )
 
         assertTrue(result.isSuccess)
@@ -114,7 +236,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = outstanding + 1L,  // One cent over outstanding
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -131,7 +254,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = outstanding + 10000L,
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         coVerify(exactly = 0) {
@@ -157,7 +281,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = outstanding,
             paymentDate = futureDate,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -176,7 +301,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = outstanding,
             paymentDate = beforeInvoiceDate,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -192,7 +318,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = 0L,
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -238,7 +365,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         coVerify(exactly = 1) {
@@ -272,6 +400,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
             invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT,
             notes = notes
         )
 

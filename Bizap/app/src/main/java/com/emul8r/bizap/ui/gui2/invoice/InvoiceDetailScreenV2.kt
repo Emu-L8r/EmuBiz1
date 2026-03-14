@@ -49,7 +49,17 @@ fun InvoiceDetailScreenV2(
                 },
                 actions = {
                     if (uiState is InvoiceDetailUiStateV2.Success) {
-                        IconButton(onClick = { showPaymentDialog = true }) {
+                        val currentStatus = runCatching {
+                            InvoiceStatus.valueOf((uiState as InvoiceDetailUiStateV2.Success).invoice.invoice.status)
+                        }.getOrElse { InvoiceStatus.DRAFT }
+                        
+                        // Disable payment button for DRAFT invoices
+                        val canRecordPayment = currentStatus != InvoiceStatus.DRAFT
+                        
+                        IconButton(
+                            onClick = { showPaymentDialog = true },
+                            enabled = canRecordPayment
+                        ) {
                             Icon(Icons.Default.Payment, contentDescription = "Record Payment")
                         }
                         IconButton(onClick = { showStatusMenu = true }) {
@@ -80,12 +90,16 @@ fun InvoiceDetailScreenV2(
 
                 // Payment Dialog
                 if (showPaymentDialog) {
+                    val currentStatus = runCatching {
+                        InvoiceStatus.valueOf(state.invoice.invoice.status)
+                    }.getOrElse { InvoiceStatus.DRAFT }
                     RecordPaymentDialogV2(
                         invoiceId = state.invoice.invoice.id,
                         businessId = businessId,
                         invoiceTotal = state.invoice.invoice.totalAmount,
                         amountPaid = state.invoice.invoice.amountPaid,
                         invoiceDate = state.invoice.invoice.date,
+                        invoiceStatus = currentStatus,
                         onDismiss = { showPaymentDialog = false },
                         onSuccess = { showPaymentDialog = false }
                     )

@@ -32,6 +32,7 @@ class RecordPaymentViewModel @Inject constructor(
     private var businessId: Long = -1L
     private var invoiceTotal: Long = 0L
     private var invoiceDate: Long = 0L
+    private var invoiceStatus: com.emul8r.bizap.domain.model.InvoiceStatus = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT
 
     // ── UI state ───────────────────────────────────────────────────────────────
 
@@ -52,19 +53,21 @@ class RecordPaymentViewModel @Inject constructor(
         businessId: Long,
         invoiceTotal: Long,
         amountPaid: Long,
-        invoiceDate: Long
+        invoiceDate: Long,
+        invoiceStatus: com.emul8r.bizap.domain.model.InvoiceStatus
     ) {
         this.invoiceId = invoiceId
         this.businessId = businessId
         this.invoiceTotal = invoiceTotal
         this.invoiceDate = invoiceDate
+        this.invoiceStatus = invoiceStatus
 
         val outstanding = (invoiceTotal - amountPaid).coerceAtLeast(0L)
         _formState.value = PaymentFormState(
             outstanding = outstanding,
             paymentDate = todayMidnightMs()
         )
-        Timber.d("RecordPaymentViewModel: initFor invoice=$invoiceId outstanding=$outstanding")
+        Timber.d("RecordPaymentViewModel: initFor invoice=$invoiceId status=$invoiceStatus outstanding=$outstanding")
     }
 
     // ── Field change handlers ──────────────────────────────────────────────────
@@ -124,6 +127,7 @@ class RecordPaymentViewModel @Inject constructor(
                 trueOutstanding = state.outstanding,
                 paymentDate = state.paymentDate,
                 invoiceDate = invoiceDate,
+                invoiceStatus = invoiceStatus,
                 notes = state.notes.ifBlank { null }
             )
 
