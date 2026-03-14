@@ -163,7 +163,7 @@ class CreateInvoiceViewModel @Inject constructor(
      */
     fun getInvoiceMetrics(): InvoiceMetrics {
         val state = _uiState.value
-        val partialInvoice = Invoice(
+        val invoiceForCalculation = Invoice(
             customerId = state.selectedCustomer?.id,
             customerName = state.selectedCustomer?.name ?: "",
             date = System.currentTimeMillis(),
@@ -173,7 +173,7 @@ class CreateInvoiceViewModel @Inject constructor(
             status = InvoiceStatus.DRAFT,
             taxRate = state.taxRate
         )
-        return calculateMetricsUseCase(partialInvoice)
+        return calculateMetricsUseCase(invoiceForCalculation)
     }
 
     fun onSaveClicked() {
@@ -194,7 +194,7 @@ class CreateInvoiceViewModel @Inject constructor(
                 val tempInvoice = Invoice(
                     customerId = customer.id,
                     customerName = customer.name,
-                    date = 0L,
+                    date = System.currentTimeMillis(),  // Placeholder for metrics calculation only
                     totalAmount = 0L,  // Placeholder — metrics will provide the real value
                     items = lineItems,
                     isQuote = false,
