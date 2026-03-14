@@ -3,6 +3,8 @@ package com.emul8r.bizap
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.*
+import com.emul8r.bizap.data.local.InvoiceDao
+import com.emul8r.bizap.data.repository.SnapshotSyncHelper
 import com.emul8r.bizap.data.worker.ExchangeRateWorker
 import com.emul8r.bizap.data.worker.SyncWorker
 import com.emul8r.bizap.domain.repository.CurrencyRepository
@@ -24,6 +26,12 @@ class BizapApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var currencyRepository: CurrencyRepository
+
+    @Inject
+    lateinit var invoiceDao: InvoiceDao
+
+    @Inject
+    lateinit var snapshotSyncHelper: SnapshotSyncHelper
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -162,11 +170,10 @@ class BizapApplication : Application(), Configuration.Provider {
 
                 Timber.i("📸 Starting snapshot backfill for existing invoices...")
 
-                // TODO: Implement backfill logic here
-                // val invoices = invoiceRepository.getAllInvoices()
-                // invoices.forEach { invoice ->
-                //     snapshotSyncHelper.syncAllSnapshots(invoice, invoice.businessProfileId)
-                // }
+                val invoices = invoiceDao.getAllInvoiceEntities()
+                invoices.forEach { invoice ->
+                    snapshotSyncHelper.syncAllSnapshots(invoice, invoice.businessProfileId)
+                }
 
                 // Mark as complete
                 prefs.edit().putBoolean("snapshots_backfilled", true).apply()
