@@ -37,7 +37,7 @@ class CsvExportService @Inject constructor(
 
         file.bufferedWriter().use { writer ->
             // ── Invoice header section ─────────────────────────────────────────
-            writer.appendLine("Invoice ID,Date,Due Date,Customer,Address,Email,Status,Currency,Subtotal,Tax,Total,Amount Paid,Balance")
+            writer.appendLine("Invoice ID,Date,Due Date,Customer,Address,Email,Status,Currency,Subtotal,Tax Rate,Tax,Total,Amount Paid,Balance")
             writer.appendLine(
                 listOf(
                     csvEscape(displayId),
@@ -49,6 +49,7 @@ class CsvExportService @Inject constructor(
                     invoice.status.name,
                     invoice.currencyCode,
                     centsToDecimal(invoice.totalAmount - invoice.taxAmount),
+                    formatTaxRate(invoice.taxRate),
                     centsToDecimal(invoice.taxAmount),
                     centsToDecimal(invoice.totalAmount),
                     centsToDecimal(invoice.amountPaid),
@@ -69,6 +70,24 @@ class CsvExportService @Inject constructor(
                         centsToDecimal((item.unitPrice * item.quantity).toLong())
                     ).joinToString(",")
                 )
+            }
+
+            // ── Notes section ──────────────────────────────────────────────────
+            writer.appendLine("")
+            writer.appendLine("Notes/Special Instructions")
+            writer.appendLine(csvEscape(invoice.notes?.takeIf { it.isNotBlank() } ?: "No notes"))
+
+            // ── Payment terms section ──────────────────────────────────────────
+            writer.appendLine("")
+            writer.appendLine("Payment Terms")
+            writer.appendLine(csvEscape(invoice.footer?.takeIf { it.isNotBlank() } ?: "No specific terms"))
+
+            // ── Custom header section (only when present) ──────────────────────
+            val headerText = invoice.header?.takeIf { it.isNotBlank() }
+            if (headerText != null) {
+                writer.appendLine("")
+                writer.appendLine("Invoice Header")
+                writer.appendLine(csvEscape(headerText))
             }
         }
 
@@ -113,9 +132,19 @@ class CsvExportService @Inject constructor(
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    /** Converts cents (Long) to a decimal string, e.g. 14999 → "149.99". */
+    /**
+     * Converts cents (Long) to a currency string with the Australian dollar prefix,
+     * e.g. 14999 → "A$149.99".
+     *
+     * Note: "A$" is the standard symbol for Australian dollars (AUD), which is the
+     * only currency currently supported by this application.
+     */
     private fun centsToDecimal(cents: Long): String =
-        String.format(Locale.US, "%.2f", cents / 100.0)
+        "A$" + String.format(Locale.US, "%.2f", cents / 100.0)
+
+    /** Formats a tax rate Double as a percentage string, e.g. 0.10 → "10.0%". */
+    private fun formatTaxRate(rate: Double): String =
+        String.format(Locale.US, "%.1f%%", rate * 100)
 
     /**
      * Wraps [value] in double-quotes and escapes any embedded double-quotes
