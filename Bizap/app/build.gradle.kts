@@ -34,7 +34,7 @@ android {
         }
         release {
             isMinifyEnabled = true
-            isShrinkResources = true
+            isShrinkResources = false  // Disabled: causes FileSystemAlreadyExistsException in resource shrinking
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -45,8 +45,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
+
+    kotlin {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        }
     }
 
     // Room schema export configuration
@@ -56,9 +59,6 @@ android {
 
     sourceSets {
         getByName("androidTest").assets.srcDirs("$projectDir/schemas")
-        // Temporarily exclude test sources to allow build while test compilation issues are fixed
-        // TODO: Remove this once test files are updated with proper imports
-        // test.kotlin.srcDirs = emptySet()
     }
 
     buildFeatures {
@@ -69,6 +69,8 @@ android {
     lint {
         abortOnError = false
         // Allow build to continue with warnings while we fix lint errors
+        disable += "MissingTranslation"
+        disable += "ExtraTranslation"
     }
 
     packaging {
