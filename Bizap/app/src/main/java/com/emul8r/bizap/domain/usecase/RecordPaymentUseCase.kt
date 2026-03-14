@@ -1,6 +1,7 @@
 package com.emul8r.bizap.domain.usecase
 
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -25,8 +26,9 @@ class RecordPaymentUseCase @Inject constructor(
      * @param trueOutstanding Remaining balance in cents (totalAmount - amountPaid).
      * @param paymentDate Unix timestamp (ms) of midnight of the selected date.
      *                    Must be ≤ today's midnight and ≥ [invoiceDate].
-     * @param invoiceDate Invoice creation date (ms) used as lower date boundary.
-     * @param notes       Optional freeform notes (max 500 chars).
+     * @param invoiceDate   Invoice creation date (ms) used as lower date boundary.
+     * @param invoiceStatus Current status of the invoice; DRAFT invoices are blocked.
+     * @param notes         Optional freeform notes (max 500 chars).
      */
     suspend operator fun invoke(
         invoiceId: Long,
@@ -35,8 +37,17 @@ class RecordPaymentUseCase @Inject constructor(
         trueOutstanding: Long,
         paymentDate: Long,
         invoiceDate: Long,
+        invoiceStatus: InvoiceStatus,
         notes: String? = null
     ): Result<Unit> {
+        if (invoiceStatus == InvoiceStatus.DRAFT) {
+            return Result.failure(
+                IllegalArgumentException(
+                    "Cannot record payment on a draft invoice. Send the invoice first."
+                )
+            )
+        }
+
         // Use midnight of today so comparison is consistent with the UI date picker
         val todayMidnight = todayMidnightMs()
 
@@ -46,8 +57,6 @@ class RecordPaymentUseCase @Inject constructor(
             )
         }
         
-        // ALLOW payments on any invoice with a balance, including DRAFT.
-        // We use trueOutstanding (totalAmount - amountPaid) passed from the caller.
         if (amount > trueOutstanding) {
             return Result.failure(
                 IllegalArgumentException("Payment exceeds the outstanding balance.")
