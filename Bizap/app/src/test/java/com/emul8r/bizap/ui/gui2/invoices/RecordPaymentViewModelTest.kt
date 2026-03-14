@@ -72,6 +72,7 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
                 trueOutstanding = any(),
                 paymentDate = any(),
                 invoiceDate = any(),
+                invoiceStatus = any(),
                 notes = any()
             )
         } returns Result.success(Unit)
