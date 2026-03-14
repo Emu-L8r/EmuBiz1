@@ -3,6 +3,7 @@ package com.emul8r.bizap.domain.usecase
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -65,7 +66,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertTrue(result.isSuccess)
@@ -98,7 +100,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = outstanding,  // Exact outstanding
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertTrue(result.isSuccess)
@@ -114,7 +117,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = outstanding + 1L,  // One cent over outstanding
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -131,7 +135,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = outstanding + 10000L,
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         coVerify(exactly = 0) {
@@ -157,7 +162,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = outstanding,
             paymentDate = futureDate,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -176,7 +182,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = outstanding,
             paymentDate = beforeInvoiceDate,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -192,7 +199,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = 0L,
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -238,7 +246,8 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         coVerify(exactly = 1) {
@@ -272,6 +281,7 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
             trueOutstanding = outstanding,
             paymentDate = todayMidnight,
             invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT,
             notes = notes
         )
 
@@ -282,6 +292,49 @@ class RecordPaymentUseCaseTest : BaseUnitTest() {
                 amount = any(),
                 paymentDate = any(),
                 notes = eq(notes)
+            )
+        }
+    }
+
+    // ── draftInvoice_Blocked ──────────────────────────────────────────────────
+
+    @Test
+    fun `draftInvoice_Blocked - payment on DRAFT invoice returns failure`() = runTest {
+        val result = useCase(
+            invoiceId = invoiceId,
+            businessId = businessId,
+            amount = 50000L,
+            trueOutstanding = outstanding,
+            paymentDate = todayMidnight,
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.DRAFT
+        )
+
+        assertFalse(result.isSuccess)
+        val error = result.exceptionOrNull()
+        assertNotNull(error)
+        assertTrue(error.message?.contains("draft", ignoreCase = true) == true)
+    }
+
+    @Test
+    fun `draftInvoice_Blocked - repository is NOT called when invoice is DRAFT`() = runTest {
+        useCase(
+            invoiceId = invoiceId,
+            businessId = businessId,
+            amount = 50000L,
+            trueOutstanding = outstanding,
+            paymentDate = todayMidnight,
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.DRAFT
+        )
+
+        coVerify(exactly = 0) {
+            paymentRepository.recordPayment(
+                invoiceId = any(),
+                businessId = any(),
+                amount = any(),
+                paymentDate = any(),
+                notes = any()
             )
         }
     }

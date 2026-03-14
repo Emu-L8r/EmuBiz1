@@ -2,6 +2,7 @@
 package com.emul8r.bizap.ui.gui2.invoices
 
 import com.emul8r.bizap.BaseUnitTest
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.usecase.RecordPaymentUseCase
 import io.mockk.*
 import kotlinx.coroutines.flow.first
@@ -40,7 +41,8 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
             businessId = businessId,
             invoiceTotal = invoiceTotal,
             amountPaid = amountPaid,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
     }
 

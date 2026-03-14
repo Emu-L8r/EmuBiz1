@@ -3,6 +3,7 @@ package com.emul8r.bizap.integration
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.usecase.RecordPaymentUseCase
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
@@ -64,7 +65,8 @@ class PaymentFlowTest : BaseUnitTest() {
             amount = invoiceTotal,
             trueOutstanding = invoiceTotal,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertTrue(result.isSuccess)
@@ -94,7 +96,8 @@ class PaymentFlowTest : BaseUnitTest() {
             amount = partialAmount,
             trueOutstanding = invoiceTotal,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertTrue(result.isSuccess)
@@ -119,7 +122,8 @@ class PaymentFlowTest : BaseUnitTest() {
             amount = firstPayment,
             trueOutstanding = invoiceTotal,
             paymentDate = invoiceDate + 7 * 86_400_000L,  // 7 days after invoice
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         // Second payment clears the balance
@@ -129,7 +133,8 @@ class PaymentFlowTest : BaseUnitTest() {
             amount = remainingAfterFirst,
             trueOutstanding = remainingAfterFirst,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertTrue(firstResult.isSuccess)
@@ -148,7 +153,8 @@ class PaymentFlowTest : BaseUnitTest() {
             amount = overpayment,
             trueOutstanding = invoiceTotal,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -167,7 +173,8 @@ class PaymentFlowTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = invoiceTotal,
             paymentDate = futureDate,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -186,7 +193,8 @@ class PaymentFlowTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = invoiceTotal,
             paymentDate = beforeInvoice,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -204,7 +212,8 @@ class PaymentFlowTest : BaseUnitTest() {
             amount = 50000L,
             trueOutstanding = invoiceTotal,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertTrue(result.isSuccess)
@@ -232,6 +241,7 @@ class PaymentFlowTest : BaseUnitTest() {
             trueOutstanding = invoiceTotal,
             paymentDate = todayMidnight,
             invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT,
             notes = notes
         )
 
@@ -257,7 +267,8 @@ class PaymentFlowTest : BaseUnitTest() {
             amount = 0L,
             trueOutstanding = invoiceTotal,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)
@@ -271,7 +282,8 @@ class PaymentFlowTest : BaseUnitTest() {
             amount = -1000L,
             trueOutstanding = invoiceTotal,
             paymentDate = todayMidnight,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = InvoiceStatus.SENT
         )
 
         assertFalse(result.isSuccess)

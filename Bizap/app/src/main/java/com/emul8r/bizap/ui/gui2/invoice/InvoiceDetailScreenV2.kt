@@ -86,6 +86,9 @@ fun InvoiceDetailScreenV2(
                         invoiceTotal = state.invoice.invoice.totalAmount,
                         amountPaid = state.invoice.invoice.amountPaid,
                         invoiceDate = state.invoice.invoice.date,
+                        invoiceStatus = runCatching {
+                            InvoiceStatus.valueOf(state.invoice.invoice.status)
+                        }.getOrElse { InvoiceStatus.DRAFT },
                         onDismiss = { showPaymentDialog = false },
                         onSuccess = { showPaymentDialog = false }
                     )

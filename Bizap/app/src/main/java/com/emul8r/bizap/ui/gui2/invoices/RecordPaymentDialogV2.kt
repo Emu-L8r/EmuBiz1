@@ -11,6 +11,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.ui.gui2.common.formatCents
 import java.text.SimpleDateFormat
 import java.util.*
@@ -34,6 +35,7 @@ fun RecordPaymentDialogV2(
     invoiceTotal: Long,
     amountPaid: Long,
     invoiceDate: Long,
+    invoiceStatus: InvoiceStatus,
     onDismiss: () -> Unit,
     onSuccess: () -> Unit,
     viewModel: RecordPaymentViewModel = hiltViewModel()
@@ -49,7 +51,8 @@ fun RecordPaymentDialogV2(
             businessId = businessId,
             invoiceTotal = invoiceTotal,
             amountPaid = amountPaid,
-            invoiceDate = invoiceDate
+            invoiceDate = invoiceDate,
+            invoiceStatus = invoiceStatus
         )
     }
 
