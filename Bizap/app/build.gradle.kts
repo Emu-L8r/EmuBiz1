@@ -27,12 +27,22 @@ android {
         buildConfigField("String", "EXCHANGE_RATE_API_KEY", "\"${project.findProperty("EXCHANGE_RATE_API_KEY") ?: ""}\"")
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../release-key.jks")
+            storePassword = "bizap123"
+            keyAlias = "bizap-key"
+            keyPassword = "bizap123"
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
         }
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = false  // Disabled: causes FileSystemAlreadyExistsException in resource shrinking
             proguardFiles(
