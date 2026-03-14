@@ -3,6 +3,7 @@ package com.emul8r.bizap.ui.gui2.invoices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.usecase.RecordPaymentUseCase
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +33,7 @@ class RecordPaymentViewModel @Inject constructor(
     private var businessId: Long = -1L
     private var invoiceTotal: Long = 0L
     private var invoiceDate: Long = 0L
+    private var invoiceStatus: InvoiceStatus = InvoiceStatus.DRAFT
 
     // ── UI state ───────────────────────────────────────────────────────────────
 
@@ -52,12 +54,14 @@ class RecordPaymentViewModel @Inject constructor(
         businessId: Long,
         invoiceTotal: Long,
         amountPaid: Long,
-        invoiceDate: Long
+        invoiceDate: Long,
+        invoiceStatus: InvoiceStatus
     ) {
         this.invoiceId = invoiceId
         this.businessId = businessId
         this.invoiceTotal = invoiceTotal
         this.invoiceDate = invoiceDate
+        this.invoiceStatus = invoiceStatus
 
         val outstanding = (invoiceTotal - amountPaid).coerceAtLeast(0L)
         _formState.value = PaymentFormState(
@@ -124,6 +128,7 @@ class RecordPaymentViewModel @Inject constructor(
                 trueOutstanding = state.outstanding,
                 paymentDate = state.paymentDate,
                 invoiceDate = invoiceDate,
+                invoiceStatus = invoiceStatus,
                 notes = state.notes.ifBlank { null }
             )
 
