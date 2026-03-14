@@ -259,4 +259,7 @@ interface InvoiceDao {
           AND isActive = 1
     """)
     suspend fun countInvoicesOnDate(dateMillis: Long): Int
+
+    @Query("SELECT * FROM invoices WHERE isActive = 1")
+    suspend fun getAllInvoiceEntities(): List<InvoiceEntity>
 }
