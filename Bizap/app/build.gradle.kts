@@ -128,6 +128,9 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    // Paging 3
+    implementation(libs.androidx.paging.runtime.ktx)
+
     // SQLCipher - encrypted database (passphrase stored in Android Keystore)
     implementation("net.zetetic:sqlcipher-android:4.13.0@aar")
     implementation("androidx.sqlite:sqlite-ktx:2.4.0")
@@ -165,6 +168,7 @@ dependencies {
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.arch.core.test)
+    testImplementation(libs.androidx.paging.common.ktx)
     testImplementation(libs.robolectric)
     testImplementation(kotlin("test"))
 
