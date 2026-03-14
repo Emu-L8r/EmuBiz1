@@ -262,4 +262,17 @@ interface InvoiceDao {
 
     @Query("SELECT * FROM invoices WHERE isActive = 1")
     suspend fun getAllInvoiceEntities(): List<InvoiceEntity>
+
+    @Transaction
+    @Query("""
+        SELECT * FROM invoices 
+        WHERE businessProfileId = :businessId 
+        ORDER BY date DESC 
+        LIMIT :limit OFFSET :offset
+    """)
+    suspend fun getInvoicesPaged(
+        businessId: Long,
+        limit: Int,
+        offset: Int
+    ): List<InvoiceWithItems>
 }

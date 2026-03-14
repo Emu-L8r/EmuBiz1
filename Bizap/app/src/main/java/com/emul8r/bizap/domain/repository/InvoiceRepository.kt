@@ -1,5 +1,6 @@
 package com.emul8r.bizap.domain.repository
 
+import androidx.paging.PagingData
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
@@ -15,6 +16,12 @@ interface InvoiceRepository {
 
     fun getInvoiceWithItemsById(id: Long): Flow<Invoice?>
     fun getAllInvoicesWithItems(): Flow<List<Invoice>>
+
+    /**
+     * Returns a paged stream of invoices for the given business, ordered by date descending.
+     * Use [androidx.paging.cachedIn] in the ViewModel to survive config changes.
+     */
+    fun getInvoicesPaged(businessId: Long): Flow<PagingData<Invoice>>
 
     // --- PHASE 3A: Management & Versioning ---
     fun getInvoiceGroupWithVersions(year: Int, sequence: Int): Flow<List<Invoice>>
