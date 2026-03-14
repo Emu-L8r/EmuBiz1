@@ -27,10 +27,10 @@ class CalculateInvoiceMetricsUseCase @Inject constructor() {
             0L
         }
 
-        // 3. Calculate discounts (future feature)
-        val discountAmount = 0L  // invoice.discountAmount ?: 0L
+        // TODO: Implement discount calculation when Invoice model is extended with a discountAmount field
+        val discountAmount = 0L
 
-        // 4. Calculate total
+        // 3. Calculate total
         val totalAmount = subtotal + taxAmount - discountAmount
 
         return InvoiceMetrics(
