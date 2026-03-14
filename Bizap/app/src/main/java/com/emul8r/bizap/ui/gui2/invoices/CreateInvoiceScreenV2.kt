@@ -14,7 +14,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.ui.components.InvoiceBottomSummary
 import com.emul8r.bizap.ui.common.CurrencySelector
-import com.emul8r.bizap.ui.invoices.calculateTotal
 import com.emul8r.bizap.ui.invoices.CreateInvoiceViewModel
 import com.emul8r.bizap.ui.invoices.CustomerDropdown
 import com.emul8r.bizap.ui.invoices.LineItemEditor
@@ -59,9 +58,9 @@ fun CreateInvoiceScreenV2(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            val total = uiState.items.sumOf { it.calculateTotal() }
+            val metrics = viewModel.getInvoiceMetrics()
             InvoiceBottomSummary(
-                total = total,
+                total = metrics.totalAmount,
                 currencyCode = uiState.selectedCurrencyCode,
                 isSaving = uiState.isSaving,
                 onSave = { viewModel.onSaveClicked() }

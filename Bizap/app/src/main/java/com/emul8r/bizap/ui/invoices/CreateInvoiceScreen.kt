@@ -89,9 +89,9 @@ fun CreateInvoiceScreen(
         topBar = {},  // MainActivity provides the header
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            val total = uiState.items.sumOf { it.calculateTotal() }
+            val metrics = viewModel.getInvoiceMetrics()
             InvoiceBottomSummary(
-                total = total,
+                total = metrics.totalAmount,
                 currencyCode = uiState.selectedCurrencyCode,
                 isSaving = uiState.isSaving,
                 onSave = { viewModel.onSaveClicked() }
