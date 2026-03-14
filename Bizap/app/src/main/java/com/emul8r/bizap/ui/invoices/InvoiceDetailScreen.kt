@@ -484,6 +484,8 @@ fun InvoiceDetailScreen(
 
 @Composable
 fun PaymentProgressCard(invoice: com.emul8r.bizap.domain.model.Invoice, onRecordPayment: () -> Unit) {
+    val canRecordPayment = invoice.status != InvoiceStatus.DRAFT
+    
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -505,7 +507,29 @@ fun PaymentProgressCard(invoice: com.emul8r.bizap.domain.model.Invoice, onRecord
                 strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
             )
             Spacer(Modifier.height(12.dp))
-            OutlinedButton(onClick = onRecordPayment, modifier = Modifier.align(Alignment.End)) {
+            
+            if (!canRecordPayment) {
+                // Show message for DRAFT invoices
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        "Send invoice before recording payment",
+                        modifier = Modifier.padding(8.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+            
+            OutlinedButton(
+                onClick = onRecordPayment,
+                modifier = Modifier.align(Alignment.End),
+                enabled = canRecordPayment
+            ) {
                 Icon(Icons.Default.AddCard, null)
                 Spacer(Modifier.width(8.dp))
                 Text("Record Payment")

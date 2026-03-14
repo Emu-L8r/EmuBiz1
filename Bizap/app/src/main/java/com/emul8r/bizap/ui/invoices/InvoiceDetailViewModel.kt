@@ -110,10 +110,19 @@ class InvoiceDetailViewModel @Inject constructor(
     /**
      * PHASE 3A: RECORD PAYMENT
      * Validates that the payment does not exceed the remaining balance before recording.
+     * Also validates that invoice is not in DRAFT status.
      */
     fun recordPayment(amount: Long) {
         val currentState = uiState.value as? InvoiceDetailUiState.Success ?: return
         val invoice = currentState.data
+
+        // Validate invoice status - cannot record payment on DRAFT invoices
+        if (invoice.status == InvoiceStatus.DRAFT) {
+            viewModelScope.launch {
+                _uiEvent.emit(UiEvent.ShowSnackbar("Cannot record payment on a draft invoice. Send the invoice first."))
+            }
+            return
+        }
 
         val remaining = invoice.totalAmount - invoice.amountPaid
         if (amount <= 0) {
