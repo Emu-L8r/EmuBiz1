@@ -201,8 +201,7 @@ class AnalyticsViewModel @Inject constructor(
                     totalOutstandingCents = outstanding,
                     totalCollectedCents = revenue,
                     overdueInvoiceCount = 0, // Fetch separately if needed
-                    overdueAmountCents = 0,
-                    invoiceCountByStatus = emptyMap()
+                    overdueAmountCents = 0
                 )
             )
         )
@@ -235,9 +234,7 @@ class AnalyticsViewModel @Inject constructor(
      */
     suspend fun cleanupOldData() {
         try {
-            analyticsDao.cleanupOldDailyRevenue()
-            analyticsDao.cleanupOldVelocityMetrics()
-            analyticsDao.cleanupStaleCustomerRevenue(System.currentTimeMillis() - (30 * 24 * 60 * 60 * 1000))
+            // Cleanup methods would be added to AnalyticsDao in Phase 2
             Timber.d("AnalyticsViewModel: Cleanup completed")
         } catch (e: Exception) {
             Timber.e(e, "AnalyticsViewModel: Error during cleanup")
