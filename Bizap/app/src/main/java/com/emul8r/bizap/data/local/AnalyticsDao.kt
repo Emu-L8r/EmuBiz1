@@ -3,33 +3,33 @@ package com.emul8r.bizap.data.local
 import androidx.room.*
 import com.emul8r.bizap.data.model.*
 import kotlinx.coroutines.flow.Flow
-import java.time.LocalDate
 
 /**
  * Data Access Object for analytics queries.
  * Provides optimized queries for dashboard metrics.
+ * Note: These are read-only queries that return data classes, not entities.
  */
 @Dao
 interface AnalyticsDao {
 
     // ═════════════════════════════════════════════════════════════════
-    // DAILY REVENUE - Query existing data
+    // DAILY REVENUE - Query existing invoice data
     // ═════════════════════════════════════════════════════════════════
 
     @Query("""
         SELECT 
             :businessId as businessId,
-            date(invoices.date / 1000, 'unixepoch') as date,
-            COALESCE(SUM(CASE WHEN invoices.status = 'PAID' THEN invoices.totalAmount ELSE 0 END), 0) as invoicedCents,
-            COALESCE(SUM(invoices.amountPaid), 0) as paidCents,
+            DATE(date / 1000, 'unixepoch') as date,
+            COALESCE(SUM(CASE WHEN status = 'PAID' THEN totalAmount ELSE 0 END), 0) as invoicedCents,
+            COALESCE(SUM(amountPaid), 0) as paidCents,
             COUNT(*) as invoiceCount,
-            COUNT(CASE WHEN invoices.status = 'PAID' THEN 1 END) as paidCount
+            COUNT(CASE WHEN status = 'PAID' THEN 1 END) as paidCount
         FROM invoices
-        WHERE invoices.businessProfileId = :businessId
-        AND invoices.date >= (SELECT datetime('now', '-30 days', 'unixepoch') * 1000)
-        AND invoices.isActive = 1
-        GROUP BY date(invoices.date / 1000, 'unixepoch')
-        ORDER BY invoices.date ASC
+        WHERE businessProfileId = :businessId
+        AND date >= (datetime('now', '-30 days') * 1000)
+        AND isActive = 1
+        GROUP BY DATE(date / 1000, 'unixepoch')
+        ORDER BY date ASC
     """)
     fun observeDailyRevenue(businessId: Long): Flow<List<DailyRevenue>>
 
@@ -39,16 +39,16 @@ interface AnalyticsDao {
 
     @Query("""
         SELECT 
-            invoices.customerId,
-            invoices.customerName,
-            COALESCE(SUM(invoices.totalAmount), 0) as totalRevenueCents,
+            customerId,
+            customerName,
+            COALESCE(SUM(amountPaid), 0) as totalRevenueCents,
             COUNT(*) as invoiceCount,
-            MAX(invoices.date) / 1000 as lastPaymentDate
+            MAX(dueDate) as lastPaymentDate
         FROM invoices
-        WHERE invoices.businessProfileId = :businessId
-        AND invoices.status = 'PAID'
-        AND invoices.isActive = 1
-        GROUP BY invoices.customerId
+        WHERE businessProfileId = :businessId
+        AND status = 'PAID'
+        AND isActive = 1
+        GROUP BY customerId
         ORDER BY totalRevenueCents DESC
         LIMIT :limit
     """)
@@ -60,11 +60,11 @@ interface AnalyticsDao {
 
     @Query("""
         SELECT COALESCE(
-            CAST(
-                AVG(CAST(
-                    ((julianday(datetime(dueDate / 1000, 'unixepoch')) - julianday(datetime(date / 1000, 'unixepoch')))) AS REAL
-                ))
-            AS DOUBLE),
+            AVG(CAST(
+                (julianday(datetime(dueDate / 1000, 'unixepoch')) - 
+                 julianday(datetime(date / 1000, 'unixepoch')))
+                AS REAL
+            )),
             0.0
         )
         FROM invoices
@@ -109,18 +109,20 @@ interface AnalyticsDao {
     @Query("""
         SELECT 
             :businessId as businessId,
-            date(invoices.createdAt / 1000, 'unixepoch') as date,
-            COALESCE(AVG(CAST((julianday(datetime(invoices.updatedAt / 1000, 'unixepoch')) - 
-                               julianday(datetime(invoices.createdAt / 1000, 'unixepoch'))) AS REAL)), 0.0) as avgDaysFromCreationToSent,
+            DATE(createdAt / 1000, 'unixepoch') as date,
+            COALESCE(AVG(CAST(
+                (julianday(datetime(updatedAt / 1000, 'unixepoch')) - 
+                 julianday(datetime(createdAt / 1000, 'unixepoch')))
+                AS REAL)), 0.0) as avgDaysFromCreationToSent,
             COUNT(*) as invoicesCreatedCount,
-            COUNT(CASE WHEN invoices.status IN ('SENT', 'PAID') THEN 1 END) as invoicesSentCount,
-            COUNT(CASE WHEN invoices.status = 'DRAFT' THEN 1 END) as invoicesInDraftCount
+            COUNT(CASE WHEN status IN ('SENT', 'PAID') THEN 1 END) as invoicesSentCount,
+            COUNT(CASE WHEN status = 'DRAFT' THEN 1 END) as invoicesInDraftCount
         FROM invoices
-        WHERE invoices.businessProfileId = :businessId
-        AND invoices.createdAt >= (SELECT datetime('now', '-30 days', 'unixepoch') * 1000)
-        AND invoices.isActive = 1
-        GROUP BY date(invoices.createdAt / 1000, 'unixepoch')
-        ORDER BY invoices.createdAt DESC
+        WHERE businessProfileId = :businessId
+        AND createdAt >= (datetime('now', '-30 days') * 1000)
+        AND isActive = 1
+        GROUP BY DATE(createdAt / 1000, 'unixepoch')
+        ORDER BY createdAt DESC
         LIMIT 30
     """)
     fun observeInvoicingVelocity(businessId: Long): Flow<List<InvoiceVelocity>>
@@ -131,7 +133,7 @@ interface AnalyticsDao {
 
     @Query("""
         SELECT COUNT(*) 
-        FROM invoices 
+        FROM invoices
         WHERE businessProfileId = :businessId 
         AND status = 'DRAFT'
         AND isActive = 1
@@ -140,7 +142,7 @@ interface AnalyticsDao {
 
     @Query("""
         SELECT COUNT(*) 
-        FROM invoices 
+        FROM invoices
         WHERE businessProfileId = :businessId 
         AND status IN ('SENT', 'OVERDUE')
         AND dueDate < :currentTimeMs
