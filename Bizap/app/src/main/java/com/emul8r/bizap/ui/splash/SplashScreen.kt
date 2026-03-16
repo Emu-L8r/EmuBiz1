@@ -36,13 +36,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.R
-import kotlinx.coroutines.delay
 
 private val GradientPurpleStart = Color(0xFF5B3BA0)
 private val GradientLavenderEnd = Color(0xFFE8E5F0)
 
 /**
- * Branded splash screen shown at app startup.
+ * Branded splash screen shown while the app is loading preferences from DataStore.
+ *
+ * This composable has no hardcoded delays or completion callbacks. Dismissal is
+ * controlled by [com.emul8r.bizap.ui.state.AppStateViewModel]: once DataStore
+ * finishes its first read the app state transitions away from
+ * [com.emul8r.bizap.ui.state.AppState.SplashLoading] and this composable is
+ * removed from the composition automatically.
  *
  * Features:
  * - Gradient background (purple → lavender)
@@ -51,22 +56,15 @@ private val GradientLavenderEnd = Color(0xFFE8E5F0)
  * - Subtle logo pulse animation (1000ms loop)
  * - Rotating loading spinner (40dp, white)
  * - "Loading..." text below spinner
- * - Fade-out animation (500ms) before navigation
- *
- * @param onSplashComplete Called after the splash duration completes.
  */
 @Composable
-fun SplashScreen(onSplashComplete: () -> Unit) {
+fun SplashScreen() {
     var screenAlpha by remember { mutableStateOf(0f) }
-    var exiting by remember { mutableStateOf(false) }
 
-    // Fade-in / fade-out animation
-    val fadeInAlpha by animateFloatAsState(
-        targetValue = if (exiting) 0f else screenAlpha,
-        animationSpec = tween(
-            durationMillis = if (exiting) 500 else 800,
-            easing = LinearEasing
-        ),
+    // Fade-in animation triggered immediately on first composition
+    val fadeAlpha by animateFloatAsState(
+        targetValue = screenAlpha,
+        animationSpec = tween(durationMillis = 800, easing = LinearEasing),
         label = "splashFade"
     )
 
@@ -83,20 +81,14 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
     )
 
     LaunchedEffect(Unit) {
-        // Trigger fade-in
+        // Trigger fade-in — no hardcoded hold delay; AppStateViewModel controls dismissal
         screenAlpha = 1f
-        // Hold for splash duration
-        delay(SPLASH_DURATION_MS)
-        // Trigger fade-out
-        exiting = true
-        delay(FADE_OUT_DURATION_MS)
-        onSplashComplete()
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .alpha(fadeInAlpha)
+            .alpha(fadeAlpha)
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(GradientPurpleStart, GradientLavenderEnd)
@@ -139,6 +131,3 @@ fun SplashScreen(onSplashComplete: () -> Unit) {
         }
     }
 }
-
-private const val SPLASH_DURATION_MS = 2_500L
-private const val FADE_OUT_DURATION_MS = 500L
