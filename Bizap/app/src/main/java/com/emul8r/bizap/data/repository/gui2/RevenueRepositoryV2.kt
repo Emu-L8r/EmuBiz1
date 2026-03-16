@@ -76,6 +76,8 @@ class RevenueRepositoryV2 @Inject constructor(
         /** How often the ticker refreshes time-window boundaries. */
         const val REFRESH_INTERVAL_MS = 60_000L
 
+        private const val MILLIS_IN_WEEK = 7L * 24 * 60 * 60 * 1000
+
         /**
          * Flow that emits [System.currentTimeMillis] immediately, then every
          * [REFRESH_INTERVAL_MS], keeping date-window boundaries fresh across
@@ -87,9 +89,5 @@ class RevenueRepositoryV2 @Inject constructor(
                 delay(REFRESH_INTERVAL_MS)
             }
         }
-    }
-
-    companion object {
-        private const val MILLIS_IN_WEEK = 7L * 24 * 60 * 60 * 1000
     }
 }
