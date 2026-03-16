@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
+import java.util.Calendar
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -86,5 +87,9 @@ class RevenueRepositoryV2 @Inject constructor(
                 delay(REFRESH_INTERVAL_MS)
             }
         }
+    }
+
+    companion object {
+        private const val MILLIS_IN_WEEK = 7L * 24 * 60 * 60 * 1000
     }
 }

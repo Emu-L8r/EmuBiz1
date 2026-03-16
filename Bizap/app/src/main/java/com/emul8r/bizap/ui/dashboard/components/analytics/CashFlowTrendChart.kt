@@ -3,6 +3,7 @@ package com.emul8r.bizap.ui.dashboard.components.analytics
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +21,7 @@ import com.emul8r.bizap.data.model.CashFlowTrendPoint
 /**
  * Cash Flow Trend Chart
  *
- * Shows 30-day invoiced vs. paid trends.
+ * Shows 30-day invoiced vs. paid trends using a Canvas-based line chart.
  * Helps users identify seasonal patterns and predict cash needs.
  *
  * Implemented with Compose Canvas to avoid Vico library version constraints.
@@ -118,12 +119,18 @@ fun CashFlowTrendChart(
                 }
             }
         } else {
-            Text(
-                text = "No data available",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(32.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No data available",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         // Info text
@@ -146,7 +153,7 @@ private fun LegendItem(label: String, color: Color) {
         Box(
             modifier = Modifier
                 .size(12.dp)
-                .background(color, shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                .background(color, shape = RoundedCornerShape(2.dp))
         )
         Text(
             text = label,
