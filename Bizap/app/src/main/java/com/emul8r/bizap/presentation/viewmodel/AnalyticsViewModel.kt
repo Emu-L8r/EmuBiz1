@@ -186,30 +186,39 @@ class AnalyticsViewModel @Inject constructor(
         invoicingVelocity,
         totalRevenue,
         totalOutstanding
-    ) { trend, customers, dsoValue, velocity, revenue, outstanding ->
+    ) { values ->
+        @Suppress("UNCHECKED_CAST")
+        val trend = values[0] as List<CashFlowTrendPoint>
+        val customers = values[1] as List<TopCustomerMetric>
+        val dsoValue = values[2] as Double
+        val velocity = values[3] as List<InvoiceVelocity>
+        val revenue = values[4] as Long
+        val outstanding = values[5] as Long
+
         Timber.d("AnalyticsViewModel: State updated for businessId=$businessId")
 
-        AnalyticsUiState.Success(
-            AnalyticsData(
-                cashFlowTrend = trend,
-                averageDaysToPayTrend = emptyList(), // Will be populated separately
-                topCustomerMetrics = customers,
-                currentAverageDaysToPayment = dsoValue,
-                totalRevenue = revenue,
-                paymentMetrics = PaymentMetrics(
-                    averageDaysToPayment = dsoValue,
-                    totalOutstandingCents = outstanding,
-                    totalCollectedCents = revenue,
-                    overdueInvoiceCount = 0, // Fetch separately if needed
-                    overdueAmountCents = 0
+        try {
+            AnalyticsUiState.Success(
+                AnalyticsData(
+                    cashFlowTrend = trend,
+                    averageDaysToPayTrend = emptyList(), // Will be populated separately
+                    topCustomerMetrics = customers,
+                    currentAverageDaysToPayment = dsoValue,
+                    totalRevenue = revenue,
+                    paymentMetrics = PaymentMetrics(
+                        averageDaysToPayment = dsoValue,
+                        totalOutstandingCents = outstanding,
+                        totalCollectedCents = revenue,
+                        overdueInvoiceCount = 0, // Fetch separately if needed
+                        overdueAmountCents = 0
+                    )
                 )
-            )
-        )
-    }
-        .catch { error ->
-            Timber.e(error, "AnalyticsViewModel: Error aggregating state")
-            emit(AnalyticsUiState.Error(error.message ?: "Unknown error"))
+            ) as AnalyticsUiState
+        } catch (e: Exception) {
+            Timber.e(e, "AnalyticsViewModel: Error aggregating state")
+            AnalyticsUiState.Error(e.message ?: "Unknown error")
         }
+    }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
