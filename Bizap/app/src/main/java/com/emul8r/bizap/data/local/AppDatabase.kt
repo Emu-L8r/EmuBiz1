@@ -5,11 +5,12 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.emul8r.bizap.data.local.entities.*
 import com.emul8r.bizap.data.local.dao.*
+import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
+import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
 import com.emul8r.bizap.data.model.DailyRevenue
 import com.emul8r.bizap.data.model.CustomerRevenue
 import com.emul8r.bizap.data.model.InvoiceVelocity
 import com.emul8r.bizap.domain.model.Note
-import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 
 @Database(
     entities = [
@@ -40,7 +41,7 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         CustomerRevenue::class,
         InvoiceVelocity::class
     ],
-    version = 34,
+    version = 35,
     exportSchema = true
 )
 @TypeConverters(DocumentStatusConverter::class, LocalDateTypeConverter::class)
