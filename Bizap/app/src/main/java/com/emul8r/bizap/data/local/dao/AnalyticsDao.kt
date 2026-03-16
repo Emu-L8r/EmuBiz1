@@ -30,14 +30,14 @@ interface AnalyticsDao {
     @Query("""
         SELECT
             :businessId as businessId,
-            strftime('%s', DATE(date / 1000, 'unixepoch')) * 1000 as date,
+            CAST(strftime('%s', DATE(date / 1000, 'unixepoch')) AS INTEGER) * 1000 as date,
             COALESCE(SUM(CASE WHEN status = 'PAID' THEN totalAmount ELSE 0 END), 0) as invoicedCents,
             COALESCE(SUM(amountPaid), 0) as paidCents,
             COUNT(*) as invoiceCount,
             COUNT(CASE WHEN status = 'PAID' THEN 1 END) as paidCount
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND date >= strftime('%s', 'now', '-30 days') * 1000
+        AND date >= CAST(strftime('%s', 'now', '-30 days') AS INTEGER) * 1000
         AND isActive = 1
         GROUP BY DATE(date / 1000, 'unixepoch')
         ORDER BY date ASC
@@ -108,7 +108,7 @@ interface AnalyticsDao {
     @Query("""
         SELECT
             :businessId as businessId,
-            strftime('%s', DATE(createdAt / 1000, 'unixepoch')) * 1000 as date,
+            CAST(strftime('%s', DATE(createdAt / 1000, 'unixepoch')) AS INTEGER) * 1000 as date,
             COALESCE(AVG(CAST(
                 (julianday(datetime(updatedAt / 1000, 'unixepoch')) -
                  julianday(datetime(createdAt / 1000, 'unixepoch')))
@@ -118,7 +118,7 @@ interface AnalyticsDao {
             COUNT(CASE WHEN status = 'DRAFT' THEN 1 END) as invoicesInDraftCount
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND createdAt >= strftime('%s', 'now', '-30 days') * 1000
+        AND createdAt >= CAST(strftime('%s', 'now', '-30 days') AS INTEGER) * 1000
         AND isActive = 1
         GROUP BY DATE(createdAt / 1000, 'unixepoch')
         ORDER BY createdAt DESC
