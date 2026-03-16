@@ -50,37 +50,39 @@ interface AnalyticsDao {
         SELECT COALESCE(
             CAST(
                 AVG(CAST(
-                    (julianday(i.paidDate) - julianday(i.sentDate)) AS REAL
+                    ((julianday(datetime(dueDate / 1000, 'unixepoch')) - julianday(datetime(date / 1000, 'unixepoch')))) AS REAL
                 ))
             AS DOUBLE),
             0.0
         )
-        FROM invoices i
-        WHERE i.businessProfileId = :businessId
-        AND i.status = 'PAID'
-        AND i.paidDate IS NOT NULL
-        AND i.sentDate IS NOT NULL
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND status = 'PAID'
+        AND dueDate > 0
+        AND date > 0
     """)
     fun observeAverageDaysToPayment(businessId: Long): Flow<Double>
 
     @Query("""
-        SELECT COALESCE(SUM(amountInvoicedCents), 0)
+        SELECT COALESCE(SUM(totalAmount - amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND status != 'DRAFT'
+        AND status IN ('SENT', 'DRAFT', 'OVERDUE')
+        AND isActive = 1
     """)
     fun observeTotalOutstanding(businessId: Long): Flow<Long>
 
     @Query("""
-        SELECT COALESCE(SUM(amountPaidCents), 0)
+        SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
         AND status = 'PAID'
+        AND isActive = 1
     """)
     fun observeTotalCollected(businessId: Long): Flow<Long>
 
     @Query("""
-        SELECT COALESCE(SUM(amountPaidCents), 0)
+        SELECT COALESCE(SUM(totalAmount), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
         AND status = 'PAID'
@@ -112,6 +114,7 @@ interface AnalyticsDao {
         FROM invoices 
         WHERE businessProfileId = :businessId 
         AND status = 'DRAFT'
+        AND isActive = 1
     """)
     fun observeDraftInvoiceCount(businessId: Long): Flow<Int>
 
@@ -119,10 +122,11 @@ interface AnalyticsDao {
         SELECT COUNT(*) 
         FROM invoices 
         WHERE businessProfileId = :businessId 
-        AND status = 'SENT'
-        AND date(dueDate) < date('now')
+        AND status IN ('SENT', 'OVERDUE')
+        AND dueDate < ?2
+        AND isActive = 1
     """)
-    fun observeOverdueInvoiceCount(businessId: Long): Flow<Int>
+    fun observeOverdueInvoiceCount(businessId: Long, currentTimeMs: Long = System.currentTimeMillis()): Flow<Int>
 
     // ═════════════════════════════════════════════════════════════════
     // CLEANUP

@@ -5,6 +5,9 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.emul8r.bizap.data.local.entities.*
 import com.emul8r.bizap.data.local.dao.*
+import com.emul8r.bizap.data.model.DailyRevenue
+import com.emul8r.bizap.data.model.CustomerRevenue
+import com.emul8r.bizap.data.model.InvoiceVelocity
 import com.emul8r.bizap.domain.model.Note
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 
@@ -32,12 +35,15 @@ import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
         OfflineOperation::class,
         InvoiceItemEntity::class,
         PaymentEntity::class,
-        Note::class
+        Note::class,
+        DailyRevenue::class,
+        CustomerRevenue::class,
+        InvoiceVelocity::class
     ],
     version = 34,
     exportSchema = true
 )
-@TypeConverters(DocumentStatusConverter::class)
+@TypeConverters(DocumentStatusConverter::class, LocalDateTypeConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun customerDao(): CustomerDao
     abstract fun invoiceDao(): InvoiceDao
