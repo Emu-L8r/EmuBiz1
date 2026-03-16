@@ -178,15 +178,24 @@ class AnalyticsViewModel @Inject constructor(
     /**
      * Combined analytics state for dashboard.
      * Aggregates all metrics into single observable.
+     *
+     * Uses nested combine to stay within the 5-flow type-safe overload limit.
+     * totalRevenue and totalOutstanding are pre-combined into a helper flow.
      */
+    private val revenueAndOutstanding: Flow<Pair<Long, Long>> =
+        combine(totalRevenue, totalOutstanding) { revenue, outstanding ->
+            Pair(revenue, outstanding)
+        }
+
     val analyticsState: StateFlow<AnalyticsUiState> = combine(
         cashFlowTrend,
         topCustomers,
         averageDaysToPayment,
         invoicingVelocity,
-        totalRevenue,
-        totalOutstanding
-    ) { trend, customers, dsoValue, velocity, revenue, outstanding ->
+        revenueAndOutstanding
+    ) { trend, customers, dsoValue, velocity, revenueOutstanding ->
+        val revenue = revenueOutstanding.first
+        val outstanding = revenueOutstanding.second
         Timber.d("AnalyticsViewModel: State updated for businessId=$businessId")
 
         AnalyticsUiState.Success(
