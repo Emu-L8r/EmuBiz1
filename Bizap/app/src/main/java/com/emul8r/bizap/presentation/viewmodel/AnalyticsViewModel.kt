@@ -3,10 +3,8 @@ package com.emul8r.bizap.presentation.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
 import com.emul8r.bizap.data.local.AnalyticsDao
 import com.emul8r.bizap.data.model.*
-import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
@@ -20,12 +18,11 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
     private val analyticsDao: AnalyticsDao
 ) : ViewModel() {
 
-    private val route: ScreenV2.Dashboard = savedStateHandle.toRoute()
-    val businessId: Long = route.businessId
+    // Default to businessId = 1 (primary business)
+    private val businessId = 1L
 
     // ═════════════════════════════════════════════════════════════════
     // PUBLIC STATE FLOWS
