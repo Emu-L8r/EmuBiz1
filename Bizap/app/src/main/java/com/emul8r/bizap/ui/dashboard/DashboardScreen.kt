@@ -21,6 +21,12 @@ import com.emul8r.bizap.ui.common.MetricCard
 import com.emul8r.bizap.ui.customers.CustomerViewModel
 import com.emul8r.bizap.ui.dashboard.components.InvoiceStatusPieChart
 import com.emul8r.bizap.ui.dashboard.components.NotesCard
+import com.emul8r.bizap.ui.dashboard.components.analytics.CashFlowTrendChart
+import com.emul8r.bizap.ui.dashboard.components.analytics.AverageDaysToPayMetric
+import com.emul8r.bizap.ui.dashboard.components.analytics.RevenueConcentrationChart
+import com.emul8r.bizap.ui.dashboard.components.analytics.InvoicingVelocityCard
+import com.emul8r.bizap.presentation.viewmodel.AnalyticsViewModel
+import com.emul8r.bizap.presentation.viewmodel.AnalyticsUiState
 import com.emul8r.bizap.ui.invoices.InvoiceList
 import com.emul8r.bizap.ui.invoices.InvoiceListUiState
 import com.emul8r.bizap.ui.invoices.InvoiceListViewModel
@@ -40,13 +46,15 @@ fun DashboardScreen(
     businessViewModel: BusinessProfileViewModel = hiltViewModel(),
     revenueViewModel: RevenueDashboardViewModel = hiltViewModel(),
     invoiceViewModel: InvoiceListViewModel = hiltViewModel(),
-    notesViewModel: NotesViewModel = hiltViewModel()
+    notesViewModel: NotesViewModel = hiltViewModel(),
+    analyticsViewModel: AnalyticsViewModel = hiltViewModel()
 ) {
     val customers by customerViewModel.uiState.collectAsStateWithLifecycle()
     val activeBusiness by businessViewModel.profileState.collectAsStateWithLifecycle()
     val revenueState by revenueViewModel.uiState.collectAsStateWithLifecycle()
     val invoiceState by invoiceViewModel.uiState.collectAsStateWithLifecycle()
     val currentNotesCount by notesViewModel.currentNotesCount.collectAsStateWithLifecycle()
+    val analyticsState by analyticsViewModel.analyticsState.collectAsStateWithLifecycle()
     var showSwitcher by remember { mutableStateOf(false) }
 
     // Calculate status breakdown from invoices
@@ -280,6 +288,64 @@ fun DashboardScreen(
                 }
             }
 
+
+            // Analytics Section
+            item {
+                when (analyticsState) {
+                    is AnalyticsUiState.Loading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                    is AnalyticsUiState.Success -> {
+                        val data = (analyticsState as AnalyticsUiState.Success).data
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // Analytics Header
+                            Text(
+                                text = "💡 Business Analytics",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+
+                            // Cash Flow Trend
+                            CashFlowTrendChart(data.cashFlowTrend)
+
+                            // Days to Pay Metric
+                            AverageDaysToPayMetric(
+                                currentDaysToPayment = data.currentAverageDaysToPayment,
+                                trendHistory = data.averageDaysToPayTrend
+                            )
+
+                            // Revenue Concentration
+                            RevenueConcentrationChart(
+                                topCustomers = data.topCustomerMetrics
+                            )
+
+                            // Invoicing Velocity
+                            InvoicingVelocityCard(
+                                velocityData = emptyList()  // Will be populated from ViewModel
+                            )
+                        }
+                    }
+                    is AnalyticsUiState.Error -> {
+                        Text(
+                            text = "Error loading analytics: ${(analyticsState as AnalyticsUiState.Error).message}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
 
             item {
                 Text("Recent Invoices", style = MaterialTheme.typography.titleMedium)
