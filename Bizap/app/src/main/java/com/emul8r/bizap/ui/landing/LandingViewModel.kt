@@ -2,6 +2,7 @@ package com.emul8r.bizap.ui.landing
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.ViewModel
@@ -16,6 +17,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 private val KEY_GUI_MODE = stringPreferencesKey("gui_mode")
+private val KEY_FIRST_LAUNCH_WARNING_SHOWN = booleanPreferencesKey("first_launch_warning_shown")
 
 /**
  * ViewModel for the landing screen.
@@ -59,6 +61,25 @@ class LandingViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.edit { prefs ->
                 prefs.remove(KEY_GUI_MODE)
+            }
+        }
+    }
+
+    /** Whether the first-launch data-loss warning has been shown and acknowledged.
+     *  Null while loading from DataStore; false = never shown; true = already shown. */
+    val firstLaunchWarningShown: StateFlow<Boolean?> = dataStore.data
+        .map { prefs -> prefs[KEY_FIRST_LAUNCH_WARNING_SHOWN] }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null  // null while DataStore hasn't emitted yet
+        )
+
+    /** Mark the first-launch warning as acknowledged so it never shows again. */
+    fun markFirstLaunchWarningShown() {
+        viewModelScope.launch {
+            dataStore.edit { prefs ->
+                prefs[KEY_FIRST_LAUNCH_WARNING_SHOWN] = true
             }
         }
     }
