@@ -116,9 +116,13 @@ class AnalyticsDiagnostics @Inject constructor(
         val highRisk = invoiceDaoV2.observeHighRiskInvoiceCount(businessId).first()
         val atRisk = invoiceDaoV2.observeAtRiskInvoiceCount(businessId).first()
         val healthy = invoiceDaoV2.observeHealthyInvoiceCount(businessId).first()
-        val mtd = invoiceDaoV2.observeMTDRevenue(businessId).first()
-        val ytd = invoiceDaoV2.observeYTDRevenue(businessId).first()
-        val weekly = invoiceDaoV2.observeWeeklyRevenue(businessId).first()
+        val now = System.currentTimeMillis()
+        val mtdStart = startOfCurrentMonth(now)
+        val ytdStart = startOfCurrentYear(now)
+        val weekStart = now - 7L * 24 * 60 * 60 * 1000
+        val mtd = invoiceDaoV2.observeMTDRevenue(businessId, mtdStart, now).first()
+        val ytd = invoiceDaoV2.observeYTDRevenue(businessId, ytdStart, now).first()
+        val weekly = invoiceDaoV2.observeWeeklyRevenue(businessId, weekStart, now).first()
 
         // Payment metrics validation
         val paymentValidation = validator.validatePaymentMetrics(outstanding, collected, totalBilled)
@@ -162,4 +166,23 @@ class AnalyticsDiagnostics @Inject constructor(
         Timber.i("AnalyticsDiagnostics:\n$report")
         return report
     }
+
+    private fun startOfCurrentMonth(nowMs: Long): Long = java.util.Calendar.getInstance().apply {
+        timeInMillis = nowMs
+        set(java.util.Calendar.DAY_OF_MONTH, 1)
+        set(java.util.Calendar.HOUR_OF_DAY, 0)
+        set(java.util.Calendar.MINUTE, 0)
+        set(java.util.Calendar.SECOND, 0)
+        set(java.util.Calendar.MILLISECOND, 0)
+    }.timeInMillis
+
+    private fun startOfCurrentYear(nowMs: Long): Long = java.util.Calendar.getInstance().apply {
+        timeInMillis = nowMs
+        set(java.util.Calendar.MONTH, java.util.Calendar.JANUARY)
+        set(java.util.Calendar.DAY_OF_MONTH, 1)
+        set(java.util.Calendar.HOUR_OF_DAY, 0)
+        set(java.util.Calendar.MINUTE, 0)
+        set(java.util.Calendar.SECOND, 0)
+        set(java.util.Calendar.MILLISECOND, 0)
+    }.timeInMillis
 }
