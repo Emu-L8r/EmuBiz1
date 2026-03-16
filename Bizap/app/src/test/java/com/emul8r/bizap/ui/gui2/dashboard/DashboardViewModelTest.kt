@@ -49,9 +49,9 @@ class DashboardViewModelTest : BaseUnitTest() {
 
     @Test
     fun `loadMetrics_Success - revenue metrics load with correct values`() = runTest {
-        every { dao.observeMTDRevenue(businessId) } returns flowOf(150000L)
-        every { dao.observeYTDRevenue(businessId) } returns flowOf(500000L)
-        every { dao.observeWeeklyRevenue(businessId) } returns flowOf(50000L)
+        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(150000L)
+        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(500000L)
+        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(50000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(450000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
@@ -65,9 +65,9 @@ class DashboardViewModelTest : BaseUnitTest() {
 
     @Test
     fun `loadMetrics_Success - zero revenue when no invoices exist`() = runTest {
-        every { dao.observeMTDRevenue(businessId) } returns flowOf(0L)
-        every { dao.observeYTDRevenue(businessId) } returns flowOf(0L)
-        every { dao.observeWeeklyRevenue(businessId) } returns flowOf(0L)
+        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(0L)
+        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(0L)
+        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(0L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
@@ -114,9 +114,9 @@ class DashboardViewModelTest : BaseUnitTest() {
 
     @Test
     fun `metricsUpdate_OnDataChange - revenue metrics not null after loading`() = runTest {
-        every { dao.observeMTDRevenue(businessId) } returns flowOf(100000L)
-        every { dao.observeYTDRevenue(businessId) } returns flowOf(800000L)
-        every { dao.observeWeeklyRevenue(businessId) } returns flowOf(25000L)
+        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(100000L)
+        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(800000L)
+        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(25000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(700000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 

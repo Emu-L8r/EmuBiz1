@@ -43,9 +43,9 @@ class CrossGUISyncTest : BaseUnitTest() {
     fun `revenue totals match between revenue repo and payment repo collected amount`() = runTest {
         val totalPaid = 500000L
 
-        every { dao.observeMTDRevenue(businessId) } returns flowOf(totalPaid)
-        every { dao.observeYTDRevenue(businessId) } returns flowOf(totalPaid)
-        every { dao.observeWeeklyRevenue(businessId) } returns flowOf(totalPaid)
+        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(totalPaid)
+        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(totalPaid)
+        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(totalPaid)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(totalPaid)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
@@ -130,9 +130,9 @@ class CrossGUISyncTest : BaseUnitTest() {
     @Test
     fun `customer totals reflected in dashboard after customer creation`() = runTest {
         // After a new customer is created with invoices, revenue metrics should update
-        every { dao.observeMTDRevenue(businessId) } returns flowOf(0L)
-        every { dao.observeYTDRevenue(businessId) } returns flowOf(0L)
-        every { dao.observeWeeklyRevenue(businessId) } returns flowOf(0L)
+        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(0L)
+        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(0L)
+        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(0L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
@@ -140,7 +140,7 @@ class CrossGUISyncTest : BaseUnitTest() {
         assertEquals(0L, before.mtdRevenue)
 
         // Simulate data after invoice created for new customer
-        every { dao.observeMTDRevenue(businessId) } returns flowOf(99900L)
+        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(99900L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(99900L)
 
         val after = revenueRepo.observeRevenueMetrics(businessId).first()
