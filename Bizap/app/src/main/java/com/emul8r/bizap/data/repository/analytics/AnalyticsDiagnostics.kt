@@ -184,5 +184,9 @@ class AnalyticsDiagnostics @Inject constructor(
         return cal.timeInMillis
     }
 
-    private fun startOfWeekMillis(): Long = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
+    private fun startOfWeekMillis(): Long = System.currentTimeMillis() - MILLIS_IN_WEEK
+
+    companion object {
+        private const val MILLIS_IN_WEEK = 7L * 24 * 60 * 60 * 1000
+    }
 }

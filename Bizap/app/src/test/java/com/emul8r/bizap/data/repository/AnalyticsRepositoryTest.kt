@@ -80,9 +80,9 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
 
     @Test
     fun `revenue metrics - MTD revenue flows from DAO`() = runTest {
-        every { dao.observeMTDRevenue(businessId) } returns flowOf(200000L)
-        every { dao.observeYTDRevenue(businessId) } returns flowOf(800000L)
-        every { dao.observeWeeklyRevenue(businessId) } returns flowOf(50000L)
+        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(200000L)
+        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(800000L)
+        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(50000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(600000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
@@ -96,9 +96,9 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
 
     @Test
     fun `revenue metrics - zero revenue when no paid invoices`() = runTest {
-        every { dao.observeMTDRevenue(businessId) } returns flowOf(0L)
-        every { dao.observeYTDRevenue(businessId) } returns flowOf(0L)
-        every { dao.observeWeeklyRevenue(businessId) } returns flowOf(0L)
+        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(0L)
+        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(0L)
+        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(0L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
@@ -119,9 +119,9 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
                 paidCount = 2
             )
         )
-        every { dao.observeMTDRevenue(businessId) } returns flowOf(50000L)
-        every { dao.observeYTDRevenue(businessId) } returns flowOf(50000L)
-        every { dao.observeWeeklyRevenue(businessId) } returns flowOf(50000L)
+        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(50000L)
+        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(50000L)
+        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(50000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(50000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trendPoints)
 
@@ -135,9 +135,9 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
 
     @Test
     fun `revenue metrics - businessId is correctly propagated`() = runTest {
-        every { dao.observeMTDRevenue(businessId) } returns flowOf(100000L)
-        every { dao.observeYTDRevenue(businessId) } returns flowOf(100000L)
-        every { dao.observeWeeklyRevenue(businessId) } returns flowOf(100000L)
+        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(100000L)
+        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(100000L)
+        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(100000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(100000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 

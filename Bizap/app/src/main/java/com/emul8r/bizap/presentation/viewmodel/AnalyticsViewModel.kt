@@ -196,7 +196,7 @@ class AnalyticsViewModel @Inject constructor(
         ) { velocity, revenue, outstanding ->
             Triple(velocity, revenue, outstanding)
         }
-    ) { (trend, customers, dsoValue), (_, revenue, outstanding) ->
+    ) { (trend, customers, dsoValue), (velocity, revenue, outstanding) ->
         Timber.d("AnalyticsViewModel: State updated for businessId=$businessId")
 
         AnalyticsUiState.Success(

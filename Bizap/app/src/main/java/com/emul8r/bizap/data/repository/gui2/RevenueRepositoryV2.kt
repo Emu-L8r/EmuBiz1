@@ -53,7 +53,7 @@ class RevenueRepositoryV2 @Inject constructor(
         cal.set(Calendar.MILLISECOND, 0)
         val startOfYearMillis = cal.timeInMillis
 
-        val startOfWeekMillis = now - 7L * 24 * 60 * 60 * 1000
+        val startOfWeekMillis = now - MILLIS_IN_WEEK
 
         return combine(
             invoiceDaoV2.observeMTDRevenue(businessId, startOfMonthMillis),
@@ -78,5 +78,9 @@ class RevenueRepositoryV2 @Inject constructor(
                 trend = trend
             )
         }
+    }
+
+    companion object {
+        private const val MILLIS_IN_WEEK = 7L * 24 * 60 * 60 * 1000
     }
 }
