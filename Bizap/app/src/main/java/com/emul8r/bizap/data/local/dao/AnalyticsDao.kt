@@ -82,7 +82,7 @@ interface AnalyticsDao {
         SELECT COALESCE(SUM(totalAmount - amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND status IN ('SENT', 'DRAFT', 'OVERDUE')
+        AND status IN ('SENT', 'PARTIALLY_PAID', 'OVERDUE')
         AND isActive = 1
     """)
     fun observeTotalOutstanding(businessId: Long): Flow<Long>
@@ -91,7 +91,7 @@ interface AnalyticsDao {
         SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND status = 'PAID'
+        AND status IN ('PAID', 'PARTIALLY_PAID')
         AND isActive = 1
     """)
     fun observeTotalCollected(businessId: Long): Flow<Long>
@@ -100,7 +100,7 @@ interface AnalyticsDao {
         SELECT COALESCE(SUM(totalAmount), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND status = 'PAID'
+        AND status IN ('PAID', 'PARTIALLY_PAID')
         AND isActive = 1
     """)
     fun observeTotalRevenue(businessId: Long): Flow<Long>
