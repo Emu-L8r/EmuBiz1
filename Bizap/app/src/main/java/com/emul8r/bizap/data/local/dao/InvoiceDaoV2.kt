@@ -66,9 +66,9 @@ interface InvoiceDaoV2 {
         WHERE businessProfileId = :businessId
           AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
-          AND DATE(date/1000, 'unixepoch') >= DATE('now', 'start of month')
+          AND date >= :startOfMonthMillis
     """)
-    fun observeMTDRevenue(businessId: Long): Flow<Long>
+    fun observeMTDRevenue(businessId: Long, startOfMonthMillis: Long): Flow<Long>
 
     @Query("""
         SELECT COALESCE(SUM(amountPaid), 0)
@@ -76,9 +76,9 @@ interface InvoiceDaoV2 {
         WHERE businessProfileId = :businessId
           AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
-          AND strftime('%Y', date/1000, 'unixepoch') = strftime('%Y', 'now')
+          AND date >= :startOfYearMillis
     """)
-    fun observeYTDRevenue(businessId: Long): Flow<Long>
+    fun observeYTDRevenue(businessId: Long, startOfYearMillis: Long): Flow<Long>
 
     @Query("""
         SELECT COALESCE(SUM(amountPaid), 0)
@@ -86,9 +86,9 @@ interface InvoiceDaoV2 {
         WHERE businessProfileId = :businessId
           AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
-          AND DATE(date/1000, 'unixepoch') >= DATE('now', '-7 days')
+          AND date >= :startOfWeekMillis
     """)
-    fun observeWeeklyRevenue(businessId: Long): Flow<Long>
+    fun observeWeeklyRevenue(businessId: Long, startOfWeekMillis: Long): Flow<Long>
 
     @Query("""
         SELECT COALESCE(SUM(amountPaid), 0)

@@ -6,6 +6,7 @@ import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.domain.model.gui2.RiskMetricsV2
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
+import java.util.Calendar
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -116,9 +117,9 @@ class AnalyticsDiagnostics @Inject constructor(
         val highRisk = invoiceDaoV2.observeHighRiskInvoiceCount(businessId).first()
         val atRisk = invoiceDaoV2.observeAtRiskInvoiceCount(businessId).first()
         val healthy = invoiceDaoV2.observeHealthyInvoiceCount(businessId).first()
-        val mtd = invoiceDaoV2.observeMTDRevenue(businessId).first()
-        val ytd = invoiceDaoV2.observeYTDRevenue(businessId).first()
-        val weekly = invoiceDaoV2.observeWeeklyRevenue(businessId).first()
+        val mtd = invoiceDaoV2.observeMTDRevenue(businessId, startOfMonthMillis()).first()
+        val ytd = invoiceDaoV2.observeYTDRevenue(businessId, startOfYearMillis()).first()
+        val weekly = invoiceDaoV2.observeWeeklyRevenue(businessId, startOfWeekMillis()).first()
 
         // Payment metrics validation
         val paymentValidation = validator.validatePaymentMetrics(outstanding, collected, totalBilled)
@@ -162,4 +163,26 @@ class AnalyticsDiagnostics @Inject constructor(
         Timber.i("AnalyticsDiagnostics:\n$report")
         return report
     }
+
+    private fun startOfMonthMillis(): Long {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.DAY_OF_MONTH, 1)
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
+    }
+
+    private fun startOfYearMillis(): Long {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.DAY_OF_YEAR, 1)
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
+    }
+
+    private fun startOfWeekMillis(): Long = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
 }

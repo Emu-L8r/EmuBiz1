@@ -178,15 +178,25 @@ class AnalyticsViewModel @Inject constructor(
     /**
      * Combined analytics state for dashboard.
      * Aggregates all metrics into single observable.
+     * Uses nested combine() calls because Kotlin coroutines only has typed-param
+     * overloads up to 5 flows; for 6 we split into two groups.
      */
     val analyticsState: StateFlow<AnalyticsUiState> = combine(
-        cashFlowTrend,
-        topCustomers,
-        averageDaysToPayment,
-        invoicingVelocity,
-        totalRevenue,
-        totalOutstanding
-    ) { trend, customers, dsoValue, velocity, revenue, outstanding ->
+        combine(
+            cashFlowTrend,
+            topCustomers,
+            averageDaysToPayment
+        ) { trend, customers, dsoValue ->
+            Triple(trend, customers, dsoValue)
+        },
+        combine(
+            invoicingVelocity,
+            totalRevenue,
+            totalOutstanding
+        ) { velocity, revenue, outstanding ->
+            Triple(velocity, revenue, outstanding)
+        }
+    ) { (trend, customers, dsoValue), (_, revenue, outstanding) ->
         Timber.d("AnalyticsViewModel: State updated for businessId=$businessId")
 
         AnalyticsUiState.Success(
