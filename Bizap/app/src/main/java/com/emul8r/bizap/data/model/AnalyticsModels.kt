@@ -1,57 +1,41 @@
 package com.emul8r.bizap.data.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import java.time.LocalDate
 
 /**
  * Daily revenue snapshot for trend analysis.
  * Denormalized for query efficiency.
  */
-@Entity(tableName = "daily_revenue_snapshots")
 data class DailyRevenue(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
     val businessId: Long,
     val date: LocalDate,
     val invoicedCents: Long,      // Total amount invoiced this day
     val paidCents: Long,          // Total amount paid this day
     val invoiceCount: Int,        // Number of invoices
-    val paidCount: Int,           // Number of paid invoices
-    val createdAt: Long = System.currentTimeMillis()
+    val paidCount: Int            // Number of paid invoices
 )
 
 /**
  * Customer revenue aggregation for concentration analysis.
  */
-@Entity(tableName = "customer_revenue")
 data class CustomerRevenue(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val businessId: Long,
     val customerId: Long,
     val customerName: String,
     val totalRevenueCents: Long,  // All-time paid revenue from customer
     val invoiceCount: Int,
-    val lastPaymentDate: LocalDate? = null,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val lastPaymentDate: LocalDate? = null
 )
 
 /**
  * Invoice velocity metric for workflow efficiency.
  */
-@Entity(tableName = "invoice_velocity_metrics")
 data class InvoiceVelocity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
     val businessId: Long,
     val date: LocalDate,
     val avgDaysFromCreationToSent: Double,
     val invoicesCreatedCount: Int,
     val invoicesSentCount: Int,
-    val invoicesInDraftCount: Int,
-    val createdAt: Long = System.currentTimeMillis()
+    val invoicesInDraftCount: Int
 )
 
 /**
