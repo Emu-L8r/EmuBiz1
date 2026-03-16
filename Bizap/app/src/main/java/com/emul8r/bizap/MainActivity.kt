@@ -124,28 +124,8 @@ class MainActivity : ComponentActivity() {
                             val selectedGuiMode by landingViewModel.selectedMode.collectAsStateWithLifecycle()
                             val warningShown by landingViewModel.firstLaunchWarningShown.collectAsStateWithLifecycle()
 
-                            // Handle all states: null (loading), false (show warning), true (proceed to GUI)
+                            // Handle all states: false (show warning), true (proceed to GUI)
                             when (warningShown) {
-                                null -> {
-                                    // DataStore is still loading from disk - show explicit loading indicator
-                                    Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.Center
-                                        ) {
-                                            CircularProgressIndicator()
-                                            Spacer(modifier = Modifier.height(16.dp))
-                                            Text(
-                                                "Loading...",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
-                                    }
-                                }
                                 false -> {
                                     // Show first-launch data-loss warning (not yet acknowledged)
                                     FirstLaunchWarningDialog(

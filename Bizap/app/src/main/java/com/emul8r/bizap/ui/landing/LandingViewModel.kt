@@ -66,13 +66,13 @@ class LandingViewModel @Inject constructor(
     }
 
     /** Whether the first-launch data-loss warning has been shown and acknowledged.
-     *  Null while loading from DataStore; false = never shown; true = already shown. */
-    val firstLaunchWarningShown: StateFlow<Boolean?> = dataStore.data
-        .map { prefs -> prefs[KEY_FIRST_LAUNCH_WARNING_SHOWN] }
+     *  Default: false (not shown); true = already shown. */
+    val firstLaunchWarningShown: StateFlow<Boolean> = dataStore.data
+        .map { prefs -> prefs[KEY_FIRST_LAUNCH_WARNING_SHOWN] ?: false }  // Default to false if not set
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = null  // null while DataStore hasn't emitted yet
+            initialValue = false  // Default to false on first launch
         )
 
     /** Mark the first-launch warning as acknowledged so it never shows again. */
