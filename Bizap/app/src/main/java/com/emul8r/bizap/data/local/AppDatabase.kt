@@ -6,7 +6,6 @@ import androidx.room.TypeConverters
 import com.emul8r.bizap.data.local.entities.*
 import com.emul8r.bizap.data.local.dao.*
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
-import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
 import com.emul8r.bizap.domain.model.Note
 
 @Database(
@@ -38,7 +37,7 @@ import com.emul8r.bizap.domain.model.Note
     version = 35,
     exportSchema = true
 )
-@TypeConverters(DocumentStatusConverter::class, LocalDateTypeConverter::class)
+@TypeConverters(DocumentStatusConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun customerDao(): CustomerDao
     abstract fun invoiceDao(): InvoiceDao
