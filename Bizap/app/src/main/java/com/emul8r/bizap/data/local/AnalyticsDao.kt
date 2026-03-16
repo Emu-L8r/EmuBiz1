@@ -13,17 +13,23 @@ import java.time.LocalDate
 interface AnalyticsDao {
 
     // ═════════════════════════════════════════════════════════════════
-    // DAILY REVENUE SNAPSHOTS
+    // DAILY REVENUE - Query existing data
     // ═════════════════════════════════════════════════════════════════
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertDailyRevenue(revenue: DailyRevenue)
-
     @Query("""
-        SELECT * FROM daily_revenue_snapshots
-        WHERE businessId = :businessId
-        AND date >= date('now', '-30 days')
-        ORDER BY date ASC
+        SELECT 
+            :businessId as businessId,
+            date(invoices.date / 1000, 'unixepoch') as date,
+            COALESCE(SUM(CASE WHEN invoices.status = 'PAID' THEN invoices.totalAmount ELSE 0 END), 0) as invoicedCents,
+            COALESCE(SUM(invoices.amountPaid), 0) as paidCents,
+            COUNT(*) as invoiceCount,
+            COUNT(CASE WHEN invoices.status = 'PAID' THEN 1 END) as paidCount
+        FROM invoices
+        WHERE invoices.businessProfileId = :businessId
+        AND invoices.date >= (SELECT datetime('now', '-30 days', 'unixepoch') * 1000)
+        AND invoices.isActive = 1
+        GROUP BY date(invoices.date / 1000, 'unixepoch')
+        ORDER BY invoices.date ASC
     """)
     fun observeDailyRevenue(businessId: Long): Flow<List<DailyRevenue>>
 
@@ -31,12 +37,18 @@ interface AnalyticsDao {
     // CUSTOMER REVENUE
     // ═════════════════════════════════════════════════════════════════
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCustomerRevenue(revenue: CustomerRevenue)
-
     @Query("""
-        SELECT * FROM customer_revenue
-        WHERE businessId = :businessId
+        SELECT 
+            invoices.customerId,
+            invoices.customerName,
+            COALESCE(SUM(invoices.totalAmount), 0) as totalRevenueCents,
+            COUNT(*) as invoiceCount,
+            MAX(invoices.date) / 1000 as lastPaymentDate
+        FROM invoices
+        WHERE invoices.businessProfileId = :businessId
+        AND invoices.status = 'PAID'
+        AND invoices.isActive = 1
+        GROUP BY invoices.customerId
         ORDER BY totalRevenueCents DESC
         LIMIT :limit
     """)
@@ -91,16 +103,24 @@ interface AnalyticsDao {
     fun observeTotalRevenue(businessId: Long): Flow<Long>
 
     // ═════════════════════════════════════════════════════════════════
-    // INVOICE VELOCITY
+    // INVOICE VELOCITY - Computed from invoices
     // ═════════════════════════════════════════════════════════════════
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertInvoiceVelocity(velocity: InvoiceVelocity)
-
     @Query("""
-        SELECT * FROM invoice_velocity_metrics
-        WHERE businessId = :businessId
-        ORDER BY date DESC
+        SELECT 
+            :businessId as businessId,
+            date(invoices.createdAt / 1000, 'unixepoch') as date,
+            COALESCE(AVG(CAST((julianday(datetime(invoices.updatedAt / 1000, 'unixepoch')) - 
+                               julianday(datetime(invoices.createdAt / 1000, 'unixepoch'))) AS REAL)), 0.0) as avgDaysFromCreationToSent,
+            COUNT(*) as invoicesCreatedCount,
+            COUNT(CASE WHEN invoices.status IN ('SENT', 'PAID') THEN 1 END) as invoicesSentCount,
+            COUNT(CASE WHEN invoices.status = 'DRAFT' THEN 1 END) as invoicesInDraftCount
+        FROM invoices
+        WHERE invoices.businessProfileId = :businessId
+        AND invoices.createdAt >= (SELECT datetime('now', '-30 days', 'unixepoch') * 1000)
+        AND invoices.isActive = 1
+        GROUP BY date(invoices.createdAt / 1000, 'unixepoch')
+        ORDER BY invoices.createdAt DESC
         LIMIT 30
     """)
     fun observeInvoicingVelocity(businessId: Long): Flow<List<InvoiceVelocity>>
@@ -123,22 +143,10 @@ interface AnalyticsDao {
         FROM invoices 
         WHERE businessProfileId = :businessId 
         AND status IN ('SENT', 'OVERDUE')
-        AND dueDate < ?2
+        AND dueDate < :currentTimeMs
         AND isActive = 1
     """)
     fun observeOverdueInvoiceCount(businessId: Long, currentTimeMs: Long = System.currentTimeMillis()): Flow<Int>
-
-    // ═════════════════════════════════════════════════════════════════
-    // CLEANUP
-    // ═════════════════════════════════════════════════════════════════
-
-    @Query("DELETE FROM daily_revenue_snapshots WHERE date < date('now', '-90 days')")
-    suspend fun cleanupOldDailyRevenue()
-
-    @Query("DELETE FROM customer_revenue WHERE updatedAt < :timestamp")
-    suspend fun cleanupStaleCustomerRevenue(timestamp: Long)
-
-    @Query("DELETE FROM invoice_velocity_metrics WHERE date < date('now', '-90 days')")
-    suspend fun cleanupOldVelocityMetrics()
 }
+
 

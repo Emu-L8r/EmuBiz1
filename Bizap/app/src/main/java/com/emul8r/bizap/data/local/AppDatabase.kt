@@ -7,9 +7,6 @@ import com.emul8r.bizap.data.local.entities.*
 import com.emul8r.bizap.data.local.dao.*
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
-import com.emul8r.bizap.data.model.DailyRevenue
-import com.emul8r.bizap.data.model.CustomerRevenue
-import com.emul8r.bizap.data.model.InvoiceVelocity
 import com.emul8r.bizap.domain.model.Note
 
 @Database(
@@ -36,10 +33,7 @@ import com.emul8r.bizap.domain.model.Note
         OfflineOperation::class,
         InvoiceItemEntity::class,
         PaymentEntity::class,
-        Note::class,
-        DailyRevenue::class,
-        CustomerRevenue::class,
-        InvoiceVelocity::class
+        Note::class
     ],
     version = 35,
     exportSchema = true
