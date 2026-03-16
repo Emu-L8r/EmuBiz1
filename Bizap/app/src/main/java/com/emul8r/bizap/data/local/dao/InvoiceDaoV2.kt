@@ -97,7 +97,7 @@ interface InvoiceDaoV2 {
 
     /**
      * Last-7-days revenue using explicit epoch-millisecond boundaries.
-     * Pass [weekStartMs] = 7 days ago at midnight (local time).
+     * Pass [weekStartMs] = 7 days ago from the current time (rolling 7-day window).
      * Pass [nowMs]       = current time.
      */
     @Query("""
