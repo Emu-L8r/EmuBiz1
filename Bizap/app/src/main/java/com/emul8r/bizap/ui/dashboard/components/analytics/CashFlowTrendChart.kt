@@ -23,6 +23,8 @@ import com.emul8r.bizap.data.model.CashFlowTrendPoint
  *
  * Shows 30-day invoiced vs. paid trends using a Canvas-based line chart.
  * Helps users identify seasonal patterns and predict cash needs.
+ *
+ * Implemented with Compose Canvas to avoid Vico library version constraints.
  */
 @Composable
 fun CashFlowTrendChart(
@@ -59,75 +61,61 @@ fun CashFlowTrendChart(
 
         // Chart
         if (dailyTrends.isNotEmpty()) {
+            val invoicedValues = dailyTrends.map { it.invoicedCents.toFloat() }
+            val paidValues = dailyTrends.map { it.paidCents.toFloat() }
+            val maxValue = (invoicedValues + paidValues).maxOrNull()?.takeIf { it > 0f } ?: 1f
+
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp)
+                    .height(200.dp)
             ) {
-                val chartPadding = 40.dp.toPx()
-                val chartWidth = size.width - (2 * chartPadding)
-                val chartHeight = size.height - (2 * chartPadding)
+                val w = size.width
+                val h = size.height
+                val count = dailyTrends.size
+                val step = if (count > 1) w / (count - 1) else w
 
-                val maxValue = maxOf(
-                    dailyTrends.maxOfOrNull { it.invoicedCents } ?: 1L,
-                    dailyTrends.maxOfOrNull { it.paidCents } ?: 1L
-                ).coerceAtLeast(1L).toFloat()
-
-                // Draw axes
-                drawLine(
-                    color = Color.Gray,
-                    start = Offset(chartPadding, chartPadding),
-                    end = Offset(chartPadding, chartHeight + chartPadding),
-                    strokeWidth = 2f
-                )
-                drawLine(
-                    color = Color.Gray,
-                    start = Offset(chartPadding, chartHeight + chartPadding),
-                    end = Offset(chartPadding + chartWidth, chartHeight + chartPadding),
-                    strokeWidth = 2f
-                )
-
-                val n = dailyTrends.size
-
-                fun xFor(index: Int) =
-                    chartPadding + (index.toFloat() / (n - 1).coerceAtLeast(1)) * chartWidth
-
-                fun yFor(valueCents: Long) =
-                    chartHeight + chartPadding - (valueCents.toFloat() / maxValue) * chartHeight
+                // Draw grid lines
+                for (i in 0..4) {
+                    val y = h * i / 4f
+                    drawLine(
+                        color = Color.LightGray.copy(alpha = 0.4f),
+                        start = Offset(0f, y),
+                        end = Offset(w, y),
+                        strokeWidth = 1f
+                    )
+                }
 
                 // Draw invoiced line
-                if (n > 1) {
-                    val invoicedPath = Path()
-                    dailyTrends.forEachIndexed { i, point ->
-                        val x = xFor(i)
-                        val y = yFor(point.invoicedCents)
-                        if (i == 0) invoicedPath.moveTo(x, y) else invoicedPath.lineTo(x, y)
+                if (count > 1) {
+                    val invoicedPath = Path().apply {
+                        invoicedValues.forEachIndexed { i, v ->
+                            val x = i * step
+                            val y = h - (v / maxValue) * h
+                            if (i == 0) moveTo(x, y) else lineTo(x, y)
+                        }
                     }
                     drawPath(
                         path = invoicedPath,
                         color = invoicedColor,
                         style = Stroke(width = 3f, cap = StrokeCap.Round)
                     )
+                }
 
-                    // Draw paid line
-                    val paidPath = Path()
-                    dailyTrends.forEachIndexed { i, point ->
-                        val x = xFor(i)
-                        val y = yFor(point.paidCents)
-                        if (i == 0) paidPath.moveTo(x, y) else paidPath.lineTo(x, y)
+                // Draw paid line
+                if (count > 1) {
+                    val paidPath = Path().apply {
+                        paidValues.forEachIndexed { i, v ->
+                            val x = i * step
+                            val y = h - (v / maxValue) * h
+                            if (i == 0) moveTo(x, y) else lineTo(x, y)
+                        }
                     }
                     drawPath(
                         path = paidPath,
                         color = paidColor,
                         style = Stroke(width = 3f, cap = StrokeCap.Round)
                     )
-                }
-
-                // Draw data points
-                dailyTrends.forEachIndexed { i, point ->
-                    val x = xFor(i)
-                    drawCircle(color = invoicedColor, radius = 4f, center = Offset(x, yFor(point.invoicedCents)))
-                    drawCircle(color = paidColor, radius = 4f, center = Offset(x, yFor(point.paidCents)))
                 }
             }
         } else {

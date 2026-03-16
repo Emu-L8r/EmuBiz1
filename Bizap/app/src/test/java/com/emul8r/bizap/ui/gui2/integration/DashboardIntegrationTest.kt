@@ -42,9 +42,9 @@ class DashboardIntegrationTest : BaseUnitTest() {
 
     @Test
     fun `dashboard revenue metrics update when invoice is created`() = runTest {
-        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(200000L)
-        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(200000L)
-        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(200000L)
+        every { dao.observeMTDRevenue(businessId, any(), any()) } returns flowOf(200000L)
+        every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(200000L)
+        every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(200000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(200000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 

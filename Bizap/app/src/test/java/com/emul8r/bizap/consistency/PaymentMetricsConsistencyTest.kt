@@ -95,9 +95,9 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
     fun `crossDashboard_Consistency - revenue repo and payment repo show same paid total`() = runTest {
         val totalPaid = 750000L
 
-        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(750000L)
-        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(750000L)
-        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(150000L)
+        every { dao.observeMTDRevenue(businessId, any(), any()) } returns flowOf(750000L)
+        every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(750000L)
+        every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(150000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(totalPaid)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
@@ -121,9 +121,9 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
         val outstanding = 300000L
         val collected = 700000L
 
-        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(1000000L)
-        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(1000000L)
-        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(200000L)
+        every { dao.observeMTDRevenue(businessId, any(), any()) } returns flowOf(1000000L)
+        every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(1000000L)
+        every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(200000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(collected)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
         stubDao(outstanding = outstanding, collected = collected,

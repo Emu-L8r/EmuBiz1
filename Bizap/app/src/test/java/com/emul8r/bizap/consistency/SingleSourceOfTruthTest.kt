@@ -116,9 +116,9 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
     @Test
     fun `rule2_RevenueFilter - revenue reflects only paid invoices`() = runTest {
         // Revenue = A$222.00 (INV-2 PAID only; INV-1 SENT and INV-3 DRAFT excluded)
-        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(inv2Amount)
-        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(inv2Amount)
-        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(inv2Amount)
+        every { dao.observeMTDRevenue(businessId, any(), any()) } returns flowOf(inv2Amount)
+        every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(inv2Amount)
+        every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(inv2Amount)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(inv2Amount)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
@@ -133,9 +133,9 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
     @Test
     fun `rule2_RevenueFilter - DRAFT invoices are excluded from all revenue metrics`() = runTest {
         // Even though DRAFT invoice exists, revenue should be zero if no PAID invoices
-        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(0L)
-        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(0L)
-        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(0L)
+        every { dao.observeMTDRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
@@ -226,9 +226,9 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
     fun `rule4_SingleSource - revenue and payment repos show consistent collected total`() = runTest {
         val totalCollected = inv2Amount  // A$222.00
 
-        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(totalCollected)
-        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(totalCollected)
-        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(totalCollected)
+        every { dao.observeMTDRevenue(businessId, any(), any()) } returns flowOf(totalCollected)
+        every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(totalCollected)
+        every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(totalCollected)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(totalCollected)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
