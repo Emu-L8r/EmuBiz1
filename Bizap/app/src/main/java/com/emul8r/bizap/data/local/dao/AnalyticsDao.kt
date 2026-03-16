@@ -31,7 +31,7 @@ interface AnalyticsDao {
         SELECT
             :businessId as businessId,
             CAST(strftime('%s', DATE(date / 1000, 'unixepoch')) AS INTEGER) * 1000 as date,
-            COALESCE(SUM(CASE WHEN status = 'PAID' THEN totalAmount ELSE 0 END), 0) as invoicedCents,
+            COALESCE(SUM(CASE WHEN status IN ('SENT', 'OVERDUE', 'PARTIALLY_PAID', 'PAID') THEN totalAmount ELSE 0 END), 0) as invoicedCents,
             COALESCE(SUM(amountPaid), 0) as paidCents,
             COUNT(*) as invoiceCount,
             COUNT(CASE WHEN status = 'PAID' THEN 1 END) as paidCount

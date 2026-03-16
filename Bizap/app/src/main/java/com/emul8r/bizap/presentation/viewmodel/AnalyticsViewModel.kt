@@ -213,7 +213,7 @@ class AnalyticsViewModel @Inject constructor(
                     overdueAmountCents = 0
                 )
             )
-        )
+        ) as AnalyticsUiState
     }
         .catch { error ->
             Timber.e(error, "AnalyticsViewModel: Error aggregating state")
