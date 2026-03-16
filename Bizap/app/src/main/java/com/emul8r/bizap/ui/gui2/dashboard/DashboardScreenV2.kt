@@ -37,6 +37,7 @@ fun DashboardScreenV2(
     onNavigateToCustomers: () -> Unit,
     onNavigateToInvoices: () -> Unit,
     onNavigateToInvoiceAnalytics: () -> Unit = {},
+    onNavigateToVault: () -> Unit = {},
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
@@ -73,6 +74,7 @@ fun DashboardScreenV2(
                 onNavigateToCustomers = onNavigateToCustomers,
                 onNavigateToInvoices = onNavigateToInvoices,
                 onNavigateToInvoiceAnalytics = onNavigateToInvoiceAnalytics,
+                onNavigateToVault = onNavigateToVault,
                 onCreateCustomer = onCreateCustomer,
                 onCreateInvoice = onCreateInvoice,
                 modifier = Modifier.padding(paddingValues)
@@ -90,6 +92,7 @@ private fun DashboardContentV2(
     onNavigateToCustomers: () -> Unit,
     onNavigateToInvoices: () -> Unit,
     onNavigateToInvoiceAnalytics: () -> Unit = {},
+    onNavigateToVault: () -> Unit = {},
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
     modifier: Modifier = Modifier
@@ -319,6 +322,16 @@ private fun DashboardContentV2(
             Icon(Icons.Default.Receipt, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))
             Text("View All Invoices")
+            Spacer(Modifier.weight(1f))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+        }
+        OutlinedButton(
+            onClick = onNavigateToVault,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Inventory, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("Document Vault")
             Spacer(Modifier.weight(1f))
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
         }
