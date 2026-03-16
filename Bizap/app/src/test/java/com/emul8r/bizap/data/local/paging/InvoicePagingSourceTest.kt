@@ -44,7 +44,7 @@ class InvoicePagingSourceTest : BaseUnitTest() {
         coEvery { invoiceDao.getInvoicesPaged(businessId, 20, 0) } returns items
 
         val source = createPagingSource()
-        val params = PagingSource.LoadParams.Refresh(key = null, loadSize = 20, placeholdersEnabled = false)
+        val params = PagingSource.LoadParams.Refresh<Int>(key = null, loadSize = 20, placeholdersEnabled = false)
 
         val result = source.load(params)
 
@@ -97,7 +97,7 @@ class InvoicePagingSourceTest : BaseUnitTest() {
         coEvery { invoiceDao.getInvoicesPaged(any(), any(), any()) } throws error
 
         val source = createPagingSource()
-        val params = PagingSource.LoadParams.Refresh(key = null, loadSize = 20, placeholdersEnabled = false)
+        val params = PagingSource.LoadParams.Refresh<Int>(key = null, loadSize = 20, placeholdersEnabled = false)
 
         val result = source.load(params)
 
