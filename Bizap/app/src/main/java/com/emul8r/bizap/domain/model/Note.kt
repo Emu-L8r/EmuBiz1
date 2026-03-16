@@ -2,7 +2,6 @@ package com.emul8r.bizap.domain.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.time.Instant
 
 /**
  * Note entity - can be linked to either a Customer or Invoice

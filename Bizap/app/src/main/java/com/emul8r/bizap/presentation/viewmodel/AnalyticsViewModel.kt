@@ -3,7 +3,7 @@ package com.emul8r.bizap.presentation.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.local.AnalyticsDao
+import com.emul8r.bizap.data.local.dao.AnalyticsDao
 import com.emul8r.bizap.data.model.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
