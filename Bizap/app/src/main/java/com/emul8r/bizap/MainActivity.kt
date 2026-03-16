@@ -5,9 +5,13 @@ import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
@@ -15,8 +19,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -118,43 +124,68 @@ class MainActivity : ComponentActivity() {
                             val selectedGuiMode by landingViewModel.selectedMode.collectAsStateWithLifecycle()
                             val warningShown by landingViewModel.firstLaunchWarningShown.collectAsStateWithLifecycle()
 
-                            // Show first-launch data-loss warning once (null = DataStore still loading)
-                            if (warningShown == false) {
-                                FirstLaunchWarningDialog(
-                                    onDismiss = { landingViewModel.markFirstLaunchWarningShown() }
-                                )
-                            } else if (warningShown == true) {
-                                when (selectedGuiMode) {
+                            // Handle all states: null (loading), false (show warning), true (proceed to GUI)
+                            when (warningShown) {
                                 null -> {
-                                    // No GUI mode selected yet — show Landing Screen
-                                    LandingScreen(
-                                        onSelectGui1 = {
-                                            landingViewModel.selectMode(GuiMode.GUI1)
-                                            // Launch GUI1 activity
-                                            startActivity(TraditionalGUIMainActivity.createIntent(this@MainActivity))
-                                            finish()
-                                        },
-                                        onSelectGui2 = {
-                                            landingViewModel.selectMode(GuiMode.GUI2)
-                                            // Launch GUI2 activity
-                                            startActivity(ModernGUIMainActivity.createIntent(this@MainActivity))
-                                            finish()
+                                    // DataStore is still loading from disk - show explicit loading indicator
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            CircularProgressIndicator()
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            Text(
+                                                "Loading...",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
                                         }
+                                    }
+                                }
+                                false -> {
+                                    // Show first-launch data-loss warning (not yet acknowledged)
+                                    FirstLaunchWarningDialog(
+                                        onDismiss = { landingViewModel.markFirstLaunchWarningShown() }
                                     )
                                 }
-                                else -> {
-                                     // GUI mode already selected, launch appropriate activity
-                                     val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
-                                     val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
+                                true -> {
+                                    // Warning has been shown - proceed to GUI selection or content
+                                    when (selectedGuiMode) {
+                                        null -> {
+                                            // No GUI mode selected yet — show Landing Screen
+                                            LandingScreen(
+                                                onSelectGui1 = {
+                                                    landingViewModel.selectMode(GuiMode.GUI1)
+                                                    // Launch GUI1 activity
+                                                    startActivity(TraditionalGUIMainActivity.createIntent(this@MainActivity))
+                                                    finish()
+                                                },
+                                                onSelectGui2 = {
+                                                    landingViewModel.selectMode(GuiMode.GUI2)
+                                                    // Launch GUI2 activity
+                                                    startActivity(ModernGUIMainActivity.createIntent(this@MainActivity))
+                                                    finish()
+                                                }
+                                            )
+                                        }
+                                        else -> {
+                                             // GUI mode already selected, show appropriate GUI
+                                             val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
+                                             val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
 
-                                     val gui2NavController = rememberNavController()
-                                     GuiV2NavGraph(
-                                         navController = gui2NavController,
-                                         startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
-                                         onSwitchToGui1 = { landingViewModel.resetMode() }
-                                     )
-                                 }
-                             }
+                                             val gui2NavController = rememberNavController()
+                                             GuiV2NavGraph(
+                                                 navController = gui2NavController,
+                                                 startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
+                                                 onSwitchToGui1 = { landingViewModel.resetMode() }
+                                             )
+                                         }
+                                    }
+                                }
                             }
                         }
                         else -> {
