@@ -59,6 +59,7 @@ import com.emul8r.bizap.ui.notes.NotesScreen
 import com.emul8r.bizap.ui.landing.LandingScreen
 import com.emul8r.bizap.ui.landing.LandingViewModel
 import com.emul8r.bizap.ui.landing.GuiMode
+import com.emul8r.bizap.ui.onboarding.FirstLaunchWarningDialog
 import com.emul8r.bizap.ui.activities.TraditionalGUIMainActivity
 import com.emul8r.bizap.ui.activities.ModernGUIMainActivity
 import dagger.hilt.android.AndroidEntryPoint
@@ -115,8 +116,15 @@ class MainActivity : ComponentActivity() {
                             // After authentication, check if user has selected a GUI mode
                             val landingViewModel: LandingViewModel = hiltViewModel()
                             val selectedGuiMode by landingViewModel.selectedMode.collectAsStateWithLifecycle()
+                            val warningShown by landingViewModel.firstLaunchWarningShown.collectAsStateWithLifecycle()
 
-                            when (selectedGuiMode) {
+                            // Show first-launch data-loss warning once (null = DataStore still loading)
+                            if (warningShown == false) {
+                                FirstLaunchWarningDialog(
+                                    onDismiss = { landingViewModel.markFirstLaunchWarningShown() }
+                                )
+                            } else if (warningShown == true) {
+                                when (selectedGuiMode) {
                                 null -> {
                                     // No GUI mode selected yet — show Landing Screen
                                     LandingScreen(
@@ -135,17 +143,18 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                                 else -> {
-                                    // GUI mode already selected, launch appropriate activity
-                                    val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
-                                    val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
+                                     // GUI mode already selected, launch appropriate activity
+                                     val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
+                                     val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
 
-                                    val gui2NavController = rememberNavController()
-                                    GuiV2NavGraph(
-                                        navController = gui2NavController,
-                                        startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
-                                        onSwitchToGui1 = { landingViewModel.resetMode() }
-                                    )
-                                }
+                                     val gui2NavController = rememberNavController()
+                                     GuiV2NavGraph(
+                                         navController = gui2NavController,
+                                         startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
+                                         onSwitchToGui1 = { landingViewModel.resetMode() }
+                                     )
+                                 }
+                             }
                             }
                         }
                         else -> {
