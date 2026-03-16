@@ -48,9 +48,9 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
             DailyRevenueTrendV2("2026-03-01", 50000L, 2, 1),
             DailyRevenueTrendV2("2026-03-02", 75000L, 3, 2)
         )
-        every { daoV2.observeMTDRevenue(businessId) } returns flowOf(125000L)
-        every { daoV2.observeYTDRevenue(businessId) } returns flowOf(500000L)
-        every { daoV2.observeWeeklyRevenue(businessId) } returns flowOf(100000L)
+        every { daoV2.observeMTDRevenue(businessId, any(), any()) } returns flowOf(125000L)
+        every { daoV2.observeYTDRevenue(businessId, any(), any()) } returns flowOf(500000L)
+        every { daoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(100000L)
         every { daoV2.observeTotalPaidRevenue(businessId) } returns flowOf(500000L)
         every { daoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
 
@@ -67,9 +67,9 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
 
     @Test
     fun `observeRevenueMetrics returns zero values when no data`() = runTest {
-        every { daoV2.observeMTDRevenue(businessId) } returns flowOf(0L)
-        every { daoV2.observeYTDRevenue(businessId) } returns flowOf(0L)
-        every { daoV2.observeWeeklyRevenue(businessId) } returns flowOf(0L)
+        every { daoV2.observeMTDRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { daoV2.observeYTDRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { daoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { daoV2.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { daoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
