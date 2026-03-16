@@ -1,27 +1,27 @@
 package com.emul8r.bizap.ui.dashboard.components.analytics
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.data.model.CashFlowTrendPoint
-import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottomAxis
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStartAxis
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 
 /**
  * Cash Flow Trend Chart
  *
- * Shows 30-day invoiced vs. paid trends.
+ * Shows 30-day invoiced vs. paid trends using a Canvas-based line chart.
  * Helps users identify seasonal patterns and predict cash needs.
  */
 @Composable
@@ -29,19 +29,8 @@ fun CashFlowTrendChart(
     dailyTrends: List<CashFlowTrendPoint>,
     modifier: Modifier = Modifier
 ) {
-    val modelProducer = CartesianChartModelProducer()
-
-    // Prepare chart data
-    val invoicedAmounts = dailyTrends.map { it.invoicedCents / 100.0 }.toFloatArray()
-    val paidAmounts = dailyTrends.map { it.paidCents / 100.0 }.toFloatArray()
-
-    // Update chart with data
-    modelProducer.runTransaction {
-        lineSeries {
-            series(invoicedAmounts.toList())
-            series(paidAmounts.toList())
-        }
-    }
+    val invoicedColor = Color(0xFF1976D2)
+    val paidColor = Color(0xFF388E3C)
 
     Column(
         modifier = modifier
@@ -64,36 +53,96 @@ fun CashFlowTrendChart(
                 .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            LegendItem("Invoiced", Color(0xFF1976D2))
-            LegendItem("Paid", Color(0xFF388E3C))
+            LegendItem("Invoiced", invoicedColor)
+            LegendItem("Paid", paidColor)
         }
 
         // Chart
         if (dailyTrends.isNotEmpty()) {
-            CartesianChartHost(
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+            ) {
+                val chartPadding = 40.dp.toPx()
+                val chartWidth = size.width - (2 * chartPadding)
+                val chartHeight = size.height - (2 * chartPadding)
+
+                val maxValue = maxOf(
+                    dailyTrends.maxOfOrNull { it.invoicedCents } ?: 1L,
+                    dailyTrends.maxOfOrNull { it.paidCents } ?: 1L
+                ).coerceAtLeast(1L).toFloat()
+
+                // Draw axes
+                drawLine(
+                    color = Color.Gray,
+                    start = Offset(chartPadding, chartPadding),
+                    end = Offset(chartPadding, chartHeight + chartPadding),
+                    strokeWidth = 2f
+                )
+                drawLine(
+                    color = Color.Gray,
+                    start = Offset(chartPadding, chartHeight + chartPadding),
+                    end = Offset(chartPadding + chartWidth, chartHeight + chartPadding),
+                    strokeWidth = 2f
+                )
+
+                val n = dailyTrends.size
+
+                fun xFor(index: Int) =
+                    chartPadding + (index.toFloat() / (n - 1).coerceAtLeast(1)) * chartWidth
+
+                fun yFor(valueCents: Long) =
+                    chartHeight + chartPadding - (valueCents.toFloat() / maxValue) * chartHeight
+
+                // Draw invoiced line
+                if (n > 1) {
+                    val invoicedPath = Path()
+                    dailyTrends.forEachIndexed { i, point ->
+                        val x = xFor(i)
+                        val y = yFor(point.invoicedCents)
+                        if (i == 0) invoicedPath.moveTo(x, y) else invoicedPath.lineTo(x, y)
+                    }
+                    drawPath(
+                        path = invoicedPath,
+                        color = invoicedColor,
+                        style = Stroke(width = 3f, cap = StrokeCap.Round)
+                    )
+
+                    // Draw paid line
+                    val paidPath = Path()
+                    dailyTrends.forEachIndexed { i, point ->
+                        val x = xFor(i)
+                        val y = yFor(point.paidCents)
+                        if (i == 0) paidPath.moveTo(x, y) else paidPath.lineTo(x, y)
+                    }
+                    drawPath(
+                        path = paidPath,
+                        color = paidColor,
+                        style = Stroke(width = 3f, cap = StrokeCap.Round)
+                    )
+                }
+
+                // Draw data points
+                dailyTrends.forEachIndexed { i, point ->
+                    val x = xFor(i)
+                    drawCircle(color = invoicedColor, radius = 4f, center = Offset(x, yFor(point.invoicedCents)))
+                    drawCircle(color = paidColor, radius = 4f, center = Offset(x, yFor(point.paidCents)))
+                }
+            }
+        } else {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(250.dp),
-                modelProducer = modelProducer,
-                layers = listOf(
-                    rememberLineCartesianLayer(
-                        lines = listOf(
-                            androidx.compose.ui.graphics.Color(0xFF1976D2),
-                            androidx.compose.ui.graphics.Color(0xFF388E3C)
-                        )
-                    )
-                ),
-                startAxis = rememberStartAxis(),
-                bottomAxis = rememberBottomAxis(),
-                isZoomEnabled = true
-            )
-        } else {
-            Text(
-                text = "No data available",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(32.dp)
-            )
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No data available",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         // Info text
@@ -116,7 +165,7 @@ private fun LegendItem(label: String, color: Color) {
         Box(
             modifier = Modifier
                 .size(12.dp)
-                .background(color, shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                .background(color, shape = RoundedCornerShape(2.dp))
         )
         Text(
             text = label,
