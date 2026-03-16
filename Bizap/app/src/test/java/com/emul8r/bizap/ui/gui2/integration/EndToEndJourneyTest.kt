@@ -47,9 +47,9 @@ class EndToEndJourneyTest : BaseUnitTest() {
 
     @Test
     fun `revenue metrics reflect paid invoice after payment recorded`() = runTest {
-        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(50000L)
-        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(50000L)
-        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(50000L)
+        every { dao.observeMTDRevenue(businessId, any(), any()) } returns flowOf(50000L)
+        every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(50000L)
+        every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(50000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(50000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
@@ -113,9 +113,9 @@ class EndToEndJourneyTest : BaseUnitTest() {
 
     @Test
     fun `dashboard metrics go to zero when invoice is deleted`() = runTest {
-        every { dao.observeMTDRevenue(businessId, any()) } returns flowOf(0L)
-        every { dao.observeYTDRevenue(businessId, any()) } returns flowOf(0L)
-        every { dao.observeWeeklyRevenue(businessId, any()) } returns flowOf(0L)
+        every { dao.observeMTDRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 

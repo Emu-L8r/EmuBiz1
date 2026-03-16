@@ -60,35 +60,56 @@ interface InvoiceDaoV2 {
 
     // ==================== REVENUE QUERIES ====================
 
+    /**
+     * Month-to-date revenue using explicit epoch-millisecond boundaries calculated
+     * in app code with the device's local timezone (via Calendar.getInstance()).
+     * This avoids SQLite's UTC-only date() function causing timezone divergence.
+     *
+     * Pass [monthStartMs] = start of current month at midnight (local time).
+     * Pass [nowMs]        = current time (System.currentTimeMillis()).
+     */
     @Query("""
         SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
           AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
-          AND date >= :startOfMonthMillis
+          AND date >= :monthStartMs
+          AND date <= :nowMs
     """)
-    fun observeMTDRevenue(businessId: Long, startOfMonthMillis: Long): Flow<Long>
+    fun observeMTDRevenue(businessId: Long, monthStartMs: Long, nowMs: Long): Flow<Long>
 
+    /**
+     * Year-to-date revenue using explicit epoch-millisecond boundaries.
+     * Pass [yearStartMs] = start of current year at midnight (local time).
+     * Pass [nowMs]       = current time.
+     */
     @Query("""
         SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
           AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
-          AND date >= :startOfYearMillis
+          AND date >= :yearStartMs
+          AND date <= :nowMs
     """)
-    fun observeYTDRevenue(businessId: Long, startOfYearMillis: Long): Flow<Long>
+    fun observeYTDRevenue(businessId: Long, yearStartMs: Long, nowMs: Long): Flow<Long>
 
+    /**
+     * Last-7-days revenue using explicit epoch-millisecond boundaries.
+     * Pass [weekStartMs] = 7 days ago from the current time (rolling 7-day window).
+     * Pass [nowMs]       = current time.
+     */
     @Query("""
         SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
           AND (status = 'PAID' OR status = 'PARTIALLY_PAID')
           AND isActive = 1
-          AND date >= :startOfWeekMillis
+          AND date >= :weekStartMs
+          AND date <= :nowMs
     """)
-    fun observeWeeklyRevenue(businessId: Long, startOfWeekMillis: Long): Flow<Long>
+    fun observeWeeklyRevenue(businessId: Long, weekStartMs: Long, nowMs: Long): Flow<Long>
 
     @Query("""
         SELECT COALESCE(SUM(amountPaid), 0)

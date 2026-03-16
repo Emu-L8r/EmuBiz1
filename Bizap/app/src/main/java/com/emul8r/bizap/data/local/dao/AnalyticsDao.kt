@@ -100,7 +100,7 @@ interface AnalyticsDao {
         SELECT COALESCE(SUM(totalAmount), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND status = 'PAID'
+        AND status IN ('PAID', 'PARTIALLY_PAID')
         AND isActive = 1
     """)
     fun observeTotalRevenue(businessId: Long): Flow<Long>

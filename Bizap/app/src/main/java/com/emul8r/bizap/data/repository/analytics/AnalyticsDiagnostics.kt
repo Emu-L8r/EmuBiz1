@@ -117,9 +117,13 @@ class AnalyticsDiagnostics @Inject constructor(
         val highRisk = invoiceDaoV2.observeHighRiskInvoiceCount(businessId).first()
         val atRisk = invoiceDaoV2.observeAtRiskInvoiceCount(businessId).first()
         val healthy = invoiceDaoV2.observeHealthyInvoiceCount(businessId).first()
-        val mtd = invoiceDaoV2.observeMTDRevenue(businessId, startOfMonthMillis()).first()
-        val ytd = invoiceDaoV2.observeYTDRevenue(businessId, startOfYearMillis()).first()
-        val weekly = invoiceDaoV2.observeWeeklyRevenue(businessId, startOfWeekMillis()).first()
+        val now = System.currentTimeMillis()
+        val mtdStart = CalendarUtils.startOfCurrentMonth(now)
+        val ytdStart = CalendarUtils.startOfCurrentYear(now)
+        val weekStart = now - CalendarUtils.SEVEN_DAYS_MS
+        val mtd = invoiceDaoV2.observeMTDRevenue(businessId, mtdStart, now).first()
+        val ytd = invoiceDaoV2.observeYTDRevenue(businessId, ytdStart, now).first()
+        val weekly = invoiceDaoV2.observeWeeklyRevenue(businessId, weekStart, now).first()
 
         // Payment metrics validation
         val paymentValidation = validator.validatePaymentMetrics(outstanding, collected, totalBilled)
