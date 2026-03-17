@@ -155,7 +155,7 @@ class MigrationRoundTripTest {
         val businessCursor = dbV35.query("""
             SELECT id, name, currency FROM business_profiles WHERE id = 1
         """)
-        assertTrue("Business should exist after migration", businessCursor.moveToFirst())
+        assertTrue("Business should exist after migration") { businessCursor.moveToFirst() }
         assertEquals("Business name preserved", "Test Business Inc",
             businessCursor.getString(businessCursor.getColumnIndex("name")))
         businessCursor.close()
@@ -193,27 +193,27 @@ class MigrationRoundTripTest {
 
         invoicesCursor.moveToFirst()
         assertEquals("Invoice 1: Amount preserved", 15999L,
-            invoicesCursor.getLong(invoicesCursor.getColumnIndex("totalAmount")))
+            invoicesCursor.getLong(invoicesCursor.getColumnIndexOrThrow("totalAmount")))
         assertEquals("Invoice 1: Paid amount preserved", 15999L,
-            invoicesCursor.getLong(invoicesCursor.getColumnIndex("amountPaid")))
+            invoicesCursor.getLong(invoicesCursor.getColumnIndexOrThrow("amountPaid")))
         assertEquals("Invoice 1: Status preserved", "PAID",
-            invoicesCursor.getString(invoicesCursor.getColumnIndex("status")))
+            invoicesCursor.getString(invoicesCursor.getColumnIndexOrThrow("status")))
 
         invoicesCursor.moveToNext()
         assertEquals("Invoice 2: Amount preserved", 25000L,
-            invoicesCursor.getLong(invoicesCursor.getColumnIndex("totalAmount")))
+            invoicesCursor.getLong(invoicesCursor.getColumnIndexOrThrow("totalAmount")))
         assertEquals("Invoice 2: Partial payment preserved", 10000L,
-            invoicesCursor.getLong(invoicesCursor.getColumnIndex("amountPaid")))
+            invoicesCursor.getLong(invoicesCursor.getColumnIndexOrThrow("amountPaid")))
         assertEquals("Invoice 2: Status preserved", "PARTIALLY_PAID",
-            invoicesCursor.getString(invoicesCursor.getColumnIndex("status")))
+            invoicesCursor.getString(invoicesCursor.getColumnIndexOrThrow("status")))
 
         invoicesCursor.moveToNext()
         assertEquals("Invoice 3: Amount preserved", 8750L,
-            invoicesCursor.getLong(invoicesCursor.getColumnIndex("totalAmount")))
+            invoicesCursor.getLong(invoicesCursor.getColumnIndexOrThrow("totalAmount")))
         assertEquals("Invoice 3: No payment preserved", 0L,
-            invoicesCursor.getLong(invoicesCursor.getColumnIndex("amountPaid")))
+            invoicesCursor.getLong(invoicesCursor.getColumnIndexOrThrow("amountPaid")))
         assertEquals("Invoice 3: Status preserved", "OVERDUE",
-            invoicesCursor.getString(invoicesCursor.getColumnIndex("status")))
+            invoicesCursor.getString(invoicesCursor.getColumnIndexOrThrow("status")))
 
         invoicesCursor.close()
 
