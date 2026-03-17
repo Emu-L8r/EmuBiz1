@@ -12,6 +12,7 @@ data class RevenueMetricsV2(
     val totalPaidRevenue: Long,     // All-time paid revenue (cents)
     val outstandingAmount: Long,    // Unpaid outstanding amount (cents)
     val collectedAmount: Long,      // Total amount collected (amountPaid sum, cents)
+    val overdueAmount: Long = 0L,   // Amount owed on OVERDUE invoices (cents)
     val dailyTrend: List<DailyTrendPointV2> = emptyList()
 )
 

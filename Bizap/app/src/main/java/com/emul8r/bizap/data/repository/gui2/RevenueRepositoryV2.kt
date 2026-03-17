@@ -1,6 +1,7 @@
 package com.emul8r.bizap.data.repository.gui2
 
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
+import com.emul8r.bizap.data.local.entities.DailyRevenueTrendV2
 import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
 import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.data.repository.analytics.CalendarUtils
@@ -53,9 +54,18 @@ class RevenueRepositoryV2 @Inject constructor(
                 invoiceDaoV2.observeYTDRevenue(businessId, yearStartMs, now),
                 invoiceDaoV2.observeWeeklyRevenue(businessId, weekStartMs, now),
                 invoiceDaoV2.observeTotalPaidRevenue(businessId),
-                invoiceDaoV2.observeLast30DaysRevenueTrend(businessId)
-            ) { mtd, ytd, weekly, totalPaid, trend ->
-                Timber.d("RevenueRepositoryV2: metrics update — mtd=$mtd ytd=$ytd weekly=$weekly totalPaid=$totalPaid")
+                invoiceDaoV2.observeLast30DaysRevenueTrend(businessId),
+                invoiceDaoV2.observeOverdueAmount(businessId)
+            ) { values ->
+                @Suppress("UNCHECKED_CAST")
+                val mtd = values[0] as Long
+                val ytd = values[1] as Long
+                val weekly = values[2] as Long
+                val totalPaid = values[3] as Long
+                val trend = values[4] as List<DailyRevenueTrendV2>
+                val overdueAmt = values[5] as Long
+
+                Timber.d("RevenueRepositoryV2: metrics update — mtd=$mtd ytd=$ytd weekly=$weekly totalPaid=$totalPaid overdueAmt=$overdueAmt")
 
                 val validation = validator.validateRevenueMetrics(mtd, ytd, weekly)
                 if (!validation.isValid) {
@@ -69,7 +79,8 @@ class RevenueRepositoryV2 @Inject constructor(
                         ytd = ytd,
                         weekly = weekly,
                         totalPaid = totalPaid,
-                        trend = trend
+                        trend = trend,
+                        overdueAmount = overdueAmt
                     )
                 }
             }

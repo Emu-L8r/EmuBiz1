@@ -56,18 +56,11 @@ fun DashboardScreen(
     val invoiceState by invoiceViewModel.uiState.collectAsStateWithLifecycle()
     val currentNotesCount by notesViewModel.currentNotesCount.collectAsStateWithLifecycle()
     val analyticsState by analyticsViewModel.analyticsState.collectAsStateWithLifecycle()
+    // Fix #5: statusCounts moved to ViewModel to avoid O(n) groupBy on UI thread
+    val statusCounts by dashboardViewModel.statusCounts.collectAsStateWithLifecycle()
+    // Fix #6: collect velocity data from ViewModel
+    val invoicingVelocity by analyticsViewModel.invoicingVelocity.collectAsStateWithLifecycle()
     var showSwitcher by remember { mutableStateOf(false) }
-
-    // Calculate status breakdown from invoices
-    val statusCounts: Map<String, Int> = remember(invoiceState) {
-        when (invoiceState) {
-            is InvoiceListUiState.Success -> {
-                val invoices = (invoiceState as InvoiceListUiState.Success).invoices
-                invoices.groupBy { it.status.name }.mapValues { it.value.size } as Map<String, Int>
-            }
-            else -> emptyMap<String, Int>()
-        }
-    }
 
     if (showSwitcher) {
         BusinessSwitcherDialog(onDismiss = { showSwitcher = false })
@@ -102,7 +95,14 @@ fun DashboardScreen(
             item {
                 NotesCard(
                     currentNotesCount = currentNotesCount,
-                    onClick = { navController.navigate(Screen.Notes) }
+                    onClick = {
+                        // Fix #4: safe navigation with error logging
+                        try {
+                            navController.navigate(Screen.Notes)
+                        } catch (e: IllegalArgumentException) {
+                            Timber.e(e, "Navigation to Notes screen failed")
+                        }
+                    }
                 )
             }
 
@@ -130,7 +130,14 @@ fun DashboardScreen(
                         accentColor = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier
                             .weight(1f)
-                            .clickable { navController.navigate(Screen.RevenueDashboard) }
+                            .clickable {
+                                // Fix #4: safe navigation with error logging
+                                try {
+                                    navController.navigate(Screen.RevenueDashboard)
+                                } catch (e: IllegalArgumentException) {
+                                    Timber.e(e, "Navigation to RevenueDashboard screen failed")
+                                }
+                            }
                     )
                 }
             }
@@ -198,16 +205,12 @@ fun DashboardScreen(
             // ── Row 4: Outstanding | Overdue ───────────────────────────────
             item {
                 val outstandingAmount: Long
+                // Fix #3: overdueAmount now comes from repository (actual DB data, not estimate)
                 val overdueAmount: Long
                 when (val s = revenueState) {
                     is DashboardRevenueState.Success -> {
                         outstandingAmount = s.metrics.outstandingAmount
-                        val overdueCount = statusCounts["OVERDUE"] ?: 0
-                        overdueAmount = if (overdueCount > 0 && outstandingAmount > 0) {
-                            (outstandingAmount * 0.3).toLong()
-                        } else {
-                            0L
-                        }
+                        overdueAmount = s.metrics.overdueAmount
                     }
                     else -> {
                         outstandingAmount = 0L
@@ -237,7 +240,7 @@ fun DashboardScreen(
 
             // ── Analytics section ──────────────────────────────────────────
             item {
-                when (analyticsState) {
+                when (val s = analyticsState) {
                     is AnalyticsUiState.Loading -> {
                         Box(
                             modifier = Modifier
@@ -249,7 +252,8 @@ fun DashboardScreen(
                         }
                     }
                     is AnalyticsUiState.Success -> {
-                        val data = (analyticsState as AnalyticsUiState.Success).data
+                        // Fix #1/7: use local smart-cast variable, no redundant explicit cast
+                        val data = s.data
                         AnalyticsSectionCard(
                             title = "💡 Business Analytics",
                             accentColor = MaterialTheme.colorScheme.primary
@@ -261,12 +265,13 @@ fun DashboardScreen(
                                 config = BizapConfig()
                             )
                             RevenueConcentrationChart(topCustomers = data.topCustomerMetrics)
-                            InvoicingVelocityCard(velocityData = emptyList())
+                            // Fix #6: pass actual velocity data instead of emptyList()
+                            InvoicingVelocityCard(velocityData = invoicingVelocity)
                         }
                     }
                     is AnalyticsUiState.Error -> {
                         Text(
-                            text = "Error loading analytics: ${(analyticsState as AnalyticsUiState.Error).message}",
+                            text = "Error loading analytics: ${s.message}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )

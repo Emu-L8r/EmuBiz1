@@ -121,6 +121,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(inv2Amount)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(inv2Amount)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
@@ -138,6 +139,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
@@ -231,6 +233,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(totalCollected)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(totalCollected)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         stubPaymentDao(
             outstanding = inv1Amount,
