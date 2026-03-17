@@ -106,7 +106,7 @@ class InvoicePdfService @Inject constructor(
         canvas.drawText("Date: ${formatDate(snapshot.date)}", 400f, 162f, bodyPaint)
         canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 400f, 178f, bodyPaint)
 
-r/nop        var currentY = 195f
+        var currentY = 195f
 
         // ===== BILLING INFORMATION SECTION =====
         canvas.drawLine(40f, currentY, 555f, currentY, Paint().apply { color = colors.secondary; strokeWidth = 0.5f })

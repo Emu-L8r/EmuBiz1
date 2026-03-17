@@ -64,7 +64,7 @@ interface AnalyticsDao {
     @Query("""
         SELECT COALESCE(
             AVG(CAST(
-                (julianday(datetime(dueDate / 1000, 'unixepoch')) -
+                (julianday(datetime(updatedAt / 1000, 'unixepoch')) -
                  julianday(datetime(date / 1000, 'unixepoch')))
                 AS REAL
             )),
@@ -73,10 +73,29 @@ interface AnalyticsDao {
         FROM invoices
         WHERE businessProfileId = :businessId
         AND status = 'PAID'
-        AND dueDate > 0
+        AND updatedAt > 0
         AND date > 0
     """)
     fun observeAverageDaysToPayment(businessId: Long): Flow<Double>
+
+    @Query("""
+        SELECT
+            CAST(strftime('%s', DATE(date / 1000, 'unixepoch')) AS INTEGER) * 1000 as date,
+            COALESCE(AVG(CAST(
+                (julianday(datetime(updatedAt / 1000, 'unixepoch')) -
+                 julianday(datetime(date / 1000, 'unixepoch')))
+                AS REAL
+            )), 0.0) as averageDaysToPayment
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND status = 'PAID'
+        AND updatedAt > 0
+        AND date > 0
+        GROUP BY DATE(date / 1000, 'unixepoch')
+        ORDER BY date DESC
+        LIMIT 30
+    """)
+    fun observeAverageDaysToPayTrend(businessId: Long): Flow<List<com.emul8r.bizap.data.model.DaysToPayMetric>>
 
     @Query("""
         SELECT COALESCE(SUM(totalAmount - amountPaid), 0)

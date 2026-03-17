@@ -241,15 +241,17 @@ interface InvoiceDaoV2 {
     @Query("""
         SELECT COALESCE(
             AVG(
-                CASE
-                    WHEN dueDate > 0
-                    THEN CAST((dueDate - date) AS REAL) / 86400000.0
-                    ELSE 30.0
-                END
+                CAST(
+                    (julianday(datetime(updatedAt / 1000, 'unixepoch')) -
+                     julianday(datetime(date / 1000, 'unixepoch')))
+                    AS REAL
+                )
             ), 0.0)
         FROM invoices
         WHERE businessProfileId = :businessId
           AND status = 'PAID'
+          AND updatedAt > 0
+          AND date > 0
           AND isActive = 1
     """)
     fun observeAverageDaysToPayment(businessId: Long): Flow<Double>

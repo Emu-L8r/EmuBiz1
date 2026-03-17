@@ -326,7 +326,11 @@ class InvoiceDetailViewModel @Inject constructor(
             businessEmail = business.email,
             businessPhone = business.phone,
             businessAddress = business.address,
-            logoBase64 = business.logoBase64
+            logoBase64 = business.logoBase64,
+            headerText = invoice.header ?: "",
+            subheaderText = invoice.subheader ?: "",
+            notes = invoice.notes ?: "",
+            footerText = invoice.footer ?: ""
         )
     }
 

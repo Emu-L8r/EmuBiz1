@@ -198,7 +198,11 @@ class EditInvoiceViewModel @Inject constructor(
                         businessEmail = businessProfile.email,
                         businessPhone = businessProfile.phone,    // FIXED
                         businessAddress = businessProfile.address, // FIXED
-                        logoBase64 = businessProfile.logoBase64
+                        logoBase64 = businessProfile.logoBase64,
+                        headerText = invoice.header ?: "",
+                        subheaderText = invoice.subheader ?: "",
+                        notes = invoice.notes ?: "",
+                        footerText = invoice.footer ?: ""
                     )
 
                     val pdfFile = invoicePdfService.generateInvoice(snapshot, isQuote = false)
