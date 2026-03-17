@@ -274,11 +274,18 @@ fun DashboardScreen(
                             AverageDaysToPayMetric(
                                 currentDaysToPayment = data.currentAverageDaysToPayment,
                                 trendHistory = data.averageDaysToPayTrend,
-                                config = BizapConfig()
+                                config = BizapConfig()  // Uses default config (can be injected if needed)
                             )
-                            RevenueConcentrationChart(topCustomers = data.topCustomerMetrics)
-                            // Fix #6: pass actual velocity data instead of emptyList()
-                            InvoicingVelocityCard(velocityData = invoicingVelocity)
+
+                            // Revenue Concentration
+                            RevenueConcentrationChart(
+                                topCustomers = data.topCustomerMetrics
+                            )
+
+                            // Invoicing Velocity
+                            InvoicingVelocityCard(
+                                velocityData = invoicingVelocity  // Fix #6: pass actual velocity data instead of emptyList()
+                            )
                         }
                     }
                     is AnalyticsUiState.Error -> {
