@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+
 /**
  * Bridge that unifies GUI1 and GUI2 analytics under a single data source.
  *
