@@ -178,11 +178,23 @@ dependencies {
     testImplementation("androidx.test.ext:junit:1.1.5")
     testImplementation("io.mockk:mockk-android:1.13.5")
 
+    // Android Test Dependencies (for instrumented tests on device/emulator)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     androidTestImplementation(libs.androidx.room.testing)
+
+    // Kotlin Test Library (for kotlin.test assertions in androidTest)
+    androidTestImplementation(kotlin("test"))
+
+    // AndroidX Test Ext - needed for AndroidJUnit4 runner
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.ext:junit-ktx:1.1.5")
+    androidTestImplementation("androidx.test:core:1.5.0")
+    androidTestImplementation("androidx.test:core-ktx:1.5.0")
+
+    // Debug Dependencies
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
