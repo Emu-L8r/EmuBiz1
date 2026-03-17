@@ -7,6 +7,7 @@ import com.emul8r.bizap.data.repository.analytics.CalendarUtils
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -41,7 +42,7 @@ class RevenueRepositoryV2 @Inject constructor(
      *  - Invoice table changes (Room reactive query re-emission)
      *  - Clock ticks every [REFRESH_INTERVAL_MS] to refresh time-window boundaries
      */
-    fun observeRevenueMetrics(businessId: Long): Flow<RevenueMetricsV2> =
+    fun observeRevenueMetrics(businessId: Long): Flow<Result<RevenueMetricsV2>> =
         tickerFlow.flatMapLatest { now ->
             val monthStartMs = CalendarUtils.startOfCurrentMonth(now)
             val yearStartMs = CalendarUtils.startOfCurrentYear(now)
@@ -61,15 +62,21 @@ class RevenueRepositoryV2 @Inject constructor(
                     Timber.w("RevenueRepositoryV2: validation failed — ${validation.error}")
                 }
 
-                calculator.combineRevenueMetrics(
-                    businessId = businessId,
-                    mtd = mtd,
-                    ytd = ytd,
-                    weekly = weekly,
-                    totalPaid = totalPaid,
-                    trend = trend
-                )
+                Result.runCatching {
+                    calculator.combineRevenueMetrics(
+                        businessId = businessId,
+                        mtd = mtd,
+                        ytd = ytd,
+                        weekly = weekly,
+                        totalPaid = totalPaid,
+                        trend = trend
+                    )
+                }
             }
+        }
+        .catch { e ->
+            Timber.e(e, "RevenueRepositoryV2: error observing metrics for businessId=$businessId")
+            emit(Result.failure(e))
         }
 
     companion object {

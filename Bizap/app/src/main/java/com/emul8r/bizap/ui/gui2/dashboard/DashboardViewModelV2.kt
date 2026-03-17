@@ -39,23 +39,35 @@ class DashboardViewModelV2 @Inject constructor(
         paymentRepository.observePaymentMetrics(businessId),
         riskRepository.observeRiskMetrics(businessId),
         invoiceMetricsRepository.observeInvoiceMetrics(businessId)
-    ) { context, revenue, payment, risk, invoiceMetrics ->
-        Timber.d("DashboardViewModelV2: state updated for businessId=$businessId")
-        DashboardUiStateV2.Success(
-            DashboardStateV2(
-                businessContext = context,
-                revenueMetrics = revenue.copy(
-                    outstandingAmount = payment.outstandingAmount,
-                    collectedAmount = payment.collectedAmount
-                ),
-                paymentMetrics = payment,
-                riskMetrics = risk,
-                invoiceMetrics = invoiceMetrics
-            )
-        ) as DashboardUiStateV2
+    ) { context, revenueResult, paymentResult, riskResult, invoiceMetricsResult ->
+        val failure = revenueResult.exceptionOrNull()
+            ?: paymentResult.exceptionOrNull()
+            ?: riskResult.exceptionOrNull()
+            ?: invoiceMetricsResult.exceptionOrNull()
+
+        if (failure != null) {
+            Timber.e(failure, "DashboardViewModelV2: error loading state")
+            DashboardUiStateV2.Error(failure.message ?: "Unknown error") as DashboardUiStateV2
+        } else {
+            val revenue = revenueResult.getOrThrow()
+            val payment = paymentResult.getOrThrow()
+            Timber.d("DashboardViewModelV2: state updated for businessId=$businessId")
+            DashboardUiStateV2.Success(
+                DashboardStateV2(
+                    businessContext = context,
+                    revenueMetrics = revenue.copy(
+                        outstandingAmount = payment.outstandingAmount,
+                        collectedAmount = payment.collectedAmount
+                    ),
+                    paymentMetrics = payment,
+                    riskMetrics = riskResult.getOrThrow(),
+                    invoiceMetrics = invoiceMetricsResult.getOrThrow()
+                )
+            ) as DashboardUiStateV2
+        }
     }
     .catch { error ->
-        Timber.e(error, "DashboardViewModelV2: error loading state")
+        Timber.e(error, "DashboardViewModelV2: unexpected error loading state")
         emit(DashboardUiStateV2.Error(error.message ?: "Unknown error"))
     }
     .stateIn(

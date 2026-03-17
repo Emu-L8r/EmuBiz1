@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
-import com.emul8r.bizap.domain.model.gui2.RiskMetricsV2
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -23,13 +22,17 @@ class RiskAnalyticsViewModelV2 @Inject constructor(
 
     val uiState: StateFlow<RiskAnalyticsUiStateV2> =
         riskRepository.observeRiskMetrics(businessId)
-            .map<RiskMetricsV2, RiskAnalyticsUiStateV2> { metrics ->
-                Timber.d("RiskAnalyticsViewModelV2: metrics updated for businessId=$businessId")
-                RiskAnalyticsUiStateV2.Success(metrics)
-            }
-            .catch { error ->
-                Timber.e(error, "RiskAnalyticsViewModelV2: error")
-                emit(RiskAnalyticsUiStateV2.Error(error.message ?: "Unknown error"))
+            .map { result ->
+                result.fold(
+                    onSuccess = { metrics ->
+                        Timber.d("RiskAnalyticsViewModelV2: metrics updated for businessId=$businessId")
+                        RiskAnalyticsUiStateV2.Success(metrics)
+                    },
+                    onFailure = { error ->
+                        Timber.e(error, "RiskAnalyticsViewModelV2: error")
+                        RiskAnalyticsUiStateV2.Error(error.message ?: "Unknown error")
+                    }
+                )
             }
             .stateIn(
                 scope = viewModelScope,

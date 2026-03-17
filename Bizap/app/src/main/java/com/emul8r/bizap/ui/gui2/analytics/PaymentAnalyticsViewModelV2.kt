@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
-import com.emul8r.bizap.domain.model.gui2.PaymentMetricsV2
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -23,13 +22,17 @@ class PaymentAnalyticsViewModelV2 @Inject constructor(
             .flatMapLatest { businessId ->
                 Timber.d("PaymentAnalyticsViewModelV2: observing businessId=$businessId")
                 paymentRepository.observePaymentMetrics(businessId)
-                    .map<PaymentMetricsV2, PaymentAnalyticsUiStateV2> { metrics ->
-                        Timber.d("PaymentAnalyticsViewModelV2: metrics updated for businessId=$businessId")
-                        PaymentAnalyticsUiStateV2.Success(metrics)
-                    }
-                    .catch { error ->
-                        Timber.e(error, "PaymentAnalyticsViewModelV2: error")
-                        emit(PaymentAnalyticsUiStateV2.Error(error.message ?: "Unknown error"))
+                    .map { result ->
+                        result.fold(
+                            onSuccess = { metrics ->
+                                Timber.d("PaymentAnalyticsViewModelV2: metrics updated for businessId=$businessId")
+                                PaymentAnalyticsUiStateV2.Success(metrics)
+                            },
+                            onFailure = { error ->
+                                Timber.e(error, "PaymentAnalyticsViewModelV2: error")
+                                PaymentAnalyticsUiStateV2.Error(error.message ?: "Unknown error")
+                            }
+                        )
                     }
             }
             .stateIn(

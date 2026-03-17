@@ -73,7 +73,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
             )
         )
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(inv1Amount, metrics.outstandingAmount,
             "Outstanding should be A\$100 (only SENT invoice, DRAFT excluded)")
@@ -87,7 +87,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
             statusCounts = listOf(InvoiceStatusCountV2("PAID", 1))
         )
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(0L, metrics.outstandingAmount, "PAID invoices must not contribute to outstanding")
     }
@@ -104,7 +104,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
             statusCounts = listOf(InvoiceStatusCountV2("PARTIALLY_PAID", 1))
         )
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(balanceRemaining, metrics.outstandingAmount,
             "Outstanding for PARTIALLY_PAID should be totalAmount - amountPaid")
@@ -122,7 +122,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(inv2Amount)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepo.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(inv2Amount, metrics.mtdRevenue,
             "MTD Revenue should be A\$222 (only PAID invoice)")
@@ -139,7 +139,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepo.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(0L, metrics.mtdRevenue, "DRAFT invoices must not appear in MTD revenue")
         assertEquals(0L, metrics.ytdRevenue, "DRAFT invoices must not appear in YTD revenue")
@@ -161,7 +161,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
             )
         )
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         val expectedRate = inv2Amount * 100.0 / (inv2Amount + inv1Amount)
         assertEquals(expectedRate, metrics.collectionRate,
@@ -174,7 +174,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
     fun `rule3_CollectionRate - zero when no invoices`() = runTest {
         stubPaymentDao(outstanding = 0L, collected = 0L, statusCounts = emptyList())
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(0.0, metrics.collectionRate, "Collection rate should be 0 with no invoices")
     }
@@ -188,7 +188,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
             statusCounts = listOf(InvoiceStatusCountV2("PAID", 5))
         )
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(100.0, metrics.collectionRate,
             "Collection rate should be 100% when all invoices are paid")
@@ -211,7 +211,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
             )
         )
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         val expectedAmountBased = largePaid * 100.0 / (largePaid + smallOutstanding)
         assertEquals(expectedAmountBased, metrics.collectionRate,
@@ -241,8 +241,8 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
             )
         )
 
-        val revenue = revenueRepo.observeRevenueMetrics(businessId).first()
-        val payment = paymentRepo.observePaymentMetrics(businessId).first()
+        val revenue = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
+        val payment = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         // Both repositories read from the same DAO — totals must match
         assertEquals(revenue.totalPaidRevenue, payment.collectedAmount,
@@ -265,7 +265,7 @@ class SingleSourceOfTruthTest : BaseUnitTest() {
             )
         )
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(outstanding, metrics.outstandingAmount)
         assertEquals(collected, metrics.collectedAmount)

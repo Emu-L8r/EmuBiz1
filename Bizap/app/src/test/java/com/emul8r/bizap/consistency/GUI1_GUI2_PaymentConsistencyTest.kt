@@ -64,7 +64,7 @@ class GUI1_GUI2_PaymentConsistencyTest : BaseUnitTest() {
         )
 
         // Both repositories should return the same collected and outstanding amounts
-        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first()
+        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first().getOrThrow()
         val metricsImpl = repositoryImpl.observePaymentAnalytics(businessId).first()
 
         assertEquals(amountPaid, metricsV2.collectedAmount, "V2 shows correct collected amount")
@@ -94,7 +94,7 @@ class GUI1_GUI2_PaymentConsistencyTest : BaseUnitTest() {
             )
         )
 
-        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first()
+        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first().getOrThrow()
         val metricsImpl = repositoryImpl.observePaymentAnalytics(businessId).first()
 
         // Collection rate should be: (collected / (collected + outstanding)) * 100
@@ -115,7 +115,7 @@ class GUI1_GUI2_PaymentConsistencyTest : BaseUnitTest() {
             statusCounts = listOf(InvoiceStatusCountV2("PAID", 5))
         )
 
-        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first()
+        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first().getOrThrow()
         val metricsImpl = repositoryImpl.observePaymentAnalytics(businessId).first()
 
         assertEquals(0L, metricsV2.outstandingAmount, "V2 shows zero outstanding for paid invoices")
@@ -145,7 +145,7 @@ class GUI1_GUI2_PaymentConsistencyTest : BaseUnitTest() {
             statusCounts = listOf(InvoiceStatusCountV2("PARTIALLY_PAID", 1))
         )
 
-        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first()
+        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first().getOrThrow()
         val metricsImpl = repositoryImpl.observePaymentAnalytics(businessId).first()
 
         // Both should read from invoices table and show correct data
@@ -172,7 +172,7 @@ class GUI1_GUI2_PaymentConsistencyTest : BaseUnitTest() {
             statusCounts = listOf(InvoiceStatusCountV2("PARTIALLY_PAID", 1))
         )
 
-        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first()
+        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first().getOrThrow()
 
         // Calculate progress bar ratio: 80 / 200 = 0.4 (40%)
         val progressBarRatio = amountPaid.toDouble() / totalAmount.toDouble()
@@ -200,7 +200,7 @@ class GUI1_GUI2_PaymentConsistencyTest : BaseUnitTest() {
             statusCounts = listOf(InvoiceStatusCountV2("PARTIALLY_PAID", 1))
         )
 
-        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first()
+        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first().getOrThrow()
         val metricsImpl = repositoryImpl.observePaymentAnalytics(businessId).first()
 
         assertEquals(collected, metricsV2.collectedAmount)
@@ -224,7 +224,7 @@ class GUI1_GUI2_PaymentConsistencyTest : BaseUnitTest() {
             statusCounts = listOf(InvoiceStatusCountV2("PAID", 1))
         )
 
-        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first()
+        val metricsV2 = repositoryV2.observePaymentMetrics(businessId).first().getOrThrow()
 
         // Sanity check: collected should never exceed billed amount
         assertTrue(metricsV2.collectedAmount <= (metricsV2.collectedAmount + metricsV2.outstandingAmount),
