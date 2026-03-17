@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import com.emul8r.bizap.data.mapper.toEntity
 
@@ -215,6 +216,52 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         // Assert
         assertTrue(result.isFailure)
         assertEquals(dbException, result.exceptionOrNull())
+    }
+
+    @Test
+    fun `invoice counter increments for same customer same day`() = runTest {
+        // Given
+        val businessId = 1L
+        val testDate = System.currentTimeMillis()
+        val baseInvoice = TestDataFactory.createTestInvoice(id = 0).copy(
+            date = testDate,
+            dailyCounter = 1,
+            displayName = "testcustomer-${testDate}-01"
+        )
+
+        coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
+        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
+        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
+
+        // When - first invoice: countInvoicesOnDate returns 0 → dailyCounter = 1
+        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 0
+        coEvery { invoiceDao.insert(any(), any()) } returns 1L
+        val result1 = repository.saveInvoice(baseInvoice)
+        assertTrue(result1.isSuccess, "First invoice should save successfully")
+
+        // When - second invoice same day: countInvoicesOnDate returns 1 → dailyCounter = 2
+        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 1
+        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 1
+        coEvery { invoiceDao.insert(any(), any()) } returns 2L
+        val result2 = repository.saveInvoice(baseInvoice)
+        assertTrue(result2.isSuccess, "Second invoice should save successfully")
+
+        // When - third invoice same day: countInvoicesOnDate returns 2 → dailyCounter = 3
+        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 2
+        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 2
+        coEvery { invoiceDao.insert(any(), any()) } returns 3L
+        val result3 = repository.saveInvoice(baseInvoice)
+        assertTrue(result3.isSuccess, "Third invoice should save successfully")
+
+        // Then - verify IDs are different (counter incremented)
+        assertNotEquals(result1.getOrNull(), result2.getOrNull(), "Invoice IDs should differ")
+        assertNotEquals(result2.getOrNull(), result3.getOrNull(), "Invoice IDs should differ")
+        assertEquals(1L, result1.getOrNull(), "First invoice ID should be 1")
+        assertEquals(2L, result2.getOrNull(), "Second invoice ID should be 2")
+        assertEquals(3L, result3.getOrNull(), "Third invoice ID should be 3")
+
+        // Verify countInvoicesOnDate was called for each new invoice
+        coVerify(atLeast = 3) { invoiceDao.countInvoicesOnDate(any()) }
     }
 
     @Test

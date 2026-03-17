@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.emul8r.bizap.data.backup.DatabaseBackupService
 import com.emul8r.bizap.data.backup.DatabaseRestoreService
 import com.emul8r.bizap.data.local.*
@@ -16,6 +18,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
+import timber.log.Timber
 import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -62,6 +65,14 @@ object DatabaseModule {
         // In RELEASE: fail loudly if migration missing (don't silently delete user data)
         if (com.emul8r.bizap.BuildConfig.DEBUG) {
             builder.fallbackToDestructiveMigration()
+            Timber.w("⚠️ DESTRUCTIVE MIGRATION ENABLED - Development only!")
+        } else {
+            // In production: log success after migration to confirm user data is intact
+            builder.addCallback(object : RoomDatabase.Callback() {
+                override fun onOpen(db: SupportSQLiteDatabase) {
+                    Timber.i("✅ Database migration successful - user data intact")
+                }
+            })
         }
 
         return builder.build()

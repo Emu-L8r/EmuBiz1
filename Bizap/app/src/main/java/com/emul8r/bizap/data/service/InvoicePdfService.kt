@@ -175,6 +175,29 @@ class InvoicePdfService @Inject constructor(
         val formattedAmount = String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount / 100.0)
         canvas.drawText(formattedAmount, rightX, currentY, totalLabelPaint)
 
+        // ===== PAYMENT DETAILS SECTION =====
+        currentY += 30f
+        canvas.drawLine(40f, currentY, 555f, currentY, separatorPaint)
+        currentY += 12f
+        canvas.drawText("PAYMENT DETAILS", 40f, currentY, labelPaint)
+        currentY += 14f
+
+        bodyPaint.textAlign = Paint.Align.LEFT
+        canvas.drawText("Payment Terms: Due within 30 days of invoice date", 40f, currentY, bodyPaint)
+        currentY += 12f
+        canvas.drawText("Reference: ${snapshot.invoiceNumber}", 40f, currentY, bodyPaint)
+        currentY += 12f
+
+        if (snapshot.businessPhone.isNotBlank()) {
+            canvas.drawText("Contact: ${snapshot.businessPhone}", 40f, currentY, bodyPaint)
+            currentY += 12f
+        }
+
+        if (snapshot.businessEmail.isNotBlank()) {
+            canvas.drawText(snapshot.businessEmail, 40f, currentY, bodyPaint)
+            currentY += 12f
+        }
+
         // Render notes and footer below totals
         bodyPaint.textAlign = Paint.Align.LEFT
         if (snapshot.notes.isNotBlank()) {

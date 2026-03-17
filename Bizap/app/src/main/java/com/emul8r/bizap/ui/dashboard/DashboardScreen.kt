@@ -32,8 +32,6 @@ import com.emul8r.bizap.ui.invoices.InvoiceListUiState
 import com.emul8r.bizap.ui.invoices.InvoiceListViewModel
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.notes.NotesViewModel
-import com.emul8r.bizap.ui.revenue.RevenueDashboardUiState
-import com.emul8r.bizap.ui.revenue.RevenueDashboardViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
 import com.emul8r.bizap.ui.theme.StatusColors
@@ -44,14 +42,14 @@ fun DashboardScreen(
     navController: NavController,
     customerViewModel: CustomerViewModel = hiltViewModel(),
     businessViewModel: BusinessProfileViewModel = hiltViewModel(),
-    revenueViewModel: RevenueDashboardViewModel = hiltViewModel(),
+    dashboardViewModel: DashboardViewModel = hiltViewModel(),
     invoiceViewModel: InvoiceListViewModel = hiltViewModel(),
     notesViewModel: NotesViewModel = hiltViewModel(),
     analyticsViewModel: AnalyticsViewModel = hiltViewModel()
 ) {
     val customers by customerViewModel.uiState.collectAsStateWithLifecycle()
     val activeBusiness by businessViewModel.profileState.collectAsStateWithLifecycle()
-    val revenueState by revenueViewModel.uiState.collectAsStateWithLifecycle()
+    val revenueState by dashboardViewModel.revenueState.collectAsStateWithLifecycle()
     val invoiceState by invoiceViewModel.uiState.collectAsStateWithLifecycle()
     val currentNotesCount by notesViewModel.currentNotesCount.collectAsStateWithLifecycle()
     val analyticsState by analyticsViewModel.analyticsState.collectAsStateWithLifecycle()
@@ -128,76 +126,63 @@ fun DashboardScreen(
 
             item {
                 // First row: Total Clients and Total Invoices
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    ElevatedCard(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.elevatedCardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Icon(Icons.Default.People, contentDescription = null)
-                            Text("Total Clients", style = MaterialTheme.typography.labelMedium)
-                            Text("${customers.size}", style = MaterialTheme.typography.headlineMedium)
-                        }
-                    }
-
-                    ElevatedCard(
+                val totalInvoices = when (invoiceState) {
+                    is InvoiceListUiState.Success -> (invoiceState as InvoiceListUiState.Success).invoices.size
+                    else -> 0
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    MetricCard(
+                        title = "Total Clients",
+                        value = "${customers.size}",
+                        icon = Icons.Default.People,
+                        backgroundColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                        borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                        accentColor = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCard(
+                        title = "Total Invoices",
+                        value = "$totalInvoices",
+                        icon = Icons.Default.Receipt,
+                        backgroundColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        borderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                        accentColor = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier
                             .weight(1f)
-                            .clickable { navController.navigate(Screen.RevenueDashboard) },
-                        colors = CardDefaults.elevatedCardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Icon(Icons.Default.Receipt, contentDescription = null)
-                            Text("Total Invoices", style = MaterialTheme.typography.labelMedium)
-                            // Calculate total invoices from invoice state
-                            val totalInvoices = when (invoiceState) {
-                                is InvoiceListUiState.Success -> (invoiceState as InvoiceListUiState.Success).invoices.size
-                                else -> 0
-                            }
-                            Text("$totalInvoices", style = MaterialTheme.typography.headlineMedium)
-                        }
-                    }
+                            .clickable { navController.navigate(Screen.RevenueDashboard) }
+                    )
                 }
             }
 
             item {
                 // Second row: Paid and Pending Invoices
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    ElevatedCard(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.elevatedCardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null)
-                            Text("Invoices Paid", style = MaterialTheme.typography.labelMedium)
-                            val paidCount = statusCounts["PAID"] ?: 0
-                            Text("$paidCount", style = MaterialTheme.typography.headlineMedium)
-                        }
-                    }
-
-                    ElevatedCard(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.elevatedCardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Icon(Icons.Default.Schedule, contentDescription = null)
-                            Text("Invoices Pending", style = MaterialTheme.typography.labelMedium)
-                            val pendingCount = (statusCounts["SENT"] ?: 0) + (statusCounts["DRAFT"] ?: 0)
-                            Text("$pendingCount", style = MaterialTheme.typography.headlineMedium)
-                        }
-                    }
+                val paidCount = statusCounts["PAID"] ?: 0
+                val pendingCount = (statusCounts["SENT"] ?: 0) + (statusCounts["DRAFT"] ?: 0)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    MetricCard(
+                        title = "Invoices Paid",
+                        value = "$paidCount",
+                        icon = Icons.Default.CheckCircle,
+                        backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
+                        borderColor = StatusColors.Paid.copy(alpha = 0.3f),
+                        accentColor = StatusColors.Paid,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCard(
+                        title = "Invoices Pending",
+                        value = "$pendingCount",
+                        icon = Icons.Default.Schedule,
+                        backgroundColor = StatusColors.Outstanding.copy(alpha = 0.08f),
+                        borderColor = StatusColors.Outstanding.copy(alpha = 0.3f),
+                        accentColor = StatusColors.Outstanding,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
 
@@ -206,7 +191,7 @@ fun DashboardScreen(
                 val expectedRevenue: Long
                 val actualRevenue: Long
                 when (val s = revenueState) {
-                    is RevenueDashboardUiState.Success -> {
+                    is DashboardRevenueState.Success -> {
                         expectedRevenue = s.metrics.outstandingAmount + s.metrics.totalPaidRevenue
                         actualRevenue = s.metrics.totalPaidRevenue
                     }
@@ -247,7 +232,7 @@ fun DashboardScreen(
                 val outstandingAmount: Long
                 val overdueAmount: Long
                 when (val s = revenueState) {
-                    is RevenueDashboardUiState.Success -> {
+                    is DashboardRevenueState.Success -> {
                         outstandingAmount = s.metrics.outstandingAmount
                         val overdueCount = statusCounts["OVERDUE"] ?: 0
                         overdueAmount = if (overdueCount > 0 && outstandingAmount > 0) {
