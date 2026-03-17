@@ -26,12 +26,13 @@ class AnalyticsCalculator @Inject constructor() {
     /**
      * Combines individual revenue measurements into a unified [RevenueMetricsV2].
      *
-     * @param businessId  Owning business profile ID.
-     * @param mtd         Month-to-date paid revenue in cents.
-     * @param ytd         Year-to-date paid revenue in cents.
-     * @param weekly      Last-7-days paid revenue in cents.
-     * @param totalPaid   All-time paid revenue in cents.
-     * @param trend       Raw trend rows from DAO.
+     * @param businessId    Owning business profile ID.
+     * @param mtd           Month-to-date paid revenue in cents.
+     * @param ytd           Year-to-date paid revenue in cents.
+     * @param weekly        Last-7-days paid revenue in cents.
+     * @param totalPaid     All-time paid revenue in cents.
+     * @param trend         Raw trend rows from DAO.
+     * @param overdueAmount Actual overdue balance from DAO (cents). Defaults to 0.
      * @return Combined [RevenueMetricsV2] (outstandingAmount/collectedAmount left at 0 to be
      *         populated by the payment repository layer).
      */
@@ -41,7 +42,8 @@ class AnalyticsCalculator @Inject constructor() {
         ytd: Long,
         weekly: Long,
         totalPaid: Long,
-        trend: List<DailyRevenueTrendV2>
+        trend: List<DailyRevenueTrendV2>,
+        overdueAmount: Long = 0L
     ): RevenueMetricsV2 = RevenueMetricsV2(
         businessProfileId = businessId,
         mtdRevenue = mtd,
@@ -50,6 +52,7 @@ class AnalyticsCalculator @Inject constructor() {
         totalPaidRevenue = totalPaid,
         outstandingAmount = 0L,   // populated by PaymentAnalyticsRepositoryV2
         collectedAmount = 0L,     // populated by PaymentAnalyticsRepositoryV2
+        overdueAmount = overdueAmount,
         dailyTrend = trend.map { point ->
             DailyTrendPointV2(
                 date = point.dateString,

@@ -43,7 +43,7 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
     // ── RevenueRepositoryV2 ───────────────────────────────────────────────────
 
     @Test
-    fun `observeRevenueMetrics combines 5 flows correctly`() = runTest {
+    fun `observeRevenueMetrics combines 6 flows correctly`() = runTest {
         val trend = listOf(
             DailyRevenueTrendV2("2026-03-01", 50000L, 2, 1),
             DailyRevenueTrendV2("2026-03-02", 75000L, 3, 2)
@@ -53,6 +53,7 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
         every { daoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(100000L)
         every { daoV2.observeTotalPaidRevenue(businessId) } returns flowOf(500000L)
         every { daoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
+        every { daoV2.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val result = revenueRepository.observeRevenueMetrics(businessId).first()
         val metrics = result.getOrThrow()
@@ -73,6 +74,7 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
         every { daoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { daoV2.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { daoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { daoV2.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val result = revenueRepository.observeRevenueMetrics(businessId).first()
         val metrics = result.getOrThrow()

@@ -85,6 +85,7 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(50000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(600000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 
@@ -101,6 +102,7 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 
@@ -124,6 +126,7 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(50000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(50000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trendPoints)
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 
@@ -140,6 +143,7 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(100000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(100000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 

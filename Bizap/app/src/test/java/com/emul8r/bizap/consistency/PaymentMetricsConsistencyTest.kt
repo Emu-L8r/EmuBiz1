@@ -100,6 +100,7 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(150000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(totalPaid)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         stubDao(outstanding = 250000L, collected = totalPaid,
             statusCounts = listOf(
@@ -126,6 +127,7 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(200000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(collected)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
         stubDao(outstanding = outstanding, collected = collected,
             statusCounts = listOf(
                 InvoiceStatusCountV2("PAID", 7),
