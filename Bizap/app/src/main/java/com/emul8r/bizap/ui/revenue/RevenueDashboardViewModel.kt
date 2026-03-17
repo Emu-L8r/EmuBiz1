@@ -2,8 +2,8 @@ package com.emul8r.bizap.ui.revenue
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
-import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
 import com.emul8r.bizap.domain.revenue.usecase.GetRevenueMetricsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,9 +28,17 @@ class RevenueDashboardViewModel @Inject constructor(
     }
         .flatMapLatest { businessId ->
             getRevenueMetricsUseCase(businessId)
-                .map { metrics ->
-                    Timber.d("✅ RevenueDashboardViewModel: Metrics updated reactively")
-                    RevenueDashboardUiState.Success(metrics) as RevenueDashboardUiState
+                .map { result ->
+                    result.fold(
+                        onSuccess = { metrics ->
+                            Timber.d("✅ RevenueDashboardViewModel: Metrics updated reactively")
+                            RevenueDashboardUiState.Success(metrics) as RevenueDashboardUiState
+                        },
+                        onFailure = { error ->
+                            Timber.e(error, "❌ RevenueDashboardViewModel: Failed to load metrics")
+                            RevenueDashboardUiState.Error(error.message ?: "Unknown Error")
+                        }
+                    )
                 }
                 .catch { error ->
                     Timber.e(error, "❌ RevenueDashboardViewModel: Failed to load metrics")
@@ -54,6 +62,6 @@ class RevenueDashboardViewModel @Inject constructor(
 
 sealed class RevenueDashboardUiState {
     object Loading : RevenueDashboardUiState()
-    data class Success(val metrics: RevenueMetrics) : RevenueDashboardUiState()
+    data class Success(val metrics: RevenueMetricsV2) : RevenueDashboardUiState()
     data class Error(val message: String) : RevenueDashboardUiState()
 }

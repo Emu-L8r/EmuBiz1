@@ -11,7 +11,6 @@ import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
-import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import dagger.Module
@@ -47,14 +46,6 @@ object GuiV2Module {
         calculator: AnalyticsCalculator,
         validator: AnalyticsValidator
     ): AnalyticsDiagnostics = AnalyticsDiagnostics(invoiceDaoV2, calculator, validator)
-
-    @Provides
-    @Singleton
-    fun provideRevenueRepositoryV2(
-        invoiceDaoV2: InvoiceDaoV2,
-        calculator: AnalyticsCalculator,
-        validator: AnalyticsValidator
-    ): RevenueRepositoryV2 = RevenueRepositoryV2(invoiceDaoV2, calculator, validator)
 
     @Provides
     @Singleton
