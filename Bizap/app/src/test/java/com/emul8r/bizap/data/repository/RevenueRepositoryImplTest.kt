@@ -34,15 +34,15 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
         val trend = listOf(
             DailyRevenueTrendV2(
                 dateString = "2026-03-01",
-                revenueCents = 100000L,
+                revenue = 100000L,
                 invoiceCount = 2,
-                businessProfileId = businessId.toInt()
+                paidCount = 1
             ),
             DailyRevenueTrendV2(
                 dateString = "2026-03-02",
-                revenueCents = 50000L,
+                revenue = 50000L,
                 invoiceCount = 1,
-                businessProfileId = businessId.toInt()
+                paidCount = 1
             )
         )
 
@@ -50,7 +50,6 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
         every { invoiceDaoV2.observeYTDRevenue(businessId, any(), any()) } returns flowOf(150000L)
         every { invoiceDaoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(150000L)
         every { invoiceDaoV2.observeTotalPaidRevenue(businessId) } returns flowOf(150000L)
-        every { invoiceDaoV2.observeOutstandingAmount(businessId) } returns flowOf(0L)
         every { invoiceDaoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
         every { invoiceDaoV2.observeOverdueAmount(businessId) } returns flowOf(0L)
 
