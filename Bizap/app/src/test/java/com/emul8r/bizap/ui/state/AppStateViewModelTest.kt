@@ -67,6 +67,7 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        launch { viewModel.appState.collect {} }
         advanceUntilIdle()
 
         assertEquals(AppState.PINSetup, viewModel.appState.value)
@@ -85,6 +86,7 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        launch { viewModel.appState.collect {} }
         advanceUntilIdle()
 
         assertEquals(AppState.Login, viewModel.appState.value)
@@ -99,6 +101,7 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        launch { viewModel.appState.collect {} }
         advanceUntilIdle()
 
         assertEquals(AppState.Login, viewModel.appState.value)
@@ -117,6 +120,7 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        launch { viewModel.appState.collect {} }
         advanceUntilIdle()
 
         assertEquals(AppState.FirstLaunchWarning, viewModel.appState.value)
@@ -135,6 +139,7 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        launch { viewModel.appState.collect {} }
         advanceUntilIdle()
 
         assertEquals(AppState.GUISelection, viewModel.appState.value)
@@ -153,6 +158,7 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        launch { viewModel.appState.collect {} }
         advanceUntilIdle()
 
         assertEquals(AppState.AppReady(GuiMode.GUI2), viewModel.appState.value)
@@ -167,6 +173,7 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        launch { viewModel.appState.collect {} }
         advanceUntilIdle()
 
         assertEquals(AppState.AppReady(GuiMode.GUI1), viewModel.appState.value)
@@ -181,6 +188,7 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        launch { viewModel.appState.collect {} }
         advanceUntilIdle()
 
         // Unrecognised mode falls back to null → GUISelection
@@ -203,6 +211,7 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        launch { viewModel.appState.collect {} }
         advanceUntilIdle()
         assertEquals(AppState.PINSetup, viewModel.appState.value)
 
