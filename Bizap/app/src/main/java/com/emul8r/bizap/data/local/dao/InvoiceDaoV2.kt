@@ -188,6 +188,19 @@ interface InvoiceDaoV2 {
     """)
     fun observeOverdueCount(businessId: Long): Flow<Int>
 
+    /**
+     * Total outstanding balance across all OVERDUE invoices (totalAmount - amountPaid).
+     * Returns the actual overdue amount from the database rather than an estimate.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(totalAmount - amountPaid), 0)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND status = 'OVERDUE'
+          AND isActive = 1
+    """)
+    fun observeOverdueAmount(businessId: Long): Flow<Long>
+
     @Query("""
         SELECT COUNT(*)
         FROM invoices

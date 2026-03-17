@@ -48,8 +48,7 @@ class CrossGUISyncTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(totalPaid)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(totalPaid)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
-
-        every { dao.observeOutstandingAmount(businessId) } returns flowOf(0L)
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
         every { dao.observeCollectedAmount(businessId) } returns flowOf(totalPaid)
         every { dao.observeInvoiceCountByStatus(businessId) } returns flowOf(
             listOf(InvoiceStatusCountV2("PAID", 5))
@@ -135,6 +134,7 @@ class CrossGUISyncTest : BaseUnitTest() {
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val before = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
         assertEquals(0L, before.mtdRevenue)
