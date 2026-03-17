@@ -4,11 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
+import com.emul8r.bizap.domain.config.BizapConfig
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
+import com.emul8r.bizap.domain.usecase.DateChangeTickerManager
+import com.emul8r.bizap.domain.usecase.DateChangeTickerObserver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
+import java.time.LocalDate
 import javax.inject.Inject
 
 sealed class DashboardRevenueState {
@@ -21,16 +25,29 @@ sealed class DashboardRevenueState {
  * ViewModel for the GUI1 Dashboard screen.
  * Uses the same V2 repositories as GUI2 to ensure data consistency
  * between both GUIs.
+ *
+ * Implements [DateChangeTickerObserver] to automatically refresh revenue data
+ * at midnight when date-dependent calculations become stale.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val revenueRepository: RevenueRepositoryV2,
-    private val businessContextRepository: BusinessContextRepositoryV2
-) : ViewModel() {
+    private val businessContextRepository: BusinessContextRepositoryV2,
+    private val dateChangeTickerManager: DateChangeTickerManager,
+    private val bizapConfig: BizapConfig
+) : ViewModel(), DateChangeTickerObserver {
+
+    /**
+     * Emitting to this flow causes the revenue query to restart with fresh date parameters.
+     */
+    private val _refreshTrigger = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
 
     val revenueState: StateFlow<DashboardRevenueState> =
-        businessContextRepository.observeActiveBusinessId()
+        combine(
+            businessContextRepository.observeActiveBusinessId(),
+            _refreshTrigger
+        ) { businessId, _ -> businessId }
             .flatMapLatest { businessId ->
                 revenueRepository.observeRevenueMetrics(businessId)
                     .map { result ->
@@ -51,4 +68,37 @@ class DashboardViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = DashboardRevenueState.Loading
             )
+
+    private var tickerStarted = false
+
+    init {
+        if (bizapConfig.dashboardRefreshOnDateChange && bizapConfig.enableAutoRefresh) {
+            dateChangeTickerManager.registerObserver(this)
+            dateChangeTickerManager.startWatching()
+            tickerStarted = true
+        }
+    }
+
+    /**
+     * Called automatically at midnight when the date changes.
+     * Triggers a dashboard refresh so date-dependent revenue calculations are updated.
+     */
+    override suspend fun onDateChanged(newDate: LocalDate) {
+        Timber.d("DashboardViewModel: Date changed to $newDate, refreshing dashboard data")
+        _refreshTrigger.emit(Unit)
+    }
+
+    /**
+     * Manually trigger a dashboard data refresh.
+     */
+    fun manualRefresh() {
+        _refreshTrigger.tryEmit(Unit)
+    }
+
+    override fun onCleared() {
+        if (tickerStarted) {
+            dateChangeTickerManager.stopWatching()
+        }
+        super.onCleared()
+    }
 }
