@@ -15,10 +15,10 @@ class AnalyticsTest {
 
     @Test
     fun testDailyRevenueCreation() {
-        val testDate = 1742083200000L  // 2026-03-16 epoch ms
+        val dateMillis = 1710604800000L  // 2026-03-16 00:00:00 UTC
         val dailyRevenue = DailyRevenue(
             businessId = 1L,
-            date = testDate,
+            date = dateMillis,
             invoicedCents = 50000,  // $500
             paidCents = 30000,      // $300
             invoiceCount = 5,
@@ -26,7 +26,7 @@ class AnalyticsTest {
         )
 
         assertEquals(1L, dailyRevenue.businessId)
-        assertEquals(testDate, dailyRevenue.date)
+        assertEquals(dateMillis, dailyRevenue.date)
         assertEquals(50000, dailyRevenue.invoicedCents)
         assertEquals(30000, dailyRevenue.paidCents)
         assertEquals(5, dailyRevenue.invoiceCount)
@@ -35,16 +35,20 @@ class AnalyticsTest {
 
     @Test
     fun testDailyRevenueWithDefaults() {
+        val currentTimeMillis = System.currentTimeMillis()
         val dailyRevenue = DailyRevenue(
             businessId = 1L,
-            date = System.currentTimeMillis(),
+            date = currentTimeMillis,
             invoicedCents = 100000,
             paidCents = 100000,
             invoiceCount = 10,
             paidCount = 10
         )
 
-        assertTrue(dailyRevenue.date > 0)
+        assertEquals(1L, dailyRevenue.businessId)
+        assertEquals(currentTimeMillis, dailyRevenue.date)
+        assertEquals(100000, dailyRevenue.invoicedCents)
+        assertEquals(100000, dailyRevenue.paidCents)
     }
 
     // ═════════════════════════════════════════════════════════════════
@@ -53,20 +57,20 @@ class AnalyticsTest {
 
     @Test
     fun testCustomerRevenueCreation() {
-        val testDate = 1742083200000L  // 2026-03-15 epoch ms
+        val dateMillis = 1710513600000L  // 2026-03-15 00:00:00 UTC
         val customerRevenue = CustomerRevenue(
             customerId = 100L,
             customerName = "Acme Corp",
             totalRevenueCents = 500000,  // $5000
             invoiceCount = 10,
-            lastPaymentDate = testDate
+            lastPaymentDate = dateMillis
         )
 
         assertEquals(100L, customerRevenue.customerId)
         assertEquals("Acme Corp", customerRevenue.customerName)
         assertEquals(500000, customerRevenue.totalRevenueCents)
         assertEquals(10, customerRevenue.invoiceCount)
-        assertEquals(testDate, customerRevenue.lastPaymentDate)
+        assertEquals(dateMillis, customerRevenue.lastPaymentDate)
     }
 
     @Test
@@ -141,14 +145,14 @@ class AnalyticsTest {
 
     @Test
     fun testCashFlowTrendPoint() {
-        val testDate = 1742083200000L  // 2026-03-16 epoch ms
+        val dateMillis = 1710604800000L  // 2026-03-16 00:00:00 UTC
         val trendPoint = CashFlowTrendPoint(
-            date = testDate,
+            date = dateMillis,
             invoicedCents = 100000,
             paidCents = 80000
         )
 
-        assertEquals(testDate, trendPoint.date)
+        assertEquals(dateMillis, trendPoint.date)
         assertEquals(100000, trendPoint.invoicedCents)
         assertEquals(80000, trendPoint.paidCents)
         assertEquals(-20000, trendPoint.netCents)  // More invoiced than paid
@@ -219,13 +223,13 @@ class AnalyticsTest {
 
     @Test
     fun testDaysToPayMetric() {
-        val testDate = 1740700800000L  // 2026-02-28 epoch ms
+        val dateMillis = 1709251200000L  // 2026-02-28 00:00:00 UTC
         val metric = DaysToPayMetric(
-            date = testDate,
+            date = dateMillis,
             averageDaysToPayment = 14.5
         )
 
-        assertEquals(testDate, metric.date)
+        assertEquals(dateMillis, metric.date)
         assertEquals(14.5, metric.averageDaysToPayment, 0.1)
     }
 
@@ -255,10 +259,14 @@ class AnalyticsTest {
 
     @Test
     fun testAnalyticsDataAggregation() {
+        val date1 = 1710345600000L  // 2026-03-14
+        val date2 = 1710432000000L  // 2026-03-15
+        val date3 = 1710518400000L  // 2026-03-16
+
         val trendPoints = listOf(
-            CashFlowTrendPoint(1741910400000L, 50000, 40000),
-            CashFlowTrendPoint(1741996800000L, 60000, 50000),
-            CashFlowTrendPoint(1742083200000L, 70000, 60000)
+            CashFlowTrendPoint(date1, 50000, 40000),
+            CashFlowTrendPoint(date2, 60000, 50000),
+            CashFlowTrendPoint(date3, 70000, 60000)
         )
 
         val topCustomers = listOf(

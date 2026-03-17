@@ -13,6 +13,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -67,7 +68,9 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        val job = launch { viewModel.appState.collect {} }
         advanceUntilIdle()
+        job.cancel()
 
         assertEquals(AppState.PINSetup, viewModel.appState.value)
     }
@@ -85,7 +88,9 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        val job = launch { viewModel.appState.collect {} }
         advanceUntilIdle()
+        job.cancel()
 
         assertEquals(AppState.Login, viewModel.appState.value)
     }
@@ -99,7 +104,9 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        val job = launch { viewModel.appState.collect {} }
         advanceUntilIdle()
+        job.cancel()
 
         assertEquals(AppState.Login, viewModel.appState.value)
     }
@@ -117,7 +124,9 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        val job = launch { viewModel.appState.collect {} }
         advanceUntilIdle()
+        job.cancel()
 
         assertEquals(AppState.FirstLaunchWarning, viewModel.appState.value)
     }
@@ -135,7 +144,9 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        val job = launch { viewModel.appState.collect {} }
         advanceUntilIdle()
+        job.cancel()
 
         assertEquals(AppState.GUISelection, viewModel.appState.value)
     }
@@ -153,7 +164,9 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        val job = launch { viewModel.appState.collect {} }
         advanceUntilIdle()
+        job.cancel()
 
         assertEquals(AppState.AppReady(GuiMode.GUI2), viewModel.appState.value)
     }
@@ -167,7 +180,9 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        val job = launch { viewModel.appState.collect {} }
         advanceUntilIdle()
+        job.cancel()
 
         assertEquals(AppState.AppReady(GuiMode.GUI1), viewModel.appState.value)
     }
@@ -181,7 +196,9 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        val job = launch { viewModel.appState.collect {} }
         advanceUntilIdle()
+        job.cancel()
 
         // Unrecognised mode falls back to null → GUISelection
         assertEquals(AppState.GUISelection, viewModel.appState.value)
@@ -203,11 +220,13 @@ class AppStateViewModelTest : BaseUnitTest() {
         every { dataStore.data } returns flowOf(prefs)
 
         val viewModel = AppStateViewModel(authManager, dataStore)
+        val job = launch { viewModel.appState.collect {} }
         advanceUntilIdle()
         assertEquals(AppState.PINSetup, viewModel.appState.value)
 
         viewModel.refreshAuth()
         advanceUntilIdle()
+        job.cancel()
         assertEquals(AppState.AppReady(GuiMode.GUI2), viewModel.appState.value)
     }
 
