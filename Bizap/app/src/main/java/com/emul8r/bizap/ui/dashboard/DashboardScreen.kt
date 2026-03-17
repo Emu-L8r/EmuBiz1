@@ -38,6 +38,7 @@ import com.emul8r.bizap.ui.theme.DashboardTheme
 import com.emul8r.bizap.ui.theme.StatusColors
 import com.emul8r.bizap.utils.CentsFormatter
 import androidx.compose.ui.unit.dp
+import timber.log.Timber
 
 
 @Composable
