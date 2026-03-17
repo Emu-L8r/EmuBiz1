@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 /**
  * Centralises all analytics calculation logic that was previously duplicated
- * across [RevenueRepositoryV2], [PaymentAnalyticsRepositoryV2], and
+ * across [RevenueRepositoryImpl], [PaymentAnalyticsRepositoryV2], and
  * [RiskAnalyticsRepositoryV2].
  *
  * Extracting these calculations here makes them:

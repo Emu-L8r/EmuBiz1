@@ -2,10 +2,10 @@ package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
-import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
 import com.emul8r.bizap.domain.model.gui2.PaymentMetricsV2
 import com.emul8r.bizap.domain.model.gui2.RiskMetricsV2
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
+import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 import javax.inject.Inject
@@ -30,7 +30,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class AnalyticsRepositoryBridge @Inject constructor(
-    private val revenueRepositoryV2: RevenueRepositoryV2,
+    private val revenueRepository: RevenueRepository,
     private val paymentAnalyticsRepositoryV2: PaymentAnalyticsRepositoryV2,
     private val riskAnalyticsRepositoryV2: RiskAnalyticsRepositoryV2
 ) {
@@ -40,7 +40,7 @@ class AnalyticsRepositoryBridge @Inject constructor(
      */
     fun observeRevenueMetrics(businessId: Long): Flow<Result<RevenueMetricsV2>> {
         Timber.d("AnalyticsRepositoryBridge: observeRevenueMetrics for businessId=$businessId")
-        return revenueRepositoryV2.observeRevenueMetrics(businessId)
+        return revenueRepository.observeRevenueMetrics(businessId)
     }
 
     /**
