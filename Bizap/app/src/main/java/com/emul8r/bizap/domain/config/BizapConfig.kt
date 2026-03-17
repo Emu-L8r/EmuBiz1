@@ -21,6 +21,12 @@ data class BizapConfig(
     val dashboardRefreshOnDateChange: Boolean = true,
     val dashboardMaxDisplayedInvoices: Int = 50,
 
+    // Payment Health Metrics (configurable thresholds for business types)
+    // These determine when a business transitions from Healthy → Warning → Problem
+    // Example: Retail expects payment in 1-2 days; B2B expects 30-45 days
+    val paymentHealthyThresholdDays: Double = 15.0,
+    val paymentWarningThresholdDays: Double = 25.0,
+
     // Database
     val databaseQueryTimeoutMs: Long = 30_000,
     val databaseBatchSizeLimit: Int = 1000,

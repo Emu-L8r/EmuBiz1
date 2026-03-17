@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.emul8r.bizap.domain.config.BizapConfig
 import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.common.MetricCard
@@ -308,7 +309,8 @@ fun DashboardScreen(
                             // Days to Pay Metric
                             AverageDaysToPayMetric(
                                 currentDaysToPayment = data.currentAverageDaysToPayment,
-                                trendHistory = data.averageDaysToPayTrend
+                                trendHistory = data.averageDaysToPayTrend,
+                                config = BizapConfig()  // Uses default config (can be injected if needed)
                             )
 
                             // Revenue Concentration
