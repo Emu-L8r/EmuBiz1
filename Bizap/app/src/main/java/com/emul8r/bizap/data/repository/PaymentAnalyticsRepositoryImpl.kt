@@ -31,27 +31,50 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
         // PHASE 3B FIX: Delegate to V2 repository to ensure single source of truth
         // V2 queries invoices table directly and excludes DRAFT invoices
         return repositoryV2.observePaymentMetrics(businessId)
-            .map { metricsV2 ->
-                Timber.d("PaymentAnalyticsRepositoryImpl: Using V2 metrics for business $businessId (collection rate: ${metricsV2.collectionRate}%)")
+            .map { result ->
+                result.fold(
+                    onSuccess = { metricsV2 ->
+                        Timber.d("PaymentAnalyticsRepositoryImpl: Using V2 metrics for business $businessId (collection rate: ${metricsV2.collectionRate}%)")
 
-                // Calculate unpaid count: SENT + PARTIALLY_PAID + OVERDUE
-                val unpaidCount = metricsV2.sentCount + metricsV2.partiallyPaidCount + metricsV2.overdueCount
+                        // Calculate unpaid count: SENT + PARTIALLY_PAID + OVERDUE
+                        val unpaidCount = metricsV2.sentCount + metricsV2.partiallyPaidCount + metricsV2.overdueCount
 
-                // Convert PaymentMetricsV2 to PaymentAnalyticsSummary for backwards compatibility
-                PaymentAnalyticsSummary(
-                    businessProfileId = businessId,
-                    totalInvoices = metricsV2.totalInvoices,
-                    paidInvoices = metricsV2.paidCount,
-                    unpaidInvoices = unpaidCount,
-                    overdueInvoices = metricsV2.overdueCount,
-                    totalInvoiceAmount = (metricsV2.outstandingAmount + metricsV2.collectedAmount).toDouble() / 100.0,
-                    totalPaidAmount = metricsV2.collectedAmount.toDouble() / 100.0,
-                    totalOutstandingAmount = metricsV2.outstandingAmount.toDouble() / 100.0,
-                    collectionRate = metricsV2.collectionRate,
-                    averagePaymentTime = metricsV2.averageDaysToPayment,
-                    outstandingByAging = OutstandingByAging(0.0, 0.0, 0.0, 0.0, metricsV2.outstandingAmount.toDouble() / 100.0),
-                    riskInvoices = emptyList(),
-                    cashFlowForecast = emptyList()
+                        // Convert PaymentMetricsV2 to PaymentAnalyticsSummary for backwards compatibility
+                        PaymentAnalyticsSummary(
+                            businessProfileId = businessId,
+                            totalInvoices = metricsV2.totalInvoices,
+                            paidInvoices = metricsV2.paidCount,
+                            unpaidInvoices = unpaidCount,
+                            overdueInvoices = metricsV2.overdueCount,
+                            totalInvoiceAmount = (metricsV2.outstandingAmount + metricsV2.collectedAmount).toDouble() / 100.0,
+                            totalPaidAmount = metricsV2.collectedAmount.toDouble() / 100.0,
+                            totalOutstandingAmount = metricsV2.outstandingAmount.toDouble() / 100.0,
+                            collectionRate = metricsV2.collectionRate,
+                            averagePaymentTime = metricsV2.averageDaysToPayment,
+                            outstandingByAging = OutstandingByAging(0.0, 0.0, 0.0, 0.0, metricsV2.outstandingAmount.toDouble() / 100.0),
+                            riskInvoices = emptyList(),
+                            cashFlowForecast = emptyList()
+                        )
+                    },
+                    onFailure = { error ->
+                        Timber.e(error, "PaymentAnalyticsRepositoryImpl: Failed to load metrics for business $businessId")
+                        // Return empty summary on failure
+                        PaymentAnalyticsSummary(
+                            businessProfileId = businessId,
+                            totalInvoices = 0,
+                            paidInvoices = 0,
+                            unpaidInvoices = 0,
+                            overdueInvoices = 0,
+                            totalInvoiceAmount = 0.0,
+                            totalPaidAmount = 0.0,
+                            totalOutstandingAmount = 0.0,
+                            collectionRate = 0.0,
+                            averagePaymentTime = 0.0,
+                            outstandingByAging = OutstandingByAging(0.0, 0.0, 0.0, 0.0, 0.0),
+                            riskInvoices = emptyList(),
+                            cashFlowForecast = emptyList()
+                        )
+                    }
                 )
             }
     }
