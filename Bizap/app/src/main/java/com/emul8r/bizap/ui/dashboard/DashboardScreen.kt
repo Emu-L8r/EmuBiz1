@@ -37,6 +37,8 @@ import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
 import com.emul8r.bizap.ui.theme.DashboardTheme
 import com.emul8r.bizap.ui.theme.StatusColors
 import com.emul8r.bizap.utils.CentsFormatter
+import androidx.compose.ui.unit.dp
+
 
 @Composable
 fun DashboardScreen(
