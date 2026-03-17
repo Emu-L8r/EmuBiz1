@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Unified revenue repository — single source of truth for both GUI1 and GUI2.
@@ -32,7 +31,6 @@ import javax.inject.Singleton
  */
 @Singleton
 class RevenueRepositoryImpl @Inject constructor(
-    private val invoiceDaoV2: InvoiceDaoV2,
     private val calculator: AnalyticsCalculator,
     private val validator: AnalyticsValidator
 ) : RevenueRepository {
