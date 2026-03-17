@@ -1,7 +1,6 @@
 package com.emul8r.bizap
 
 import com.emul8r.bizap.data.model.*
-import java.time.LocalDate
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -16,9 +15,10 @@ class AnalyticsTest {
 
     @Test
     fun testDailyRevenueCreation() {
+        val dateMillis = 1710604800000L  // 2026-03-16 00:00:00 UTC
         val dailyRevenue = DailyRevenue(
             businessId = 1L,
-            date = LocalDate.of(2026, 3, 16),
+            date = dateMillis,
             invoicedCents = 50000,  // $500
             paidCents = 30000,      // $300
             invoiceCount = 5,
@@ -26,7 +26,7 @@ class AnalyticsTest {
         )
 
         assertEquals(1L, dailyRevenue.businessId)
-        assertEquals(LocalDate.of(2026, 3, 16), dailyRevenue.date)
+        assertEquals(dateMillis, dailyRevenue.date)
         assertEquals(50000, dailyRevenue.invoicedCents)
         assertEquals(30000, dailyRevenue.paidCents)
         assertEquals(5, dailyRevenue.invoiceCount)
@@ -35,17 +35,20 @@ class AnalyticsTest {
 
     @Test
     fun testDailyRevenueWithDefaults() {
+        val currentTimeMillis = System.currentTimeMillis()
         val dailyRevenue = DailyRevenue(
             businessId = 1L,
-            date = LocalDate.now(),
+            date = currentTimeMillis,
             invoicedCents = 100000,
             paidCents = 100000,
             invoiceCount = 10,
             paidCount = 10
         )
 
-        assertTrue(dailyRevenue.id == 0L)  // Default id
-        assertTrue(dailyRevenue.createdAt > 0)  // Auto-set timestamp
+        assertEquals(1L, dailyRevenue.businessId)
+        assertEquals(currentTimeMillis, dailyRevenue.date)
+        assertEquals(100000, dailyRevenue.invoicedCents)
+        assertEquals(100000, dailyRevenue.paidCents)
     }
 
     // ═════════════════════════════════════════════════════════════════
@@ -54,27 +57,25 @@ class AnalyticsTest {
 
     @Test
     fun testCustomerRevenueCreation() {
+        val dateMillis = 1710513600000L  // 2026-03-15 00:00:00 UTC
         val customerRevenue = CustomerRevenue(
-            businessId = 1L,
             customerId = 100L,
             customerName = "Acme Corp",
             totalRevenueCents = 500000,  // $5000
             invoiceCount = 10,
-            lastPaymentDate = LocalDate.of(2026, 3, 15)
+            lastPaymentDate = dateMillis
         )
 
-        assertEquals(1L, customerRevenue.businessId)
         assertEquals(100L, customerRevenue.customerId)
         assertEquals("Acme Corp", customerRevenue.customerName)
         assertEquals(500000, customerRevenue.totalRevenueCents)
         assertEquals(10, customerRevenue.invoiceCount)
-        assertEquals(LocalDate.of(2026, 3, 15), customerRevenue.lastPaymentDate)
+        assertEquals(dateMillis, customerRevenue.lastPaymentDate)
     }
 
     @Test
     fun testCustomerRevenueWithoutPaymentDate() {
         val customerRevenue = CustomerRevenue(
-            businessId = 1L,
             customerId = 200L,
             customerName = "New Customer",
             totalRevenueCents = 100000,
@@ -93,7 +94,7 @@ class AnalyticsTest {
     fun testInvoiceVelocityMetrics() {
         val velocity = InvoiceVelocity(
             businessId = 1L,
-            date = LocalDate.now(),
+            date = System.currentTimeMillis(),
             avgDaysFromCreationToSent = 2.5,
             invoicesCreatedCount = 10,
             invoicesSentCount = 8,
@@ -111,7 +112,7 @@ class AnalyticsTest {
     fun testInvoiceVelocityWithZeroVelocity() {
         val velocity = InvoiceVelocity(
             businessId = 1L,
-            date = LocalDate.now(),
+            date = System.currentTimeMillis(),
             avgDaysFromCreationToSent = 0.0,  // Instant
             invoicesCreatedCount = 5,
             invoicesSentCount = 5,
@@ -132,13 +133,7 @@ class AnalyticsTest {
             totalOutstandingCents = 200000,
             totalCollectedCents = 1000000,
             overdueInvoiceCount = 3,
-            overdueAmountCents = 50000,
-            invoiceCountByStatus = mapOf(
-                "PAID" to 20,
-                "SENT" to 5,
-                "DRAFT" to 2,
-                "OVERDUE" to 3
-            )
+            overdueAmountCents = 50000
         )
 
         assertEquals(14.5, metrics.averageDaysToPayment, 0.1)
@@ -146,18 +141,18 @@ class AnalyticsTest {
         assertEquals(1000000, metrics.totalCollectedCents)
         assertEquals(3, metrics.overdueInvoiceCount)
         assertEquals(50000, metrics.overdueAmountCents)
-        assertEquals(20, metrics.invoiceCountByStatus["PAID"])
     }
 
     @Test
     fun testCashFlowTrendPoint() {
+        val dateMillis = 1710604800000L  // 2026-03-16 00:00:00 UTC
         val trendPoint = CashFlowTrendPoint(
-            date = LocalDate.of(2026, 3, 16),
+            date = dateMillis,
             invoicedCents = 100000,
             paidCents = 80000
         )
 
-        assertEquals(LocalDate.of(2026, 3, 16), trendPoint.date)
+        assertEquals(dateMillis, trendPoint.date)
         assertEquals(100000, trendPoint.invoicedCents)
         assertEquals(80000, trendPoint.paidCents)
         assertEquals(-20000, trendPoint.netCents)  // More invoiced than paid
@@ -166,7 +161,7 @@ class AnalyticsTest {
     @Test
     fun testCashFlowPositiveNet() {
         val trendPoint = CashFlowTrendPoint(
-            date = LocalDate.now(),
+            date = System.currentTimeMillis(),
             invoicedCents = 50000,
             paidCents = 100000  // More paid than invoiced
         )
@@ -228,19 +223,20 @@ class AnalyticsTest {
 
     @Test
     fun testDaysToPayMetric() {
+        val dateMillis = 1709251200000L  // 2026-02-28 00:00:00 UTC
         val metric = DaysToPayMetric(
-            date = LocalDate.of(2026, 2, 28),
+            date = dateMillis,
             averageDaysToPayment = 14.5
         )
 
-        assertEquals(LocalDate.of(2026, 2, 28), metric.date)
+        assertEquals(dateMillis, metric.date)
         assertEquals(14.5, metric.averageDaysToPayment, 0.1)
     }
 
     @Test
     fun testDaysToPayMetricFormatting() {
         val metric = DaysToPayMetric(
-            date = LocalDate.now(),
+            date = System.currentTimeMillis(),
             averageDaysToPayment = 12.7
         )
 
@@ -250,7 +246,7 @@ class AnalyticsTest {
     @Test
     fun testDaysToPayMetricWithWholeNumber() {
         val metric = DaysToPayMetric(
-            date = LocalDate.now(),
+            date = System.currentTimeMillis(),
             averageDaysToPayment = 10.0
         )
 
@@ -263,10 +259,14 @@ class AnalyticsTest {
 
     @Test
     fun testAnalyticsDataAggregation() {
+        val date1 = 1710345600000L  // 2026-03-14
+        val date2 = 1710432000000L  // 2026-03-15
+        val date3 = 1710518400000L  // 2026-03-16
+
         val trendPoints = listOf(
-            CashFlowTrendPoint(LocalDate.of(2026, 3, 14), 50000, 40000),
-            CashFlowTrendPoint(LocalDate.of(2026, 3, 15), 60000, 50000),
-            CashFlowTrendPoint(LocalDate.of(2026, 3, 16), 70000, 60000)
+            CashFlowTrendPoint(date1, 50000, 40000),
+            CashFlowTrendPoint(date2, 60000, 50000),
+            CashFlowTrendPoint(date3, 70000, 60000)
         )
 
         val topCustomers = listOf(
@@ -280,8 +280,7 @@ class AnalyticsTest {
             totalOutstandingCents = 100000,
             totalCollectedCents = 1000000,
             overdueInvoiceCount = 2,
-            overdueAmountCents = 50000,
-            invoiceCountByStatus = mapOf("PAID" to 45, "SENT" to 5)
+            overdueAmountCents = 50000
         )
 
         val analyticsData = AnalyticsData(
