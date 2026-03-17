@@ -9,16 +9,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.emul8r.bizap.domain.config.BizapConfig
 import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
-import com.emul8r.bizap.ui.common.MetricCard
 import com.emul8r.bizap.ui.customers.CustomerViewModel
 import com.emul8r.bizap.ui.dashboard.components.InvoiceStatusPieChart
 import com.emul8r.bizap.ui.dashboard.components.NotesCard
@@ -26,6 +22,9 @@ import com.emul8r.bizap.ui.dashboard.components.analytics.CashFlowTrendChart
 import com.emul8r.bizap.ui.dashboard.components.analytics.AverageDaysToPayMetric
 import com.emul8r.bizap.ui.dashboard.components.analytics.RevenueConcentrationChart
 import com.emul8r.bizap.ui.dashboard.components.analytics.InvoicingVelocityCard
+import com.emul8r.bizap.ui.dashboard.components.base.AnalyticsSectionCard
+import com.emul8r.bizap.ui.dashboard.components.base.HeaderCardBase
+import com.emul8r.bizap.ui.dashboard.components.base.MetricCardBase
 import com.emul8r.bizap.presentation.viewmodel.AnalyticsViewModel
 import com.emul8r.bizap.presentation.viewmodel.AnalyticsUiState
 import com.emul8r.bizap.ui.invoices.InvoiceList
@@ -35,6 +34,7 @@ import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.notes.NotesViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
+import com.emul8r.bizap.ui.theme.DashboardTheme
 import com.emul8r.bizap.ui.theme.StatusColors
 import com.emul8r.bizap.utils.CentsFormatter
 
@@ -72,52 +72,31 @@ fun DashboardScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().subtleVerticalGradient()) {
-        // Image background placeholder
-        ImagePlaceholderBackground(
-            // If you haven't moved thswalogo yet, this falls back to company_logo
-            alpha = 0.08f 
-        )
+        ImagePlaceholderBackground(alpha = 0.08f)
 
         LazyColumn(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(DashboardTheme.screenPadding)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(DashboardTheme.sectionSpacing)
         ) {
+            // ── Business header ────────────────────────────────────────────
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = activeBusiness.businessName.ifEmpty { "Default Business" },
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "ABN: ${activeBusiness.abn.ifEmpty { "Not Set" }}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    IconButton(onClick = { showSwitcher = true }) {
-                        Icon(
-                            imageVector = Icons.Default.SwapHoriz,
-                            contentDescription = "Switch Business",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                HeaderCardBase(
+                    title = activeBusiness.businessName.ifEmpty { "Default Business" },
+                    subtitle = "ABN: ${activeBusiness.abn.ifEmpty { "Not Set" }}",
+                    accentColor = MaterialTheme.colorScheme.primary,
+                    trailingIcon = Icons.Default.SwapHoriz,
+                    onTrailingClick = { showSwitcher = true }
+                )
             }
 
+            // ── Invoice status pie chart ───────────────────────────────────
             item {
                 InvoiceStatusPieChart(statusCounts = statusCounts)
             }
 
+            // ── Notes card ────────────────────────────────────────────────
             item {
                 NotesCard(
                     currentNotesCount = currentNotesCount,
@@ -125,31 +104,27 @@ fun DashboardScreen(
                 )
             }
 
+            // ── Row 1: Total Clients | Total Invoices ──────────────────────
             item {
-                // First row: Total Clients and Total Invoices
-                val totalInvoices = when (invoiceState) {
-                    is InvoiceListUiState.Success -> (invoiceState as InvoiceListUiState.Success).invoices.size
+                val totalInvoices = when (val s = invoiceState) {
+                    is InvoiceListUiState.Success -> s.invoices.size
                     else -> 0
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DashboardTheme.cardSpacing)
                 ) {
-                    MetricCard(
+                    MetricCardBase(
                         title = "Total Clients",
                         value = "${customers.size}",
                         icon = Icons.Default.People,
-                        backgroundColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                        borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                         accentColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f)
                     )
-                    MetricCard(
+                    MetricCardBase(
                         title = "Total Invoices",
                         value = "$totalInvoices",
                         icon = Icons.Default.Receipt,
-                        backgroundColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                        borderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
                         accentColor = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier
                             .weight(1f)
@@ -158,37 +133,33 @@ fun DashboardScreen(
                 }
             }
 
+            // ── Row 2: Invoices Paid | Invoices Pending ────────────────────
             item {
-                // Second row: Paid and Pending Invoices
                 val paidCount = statusCounts["PAID"] ?: 0
                 val pendingCount = (statusCounts["SENT"] ?: 0) + (statusCounts["DRAFT"] ?: 0)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DashboardTheme.cardSpacing)
                 ) {
-                    MetricCard(
+                    MetricCardBase(
                         title = "Invoices Paid",
                         value = "$paidCount",
                         icon = Icons.Default.CheckCircle,
-                        backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
-                        borderColor = StatusColors.Paid.copy(alpha = 0.3f),
                         accentColor = StatusColors.Paid,
                         modifier = Modifier.weight(1f)
                     )
-                    MetricCard(
+                    MetricCardBase(
                         title = "Invoices Pending",
                         value = "$pendingCount",
                         icon = Icons.Default.Schedule,
-                        backgroundColor = StatusColors.Outstanding.copy(alpha = 0.08f),
-                        borderColor = StatusColors.Outstanding.copy(alpha = 0.3f),
                         accentColor = StatusColors.Outstanding,
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
 
+            // ── Row 3: Expected Revenue | Actual Revenue ───────────────────
             item {
-                // Third row: Expected Revenue vs Actual Revenue with color coding
                 val expectedRevenue: Long
                 val actualRevenue: Long
                 when (val s = revenueState) {
@@ -201,35 +172,29 @@ fun DashboardScreen(
                         actualRevenue = 0L
                     }
                 }
-                
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DashboardTheme.cardSpacing)
                 ) {
-                    MetricCard(
+                    MetricCardBase(
                         title = "Expected Revenue",
                         value = CentsFormatter.formatCents(expectedRevenue),
                         icon = Icons.Default.TrendingUp,
-                        backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
-                        borderColor = StatusColors.Paid.copy(alpha = 0.3f),
                         accentColor = StatusColors.Paid,
                         modifier = Modifier.weight(1f)
                     )
-                    
-                    MetricCard(
+                    MetricCardBase(
                         title = "Actual Revenue",
                         value = CentsFormatter.formatCents(actualRevenue),
                         icon = Icons.Default.CheckCircle,
-                        backgroundColor = StatusColors.Sent.copy(alpha = 0.08f),
-                        borderColor = StatusColors.Sent.copy(alpha = 0.3f),
                         accentColor = StatusColors.Sent,
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
-            
+
+            // ── Row 4: Outstanding | Overdue ───────────────────────────────
             item {
-                // Fourth row: Outstanding and Overdue amounts
                 val outstandingAmount: Long
                 val overdueAmount: Long
                 when (val s = revenueState) {
@@ -247,35 +212,28 @@ fun DashboardScreen(
                         overdueAmount = 0L
                     }
                 }
-                
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DashboardTheme.cardSpacing)
                 ) {
-                    MetricCard(
+                    MetricCardBase(
                         title = "Outstanding",
                         value = CentsFormatter.formatCents(outstandingAmount),
                         icon = Icons.Default.Schedule,
-                        backgroundColor = StatusColors.Outstanding.copy(alpha = 0.08f),
-                        borderColor = StatusColors.Outstanding.copy(alpha = 0.3f),
                         accentColor = StatusColors.Outstanding,
                         modifier = Modifier.weight(1f)
                     )
-                    
-                    MetricCard(
+                    MetricCardBase(
                         title = "Overdue",
                         value = CentsFormatter.formatCents(overdueAmount),
                         icon = Icons.Default.Error,
-                        backgroundColor = StatusColors.Overdue.copy(alpha = 0.08f),
-                        borderColor = StatusColors.Overdue.copy(alpha = 0.3f),
                         accentColor = StatusColors.Overdue,
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
 
-
-            // Analytics Section
+            // ── Analytics section ──────────────────────────────────────────
             item {
                 when (analyticsState) {
                     is AnalyticsUiState.Loading -> {
@@ -290,38 +248,18 @@ fun DashboardScreen(
                     }
                     is AnalyticsUiState.Success -> {
                         val data = (analyticsState as AnalyticsUiState.Success).data
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        AnalyticsSectionCard(
+                            title = "💡 Business Analytics",
+                            accentColor = MaterialTheme.colorScheme.primary
                         ) {
-                            // Analytics Header
-                            Text(
-                                text = "💡 Business Analytics",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-
-                            // Cash Flow Trend
                             CashFlowTrendChart(data.cashFlowTrend)
-
-                            // Days to Pay Metric
                             AverageDaysToPayMetric(
                                 currentDaysToPayment = data.currentAverageDaysToPayment,
                                 trendHistory = data.averageDaysToPayTrend,
-                                config = BizapConfig()  // Uses default config (can be injected if needed)
+                                config = BizapConfig()
                             )
-
-                            // Revenue Concentration
-                            RevenueConcentrationChart(
-                                topCustomers = data.topCustomerMetrics
-                            )
-
-                            // Invoicing Velocity
-                            InvoicingVelocityCard(
-                                velocityData = emptyList()  // Will be populated from ViewModel
-                            )
+                            RevenueConcentrationChart(topCustomers = data.topCustomerMetrics)
+                            InvoicingVelocityCard(velocityData = emptyList())
                         }
                     }
                     is AnalyticsUiState.Error -> {
@@ -334,6 +272,7 @@ fun DashboardScreen(
                 }
             }
 
+            // ── Recent Invoices ────────────────────────────────────────────
             item {
                 Text("Recent Invoices", style = MaterialTheme.typography.titleMedium)
             }
