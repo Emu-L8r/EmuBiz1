@@ -54,7 +54,8 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
         every { daoV2.observeTotalPaidRevenue(businessId) } returns flowOf(500000L)
         every { daoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
 
-        val metrics = revenueRepository.observeRevenueMetrics(businessId).first()
+        val result = revenueRepository.observeRevenueMetrics(businessId).first()
+        val metrics = result.getOrThrow()
 
         assertEquals(125000L, metrics.mtdRevenue)
         assertEquals(500000L, metrics.ytdRevenue)
@@ -73,7 +74,8 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
         every { daoV2.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { daoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepository.observeRevenueMetrics(businessId).first()
+        val result = revenueRepository.observeRevenueMetrics(businessId).first()
+        val metrics = result.getOrThrow()
 
         assertEquals(0L, metrics.mtdRevenue)
         assertEquals(0L, metrics.ytdRevenue)
@@ -96,7 +98,8 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
         every { daoV2.observeOverdueCount(businessId) } returns flowOf(2)
         every { daoV2.observeAverageDaysToPayment(businessId) } returns flowOf(25.5)
 
-        val metrics = paymentRepository.observePaymentMetrics(businessId).first()
+        val result = paymentRepository.observePaymentMetrics(businessId).first()
+        val metrics = result.getOrThrow()
 
         assertEquals(16, metrics.totalInvoices)
         assertEquals(10, metrics.paidCount)
@@ -118,7 +121,8 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
         every { daoV2.observeOverdueCount(businessId) } returns flowOf(8)
         every { daoV2.observeOutstandingAmount(businessId) } returns flowOf(500000L)
 
-        val metrics = riskRepository.observeRiskMetrics(businessId).first()
+        val result = riskRepository.observeRiskMetrics(businessId).first()
+        val metrics = result.getOrThrow()
 
         assertEquals(3, metrics.highRiskCount)
         assertEquals(5, metrics.atRiskCount)
@@ -135,7 +139,8 @@ class RevenueRepositoryV2Test : BaseUnitTest() {
         every { daoV2.observeOverdueCount(businessId) } returns flowOf(0)
         every { daoV2.observeOutstandingAmount(businessId) } returns flowOf(0L)
 
-        val metrics = riskRepository.observeRiskMetrics(businessId).first()
+        val result = riskRepository.observeRiskMetrics(businessId).first()
+        val metrics = result.getOrThrow()
 
         assertEquals(0, metrics.highRiskCount)
         assertEquals(0, metrics.atRiskCount)

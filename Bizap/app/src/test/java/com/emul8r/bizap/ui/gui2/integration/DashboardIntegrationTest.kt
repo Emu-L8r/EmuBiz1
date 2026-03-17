@@ -48,7 +48,7 @@ class DashboardIntegrationTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(200000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepo.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(200000L, metrics.mtdRevenue)
         assertEquals(200000L, metrics.ytdRevenue)
@@ -65,7 +65,7 @@ class DashboardIntegrationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(0.0)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(1, metrics.totalInvoices)
         assertEquals(1, metrics.sentCount)
@@ -83,7 +83,7 @@ class DashboardIntegrationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(3.0)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(1, metrics.paidCount)
         assertEquals(0L, metrics.outstandingAmount)
@@ -103,7 +103,7 @@ class DashboardIntegrationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(12.0)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(750000L, metrics.outstandingAmount)
         assertEquals(250000L, metrics.collectedAmount)
@@ -118,7 +118,7 @@ class DashboardIntegrationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(5)
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(600000L)
 
-        val metrics = riskRepo.observeRiskMetrics(businessId).first()
+        val metrics = riskRepo.observeRiskMetrics(businessId).first().getOrThrow()
 
         assertEquals(2, metrics.highRiskCount)   // overdue 60+ days
         assertEquals(3, metrics.atRiskCount)     // overdue 30–59 days

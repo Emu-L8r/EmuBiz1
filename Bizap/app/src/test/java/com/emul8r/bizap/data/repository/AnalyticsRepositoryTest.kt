@@ -86,7 +86,7 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(600000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepository.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(200000L, metrics.mtdRevenue)
         assertEquals(800000L, metrics.ytdRevenue)
@@ -102,7 +102,7 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepository.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(0L, metrics.mtdRevenue)
         assertEquals(0L, metrics.ytdRevenue)
@@ -125,7 +125,7 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(50000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trendPoints)
 
-        val metrics = revenueRepository.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(1, metrics.dailyTrend.size)
         assertEquals("2025-01-15", metrics.dailyTrend[0].date)
@@ -141,7 +141,7 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(100000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepository.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertNotNull(metrics)
         assertEquals(businessId, metrics.businessProfileId)

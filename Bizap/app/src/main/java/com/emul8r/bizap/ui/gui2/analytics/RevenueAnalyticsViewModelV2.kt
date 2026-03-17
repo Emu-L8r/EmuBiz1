@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
-import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -23,13 +22,17 @@ class RevenueAnalyticsViewModelV2 @Inject constructor(
             .flatMapLatest { businessId ->
                 Timber.d("RevenueAnalyticsViewModelV2: observing businessId=$businessId")
                 revenueRepository.observeRevenueMetrics(businessId)
-                    .map<RevenueMetricsV2, RevenueAnalyticsUiStateV2> { metrics ->
-                        Timber.d("RevenueAnalyticsViewModelV2: metrics updated for businessId=$businessId")
-                        RevenueAnalyticsUiStateV2.Success(metrics)
-                    }
-                    .catch { error ->
-                        Timber.e(error, "RevenueAnalyticsViewModelV2: error")
-                        emit(RevenueAnalyticsUiStateV2.Error(error.message ?: "Unknown error"))
+                    .map { result ->
+                        result.fold(
+                            onSuccess = { metrics ->
+                                Timber.d("RevenueAnalyticsViewModelV2: metrics updated for businessId=$businessId")
+                                RevenueAnalyticsUiStateV2.Success(metrics)
+                            },
+                            onFailure = { error ->
+                                Timber.e(error, "RevenueAnalyticsViewModelV2: error")
+                                RevenueAnalyticsUiStateV2.Error(error.message ?: "Unknown error")
+                            }
+                        )
                     }
             }
             .stateIn(

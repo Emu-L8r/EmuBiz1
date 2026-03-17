@@ -51,7 +51,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         val statusCounts = listOf(InvoiceStatusCountV2("SENT", 1))
         stubPaymentDao(outstanding = 100000L, collected = 0L, statusCounts = statusCounts)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(1, metrics.totalInvoices)
         assertEquals(1, metrics.sentCount)
@@ -64,7 +64,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         val statusCounts = listOf(InvoiceStatusCountV2("SENT", 1))
         stubPaymentDao(outstanding = invoiceTotal, collected = 0L, statusCounts = statusCounts)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(invoiceTotal, metrics.outstandingAmount)
         assertEquals(0L, metrics.collectedAmount)
@@ -75,7 +75,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         val invoiceAmount = 200000L  // $2,000.00
         stubRevenueDao(mtd = invoiceAmount, ytd = invoiceAmount, weekly = invoiceAmount, totalPaid = 0L)
 
-        val metrics = revenueRepo.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(invoiceAmount, metrics.mtdRevenue)
         assertEquals(invoiceAmount, metrics.ytdRevenue)
@@ -86,7 +86,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         val statusCounts = listOf(InvoiceStatusCountV2("DRAFT", 1))
         stubPaymentDao(outstanding = 0L, collected = 0L, statusCounts = statusCounts)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(1, metrics.draftCount)
         assertEquals(0L, metrics.outstandingAmount)
@@ -103,7 +103,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         )
         stubPaymentDao(outstanding = totalOutstanding, collected = 0L, statusCounts = statusCounts)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(3, metrics.totalInvoices)
         assertEquals(totalOutstanding, metrics.outstandingAmount)
@@ -114,7 +114,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         val ytdTotal = 600000L  // Sum of all non-draft invoices
         stubRevenueDao(mtd = 200000L, ytd = ytdTotal, weekly = 200000L, totalPaid = 200000L)
 
-        val metrics = revenueRepo.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(ytdTotal, metrics.ytdRevenue)
     }
@@ -126,7 +126,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         // Before payment: invoice is SENT
         val statusCountsBefore = listOf(InvoiceStatusCountV2("SENT", 1))
         stubPaymentDao(outstanding = 100000L, collected = 0L, statusCounts = statusCountsBefore)
-        val before = paymentRepo.observePaymentMetrics(businessId).first()
+        val before = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         // After payment: invoice is PAID
         val statusCountsAfter = listOf(InvoiceStatusCountV2("PAID", 1))
@@ -135,7 +135,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         every { dao.observeInvoiceCountByStatus(businessId) } returns flowOf(statusCountsAfter)
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(5.0)
-        val after = paymentRepo.observePaymentMetrics(businessId).first()
+        val after = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertTrue(before.outstandingAmount > after.outstandingAmount)
         assertEquals(0L, after.outstandingAmount)
@@ -147,7 +147,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         val statusCounts = listOf(InvoiceStatusCountV2("OVERDUE", 2))
         stubPaymentDao(outstanding = 200000L, collected = 0L, statusCounts = statusCounts, overdue = 2)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(2, metrics.overdueCount)
     }
@@ -164,7 +164,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         stubPaymentDao(outstanding = expectedOutstanding, collected = totalPaid,
             statusCounts = listOf(InvoiceStatusCountV2("PAID", 1), InvoiceStatusCountV2("SENT", 2)))
 
-        val payment = paymentRepo.observePaymentMetrics(businessId).first()
+        val payment = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(expectedOutstanding, payment.outstandingAmount)
         assertEquals(totalPaid, payment.collectedAmount)
@@ -179,7 +179,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
             statusCounts = listOf(InvoiceStatusCountV2("PAID", 1))
         )
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(0L, metrics.outstandingAmount)
         assertEquals(invoiceAmount, metrics.collectedAmount)
@@ -195,7 +195,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         )
         stubRevenueDao(mtd = 100000L, ytd = 100000L, weekly = 100000L, totalPaid = 0L, trend = trend)
 
-        val metrics = revenueRepo.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(1, metrics.dailyTrend.size)
         assertEquals(100000L, metrics.dailyTrend[0].revenueCents)

@@ -53,7 +53,7 @@ class EndToEndJourneyTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(50000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepo.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(50000L, metrics.mtdRevenue)
         assertEquals(50000L, metrics.totalPaidRevenue)
@@ -71,7 +71,7 @@ class EndToEndJourneyTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(5.0)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(1, metrics.paidCount)
         assertEquals(0L, metrics.outstandingAmount)
@@ -87,7 +87,7 @@ class EndToEndJourneyTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(1)
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(50000L)
 
-        val metrics = riskRepo.observeRiskMetrics(businessId).first()
+        val metrics = riskRepo.observeRiskMetrics(businessId).first().getOrThrow()
 
         assertEquals(1, metrics.highRiskCount)
         assertEquals(0, metrics.atRiskCount)
@@ -104,7 +104,7 @@ class EndToEndJourneyTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(0.0)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(1, metrics.partiallyPaidCount)
         assertEquals(25000L, metrics.outstandingAmount)
@@ -119,7 +119,7 @@ class EndToEndJourneyTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepo.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(0L, metrics.mtdRevenue)
         assertEquals(0L, metrics.ytdRevenue)
