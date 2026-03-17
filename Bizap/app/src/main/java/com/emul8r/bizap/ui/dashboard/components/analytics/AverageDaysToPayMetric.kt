@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.data.model.DaysToPayMetric
+import com.emul8r.bizap.domain.config.BizapConfig
 import kotlin.math.max
 
 /**
@@ -23,26 +24,31 @@ import kotlin.math.max
  * Shows how long invoices take to get paid on average (DSO).
  * Includes a sparkline showing trend over 12 months.
  *
- * Color coding:
- * - Green: < 15 days (excellent)
- * - Yellow: 15-25 days (normal)
- * - Red: > 25 days (problem)
+ * Color coding is configurable via BizapConfig:
+ * - Green: < healthyThresholdDays
+ * - Yellow: healthyThresholdDays to warningThresholdDays
+ * - Red: > warningThresholdDays
+ *
+ * This allows different business types to have different expectations:
+ * - Retail: expects 1-2 days
+ * - B2B: expects 30-45 days
  */
 @Composable
 fun AverageDaysToPayMetric(
     currentDaysToPayment: Double,
     trendHistory: List<DaysToPayMetric>,
+    config: BizapConfig = BizapConfig(),
     modifier: Modifier = Modifier
 ) {
     val statusColor = when {
-        currentDaysToPayment < 15.0 -> Color(0xFF388E3C)  // Green
-        currentDaysToPayment < 25.0 -> Color(0xFFF57C00)  // Yellow/Orange
+        currentDaysToPayment < config.paymentHealthyThresholdDays -> Color(0xFF388E3C)  // Green
+        currentDaysToPayment < config.paymentWarningThresholdDays -> Color(0xFFF57C00)  // Yellow/Orange
         else -> Color(0xFFD32F2F)  // Red
     }
 
     val statusText = when {
-        currentDaysToPayment < 15.0 -> "Excellent"
-        currentDaysToPayment < 25.0 -> "Normal"
+        currentDaysToPayment < config.paymentHealthyThresholdDays -> "Excellent"
+        currentDaysToPayment < config.paymentWarningThresholdDays -> "Normal"
         else -> "Needs Attention"
     }
 
