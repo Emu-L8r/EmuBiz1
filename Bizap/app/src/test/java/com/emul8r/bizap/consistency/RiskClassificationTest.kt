@@ -48,7 +48,7 @@ class RiskClassificationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(0L)
 
-        val metrics = riskRepo.observeRiskMetrics(businessId).first()
+        val metrics = riskRepo.observeRiskMetrics(businessId).first().getOrThrow()
 
         assertEquals(10, metrics.healthyCount)
         assertEquals(0, metrics.overdueCount)
@@ -64,7 +64,7 @@ class RiskClassificationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(500000L)
 
-        val metrics = riskRepo.observeRiskMetrics(businessId).first()
+        val metrics = riskRepo.observeRiskMetrics(businessId).first().getOrThrow()
 
         assertEquals(5, metrics.healthyCount)
         assertEquals(0, metrics.overdueCount)
@@ -80,7 +80,7 @@ class RiskClassificationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(3)
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(300000L)
 
-        val metrics = riskRepo.observeRiskMetrics(businessId).first()
+        val metrics = riskRepo.observeRiskMetrics(businessId).first().getOrThrow()
 
         assertEquals(3, metrics.atRiskCount)
         assertEquals(0, metrics.highRiskCount)
@@ -97,7 +97,7 @@ class RiskClassificationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(3)
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(600000L)
 
-        val metrics = riskRepo.observeRiskMetrics(businessId).first()
+        val metrics = riskRepo.observeRiskMetrics(businessId).first().getOrThrow()
 
         assertEquals(2, metrics.highRiskCount)
         assertEquals(1, metrics.atRiskCount)
@@ -118,7 +118,7 @@ class RiskClassificationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(totalOverdue)
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(1000000L)
 
-        val metrics = riskRepo.observeRiskMetrics(businessId).first()
+        val metrics = riskRepo.observeRiskMetrics(businessId).first().getOrThrow()
 
         assertEquals(totalOverdue, metrics.highRiskCount + metrics.atRiskCount)
         assertEquals(totalOverdue, metrics.overdueCount)
@@ -134,7 +134,7 @@ class RiskClassificationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(0L)
 
-        val metrics = riskRepo.observeRiskMetrics(businessId).first()
+        val metrics = riskRepo.observeRiskMetrics(businessId).first().getOrThrow()
 
         assertEquals(0, metrics.highRiskCount)
         assertEquals(0, metrics.atRiskCount)
@@ -155,7 +155,7 @@ class RiskClassificationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(5)
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(expectedOutstanding)
 
-        val metrics = riskRepo.observeRiskMetrics(businessId).first()
+        val metrics = riskRepo.observeRiskMetrics(businessId).first().getOrThrow()
 
         assertEquals(expectedOutstanding, metrics.totalOutstandingCents)
         assertTrue(metrics.totalOutstandingCents > 0)
@@ -181,8 +181,8 @@ class RiskClassificationTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId2) } returns flowOf(0)
         every { dao.observeOutstandingAmount(businessId2) } returns flowOf(0L)
 
-        val risk1 = riskRepo.observeRiskMetrics(businessId).first()
-        val risk2 = riskRepo.observeRiskMetrics(businessId2).first()
+        val risk1 = riskRepo.observeRiskMetrics(businessId).first().getOrThrow()
+        val risk2 = riskRepo.observeRiskMetrics(businessId2).first().getOrThrow()
 
         assertTrue(risk1.highRiskCount > risk2.highRiskCount)
         assertTrue(risk2.healthyCount > risk1.healthyCount)

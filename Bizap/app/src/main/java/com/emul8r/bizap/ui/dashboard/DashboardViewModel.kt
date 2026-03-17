@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
-import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -33,13 +32,17 @@ class DashboardViewModel @Inject constructor(
         businessContextRepository.observeActiveBusinessId()
             .flatMapLatest { businessId ->
                 revenueRepository.observeRevenueMetrics(businessId)
-                    .map { metrics ->
-                        Timber.d("DashboardViewModel: Revenue metrics updated for business $businessId")
-                        DashboardRevenueState.Success(metrics) as DashboardRevenueState
-                    }
-                    .catch { error ->
-                        Timber.e(error, "DashboardViewModel: Failed to load revenue metrics")
-                        emit(DashboardRevenueState.Error(error.message ?: "Unknown error"))
+                    .map { result ->
+                        result.fold(
+                            onSuccess = { metrics ->
+                                Timber.d("DashboardViewModel: Revenue metrics updated for business $businessId")
+                                DashboardRevenueState.Success(metrics)
+                            },
+                            onFailure = { error ->
+                                Timber.e(error, "DashboardViewModel: Failed to load revenue metrics")
+                                DashboardRevenueState.Error(error.message ?: "Unknown error")
+                            }
+                        )
                     }
             }
             .stateIn(

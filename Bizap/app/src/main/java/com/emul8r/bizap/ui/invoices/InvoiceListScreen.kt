@@ -2,7 +2,6 @@ package com.emul8r.bizap.ui.invoices
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -31,6 +30,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.common.StatusBadge
+import com.emul8r.bizap.ui.components.ErrorStateView
+import com.emul8r.bizap.ui.components.SkeletonLoadingItem
 import com.emul8r.bizap.ui.theme.getStatusColor
 import com.emul8r.bizap.ui.theme.getBackgroundColor
 import com.emul8r.bizap.ui.utils.formatDate
@@ -60,16 +61,20 @@ fun InvoiceListScreen(
 
         // MainActivity's Scaffold provides the TopAppBar
         when (val currentState = state) {
-            is InvoiceListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
+            is InvoiceListUiState.Loading -> LazyColumn(
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(5) { SkeletonLoadingItem() }
             }
             is InvoiceListUiState.Empty -> EmptyState(Modifier.fillMaxSize())
-            is InvoiceListUiState.Error -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    currentState.message,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
+            is InvoiceListUiState.Error -> ErrorStateView(
+                title = "Error Loading Invoices",
+                message = currentState.message,
+                onAction = { viewModel.retry() },
+                modifier = Modifier.fillMaxSize()
+            )
             is InvoiceListUiState.Success -> InvoiceList(
                 invoices = currentState.invoices,
                 onInvoiceClick = onInvoiceClick,
