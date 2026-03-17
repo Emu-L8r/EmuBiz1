@@ -100,7 +100,7 @@ fun DashboardScreen(
                         try {
                             navController.navigate(Screen.Notes)
                         } catch (e: IllegalArgumentException) {
-                            Timber.e(e, "Navigation failed: Screen.Notes not found in nav graph")
+                            Timber.e(e, "Navigation to Notes screen failed")
                         }
                     }
                 )
@@ -135,7 +135,7 @@ fun DashboardScreen(
                                 try {
                                     navController.navigate(Screen.RevenueDashboard)
                                 } catch (e: IllegalArgumentException) {
-                                    Timber.e(e, "Navigation failed: Screen.RevenueDashboard not found in nav graph")
+                                    Timber.e(e, "Navigation to RevenueDashboard screen failed")
                                 }
                             }
                     )
