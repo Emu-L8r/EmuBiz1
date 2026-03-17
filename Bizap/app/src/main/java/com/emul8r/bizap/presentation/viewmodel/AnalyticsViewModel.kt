@@ -101,6 +101,21 @@ class AnalyticsViewModel @Inject constructor(
             )
 
     /**
+     * Average days to payment trend (historical DSO over last 30 days).
+     */
+    val averageDaysToPaymentTrend: StateFlow<List<DaysToPayMetric>> =
+        analyticsDao.observeAverageDaysToPayTrend(businessId)
+            .catch { error ->
+                Timber.e(error, "Error loading average days to payment trend")
+                emit(emptyList())
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList()
+            )
+
+    /**
      * Invoicing velocity trend (days from creation to sent).
      */
     val invoicingVelocity: StateFlow<List<InvoiceVelocity>> =
@@ -185,7 +200,8 @@ class AnalyticsViewModel @Inject constructor(
         averageDaysToPayment,
         invoicingVelocity,
         totalRevenue,
-        totalOutstanding
+        totalOutstanding,
+        averageDaysToPaymentTrend
     ) { values ->
         @Suppress("UNCHECKED_CAST")
         val trend = values[0] as List<CashFlowTrendPoint>
@@ -194,6 +210,7 @@ class AnalyticsViewModel @Inject constructor(
         val velocity = values[3] as List<InvoiceVelocity>
         val revenue = values[4] as Long
         val outstanding = values[5] as Long
+        val dsoTrend = values[6] as List<DaysToPayMetric>
 
         Timber.d("AnalyticsViewModel: State updated for businessId=$businessId")
 
@@ -201,7 +218,7 @@ class AnalyticsViewModel @Inject constructor(
             AnalyticsUiState.Success(
                 AnalyticsData(
                     cashFlowTrend = trend,
-                    averageDaysToPayTrend = emptyList(), // Will be populated separately
+                    averageDaysToPayTrend = dsoTrend,
                     topCustomerMetrics = customers,
                     currentAverageDaysToPayment = dsoValue,
                     totalRevenue = revenue,
