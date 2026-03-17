@@ -136,4 +136,59 @@ class BizapConfigTest {
         val config2 = BizapConfig.production()
         assertEquals(config1, config2)
     }
+
+    // ── paymentHealthThresholds ───────────────────────────────────────────────
+
+    @Test
+    fun `paymentHealthThresholds - production has default thresholds`() {
+        val config = BizapConfig.production()
+        assertEquals(15.0, config.paymentHealthyThresholdDays)
+        assertEquals(25.0, config.paymentWarningThresholdDays)
+    }
+
+    @Test
+    fun `paymentHealthThresholds - can configure for retail business (fast payment)`() {
+        val retailConfig = BizapConfig(
+            paymentHealthyThresholdDays = 1.0,
+            paymentWarningThresholdDays = 3.0
+        )
+        assertEquals(1.0, retailConfig.paymentHealthyThresholdDays)
+        assertEquals(3.0, retailConfig.paymentWarningThresholdDays)
+    }
+
+    @Test
+    fun `paymentHealthThresholds - can configure for B2B business (slow payment)`() {
+        val b2bConfig = BizapConfig(
+            paymentHealthyThresholdDays = 30.0,
+            paymentWarningThresholdDays = 45.0
+        )
+        assertEquals(30.0, b2bConfig.paymentHealthyThresholdDays)
+        assertEquals(45.0, b2bConfig.paymentWarningThresholdDays)
+    }
+
+    @Test
+    fun `paymentHealthThresholds - different business types have different thresholds`() {
+        val retail = BizapConfig(paymentHealthyThresholdDays = 1.0)
+        val b2b = BizapConfig(paymentHealthyThresholdDays = 30.0)
+        assertTrue(retail.paymentHealthyThresholdDays < b2b.paymentHealthyThresholdDays)
+    }
+
+    @Test
+    fun `paymentHealthThresholds - healthy threshold is less than warning threshold`() {
+        val config = BizapConfig.production()
+        assertTrue(
+            config.paymentHealthyThresholdDays < config.paymentWarningThresholdDays,
+            "Healthy threshold should be stricter than warning threshold"
+        )
+    }
+
+    @Test
+    fun `paymentHealthThresholds - can disable thresholds with zero values`() {
+        val noThresholdConfig = BizapConfig(
+            paymentHealthyThresholdDays = 0.0,
+            paymentWarningThresholdDays = 0.0
+        )
+        assertEquals(0.0, noThresholdConfig.paymentHealthyThresholdDays)
+        assertEquals(0.0, noThresholdConfig.paymentWarningThresholdDays)
+    }
 }
