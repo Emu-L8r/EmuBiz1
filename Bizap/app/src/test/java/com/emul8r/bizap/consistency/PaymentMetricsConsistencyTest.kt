@@ -59,7 +59,7 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
             )
         )
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(outstanding, metrics.outstandingAmount)
         assertEquals(collected, metrics.collectedAmount)
@@ -73,7 +73,7 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
         stubDao(outstanding = 0L, collected = 500000L,
             statusCounts = listOf(InvoiceStatusCountV2("PAID", 5)))
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertTrue(metrics.outstandingAmount >= 0, "Outstanding should never be negative")
     }
@@ -83,7 +83,7 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
         stubDao(outstanding = 0L, collected = 1000000L,
             statusCounts = listOf(InvoiceStatusCountV2("PAID", 10)))
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(0L, metrics.outstandingAmount)
         assertEquals(10, metrics.paidCount)
@@ -108,8 +108,8 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
             )
         )
 
-        val revenue = revenueRepo.observeRevenueMetrics(businessId).first()
-        val payment = paymentRepo.observePaymentMetrics(businessId).first()
+        val revenue = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
+        val payment = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         // Revenue repo totalPaidRevenue must equal payment repo collectedAmount
         assertEquals(revenue.totalPaidRevenue, payment.collectedAmount,
@@ -133,8 +133,8 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
             )
         )
 
-        val revenue1 = revenueRepo.observeRevenueMetrics(businessId).first()
-        val revenue2 = revenueRepo.observeRevenueMetrics(businessId).first()
+        val revenue1 = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
+        val revenue2 = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
 
         // Multiple collections from the same V2 repository must be identical
         assertEquals(revenue1.totalPaidRevenue, revenue2.totalPaidRevenue)
@@ -154,7 +154,7 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
         )
         stubDao(outstanding = 400000L, collected = 600000L, statusCounts = statusCounts)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         val expectedTotal = statusCounts.sumOf { it.count }
         assertEquals(expectedTotal, metrics.totalInvoices)
@@ -176,7 +176,7 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
             overdue = overdueCount
         )
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(overdueCount, metrics.overdueCount)
     }

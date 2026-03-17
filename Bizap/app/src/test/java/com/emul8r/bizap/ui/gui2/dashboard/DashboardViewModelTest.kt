@@ -55,7 +55,7 @@ class DashboardViewModelTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(450000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepository.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(150000L, metrics.mtdRevenue)
         assertEquals(500000L, metrics.ytdRevenue)
@@ -71,7 +71,7 @@ class DashboardViewModelTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepository.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertEquals(0L, metrics.mtdRevenue)
         assertEquals(0L, metrics.ytdRevenue)
@@ -92,7 +92,7 @@ class DashboardViewModelTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(15.0)
 
-        val metrics = paymentRepository.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepository.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(30000L, metrics.outstandingAmount)
         assertEquals(50000L, metrics.collectedAmount)
@@ -106,7 +106,7 @@ class DashboardViewModelTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(2)
         every { dao.observeOutstandingAmount(businessId) } returns flowOf(25000L)
 
-        val metrics = riskRepository.observeRiskMetrics(businessId).first()
+        val metrics = riskRepository.observeRiskMetrics(businessId).first().getOrThrow()
 
         assertEquals(2, metrics.overdueCount)
         assertEquals(25000L, metrics.totalOutstandingCents)
@@ -120,7 +120,7 @@ class DashboardViewModelTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(700000L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val metrics = revenueRepository.observeRevenueMetrics(businessId).first()
+        val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
 
         assertNotNull(metrics)
     }

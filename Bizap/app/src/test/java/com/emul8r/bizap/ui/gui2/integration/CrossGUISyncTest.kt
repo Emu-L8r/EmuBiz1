@@ -57,8 +57,8 @@ class CrossGUISyncTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(10.0)
 
-        val revenue = revenueRepo.observeRevenueMetrics(businessId).first()
-        val payment = paymentRepo.observePaymentMetrics(businessId).first()
+        val revenue = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
+        val payment = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         // GUI1 would show totalPaidRevenue; GUI2 shows collectedAmount — they must match
         assertEquals(revenue.totalPaidRevenue, payment.collectedAmount)
@@ -79,7 +79,7 @@ class CrossGUISyncTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(14.0)
 
-        val payment = paymentRepo.observePaymentMetrics(businessId).first()
+        val payment = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(outstanding, payment.outstandingAmount)
     }
@@ -98,7 +98,7 @@ class CrossGUISyncTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(1)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(0.0)
 
-        val payment = paymentRepo.observePaymentMetrics(businessId).first()
+        val payment = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(8, payment.totalInvoices) // 4+2+1+1
         assertEquals(4, payment.paidCount)
@@ -121,7 +121,7 @@ class CrossGUISyncTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(1)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(7.5)
 
-        val payment = paymentRepo.observePaymentMetrics(businessId).first()
+        val payment = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         assertEquals(5, payment.statusBreakdown.size)
         assertEquals(20, payment.totalInvoices) // 10+3+2+1+4
@@ -136,14 +136,14 @@ class CrossGUISyncTest : BaseUnitTest() {
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
         every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
 
-        val before = revenueRepo.observeRevenueMetrics(businessId).first()
+        val before = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
         assertEquals(0L, before.mtdRevenue)
 
         // Simulate data after invoice created for new customer
         every { dao.observeMTDRevenue(businessId, any(), any()) } returns flowOf(99900L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(99900L)
 
-        val after = revenueRepo.observeRevenueMetrics(businessId).first()
+        val after = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()
         assertEquals(99900L, after.mtdRevenue)
     }
 
@@ -158,7 +158,7 @@ class CrossGUISyncTest : BaseUnitTest() {
         every { dao.observeOverdueCount(businessId) } returns flowOf(0)
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(0.0)
 
-        val metrics = paymentRepo.observePaymentMetrics(businessId).first()
+        val metrics = paymentRepo.observePaymentMetrics(businessId).first().getOrThrow()
 
         // outstanding + collected = total invoice value
         assertEquals(invoiceCents, metrics.outstandingAmount + metrics.collectedAmount)

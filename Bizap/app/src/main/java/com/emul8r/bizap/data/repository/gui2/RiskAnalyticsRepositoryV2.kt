@@ -4,6 +4,7 @@ import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
 import com.emul8r.bizap.domain.model.gui2.RiskMetricsV2
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import timber.log.Timber
 import javax.inject.Inject
@@ -24,7 +25,7 @@ class RiskAnalyticsRepositoryV2 @Inject constructor(
     /**
      * Observe risk metrics for the given business.
      */
-    fun observeRiskMetrics(businessId: Long): Flow<RiskMetricsV2> {
+    fun observeRiskMetrics(businessId: Long): Flow<Result<RiskMetricsV2>> {
         return combine(
             invoiceDaoV2.observeHighRiskInvoiceCount(businessId),
             invoiceDaoV2.observeAtRiskInvoiceCount(businessId),
@@ -33,14 +34,20 @@ class RiskAnalyticsRepositoryV2 @Inject constructor(
             invoiceDaoV2.observeOutstandingAmount(businessId)
         ) { highRisk, atRisk, healthy, overdue, outstanding ->
             Timber.d("RiskAnalyticsRepositoryV2: highRisk=$highRisk atRisk=$atRisk healthy=$healthy overdue=$overdue")
-            calculator.combineRiskMetrics(
-                businessId = businessId,
-                highRisk = highRisk,
-                atRisk = atRisk,
-                healthy = healthy,
-                overdue = overdue,
-                outstanding = outstanding
-            )
+            Result.runCatching {
+                calculator.combineRiskMetrics(
+                    businessId = businessId,
+                    highRisk = highRisk,
+                    atRisk = atRisk,
+                    healthy = healthy,
+                    overdue = overdue,
+                    outstanding = outstanding
+                )
+            }
+        }
+        .catch { e ->
+            Timber.e(e, "RiskAnalyticsRepositoryV2: error observing metrics for businessId=$businessId")
+            emit(Result.failure(e))
         }
     }
 }

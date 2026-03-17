@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
-
 /**
  * Bridge that unifies GUI1 and GUI2 analytics under a single data source.
  *
@@ -38,7 +37,7 @@ class AnalyticsRepositoryBridge @Inject constructor(
      * Observe revenue metrics from the single source of truth (invoices table).
      * Replaces any snapshot-based revenue query for both GUI1 and GUI2.
      */
-    fun observeRevenueMetrics(businessId: Long): Flow<RevenueMetricsV2> {
+    fun observeRevenueMetrics(businessId: Long): Flow<Result<RevenueMetricsV2>> {
         Timber.d("AnalyticsRepositoryBridge: observeRevenueMetrics for businessId=$businessId")
         return revenueRepositoryV2.observeRevenueMetrics(businessId)
     }
@@ -48,7 +47,7 @@ class AnalyticsRepositoryBridge @Inject constructor(
      * Replaces both GUI1 PaymentAnalyticsRepositoryImpl (snapshot-based) and
      * GUI2 PaymentAnalyticsRepositoryV2 with the same V2 implementation.
      */
-    fun observePaymentMetrics(businessId: Long): Flow<PaymentMetricsV2> {
+    fun observePaymentMetrics(businessId: Long): Flow<Result<PaymentMetricsV2>> {
         Timber.d("AnalyticsRepositoryBridge: observePaymentMetrics for businessId=$businessId")
         return paymentAnalyticsRepositoryV2.observePaymentMetrics(businessId)
     }
@@ -57,7 +56,7 @@ class AnalyticsRepositoryBridge @Inject constructor(
      * Observe risk analytics metrics from the single source of truth.
      * Replaces GUI1 IdentifyRiskInvoicesUseCase (snapshot-based) with V2 queries.
      */
-    fun observeRiskMetrics(businessId: Long): Flow<RiskMetricsV2> {
+    fun observeRiskMetrics(businessId: Long): Flow<Result<RiskMetricsV2>> {
         Timber.d("AnalyticsRepositoryBridge: observeRiskMetrics for businessId=$businessId")
         return riskAnalyticsRepositoryV2.observeRiskMetrics(businessId)
     }
