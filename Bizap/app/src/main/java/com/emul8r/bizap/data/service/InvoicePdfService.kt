@@ -106,7 +106,25 @@ class InvoicePdfService @Inject constructor(
         canvas.drawText("Date: ${formatDate(snapshot.date)}", 400f, 162f, bodyPaint)
         canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 400f, 178f, bodyPaint)
 
-        var currentY = 200f
+r/nop        var currentY = 195f
+
+        // ===== BILLING INFORMATION SECTION =====
+        canvas.drawLine(40f, currentY, 555f, currentY, Paint().apply { color = colors.secondary; strokeWidth = 0.5f })
+        currentY += 12f
+        canvas.drawText("BILLING INFORMATION", 40f, currentY, labelPaint)
+        currentY += 14f
+
+        bodyPaint.textAlign = Paint.Align.LEFT
+        canvas.drawText("Bill To: ${snapshot.customerName}", 40f, currentY, bodyPaint)
+        currentY += 12f
+        canvas.drawText(snapshot.customerAddress, 40f, currentY, bodyPaint)
+        currentY += 12f
+        snapshot.customerEmail?.let {
+            canvas.drawText("Email: $it", 40f, currentY, bodyPaint)
+            currentY += 12f
+        }
+
+        currentY += 15f
 
         val separatorPaint = Paint().apply { color = colors.secondary; strokeWidth = 0.5f; style = Paint.Style.STROKE }
         val sectionHeaderPaint = Paint().apply { typeface = boldTypeface; textSize = 11f; color = colors.primary; isAntiAlias = true }
