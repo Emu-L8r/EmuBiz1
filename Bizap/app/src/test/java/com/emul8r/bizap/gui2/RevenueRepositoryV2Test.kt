@@ -19,7 +19,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 /**
- * Unit tests for the GUI2 repository layer.
+ * Unit tests for the unified revenue repository layer.
  * All DAO calls are mocked; tests verify repository logic and flow composition.
  */
 class RevenueRepositoryV2Test : BaseUnitTest() {
