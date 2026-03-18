@@ -1,6 +1,5 @@
 package com.emul8r.bizap.presentation.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.local.dao.AnalyticsDao
@@ -8,7 +7,6 @@ import com.emul8r.bizap.data.model.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
-import java.time.LocalDate
 import javax.inject.Inject
 
 /**
@@ -268,13 +266,4 @@ class AnalyticsViewModel @Inject constructor(
     }
 }
 
-/**
- * UI state for analytics screen.
- * Sealed class ensures exhaustive when statements.
- */
-sealed class AnalyticsUiState {
-    object Loading : AnalyticsUiState()
-    data class Success(val data: AnalyticsData) : AnalyticsUiState()
-    data class Error(val message: String) : AnalyticsUiState()
-}
 
