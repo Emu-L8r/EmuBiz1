@@ -6,7 +6,7 @@ import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.entities.DailyRevenueTrendV2
 import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
 import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
-import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
+import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
 import io.mockk.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -21,18 +21,18 @@ import kotlin.test.assertTrue
  * Unit tests for analytics repositories.
  *
  * Verifies revenue calculations, tax logic, and metric aggregation
- * through the [RevenueRepositoryV2] and related repositories.
+ * through the [RevenueRepositoryImpl] and related repositories.
  */
 class AnalyticsRepositoryTest : BaseUnitTest() {
 
     private val dao: InvoiceDaoV2 = mockk()
-    private lateinit var revenueRepository: RevenueRepositoryV2
+    private lateinit var revenueRepository: RevenueRepositoryImpl
 
     private val businessId = 1L
 
     @Before
     fun setUp() {
-        revenueRepository = RevenueRepositoryV2(dao, AnalyticsCalculator(), AnalyticsValidator())
+        revenueRepository = RevenueRepositoryImpl(dao, AnalyticsCalculator(), AnalyticsValidator())
     }
 
     // ── taxCalculation_Correct ────────────────────────────────────────────────
