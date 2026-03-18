@@ -80,3 +80,7 @@ fun NavHostController.navigateToInvoiceAnalyticsV2(businessId: Long) {
 fun NavHostController.navigateToVaultV2(businessId: Long) {
     navigate(ScreenV2.Vault(businessId))
 }
+
+fun NavHostController.navigateToAppSettingsV2(businessId: Long) {
+    navigate(ScreenV2.AppSettings(businessId))
+}

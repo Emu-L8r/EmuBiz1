@@ -25,6 +25,7 @@ import com.emul8r.bizap.ui.gui2.invoices.InvoiceListScreenV2
 import com.emul8r.bizap.ui.gui2.settings.BusinessProfileScreenV2
 import com.emul8r.bizap.ui.gui2.settings.SettingsHubScreenV2
 import com.emul8r.bizap.ui.gui2.settings.ThemeSettingsScreenV2
+import com.emul8r.bizap.presentation.ui.screens.SettingsScreen as AppSettingsScreenV2
 
 /**
  * Navigation graph for GUI2.
@@ -193,6 +194,9 @@ fun GuiV2NavGraph(
                     onThemeSettingsClick = {
                         navController.navigateToThemeSettingsV2(route.businessId)
                     },
+                    onAppSettingsClick = {
+                        navController.navigateToAppSettingsV2(route.businessId)
+                    },
                     onBack = { navController.popBackStack() },
                     onSwitchToGui1 = onSwitchToGui1
                 )
@@ -223,6 +227,12 @@ fun GuiV2NavGraph(
             composable<ScreenV2.Vault> {
                 DocumentVaultScreen(
                     onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable<ScreenV2.AppSettings> {
+                AppSettingsScreenV2(
+                    onResetConfirmed = { navController.popBackStack() }
                 )
             }
         }
