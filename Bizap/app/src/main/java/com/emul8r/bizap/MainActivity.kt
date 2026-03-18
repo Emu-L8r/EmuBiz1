@@ -55,11 +55,11 @@ import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.settings.SettingsHubScreen
 import com.emul8r.bizap.ui.settings.ThemeSettingsScreen
-import com.emul8r.bizap.ui.settings.ThemeViewModel
+import com.emul8r.bizap.presentation.ui.screens.SettingsScreen as AppSettingsScreen
 import com.emul8r.bizap.ui.templates.CreateTemplateScreen
 import com.emul8r.bizap.ui.templates.EditTemplateScreen
 import com.emul8r.bizap.ui.templates.TemplateListScreen
-import com.emul8r.bizap.ui.theme.BizapTheme
+import com.emul8r.bizap.presentation.ui.theme.ThemeProvider
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
 import com.emul8r.bizap.ui.notes.NotesScreen
 import com.emul8r.bizap.ui.landing.LandingScreen
@@ -67,7 +67,6 @@ import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.onboarding.FirstLaunchWarningDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 data class NavigationItem(
     val screen: Screen,
@@ -94,12 +93,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            val themeViewModel: ThemeViewModel = hiltViewModel()
-            val config by themeViewModel.themeConfig.collectAsStateWithLifecycle()
-
-            Timber.d("🎨 Theme recomposed: seedColorHex = ${config.seedColorHex}")
-
-            BizapTheme(themeConfig = config) {
+            ThemeProvider {
                 val appStateViewModel: AppStateViewModel = hiltViewModel()
                 val appState by appStateViewModel.appState.collectAsStateWithLifecycle()
 
@@ -204,6 +198,7 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                     currentDestination?.hasRoute<Screen.CustomerSegments>() == true -> "Customer Segments"
                     currentDestination?.hasRoute<Screen.CustomerAnalytics>() == true -> "Customer Analytics"
                     currentDestination?.hasRoute<Screen.Notes>() == true -> "Notes"
+                    currentDestination?.hasRoute<Screen.AppSettings>() == true -> "App Settings"
                     else -> "Bizap"
                 }
 
@@ -364,6 +359,9 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 }
                 composable<Screen.Notes> {
                     NotesScreen(navController)
+                }
+                composable<Screen.AppSettings> {
+                    AppSettingsScreen()
                 }
             }
 
