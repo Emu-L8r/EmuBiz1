@@ -126,7 +126,7 @@ private fun RevenueDashboardContent(
             )
         }
 
-        // Overdue amount with red accent
+        // Overdue amount with warning color accent
         if (metrics.overdueAmount > 0L) {
             MetricCard(
                 title = "Overdue",
