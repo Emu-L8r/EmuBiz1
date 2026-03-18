@@ -1,6 +1,6 @@
 # Developer Migration Guide — Phase 3.3 GUI Consolidation
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 2026-03-18  
 **Applicable to:** Bizap Android App
 
@@ -229,6 +229,29 @@ class Gui1NavAdapterTest {
 @Test
 fun `MyGui1Screen returns null in Gui2NavAdapter`() {
     assertNull(Gui2NavAdapter.toScreen(AppScreen.MyGui1Screen, fallbackBusinessId = 1L))
+}
+```
+
+### Cross-GUI Consistency Tests
+
+For screens available in both GUIs, add a test to `CrossGuiNavigationConsistencyTest`:
+
+```kotlin
+@Test
+fun `MyNewScreen is reachable in GUI1`() {
+    assertNotNull(Gui1NavAdapter.toScreen(AppScreen.MyNewScreen()))
+}
+
+@Test
+fun `MyNewScreen is reachable in GUI2`() {
+    assertNotNull(Gui2NavAdapter.toScreen(AppScreen.MyNewScreen(), bizId))
+}
+
+@Test
+fun `GUI1 round-trip MyNewScreen preserves destination`() {
+    val appScreen = AppScreen.MyNewScreen()
+    val route = Gui1NavAdapter.toScreen(appScreen)!!
+    assertEquals(appScreen, Gui1NavAdapter.fromScreen(route))
 }
 ```
 
