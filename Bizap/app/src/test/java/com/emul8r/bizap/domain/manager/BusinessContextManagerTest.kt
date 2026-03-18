@@ -1,6 +1,8 @@
 package com.emul8r.bizap.domain.manager
 
 import com.emul8r.bizap.BaseUnitTest
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
+import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -19,7 +21,8 @@ class BusinessContextManagerTest : BaseUnitTest() {
 
     @Before
     fun setup() {
-        manager = BusinessContextManager()
+        val mockRepository = mockk<BusinessProfileRepository>()
+        manager = BusinessContextManager(mockRepository)
     }
 
     @Test
