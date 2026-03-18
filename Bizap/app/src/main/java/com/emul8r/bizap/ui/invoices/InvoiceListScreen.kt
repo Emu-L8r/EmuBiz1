@@ -1,11 +1,11 @@
-package com.emul8r.bizap.ui.invoices
-
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
@@ -23,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.utils.CentsFormatter
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,8 +41,6 @@ import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.theme.getStatusColor
 import com.emul8r.bizap.ui.theme.getBackgroundColor
 import com.emul8r.bizap.ui.utils.formatDate
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +58,6 @@ fun InvoiceListScreen(
             onViewAnalytics = onViewAnalytics,
         )
         GuiMode.GUI2 -> InvoiceListScreenV2Content(
-            businessId = businessId ?: 1L,
             onInvoiceClick = onInvoiceClick,
             onCreateInvoice = onCreateInvoice,
             onBack = onBack,
@@ -108,8 +105,7 @@ private fun InvoiceListScreenV1Content(
             )
             is InvoiceListUiState.Success -> InvoiceList(
                 invoices = currentState.invoices,
-                onInvoiceClick = onInvoiceClick,
-                onStatusChange = viewModel::updateInvoiceStatus
+                onInvoiceClick = onInvoiceClick
             )
         }
     }
@@ -118,8 +114,7 @@ private fun InvoiceListScreenV1Content(
 @Composable
 fun InvoiceList(
     invoices: List<Invoice>,
-    onInvoiceClick: (Long) -> Unit,
-    onStatusChange: (Long, String) -> Unit
+    onInvoiceClick: (Long) -> Unit
 ) {
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -204,7 +199,6 @@ fun EmptyState(modifier: Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InvoiceListScreenV2Content(
-    businessId: Long,
     onInvoiceClick: (Long) -> Unit,
     onCreateInvoice: () -> Unit,
     onBack: () -> Unit,

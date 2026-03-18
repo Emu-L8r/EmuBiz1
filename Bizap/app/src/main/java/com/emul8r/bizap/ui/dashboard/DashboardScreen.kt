@@ -1,6 +1,8 @@
 package com.emul8r.bizap.ui.dashboard
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -8,33 +10,20 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
-import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
-import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
-import com.emul8r.bizap.ui.common.MetricCard
-import com.emul8r.bizap.ui.gui2.common.*
-import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
-import com.emul8r.bizap.ui.gui2.dashboard.DashboardUiStateV2
-import com.emul8r.bizap.ui.gui2.dashboard.DashboardViewModelV2
-import com.emul8r.bizap.ui.landing.GuiMode
-import com.emul8r.bizap.ui.theme.StatusColors
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.emul8r.bizap.domain.config.BizapConfig
-import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
+import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
+import com.emul8r.bizap.presentation.viewmodel.AnalyticsViewModel
+import com.emul8r.bizap.presentation.viewmodel.AnalyticsUiState
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
+import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
+import com.emul8r.bizap.ui.common.MetricCard
 import com.emul8r.bizap.ui.customers.CustomerViewModel
 import com.emul8r.bizap.ui.dashboard.components.InvoiceStatusPieChart
 import com.emul8r.bizap.ui.dashboard.components.NotesCard
@@ -45,11 +34,14 @@ import com.emul8r.bizap.ui.dashboard.components.analytics.InvoicingVelocityCard
 import com.emul8r.bizap.ui.dashboard.components.base.AnalyticsSectionCard
 import com.emul8r.bizap.ui.dashboard.components.base.HeaderCardBase
 import com.emul8r.bizap.ui.dashboard.components.base.MetricCardBase
-import com.emul8r.bizap.presentation.viewmodel.AnalyticsViewModel
-import com.emul8r.bizap.presentation.viewmodel.AnalyticsUiState
+import com.emul8r.bizap.ui.gui2.common.*
+import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
+import com.emul8r.bizap.ui.gui2.dashboard.DashboardUiStateV2
+import com.emul8r.bizap.ui.gui2.dashboard.DashboardViewModelV2
 import com.emul8r.bizap.ui.invoices.InvoiceList
 import com.emul8r.bizap.ui.invoices.InvoiceListUiState
 import com.emul8r.bizap.ui.invoices.InvoiceListViewModel
+import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.notes.NotesViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
@@ -57,7 +49,6 @@ import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
 import com.emul8r.bizap.ui.theme.DashboardTheme
 import com.emul8r.bizap.ui.theme.StatusColors
 import com.emul8r.bizap.utils.CentsFormatter
-import androidx.compose.ui.unit.dp
 import timber.log.Timber
 
 
