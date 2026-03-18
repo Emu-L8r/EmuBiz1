@@ -216,6 +216,30 @@ class InvoicePdfService @Inject constructor(
             currentY += 12f
         }
 
+        // Bank / EFT payment details — only shown when the business profile has them set
+        val hasBankDetails = snapshot.bankAccountNumber.isNotBlank() || snapshot.bankBsb.isNotBlank()
+        if (hasBankDetails) {
+            currentY += 8f
+            canvas.drawText("EFT / Bank Transfer:", 40f, currentY, labelPaint)
+            currentY += 14f
+            if (snapshot.bankName.isNotBlank()) {
+                canvas.drawText("Bank: ${snapshot.bankName}", 40f, currentY, bodyPaint)
+                currentY += 12f
+            }
+            if (snapshot.bankAccountName.isNotBlank()) {
+                canvas.drawText("Account Name: ${snapshot.bankAccountName}", 40f, currentY, bodyPaint)
+                currentY += 12f
+            }
+            if (snapshot.bankBsb.isNotBlank()) {
+                canvas.drawText("BSB: ${snapshot.bankBsb}", 40f, currentY, bodyPaint)
+                currentY += 12f
+            }
+            if (snapshot.bankAccountNumber.isNotBlank()) {
+                canvas.drawText("Account No: ${snapshot.bankAccountNumber}", 40f, currentY, bodyPaint)
+                currentY += 12f
+            }
+        }
+
         // Render notes and footer below totals
         bodyPaint.textAlign = Paint.Align.LEFT
         if (snapshot.notes.isNotBlank()) {

@@ -330,7 +330,11 @@ class InvoiceDetailViewModel @Inject constructor(
             headerText = invoice.header ?: "",
             subheaderText = invoice.subheader ?: "",
             notes = invoice.notes ?: "",
-            footerText = invoice.footer ?: ""
+            footerText = invoice.footer ?: "",
+            bankAccountName = business.accountName ?: "",
+            bankAccountNumber = business.accountNumber ?: "",
+            bankBsb = business.bsbNumber ?: "",
+            bankName = business.bankName ?: ""
         )
     }
 

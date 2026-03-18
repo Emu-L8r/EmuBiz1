@@ -279,7 +279,11 @@ class CreateInvoiceViewModel @Inject constructor(
                         headerText = state.header,
                         subheaderText = state.subheader,
                         footerText = state.footer,
-                        notes = state.notes
+                        notes = state.notes,
+                        bankAccountName = businessProfile.accountName ?: "",
+                        bankAccountNumber = businessProfile.accountNumber ?: "",
+                        bankBsb = businessProfile.bsbNumber ?: "",
+                        bankName = businessProfile.bankName ?: ""
                     ),
                     isQuote = false,
                     overwriteExisting = true
