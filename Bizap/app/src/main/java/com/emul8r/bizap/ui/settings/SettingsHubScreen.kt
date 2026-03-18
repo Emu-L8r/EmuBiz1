@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Icon
@@ -35,6 +36,12 @@ fun SettingsHubScreen(onNavigate: (Screen) -> Unit) {
             title = "App Appearance",
             subtitle = "Customize the look and feel of the app",
             onClick = { onNavigate(Screen.ThemeSettings) }
+        )
+        SettingsItem(
+            icon = Icons.Default.Tune,
+            title = "App Settings",
+            subtitle = "Theme, display mode, notifications and sync",
+            onClick = { onNavigate(Screen.AppSettings) }
         )
         SettingsItem(
             icon = Icons.AutoMirrored.Filled.PlaylistAdd,

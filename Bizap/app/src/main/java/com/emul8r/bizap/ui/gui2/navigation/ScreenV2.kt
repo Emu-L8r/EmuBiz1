@@ -58,5 +58,8 @@ sealed interface ScreenV2 {
     data class InvoiceAnalytics(val businessId: Long) : ScreenV2
 
     @Serializable
+    data class AppSettings(val businessId: Long) : ScreenV2
+
+    @Serializable
     data class Vault(val businessId: Long) : ScreenV2
 }
