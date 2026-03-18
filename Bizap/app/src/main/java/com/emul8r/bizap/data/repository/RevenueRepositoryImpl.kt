@@ -15,12 +15,14 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
 import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Unified revenue repository — single source of truth for both GUI1 and GUI2.
  *
- * Replaces the former split-brain architecture where [RevenueRepositoryImpl] (legacy)
- * and [RevenueRepositoryV2] (modern) implemented different calculation logic against
+ * Replaces the former split-brain architecture where [RevenueRepositoryImpl] (legacy, using
+ * [com.emul8r.bizap.data.local.InvoiceDao]) and [com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2]
+ * (modern) implemented different calculation logic against
  * the same database. All revenue metrics now flow through one implementation backed
  * by [InvoiceDaoV2], [AnalyticsCalculator], and [AnalyticsValidator].
  *
@@ -31,6 +33,7 @@ import javax.inject.Inject
  */
 @Singleton
 class RevenueRepositoryImpl @Inject constructor(
+    private val invoiceDaoV2: InvoiceDaoV2,
     private val calculator: AnalyticsCalculator,
     private val validator: AnalyticsValidator
 ) : RevenueRepository {
