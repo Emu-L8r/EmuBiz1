@@ -230,6 +230,8 @@ fun GuiV2NavGraph(
                 )
             }
 
+            // SettingsScreen is user-level (not business-scoped) so businessId is not
+            // extracted from the route; it is carried only for navigation-graph consistency.
             composable<ScreenV2.AppSettings> {
                 AppSettingsScreenV2(
                     onResetConfirmed = { navController.popBackStack() }
