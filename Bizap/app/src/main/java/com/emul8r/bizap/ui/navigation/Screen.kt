@@ -78,4 +78,7 @@ sealed interface Screen {
 
     @Serializable
     object Notes : Screen
+
+    @Serializable
+    object Help : Screen
 }

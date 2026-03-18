@@ -56,6 +56,7 @@ import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.settings.SettingsHubScreen
 import com.emul8r.bizap.ui.settings.ThemeSettingsScreen
 import com.emul8r.bizap.presentation.ui.screens.SettingsScreen as AppSettingsScreen
+import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.ui.templates.CreateTemplateScreen
 import com.emul8r.bizap.ui.templates.EditTemplateScreen
 import com.emul8r.bizap.ui.templates.TemplateListScreen
@@ -199,6 +200,7 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                     currentDestination?.hasRoute<Screen.CustomerAnalytics>() == true -> "Customer Analytics"
                     currentDestination?.hasRoute<Screen.Notes>() == true -> "Notes"
                     currentDestination?.hasRoute<Screen.AppSettings>() == true -> "App Settings"
+                    currentDestination?.hasRoute<Screen.Help>() == true -> "Help & About"
                     else -> "Bizap"
                 }
 
@@ -362,6 +364,11 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 }
                 composable<Screen.AppSettings> {
                     AppSettingsScreen()
+                }
+                composable<Screen.Help> {
+                    HelpScreen(
+                        onBack = { navController.popBackStack() }
+                    )
                 }
             }
 
