@@ -57,4 +57,13 @@ class BusinessContextManager @Inject constructor(
             ?: throw IllegalStateException(
                 "No active business ID set. Call setActiveBusinessId() before using requireActiveBusinessId()."
             )
+
+    /**
+     * Clears the active business ID, resetting it to null.
+     * Use this during logout or when the user deselects their business.
+     */
+    fun clearActiveBusinessId() {
+        Timber.d("BusinessContextManager: clearing active business ID")
+        _activeBusinessId.value = null
+    }
 }
