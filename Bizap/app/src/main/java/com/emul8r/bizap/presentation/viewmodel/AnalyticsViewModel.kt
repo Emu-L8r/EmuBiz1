@@ -56,7 +56,7 @@ class AnalyticsViewModel @Inject constructor(
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.Eagerly,
                 initialValue = emptyList()
             )
 
@@ -90,7 +90,7 @@ class AnalyticsViewModel @Inject constructor(
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.Eagerly,
                 initialValue = emptyList()
             )
 
@@ -109,7 +109,7 @@ class AnalyticsViewModel @Inject constructor(
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.Eagerly,
                 initialValue = 0.0
             )
 
@@ -126,7 +126,7 @@ class AnalyticsViewModel @Inject constructor(
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.Eagerly,
                 initialValue = emptyList()
             )
 
@@ -143,7 +143,7 @@ class AnalyticsViewModel @Inject constructor(
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.Eagerly,
                 initialValue = emptyList()
             )
 
@@ -160,7 +160,7 @@ class AnalyticsViewModel @Inject constructor(
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.Eagerly,
                 initialValue = 0L
             )
 
@@ -177,7 +177,7 @@ class AnalyticsViewModel @Inject constructor(
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.Eagerly,
                 initialValue = 0L
             )
 
@@ -194,7 +194,7 @@ class AnalyticsViewModel @Inject constructor(
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.Eagerly,
                 initialValue = 0
             )
 
@@ -211,7 +211,7 @@ class AnalyticsViewModel @Inject constructor(
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.Eagerly,
                 initialValue = 0
             )
 
@@ -260,10 +260,10 @@ class AnalyticsViewModel @Inject constructor(
             Timber.e(e, "AnalyticsViewModel: Error aggregating state")
             AnalyticsUiState.Error(e.message ?: "Unknown error")
         }
-    }
+        }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
+            started = SharingStarted.Eagerly,
             initialValue = AnalyticsUiState.Loading
         )
 
