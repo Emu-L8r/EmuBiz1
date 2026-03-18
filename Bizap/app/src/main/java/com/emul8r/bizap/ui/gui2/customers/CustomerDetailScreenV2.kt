@@ -192,10 +192,3 @@ private fun DetailSection(
     }
 }
 
-// UI State
-sealed interface CustomerDetailUiStateV2 {
-    object Loading : CustomerDetailUiStateV2
-    data class Error(val message: String) : CustomerDetailUiStateV2
-    data class Success(val customer: Customer) : CustomerDetailUiStateV2
-}
-

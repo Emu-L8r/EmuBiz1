@@ -168,9 +168,3 @@ private fun BusinessProfileForm(
     }
 }
 
-sealed interface BusinessProfileUiStateV2 {
-    object Loading : BusinessProfileUiStateV2
-    data class Error(val message: String) : BusinessProfileUiStateV2
-    data class Success(val businessProfile: BusinessProfile) : BusinessProfileUiStateV2
-}
-
