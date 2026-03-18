@@ -2,8 +2,6 @@ package com.emul8r.bizap.data.repository.analytics
 
 import timber.log.Timber
 import kotlin.math.absoluteValue
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Validates mathematical invariants for analytics metrics before they reach the UI.
@@ -13,9 +11,10 @@ import javax.inject.Singleton
  *   - No negative monetary amounts
  *   - collectionRate bounded [0.0, 100.0]
  *   - agingBuckets.sum() ≈ outstanding
+ *
+ * Provided by Hilt via [com.emul8r.bizap.di.AnalyticsModule].
  */
-@Singleton
-class AnalyticsValidator @Inject constructor() {
+class AnalyticsValidator {
 
     data class ValidationResult(
         val isValid: Boolean,
