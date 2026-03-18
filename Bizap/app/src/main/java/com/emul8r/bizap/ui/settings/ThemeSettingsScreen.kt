@@ -18,11 +18,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.emul8r.bizap.domain.model.ThemePreference
+import com.emul8r.bizap.presentation.viewmodel.SettingsViewModel
 import com.emul8r.bizap.ui.theme.ThemePresets
 
+/**
+ * Theme settings screen (GUI1 "App Appearance").
+ *
+ * Uses [ThemeViewModel] for the seed-colour / preset selection (stored in
+ * [ThemeRepository]) **and** [SettingsViewModel] for the LIGHT/DARK/AUTO
+ * preference (stored in [SettingsRepository]).
+ *
+ * Both repositories must be kept in sync: when the user toggles dark mode here,
+ * [SettingsViewModel.setThemePreference] is called so that [ThemeProvider] — which
+ * reads from [SettingsRepository] — immediately reflects the change.
+ */
 @Composable
-fun ThemeSettingsScreen(viewModel: ThemeViewModel = hiltViewModel()) {
+fun ThemeSettingsScreen(
+    viewModel: ThemeViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
+) {
     val config by viewModel.themeConfig.collectAsStateWithLifecycle()
+    val themePreference by settingsViewModel.themePreference.collectAsStateWithLifecycle()
+
+    // Derive the displayed dark-mode state from the authoritative SettingsRepository,
+    // falling back to ThemeRepository for backward compatibility.
+    val isDarkMode = themePreference == ThemePreference.DARK
 
     LazyColumn(modifier = Modifier
         .fillMaxSize()
@@ -42,8 +63,16 @@ fun ThemeSettingsScreen(viewModel: ThemeViewModel = hiltViewModel()) {
                 ThemePresets.allLightPresets.forEach { preset ->
                     PresetButton(
                         preset = preset,
-                        isSelected = config.seedColorHex == preset.colorHex && !config.isDarkMode,
-                        onSelect = { viewModel.applyPreset(preset) }
+                        isSelected = config.seedColorHex == preset.colorHex && !isDarkMode,
+                        onSelect = {
+                            viewModel.applyPreset(preset)
+                            // Keep SettingsRepository in sync when a light preset is chosen
+                            if (preset.isDarkModePreset) {
+                                settingsViewModel.setThemePreference(ThemePreference.DARK)
+                            } else {
+                                settingsViewModel.setThemePreference(ThemePreference.LIGHT)
+                            }
+                        }
                     )
                 }
             }
@@ -62,21 +91,31 @@ fun ThemeSettingsScreen(viewModel: ThemeViewModel = hiltViewModel()) {
             ) {
                 Text("Enable Dark Mode", style = MaterialTheme.typography.bodyLarge)
                 Switch(
-                    checked = config.isDarkMode,
-                    onCheckedChange = { viewModel.updateDarkMode(it) }
+                    checked = isDarkMode,
+                    onCheckedChange = { enabled ->
+                        viewModel.updateDarkMode(enabled)
+                        // Sync the change into SettingsRepository so ThemeProvider picks it up
+                        settingsViewModel.setThemePreference(
+                            if (enabled) ThemePreference.DARK else ThemePreference.LIGHT
+                        )
+                    }
                 )
             }
 
             Spacer(Modifier.height(16.dp))
 
             // Dark mode presets
-            if (config.isDarkMode) {
+            if (isDarkMode) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ThemePresets.allDarkPresets.forEach { preset ->
                         PresetButton(
                             preset = preset,
-                            isSelected = config.seedColorHex == preset.colorHex && config.isDarkMode,
-                            onSelect = { viewModel.applyPreset(preset) }
+                            isSelected = config.seedColorHex == preset.colorHex && isDarkMode,
+                            onSelect = {
+                                viewModel.applyPreset(preset)
+                                // Keep SettingsRepository in sync when a dark preset is chosen
+                                settingsViewModel.setThemePreference(ThemePreference.DARK)
+                            }
                         )
                     }
                 }
