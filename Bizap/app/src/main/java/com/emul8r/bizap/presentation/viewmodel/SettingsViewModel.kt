@@ -47,7 +47,7 @@ class SettingsViewModel @Inject constructor(
     val settings: StateFlow<Settings> = getSettingsUseCase()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
+            started = SharingStarted.Eagerly,
             initialValue = Settings()
         )
 
@@ -55,31 +55,31 @@ class SettingsViewModel @Inject constructor(
 
     val themePreference: StateFlow<ThemePreference> = settings
         .map { it.themePreference }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings().themePreference)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, Settings().themePreference)
 
     val displayMode: StateFlow<DisplayMode> = settings
         .map { it.displayMode }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings().displayMode)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, Settings().displayMode)
 
     val uiDensity: StateFlow<UiDensity> = settings
         .map { it.uiDensity }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings().uiDensity)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, Settings().uiDensity)
 
     val notificationsEnabled: StateFlow<Boolean> = settings
         .map { it.notificationsEnabled }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings().notificationsEnabled)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, Settings().notificationsEnabled)
 
     val emailNotificationsEnabled: StateFlow<Boolean> = settings
         .map { it.emailNotificationsEnabled }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings().emailNotificationsEnabled)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, Settings().emailNotificationsEnabled)
 
     val autoSyncEnabled: StateFlow<Boolean> = settings
         .map { it.autoSyncEnabled }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings().autoSyncEnabled)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, Settings().autoSyncEnabled)
 
     val syncFrequencyMinutes: StateFlow<Int> = settings
         .map { it.syncFrequencyMinutes }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Settings().syncFrequencyMinutes)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, Settings().syncFrequencyMinutes)
 
     // ── Write helpers ──────────────────────────────────────────────────────
 

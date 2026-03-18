@@ -135,6 +135,7 @@ class SettingsViewModelTest : BaseUnitTest() {
         val updated = Settings(themePreference = ThemePreference.DARK)
         settingsFlow.value = updated
         advanceUntilIdle()
-        assertEquals(ThemePreference.DARK, viewModel.settings.first().themePreference)
+        // Verify that the derived themePreference flow picks up the emitted change
+        assertEquals(ThemePreference.DARK, viewModel.themePreference.first())
     }
 }
