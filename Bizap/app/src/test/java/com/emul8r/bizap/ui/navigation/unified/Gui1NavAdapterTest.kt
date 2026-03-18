@@ -185,4 +185,171 @@ class Gui1NavAdapterTest {
         val result = Gui1NavAdapter.fromScreen(Screen.InvoiceDetail(invoiceId = 55L))
         assertEquals(AppScreen.InvoiceDetail(invoiceId = 55L), result)
     }
+
+    @Test
+    fun `fromScreen Invoices round-trips to AppScreen InvoiceList`() {
+        assertEquals(AppScreen.InvoiceList(), Gui1NavAdapter.fromScreen(Screen.Invoices))
+    }
+
+    @Test
+    fun `fromScreen CreateInvoice round-trips to AppScreen CreateInvoice`() {
+        assertEquals(AppScreen.CreateInvoice(), Gui1NavAdapter.fromScreen(Screen.CreateInvoice))
+    }
+
+    @Test
+    fun `fromScreen EditInvoice preserves invoiceId`() {
+        assertEquals(
+            AppScreen.EditInvoice(invoiceId = 12L),
+            Gui1NavAdapter.fromScreen(Screen.EditInvoice(invoiceId = 12L))
+        )
+    }
+
+    @Test
+    fun `fromScreen InvoicePdf preserves invoiceId and isQuote`() {
+        assertEquals(
+            AppScreen.InvoicePdf(invoiceId = 8L, isQuote = false),
+            Gui1NavAdapter.fromScreen(Screen.InvoicePdf(invoiceId = 8L, isQuote = false))
+        )
+    }
+
+    @Test
+    fun `fromScreen SettingsHub round-trips to AppScreen SettingsHub`() {
+        assertEquals(AppScreen.SettingsHub(), Gui1NavAdapter.fromScreen(Screen.SettingsHub))
+    }
+
+    @Test
+    fun `fromScreen AppSettings round-trips to AppScreen AppSettings`() {
+        assertEquals(AppScreen.AppSettings(), Gui1NavAdapter.fromScreen(Screen.AppSettings))
+    }
+
+    @Test
+    fun `fromScreen BusinessProfile round-trips to AppScreen BusinessProfile`() {
+        assertEquals(AppScreen.BusinessProfile(), Gui1NavAdapter.fromScreen(Screen.BusinessProfile))
+    }
+
+    @Test
+    fun `fromScreen ThemeSettings round-trips to AppScreen ThemeSettings`() {
+        assertEquals(AppScreen.ThemeSettings(), Gui1NavAdapter.fromScreen(Screen.ThemeSettings))
+    }
+
+    @Test
+    fun `fromScreen PrefilledItems round-trips to AppScreen PrefilledItems`() {
+        assertEquals(AppScreen.PrefilledItems, Gui1NavAdapter.fromScreen(Screen.PrefilledItems))
+    }
+
+    @Test
+    fun `fromScreen BackupRestore round-trips to AppScreen BackupRestore`() {
+        assertEquals(AppScreen.BackupRestore, Gui1NavAdapter.fromScreen(Screen.BackupRestore))
+    }
+
+    @Test
+    fun `fromScreen DocumentVault round-trips to AppScreen DocumentVault`() {
+        assertEquals(AppScreen.DocumentVault(), Gui1NavAdapter.fromScreen(Screen.DocumentVault))
+    }
+
+    @Test
+    fun `fromScreen RevenueDashboard round-trips to AppScreen RevenueAnalytics`() {
+        assertEquals(AppScreen.RevenueAnalytics(), Gui1NavAdapter.fromScreen(Screen.RevenueDashboard))
+    }
+
+    @Test
+    fun `fromScreen PaymentAnalytics preserves businessId`() {
+        assertEquals(
+            AppScreen.PaymentAnalytics(businessId = 3L),
+            Gui1NavAdapter.fromScreen(Screen.PaymentAnalytics(businessId = 3L))
+        )
+    }
+
+    @Test
+    fun `fromScreen PaymentAnalytics with null businessId`() {
+        assertEquals(
+            AppScreen.PaymentAnalytics(businessId = null),
+            Gui1NavAdapter.fromScreen(Screen.PaymentAnalytics(businessId = null))
+        )
+    }
+
+    @Test
+    fun `fromScreen RiskDashboard round-trips to AppScreen RiskAnalytics`() {
+        assertEquals(AppScreen.RiskAnalytics(), Gui1NavAdapter.fromScreen(Screen.RiskDashboard))
+    }
+
+    @Test
+    fun `fromScreen DunningNotices round-trips to AppScreen DunningNotices`() {
+        assertEquals(AppScreen.DunningNotices, Gui1NavAdapter.fromScreen(Screen.DunningNotices))
+    }
+
+    @Test
+    fun `fromScreen InvoiceTemplates preserves businessProfileId`() {
+        assertEquals(
+            AppScreen.InvoiceTemplates(businessProfileId = 5L),
+            Gui1NavAdapter.fromScreen(Screen.InvoiceTemplates(businessProfileId = 5L))
+        )
+    }
+
+    @Test
+    fun `fromScreen CreateTemplate preserves businessProfileId`() {
+        assertEquals(
+            AppScreen.CreateTemplate(businessProfileId = 2L),
+            Gui1NavAdapter.fromScreen(Screen.CreateTemplate(businessProfileId = 2L))
+        )
+    }
+
+    @Test
+    fun `fromScreen EditTemplate preserves templateId`() {
+        assertEquals(
+            AppScreen.EditTemplate(templateId = "template-abc"),
+            Gui1NavAdapter.fromScreen(Screen.EditTemplate(templateId = "template-abc"))
+        )
+    }
+
+    @Test
+    fun `fromScreen CustomerSegments round-trips to AppScreen CustomerSegments`() {
+        assertEquals(AppScreen.CustomerSegments, Gui1NavAdapter.fromScreen(Screen.CustomerSegments))
+    }
+
+    @Test
+    fun `fromScreen CustomerAnalytics round-trips to AppScreen CustomerAnalytics`() {
+        assertEquals(AppScreen.CustomerAnalytics, Gui1NavAdapter.fromScreen(Screen.CustomerAnalytics))
+    }
+
+    @Test
+    fun `fromScreen Notes round-trips to AppScreen Notes`() {
+        assertEquals(AppScreen.Notes, Gui1NavAdapter.fromScreen(Screen.Notes))
+    }
+
+    // ── toScreen: template and misc screens ───────────────────────────────────
+
+    @Test
+    fun `InvoiceTemplates maps to Screen InvoiceTemplates with businessProfileId`() {
+        assertEquals(
+            Screen.InvoiceTemplates(businessProfileId = 3L),
+            Gui1NavAdapter.toScreen(AppScreen.InvoiceTemplates(businessProfileId = 3L))
+        )
+    }
+
+    @Test
+    fun `CreateTemplate maps to Screen CreateTemplate with businessProfileId`() {
+        assertEquals(
+            Screen.CreateTemplate(businessProfileId = 7L),
+            Gui1NavAdapter.toScreen(AppScreen.CreateTemplate(businessProfileId = 7L))
+        )
+    }
+
+    @Test
+    fun `EditTemplate maps to Screen EditTemplate with templateId`() {
+        assertEquals(
+            Screen.EditTemplate(templateId = "tmpl-123"),
+            Gui1NavAdapter.toScreen(AppScreen.EditTemplate(templateId = "tmpl-123"))
+        )
+    }
+
+    @Test
+    fun `CustomerSegments maps to Screen CustomerSegments`() {
+        assertEquals(Screen.CustomerSegments, Gui1NavAdapter.toScreen(AppScreen.CustomerSegments))
+    }
+
+    @Test
+    fun `CustomerAnalytics maps to Screen CustomerAnalytics`() {
+        assertEquals(Screen.CustomerAnalytics, Gui1NavAdapter.toScreen(AppScreen.CustomerAnalytics))
+    }
 }

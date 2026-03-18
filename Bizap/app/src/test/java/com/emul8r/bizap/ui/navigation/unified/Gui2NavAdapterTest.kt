@@ -223,4 +223,183 @@ class Gui2NavAdapterTest {
             Gui2NavAdapter.fromScreen(ScreenV2.Vault(7L))
         )
     }
+
+    @Test
+    fun `fromScreen Invoices preserves businessId`() {
+        assertEquals(
+            AppScreen.InvoiceList(4L),
+            Gui2NavAdapter.fromScreen(ScreenV2.Invoices(4L))
+        )
+    }
+
+    @Test
+    fun `fromScreen CreateInvoice preserves businessId`() {
+        assertEquals(
+            AppScreen.CreateInvoice(3L),
+            Gui2NavAdapter.fromScreen(ScreenV2.CreateInvoice(3L))
+        )
+    }
+
+    @Test
+    fun `fromScreen InvoiceDetail preserves both ids`() {
+        assertEquals(
+            AppScreen.InvoiceDetail(invoiceId = 20L, businessId = 2L),
+            Gui2NavAdapter.fromScreen(ScreenV2.InvoiceDetail(businessId = 2L, invoiceId = 20L))
+        )
+    }
+
+    @Test
+    fun `fromScreen EditInvoice preserves both ids`() {
+        assertEquals(
+            AppScreen.EditInvoice(invoiceId = 15L, businessId = 6L),
+            Gui2NavAdapter.fromScreen(ScreenV2.EditInvoice(businessId = 6L, invoiceId = 15L))
+        )
+    }
+
+    @Test
+    fun `fromScreen CreateCustomer preserves businessId`() {
+        assertEquals(
+            AppScreen.CreateCustomer(8L),
+            Gui2NavAdapter.fromScreen(ScreenV2.CreateCustomer(8L))
+        )
+    }
+
+    @Test
+    fun `fromScreen EditCustomer preserves both ids`() {
+        assertEquals(
+            AppScreen.EditCustomer(customerId = 11L, businessId = 9L),
+            Gui2NavAdapter.fromScreen(ScreenV2.EditCustomer(businessId = 9L, customerId = 11L))
+        )
+    }
+
+    @Test
+    fun `fromScreen Settings maps to AppScreen SettingsHub`() {
+        assertEquals(
+            AppScreen.SettingsHub(2L),
+            Gui2NavAdapter.fromScreen(ScreenV2.Settings(2L))
+        )
+    }
+
+    @Test
+    fun `fromScreen BusinessProfile preserves businessId`() {
+        assertEquals(
+            AppScreen.BusinessProfile(4L),
+            Gui2NavAdapter.fromScreen(ScreenV2.BusinessProfile(4L))
+        )
+    }
+
+    @Test
+    fun `fromScreen AppSettings preserves businessId`() {
+        assertEquals(
+            AppScreen.AppSettings(5L),
+            Gui2NavAdapter.fromScreen(ScreenV2.AppSettings(5L))
+        )
+    }
+
+    @Test
+    fun `fromScreen ThemeSettings preserves businessId`() {
+        assertEquals(
+            AppScreen.ThemeSettings(6L),
+            Gui2NavAdapter.fromScreen(ScreenV2.ThemeSettings(6L))
+        )
+    }
+
+    @Test
+    fun `fromScreen RevenueAnalytics preserves businessId`() {
+        assertEquals(
+            AppScreen.RevenueAnalytics(7L),
+            Gui2NavAdapter.fromScreen(ScreenV2.RevenueAnalytics(7L))
+        )
+    }
+
+    @Test
+    fun `fromScreen PaymentAnalytics preserves businessId`() {
+        assertEquals(
+            AppScreen.PaymentAnalytics(8L),
+            Gui2NavAdapter.fromScreen(ScreenV2.PaymentAnalytics(8L))
+        )
+    }
+
+    @Test
+    fun `fromScreen RiskAnalytics preserves businessId`() {
+        assertEquals(
+            AppScreen.RiskAnalytics(9L),
+            Gui2NavAdapter.fromScreen(ScreenV2.RiskAnalytics(9L))
+        )
+    }
+
+    @Test
+    fun `fromScreen InvoiceAnalytics preserves businessId`() {
+        assertEquals(
+            AppScreen.InvoiceAnalytics(10L),
+            Gui2NavAdapter.fromScreen(ScreenV2.InvoiceAnalytics(10L))
+        )
+    }
+
+    // ── toScreen: additional mapping tests ────────────────────────────────────
+
+    @Test
+    fun `EditInvoice maps to ScreenV2 EditInvoice with both ids`() {
+        assertEquals(
+            ScreenV2.EditInvoice(businessId = fallback, invoiceId = 30L),
+            Gui2NavAdapter.toScreen(AppScreen.EditInvoice(invoiceId = 30L), fallback)
+        )
+    }
+
+    @Test
+    fun `EditCustomer maps to ScreenV2 EditCustomer with both ids`() {
+        assertEquals(
+            ScreenV2.EditCustomer(businessId = fallback, customerId = 25L),
+            Gui2NavAdapter.toScreen(AppScreen.EditCustomer(customerId = 25L), fallback)
+        )
+    }
+
+    @Test
+    fun `ThemeSettings maps to ScreenV2 ThemeSettings`() {
+        assertEquals(
+            ScreenV2.ThemeSettings(fallback),
+            Gui2NavAdapter.toScreen(AppScreen.ThemeSettings(), fallback)
+        )
+    }
+
+    @Test
+    fun `InvoiceTemplates returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.InvoiceTemplates(1L), fallback))
+    }
+
+    @Test
+    fun `CreateTemplate returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.CreateTemplate(businessProfileId = 1L), fallback))
+    }
+
+    @Test
+    fun `EditTemplate returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.EditTemplate(templateId = "t1"), fallback))
+    }
+
+    @Test
+    fun `CustomerSegments returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.CustomerSegments, fallback))
+    }
+
+    @Test
+    fun `CustomerAnalytics returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.CustomerAnalytics, fallback))
+    }
+
+    @Test
+    fun `InvoiceDetail uses businessId from AppScreen when present`() {
+        assertEquals(
+            ScreenV2.InvoiceDetail(businessId = 3L, invoiceId = 7L),
+            Gui2NavAdapter.toScreen(AppScreen.InvoiceDetail(invoiceId = 7L, businessId = 3L), fallback)
+        )
+    }
+
+    @Test
+    fun `CreateInvoice uses businessId from AppScreen when present`() {
+        assertEquals(
+            ScreenV2.CreateInvoice(businessId = 11L),
+            Gui2NavAdapter.toScreen(AppScreen.CreateInvoice(businessId = 11L), fallback)
+        )
+    }
 }
