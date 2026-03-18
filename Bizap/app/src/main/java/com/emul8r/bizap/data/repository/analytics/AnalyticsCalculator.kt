@@ -7,8 +7,6 @@ import com.emul8r.bizap.domain.model.gui2.PaymentMetricsV2
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.domain.model.gui2.RiskMetricsV2
 import com.emul8r.bizap.domain.model.gui2.StatusBreakdownV2
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Centralises all analytics calculation logic that was previously duplicated
@@ -19,9 +17,10 @@ import javax.inject.Singleton
  *   1. Testable in isolation without requiring a DAO or Flow.
  *   2. The single source of truth for each formula.
  *   3. Easy to update consistently across all repositories.
+ *
+ * Provided by Hilt via [com.emul8r.bizap.di.AnalyticsModule].
  */
-@Singleton
-class AnalyticsCalculator @Inject constructor() {
+class AnalyticsCalculator {
 
     /**
      * Combines individual revenue measurements into a unified [RevenueMetricsV2].
