@@ -84,3 +84,7 @@ fun NavHostController.navigateToVaultV2(businessId: Long) {
 fun NavHostController.navigateToAppSettingsV2(businessId: Long) {
     navigate(ScreenV2.AppSettings(businessId))
 }
+
+fun NavHostController.navigateToHelpV2(businessId: Long) {
+    navigate(ScreenV2.Help(businessId))
+}
