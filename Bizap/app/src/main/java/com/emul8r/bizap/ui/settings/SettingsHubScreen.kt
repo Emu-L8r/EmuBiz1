@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Tune
@@ -90,6 +91,12 @@ fun SettingsHubScreen(onNavigate: (Screen) -> Unit) {
             title = "Customer Segments",
             subtitle = "View customer segmentation and analytics",
             onClick = { onNavigate(Screen.CustomerSegments) }
+        )
+        SettingsItem(
+            icon = Icons.Default.HelpOutline,
+            title = "Help & About",
+            subtitle = "App information, version, and support",
+            onClick = { onNavigate(Screen.Help) }
         )
     }
 }

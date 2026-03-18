@@ -26,6 +26,7 @@ import com.emul8r.bizap.ui.gui2.settings.BusinessProfileScreenV2
 import com.emul8r.bizap.ui.gui2.settings.SettingsHubScreenV2
 import com.emul8r.bizap.ui.gui2.settings.ThemeSettingsScreenV2
 import com.emul8r.bizap.presentation.ui.screens.SettingsScreen as AppSettingsScreenV2
+import com.emul8r.bizap.ui.shared.screens.HelpScreen
 
 /**
  * Navigation graph for GUI2.
@@ -197,6 +198,9 @@ fun GuiV2NavGraph(
                     onAppSettingsClick = {
                         navController.navigateToAppSettingsV2(route.businessId)
                     },
+                    onHelpClick = {
+                        navController.navigateToHelpV2(route.businessId)
+                    },
                     onBack = { navController.popBackStack() },
                     onSwitchToGui1 = onSwitchToGui1
                 )
@@ -235,6 +239,13 @@ fun GuiV2NavGraph(
             composable<ScreenV2.AppSettings> {
                 AppSettingsScreenV2(
                     onResetConfirmed = { navController.popBackStack() }
+                )
+            }
+
+            // HelpScreen is shared between GUI1 and GUI2.
+            composable<ScreenV2.Help> {
+                HelpScreen(
+                    onBack = { navController.popBackStack() }
                 )
             }
         }

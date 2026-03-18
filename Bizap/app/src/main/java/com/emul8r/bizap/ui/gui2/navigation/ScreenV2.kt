@@ -67,4 +67,11 @@ sealed interface ScreenV2 {
 
     @Serializable
     data class Vault(val businessId: Long) : ScreenV2
+
+    /**
+     * Help / About screen (shared HelpScreen composable).
+     * businessId is carried for navigation-graph consistency only.
+     */
+    @Serializable
+    data class Help(val businessId: Long) : ScreenV2
 }
