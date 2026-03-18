@@ -8,7 +8,7 @@ import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
 import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
-import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
+import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import io.mockk.*
@@ -30,7 +30,7 @@ import kotlin.test.assertTrue
 class DashboardViewModelTest : BaseUnitTest() {
 
     private val dao: InvoiceDaoV2 = mockk()
-    private lateinit var revenueRepository: RevenueRepositoryV2
+    private lateinit var revenueRepository: RevenueRepositoryImpl
     private lateinit var paymentRepository: PaymentAnalyticsRepositoryV2
     private lateinit var riskRepository: RiskAnalyticsRepositoryV2
 
@@ -40,7 +40,7 @@ class DashboardViewModelTest : BaseUnitTest() {
     fun setUp() {
         val calculator = AnalyticsCalculator()
         val validator = AnalyticsValidator()
-        revenueRepository = RevenueRepositoryV2(dao, calculator, validator)
+        revenueRepository = RevenueRepositoryImpl(dao, calculator, validator)
         paymentRepository = PaymentAnalyticsRepositoryV2(dao, calculator, validator)
         riskRepository = RiskAnalyticsRepositoryV2(dao, calculator)
     }

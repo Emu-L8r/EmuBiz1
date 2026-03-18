@@ -7,7 +7,7 @@ import com.emul8r.bizap.data.local.entities.InvoiceStatusCountV2
 import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
 import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
-import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
+import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
 import io.mockk.*
 import kotlinx.coroutines.flow.first
@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 class DashboardIntegrationTest : BaseUnitTest() {
 
     private val dao: InvoiceDaoV2 = mockk()
-    private lateinit var revenueRepo: RevenueRepositoryV2
+    private lateinit var revenueRepo: RevenueRepositoryImpl
     private lateinit var paymentRepo: PaymentAnalyticsRepositoryV2
     private lateinit var riskRepo: RiskAnalyticsRepositoryV2
 
@@ -35,7 +35,7 @@ class DashboardIntegrationTest : BaseUnitTest() {
     fun setup() {
         val calculator = AnalyticsCalculator()
         val validator = AnalyticsValidator()
-        revenueRepo = RevenueRepositoryV2(dao, calculator, validator)
+        revenueRepo = RevenueRepositoryImpl(dao, calculator, validator)
         paymentRepo = PaymentAnalyticsRepositoryV2(dao, calculator, validator)
         riskRepo = RiskAnalyticsRepositoryV2(dao, calculator)
     }
