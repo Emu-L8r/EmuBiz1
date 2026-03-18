@@ -1,19 +1,59 @@
 package com.emul8r.bizap.ui.customers
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.emul8r.bizap.domain.model.Customer
+import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
+import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
+import com.emul8r.bizap.ui.gui2.customers.CustomerListUiStateV2
+import com.emul8r.bizap.ui.gui2.customers.CustomerListViewModelV2
+import com.emul8r.bizap.ui.landing.GuiMode
+import timber.log.Timber
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerListScreen(
+    guiMode: GuiMode = GuiMode.GUI1,
+    businessId: Long? = null,
+    onCustomerClick: (Long) -> Unit,
+    onCreateCustomer: () -> Unit = {},
+    onViewSegments: (() -> Unit)? = null,
+    onViewAnalytics: (() -> Unit)? = null,
+    onBack: () -> Unit = {},
+) {
+    when (guiMode) {
+        GuiMode.GUI1 -> CustomerListScreenV1Content(
+            onCustomerClick = onCustomerClick,
+            onViewSegments = onViewSegments,
+            onViewAnalytics = onViewAnalytics,
+        )
+        GuiMode.GUI2 -> CustomerListScreenV2Content(
+            businessId = businessId ?: 1L,
+            onCustomerClick = onCustomerClick,
+            onCreateCustomer = onCreateCustomer,
+            onBack = onBack,
+        )
+    }
+}
+
+@Composable
+private fun CustomerListScreenV1Content(
     onCustomerClick: (Long) -> Unit,
     onViewSegments: (() -> Unit)? = null,
     onViewAnalytics: (() -> Unit)? = null,
@@ -46,7 +86,156 @@ fun CustomerListScreen(
                 Text("View Customer Segments")
             }
         }
-        // MainActivity's Scaffold provides the TopAppBar, so just show content
         CustomerList(customers = customers, onCustomerClick = onCustomerClick)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CustomerListScreenV2Content(
+    businessId: Long,
+    onCustomerClick: (Long) -> Unit,
+    onCreateCustomer: () -> Unit,
+    onBack: () -> Unit,
+    viewModel: CustomerListViewModelV2 = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Customers") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onCreateCustomer) {
+                Icon(Icons.Default.Add, contentDescription = "Add Customer")
+            }
+        }
+    ) { paddingValues ->
+        when (val state = uiState) {
+            is CustomerListUiStateV2.Loading -> {
+                LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
+            }
+            is CustomerListUiStateV2.Error -> {
+                ErrorStateV2(
+                    message = state.message,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            is CustomerListUiStateV2.Success -> {
+                CustomerListV2Content(
+                    customers = state.customers,
+                    onCustomerClick = onCustomerClick,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CustomerListV2Content(
+    customers: List<Customer>,
+    onCustomerClick: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (customers.isEmpty()) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "No customers yet",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "Tap + to add your first customer",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(customers) { customer ->
+                CustomerCardV2(
+                    customer = customer,
+                    onClick = { onCustomerClick(customer.id) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CustomerCardV2(
+    customer: Customer,
+    onClick: () -> Unit
+) {
+    OutlinedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = customer.name,
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            customer.businessName?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            customer.email?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            customer.phone?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }

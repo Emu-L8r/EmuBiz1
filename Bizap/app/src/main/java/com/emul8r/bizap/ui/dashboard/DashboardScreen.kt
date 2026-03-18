@@ -1,5 +1,25 @@
 package com.emul8r.bizap.ui.dashboard
 
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
+import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
+import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
+import com.emul8r.bizap.ui.common.MetricCard
+import com.emul8r.bizap.ui.gui2.common.*
+import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
+import com.emul8r.bizap.ui.gui2.dashboard.DashboardUiStateV2
+import com.emul8r.bizap.ui.gui2.dashboard.DashboardViewModelV2
+import com.emul8r.bizap.ui.landing.GuiMode
+import com.emul8r.bizap.ui.theme.StatusColors
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

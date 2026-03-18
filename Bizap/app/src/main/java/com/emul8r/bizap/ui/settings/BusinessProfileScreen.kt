@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Delete
@@ -27,8 +28,10 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,20 +44,39 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.BuildConfig
+import com.emul8r.bizap.domain.model.BusinessProfile
+import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
+import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
+import com.emul8r.bizap.ui.gui2.settings.BusinessProfileUiStateV2
+import com.emul8r.bizap.ui.gui2.settings.BusinessProfileViewModelV2
+import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.utils.ImageCompressor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel()) {
+fun BusinessProfileScreen(
+    guiMode: GuiMode = GuiMode.GUI1,
+    onBack: () -> Unit = {},
+    viewModel: BusinessProfileViewModel = hiltViewModel(),
+) {
+    when (guiMode) {
+        GuiMode.GUI1 -> BusinessProfileScreenV1Content(viewModel = viewModel)
+        GuiMode.GUI2 -> BusinessProfileScreenV2Content(onBack = onBack)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BusinessProfileScreenV1Content(viewModel: BusinessProfileViewModel = hiltViewModel()) {
     val profile by viewModel.profileState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Gallery picker launcher
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -70,7 +92,6 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
         }
     }
 
-    // Camera launcher
     val cameraImageUri = remember {
         val photoFile = File(context.cacheDir, "logo_${System.currentTimeMillis()}.jpg")
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
@@ -92,7 +113,7 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
     }
 
     Scaffold(
-        topBar = {}  // MainActivity provides the header
+        topBar = {}
     ) { padding ->
         Column(
             modifier = Modifier
@@ -102,7 +123,6 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Logo Section
             Text("Business Logo", style = MaterialTheme.typography.titleMedium)
             Text(
                 "This logo will appear on your invoices and in the app header",
@@ -119,7 +139,6 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Logo preview
                     Box(
                         modifier = Modifier
                             .size(120.dp)
@@ -153,7 +172,6 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
                         }
                     }
 
-                    // Action buttons
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -221,7 +239,7 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
                 minLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             OutlinedTextField(
                 value = profile.email,
                 onValueChange = { viewModel.updateProfile(profile.copy(email = it)) },
@@ -278,7 +296,6 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
             HorizontalDivider()
             Spacer(modifier = Modifier.height(16.dp))
 
-            // TAX SETTINGS SECTION
             Text("Tax Settings", style = MaterialTheme.typography.titleMedium)
             Text(
                 text = "Configure tax collection for invoices",
@@ -286,7 +303,6 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Tax Registration Toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -306,7 +322,6 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
                 )
             }
 
-            // Tax Rate Input (only visible when registered)
             if (profile.isTaxRegistered) {
                 OutlinedTextField(
                     value = (profile.defaultTaxRate * 100).toString(),
@@ -328,6 +343,147 @@ fun BusinessProfileScreen(viewModel: BusinessProfileViewModel = hiltViewModel())
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BusinessProfileScreenV2Content(
+    onBack: () -> Unit,
+    viewModel: BusinessProfileViewModelV2 = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Business Profile") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        when (val state = uiState) {
+            is BusinessProfileUiStateV2.Loading -> {
+                LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
+            }
+            is BusinessProfileUiStateV2.Error -> {
+                ErrorStateV2(
+                    message = state.message,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            is BusinessProfileUiStateV2.Success -> {
+                BusinessProfileV2Form(
+                    initialProfile = state.businessProfile,
+                    onSave = { profile ->
+                        viewModel.updateBusinessProfile(profile)
+                        onBack()
+                    },
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BusinessProfileV2Form(
+    initialProfile: BusinessProfile,
+    onSave: (BusinessProfile) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var businessName by remember(initialProfile) { mutableStateOf(initialProfile.businessName) }
+    var businessAbn by remember(initialProfile) { mutableStateOf(initialProfile.abn) }
+    var businessAddress by remember(initialProfile) { mutableStateOf(initialProfile.address) }
+    var businessPhone by remember(initialProfile) { mutableStateOf(initialProfile.phone) }
+    var businessEmail by remember(initialProfile) { mutableStateOf(initialProfile.email) }
+    var isSaving by remember { mutableStateOf(false) }
+    var nameError by remember { mutableStateOf<String?>(null) }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        OutlinedTextField(
+            value = businessName,
+            onValueChange = {
+                businessName = it
+                nameError = null
+            },
+            label = { Text("Business Name *") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = nameError != null,
+            supportingText = nameError?.let { { Text(it) } }
+        )
+
+        OutlinedTextField(
+            value = businessAbn,
+            onValueChange = { businessAbn = it },
+            label = { Text("ABN/Tax ID") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = businessAddress,
+            onValueChange = { businessAddress = it },
+            label = { Text("Address") },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 2
+        )
+
+        OutlinedTextField(
+            value = businessPhone,
+            onValueChange = { businessPhone = it },
+            label = { Text("Phone") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = businessEmail,
+            onValueChange = { businessEmail = it },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                if (businessName.isBlank()) {
+                    nameError = "Business name is required"
+                    return@Button
+                }
+                isSaving = true
+                onSave(
+                    initialProfile.copy(
+                        businessName = businessName,
+                        abn = businessAbn,
+                        address = businessAddress,
+                        phone = businessPhone,
+                        email = businessEmail
+                    )
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isSaving
+        ) {
+            if (isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text("Save Profile")
             }
         }
     }
