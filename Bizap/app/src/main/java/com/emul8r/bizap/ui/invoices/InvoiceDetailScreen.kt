@@ -8,13 +8,12 @@ import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.common.SectionHeaderV2
 import com.emul8r.bizap.ui.gui2.common.formatCents
 import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailViewModelV2
-import com.emul8r.bizap.ui.gui2.invoices.RecordPaymentDialogV2
-import com.emul8r.bizap.ui.gui2.invoices.StatusUpdateMenuV2
 import com.emul8r.bizap.ui.landing.GuiMode
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
@@ -68,7 +67,6 @@ fun InvoiceDetailScreen(
             actionSlot = actionSlot,
         )
         GuiMode.GUI2 -> InvoiceDetailScreenV2Content(
-            businessId = businessId ?: 1L,
             invoiceId = invoiceId,
             onBack = onBack,
         )
@@ -687,14 +685,11 @@ fun InvoiceStatusBanner(status: String, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InvoiceDetailScreenV2Content(
-    businessId: Long,
     invoiceId: Long,
     onBack: () -> Unit,
     viewModel: InvoiceDetailViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showPaymentDialog by remember { mutableStateOf(false) }
-    var showStatusMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -702,17 +697,7 @@ private fun InvoiceDetailScreenV2Content(
                 title = { Text("Invoice Detail") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    if (uiState is InvoiceDetailUiStateV2.Success) {
-                        IconButton(onClick = { showPaymentDialog = true }) {
-                            Icon(Icons.Default.Payment, contentDescription = "Record Payment")
-                        }
-                        IconButton(onClick = { showStatusMenu = true }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Update Status")
-                        }
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -724,29 +709,6 @@ private fun InvoiceDetailScreenV2Content(
             is InvoiceDetailUiStateV2.Error -> ErrorStateV2(message = state.message, modifier = Modifier.padding(paddingValues))
             is InvoiceDetailUiStateV2.Success -> {
                 InvoiceDetailV2Content(invoice = state.invoice, modifier = Modifier.padding(paddingValues))
-                if (showPaymentDialog) {
-                    RecordPaymentDialogV2(
-                        invoiceId = state.invoice.invoice.id,
-                        businessId = businessId,
-                        invoiceTotal = state.invoice.invoice.totalAmount,
-                        amountPaid = state.invoice.invoice.amountPaid,
-                        invoiceDate = state.invoice.invoice.date,
-                        invoiceStatus = runCatching { InvoiceStatus.valueOf(state.invoice.invoice.status) }.getOrElse { InvoiceStatus.DRAFT },
-                        onDismiss = { showPaymentDialog = false },
-                        onSuccess = { showPaymentDialog = false }
-                    )
-                }
-                if (showStatusMenu) {
-                    val currentStatus = runCatching { InvoiceStatus.valueOf(state.invoice.invoice.status) }.getOrElse { InvoiceStatus.DRAFT }
-                    StatusUpdateMenuV2(
-                        currentStatus = currentStatus,
-                        onStatusSelected = { status: InvoiceStatus ->
-                            viewModel.updateInvoiceStatus(status)
-                            showStatusMenu = false
-                        },
-                        onDismiss = { showStatusMenu = false }
-                    )
-                }
             }
         }
     }
