@@ -3,7 +3,7 @@ package com.emul8r.bizap.ui.revenue
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.BusinessProfile
-import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
+import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.domain.revenue.usecase.GetRevenueMetricsUseCase
 import io.mockk.*
 import kotlinx.coroutines.flow.flowOf
@@ -23,13 +23,18 @@ class RevenueDashboardViewModelTest : BaseUnitTest() {
         val mockProfile = BusinessProfile(id = 1L)
         every { businessProfileRepository.activeProfile } returns flowOf(mockProfile)
         every { useCase(any()) } returns flowOf(
-            RevenueMetrics(
-                mtdRevenue = 100000L,
-                ytdRevenue = 500000L,
-                weeklyRevenue = 50000L,
-                totalPaidRevenue = 600000L,
-                dailyTrend = emptyList(),
-                topPerformers = emptyList()
+            Result.success(
+                RevenueMetricsV2(
+                    businessProfileId = 1L,
+                    mtdRevenue = 100000L,
+                    ytdRevenue = 500000L,
+                    weeklyRevenue = 50000L,
+                    totalPaidRevenue = 600000L,
+                    outstandingAmount = 0L,
+                    collectedAmount = 600000L,
+                    overdueAmount = 0L,
+                    dailyTrend = emptyList()
+                )
             )
         )
     }

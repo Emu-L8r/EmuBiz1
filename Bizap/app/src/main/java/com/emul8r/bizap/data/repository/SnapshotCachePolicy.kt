@@ -21,7 +21,7 @@ package com.emul8r.bizap.data.repository
  *    Failures to update snapshots are logged and retried — they never block the main operation.
  *
  * 3. **Dashboards must use V2 repositories.**
- *    - Revenue Dashboard → [com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2]
+ *    - Revenue Dashboard → [com.emul8r.bizap.data.repository.RevenueRepositoryImpl]
  *    - Payment Analytics → [com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2]
  *    - Risk Dashboard → [com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2]
  *    - GUI1/GUI2 unified → [AnalyticsRepositoryBridge]

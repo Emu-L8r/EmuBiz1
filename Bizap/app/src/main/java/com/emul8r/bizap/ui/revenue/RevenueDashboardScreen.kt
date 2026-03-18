@@ -8,17 +8,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.emul8r.bizap.domain.revenue.model.RevenueMetrics
+import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.common.MetricCard
 import com.emul8r.bizap.ui.theme.StatusColors
@@ -67,7 +67,7 @@ fun RevenueDashboardScreen(
 
 @Composable
 private fun RevenueDashboardContent(
-    metrics: RevenueMetrics,
+    metrics: RevenueMetricsV2,
     headerSlot: (@Composable ColumnScope.() -> Unit)? = null,
     footerSlot: (@Composable ColumnScope.() -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -126,18 +126,17 @@ private fun RevenueDashboardContent(
             )
         }
 
-        Text(text = "Revenue by Currency", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        
-        metrics.topPerformers.forEach { performer ->
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = performer.currencyCode, fontWeight = FontWeight.Bold)
-                    Text(text = CentsFormatter.formatCents(performer.totalAmount, performer.currencyCode))
-                }
-            }
+        // Overdue amount with warning color accent
+        if (metrics.overdueAmount > 0L) {
+            MetricCard(
+                title = "Overdue",
+                value = CentsFormatter.formatCents(metrics.overdueAmount),
+                icon = Icons.Default.Warning,
+                backgroundColor = StatusColors.Overdue.copy(alpha = 0.08f),
+                borderColor = StatusColors.Overdue.copy(alpha = 0.3f),
+                accentColor = StatusColors.Overdue,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         footerSlot?.invoke(this) ?: run {
@@ -146,23 +145,6 @@ private fun RevenueDashboardContent(
                 text = "Data as of today",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun RevenueSummaryCard(label: String, amountCents: Long, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = label, style = MaterialTheme.typography.labelSmall)
-            Text(
-                text = CentsFormatter.formatCents(amountCents),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
             )
         }
     }

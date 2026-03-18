@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
-import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
+import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import com.emul8r.bizap.domain.config.BizapConfig
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.domain.usecase.DateChangeTickerManager
@@ -33,7 +33,7 @@ sealed class DashboardRevenueState {
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
-    private val revenueRepository: RevenueRepositoryV2,
+    private val revenueRepository: RevenueRepository,
     private val businessContextRepository: BusinessContextRepositoryV2,
     private val invoiceDaoV2: InvoiceDaoV2,
     private val dateChangeTickerManager: DateChangeTickerManager,
