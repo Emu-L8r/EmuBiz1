@@ -38,6 +38,9 @@ sealed interface Screen {
     object SettingsHub : Screen
 
     @Serializable
+    object AppSettings : Screen
+
+    @Serializable
     object BusinessProfile : Screen
 
     @Serializable

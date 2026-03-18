@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.AutoAwesomeMotion
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,6 +34,7 @@ import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 fun SettingsHubScreenV2(
     onBusinessProfileClick: () -> Unit,
     onThemeSettingsClick: () -> Unit,
+    onAppSettingsClick: () -> Unit = {},
     onBack: () -> Unit,
     onSwitchToGui1: () -> Unit = {},
     viewModel: SettingsHubViewModelV2 = hiltViewModel()
@@ -66,6 +68,7 @@ fun SettingsHubScreenV2(
                     businessProfile = state.businessProfile,
                     onBusinessProfileClick = onBusinessProfileClick,
                     onThemeSettingsClick = onThemeSettingsClick,
+                    onAppSettingsClick = onAppSettingsClick,
                     onSwitchToGui1 = onSwitchToGui1,
                     modifier = Modifier.padding(paddingValues)
                 )
@@ -79,6 +82,7 @@ private fun SettingsContent(
     businessProfile: BusinessProfile,
     onBusinessProfileClick: () -> Unit,
     onThemeSettingsClick: () -> Unit,
+    onAppSettingsClick: () -> Unit = {},
     onSwitchToGui1: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -119,6 +123,13 @@ private fun SettingsContent(
             title = "Theme",
             description = "Customize colors and appearance",
             onClick = onThemeSettingsClick
+        )
+
+        SettingsCardV2(
+            icon = Icons.Default.Tune,
+            title = "App Settings",
+            description = "Theme mode, display, notifications and sync",
+            onClick = onAppSettingsClick
         )
 
         Divider()
