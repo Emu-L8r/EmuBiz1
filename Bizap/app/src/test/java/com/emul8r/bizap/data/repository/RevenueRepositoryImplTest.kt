@@ -2,57 +2,60 @@
 package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.BaseUnitTest
-import com.emul8r.bizap.data.local.InvoiceDao
-import com.emul8r.bizap.data.local.InvoiceDao.DailyRevenueTrend
+import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
+import com.emul8r.bizap.data.local.entities.DailyRevenueTrendV2
+import com.emul8r.bizap.data.repository.analytics.AnalyticsCalculator
+import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import io.mockk.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDate
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RevenueRepositoryImplTest : BaseUnitTest() {
 
-    private val invoiceDao: InvoiceDao = mockk()
+    private val invoiceDaoV2: InvoiceDaoV2 = mockk()
     private lateinit var repository: RevenueRepositoryImpl
 
     @Before
     fun setup() {
-        repository = RevenueRepositoryImpl(invoiceDao)
+        val calculator = AnalyticsCalculator()
+        val validator = AnalyticsValidator()
+        repository = RevenueRepositoryImpl(invoiceDaoV2, calculator, validator)
     }
 
     @Test
-    fun `getRevenueMetrics returns correct values from direct invoice queries`() = runTest {
+    fun `observeRevenueMetrics returns correct values from V2 invoice queries`() = runTest {
         // Arrange
         val businessId = 1L
-        val today = LocalDate.now()
         val trend = listOf(
-            DailyRevenueTrend(
-                dateString = today.toString(),
+            DailyRevenueTrendV2(
+                dateString = "2026-03-01",
                 revenue = 100000L,
                 invoiceCount = 2,
-                paidCount = 1,
-                currencyCode = "AUD"
+                paidCount = 1
             ),
-            DailyRevenueTrend(
-                dateString = today.minusDays(5).toString(),
+            DailyRevenueTrendV2(
+                dateString = "2026-03-02",
                 revenue = 50000L,
                 invoiceCount = 1,
-                paidCount = 1,
-                currencyCode = "AUD"
+                paidCount = 1
             )
         )
 
-        every { invoiceDao.observeMTDRevenue(businessId) } returns flowOf(100000L)
-        every { invoiceDao.observeYTDRevenue(businessId) } returns flowOf(150000L)
-        every { invoiceDao.observeWeeklyRevenue(businessId) } returns flowOf(150000L)
-        every { invoiceDao.observeTotalPaidRevenue(businessId) } returns flowOf(150000L)
-        every { invoiceDao.observeOutstandingAmount(businessId) } returns flowOf(0L)
-        every { invoiceDao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
+        every { invoiceDaoV2.observeMTDRevenue(businessId, any(), any()) } returns flowOf(100000L)
+        every { invoiceDaoV2.observeYTDRevenue(businessId, any(), any()) } returns flowOf(150000L)
+        every { invoiceDaoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(150000L)
+        every { invoiceDaoV2.observeTotalPaidRevenue(businessId) } returns flowOf(150000L)
+        every { invoiceDaoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
+        every { invoiceDaoV2.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         // Act
-        val metrics = repository.getRevenueMetrics(businessId)
+        val result = repository.observeRevenueMetrics(businessId).first()
+        val metrics = result.getOrThrow()
 
         // Assert
         assertEquals(100000L, metrics.mtdRevenue)
@@ -63,68 +66,46 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
     }
 
     @Test
-    fun `getRevenueMetrics returns zeros when no invoices exist`() = runTest {
+    fun `observeRevenueMetrics returns zeros when no invoices exist`() = runTest {
         // Arrange
         val businessId = 2L
 
-        every { invoiceDao.observeMTDRevenue(businessId) } returns flowOf(0L)
-        every { invoiceDao.observeYTDRevenue(businessId) } returns flowOf(0L)
-        every { invoiceDao.observeWeeklyRevenue(businessId) } returns flowOf(0L)
-        every { invoiceDao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
-        every { invoiceDao.observeOutstandingAmount(businessId) } returns flowOf(0L)
-        every { invoiceDao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { invoiceDaoV2.observeMTDRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { invoiceDaoV2.observeYTDRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { invoiceDaoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { invoiceDaoV2.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
+        every { invoiceDaoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { invoiceDaoV2.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         // Act
-        val metrics = repository.getRevenueMetrics(businessId)
+        val result = repository.observeRevenueMetrics(businessId).first()
+        val metrics = result.getOrThrow()
 
         // Assert
         assertEquals(0L, metrics.mtdRevenue)
         assertEquals(0L, metrics.ytdRevenue)
         assertEquals(0L, metrics.weeklyRevenue)
         assertEquals(0L, metrics.totalPaidRevenue)
-        assertEquals(emptyList(), metrics.dailyTrend)
-        assertEquals(emptyList(), metrics.topPerformers)
+        assertTrue(metrics.dailyTrend.isEmpty())
     }
 
     @Test
-    fun `calculateByCurrency groups revenue correctly by currency`() = runTest {
+    fun `observeRevenueMetrics emits failure result when DAO throws`() = runTest {
         // Arrange
         val businessId = 3L
-        val today = LocalDate.now()
-        val trend = listOf(
-            DailyRevenueTrend(
-                dateString = today.toString(),
-                revenue = 60000L,
-                invoiceCount = 1,
-                paidCount = 1,
-                currencyCode = "AUD"
-            ),
-            DailyRevenueTrend(
-                dateString = today.toString(),
-                revenue = 40000L,
-                invoiceCount = 1,
-                paidCount = 1,
-                currencyCode = "USD"
-            )
-        )
+        val exception = RuntimeException("DB error")
 
-        every { invoiceDao.observeMTDRevenue(businessId) } returns flowOf(100000L)
-        every { invoiceDao.observeYTDRevenue(businessId) } returns flowOf(100000L)
-        every { invoiceDao.observeWeeklyRevenue(businessId) } returns flowOf(100000L)
-        every { invoiceDao.observeTotalPaidRevenue(businessId) } returns flowOf(100000L)
-        every { invoiceDao.observeOutstandingAmount(businessId) } returns flowOf(0L)
-        every { invoiceDao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
+        every { invoiceDaoV2.observeMTDRevenue(businessId, any(), any()) } throws exception
+        every { invoiceDaoV2.observeYTDRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { invoiceDaoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
+        every { invoiceDaoV2.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
+        every { invoiceDaoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { invoiceDaoV2.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         // Act
-        val metrics = repository.getRevenueMetrics(businessId)
+        val result = repository.observeRevenueMetrics(businessId).first()
 
-        // Assert - currencies should be sorted by amount descending
-        assertEquals(2, metrics.topPerformers.size)
-        assertEquals("AUD", metrics.topPerformers[0].currencyCode)
-        assertEquals(60000L, metrics.topPerformers[0].totalAmount)
-        assertEquals(60.0, metrics.topPerformers[0].percentageOfTotal, 0.01)
-        assertEquals("USD", metrics.topPerformers[1].currencyCode)
-        assertEquals(40000L, metrics.topPerformers[1].totalAmount)
-        assertEquals(40.0, metrics.topPerformers[1].percentageOfTotal, 0.01)
+        // Assert - flow catches exceptions and wraps them as failure Results
+        assertTrue(result.isFailure)
     }
 }

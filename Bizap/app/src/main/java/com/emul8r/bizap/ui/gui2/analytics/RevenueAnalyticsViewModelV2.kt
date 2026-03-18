@@ -3,8 +3,8 @@ package com.emul8r.bizap.ui.gui2.analytics
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
-import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
+import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -14,7 +14,7 @@ import javax.inject.Inject
 @HiltViewModel
 class RevenueAnalyticsViewModelV2 @Inject constructor(
     businessContextRepository: BusinessContextRepositoryV2,
-    revenueRepository: RevenueRepositoryV2
+    revenueRepository: RevenueRepository
 ) : ViewModel() {
 
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -7,8 +7,8 @@ import androidx.navigation.toRoute
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.InvoiceMetricsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
-import com.emul8r.bizap.data.repository.gui2.RevenueRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
+import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DashboardViewModelV2 @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val revenueRepository: RevenueRepositoryV2,
+    private val revenueRepository: RevenueRepository,
     private val paymentRepository: PaymentAnalyticsRepositoryV2,
     private val riskRepository: RiskAnalyticsRepositoryV2,
     private val businessContextRepository: BusinessContextRepositoryV2,
