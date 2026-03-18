@@ -2,6 +2,15 @@ package com.emul8r.bizap.ui.invoices
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
+import com.emul8r.bizap.data.local.entities.InvoiceWithItems
+import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
+import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
+import com.emul8r.bizap.ui.gui2.common.SectionHeaderV2
+import com.emul8r.bizap.ui.gui2.common.formatCents
+import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailViewModelV2
+import com.emul8r.bizap.ui.gui2.invoices.RecordPaymentDialogV2
+import com.emul8r.bizap.ui.gui2.invoices.StatusUpdateMenuV2
+import com.emul8r.bizap.ui.landing.GuiMode
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -35,6 +44,40 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvoiceDetailScreen(
+    guiMode: GuiMode = GuiMode.GUI1,
+    invoiceId: Long,
+    businessId: Long? = null,
+    onEdit: () -> Unit = {},
+    onBack: () -> Unit = {},
+    onInvoiceDeleted: () -> Unit = {},
+    onNavigateToRevenue: (() -> Unit)? = null,
+    onNavigateToPayments: (() -> Unit)? = null,
+    viewModel: InvoiceDetailViewModel = hiltViewModel(),
+    modifier: Modifier = Modifier,
+    actionSlot: (@Composable ColumnScope.() -> Unit)? = null,
+) {
+    when (guiMode) {
+        GuiMode.GUI1 -> InvoiceDetailScreenV1Content(
+            invoiceId = invoiceId,
+            onEdit = onEdit,
+            onInvoiceDeleted = onInvoiceDeleted,
+            onNavigateToRevenue = onNavigateToRevenue,
+            onNavigateToPayments = onNavigateToPayments,
+            viewModel = viewModel,
+            modifier = modifier,
+            actionSlot = actionSlot,
+        )
+        GuiMode.GUI2 -> InvoiceDetailScreenV2Content(
+            businessId = businessId ?: 1L,
+            invoiceId = invoiceId,
+            onBack = onBack,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InvoiceDetailScreenV1Content(
     invoiceId: Long,
     onEdit: () -> Unit,
     onInvoiceDeleted: () -> Unit = {},
@@ -640,3 +683,120 @@ fun InvoiceStatusBanner(status: String, modifier: Modifier = Modifier) {
 
 
 
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InvoiceDetailScreenV2Content(
+    businessId: Long,
+    invoiceId: Long,
+    onBack: () -> Unit,
+    viewModel: InvoiceDetailViewModelV2 = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showPaymentDialog by remember { mutableStateOf(false) }
+    var showStatusMenu by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Invoice Detail") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (uiState is InvoiceDetailUiStateV2.Success) {
+                        IconButton(onClick = { showPaymentDialog = true }) {
+                            Icon(Icons.Default.Payment, contentDescription = "Record Payment")
+                        }
+                        IconButton(onClick = { showStatusMenu = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Update Status")
+                        }
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        when (val state = uiState) {
+            is InvoiceDetailUiStateV2.Loading -> LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
+            is InvoiceDetailUiStateV2.NotFound -> ErrorStateV2(message = "Invoice #$invoiceId not found.", modifier = Modifier.padding(paddingValues))
+            is InvoiceDetailUiStateV2.Error -> ErrorStateV2(message = state.message, modifier = Modifier.padding(paddingValues))
+            is InvoiceDetailUiStateV2.Success -> {
+                InvoiceDetailV2Content(invoice = state.invoice, modifier = Modifier.padding(paddingValues))
+                if (showPaymentDialog) {
+                    RecordPaymentDialogV2(
+                        invoiceId = state.invoice.invoice.id,
+                        businessId = businessId,
+                        invoiceTotal = state.invoice.invoice.totalAmount,
+                        amountPaid = state.invoice.invoice.amountPaid,
+                        invoiceDate = state.invoice.invoice.date,
+                        invoiceStatus = runCatching { InvoiceStatus.valueOf(state.invoice.invoice.status) }.getOrElse { InvoiceStatus.DRAFT },
+                        onDismiss = { showPaymentDialog = false },
+                        onSuccess = { showPaymentDialog = false }
+                    )
+                }
+                if (showStatusMenu) {
+                    val currentStatus = runCatching { InvoiceStatus.valueOf(state.invoice.invoice.status) }.getOrElse { InvoiceStatus.DRAFT }
+                    StatusUpdateMenuV2(
+                        currentStatus = currentStatus,
+                        onStatusSelected = { status: InvoiceStatus ->
+                            viewModel.updateInvoiceStatus(status)
+                            showStatusMenu = false
+                        },
+                        onDismiss = { showStatusMenu = false }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InvoiceDetailV2Content(invoice: InvoiceWithItems, modifier: Modifier = Modifier) {
+    val dateFormatter = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+    val entity = invoice.invoice
+    Column(
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SectionHeaderV2("Invoice Info")
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                InvoiceDetailRowV2("Customer", entity.customerName)
+                InvoiceDetailRowV2("Status", entity.status)
+                InvoiceDetailRowV2("Date", dateFormatter.format(java.util.Date(entity.date)))
+                if (entity.dueDate > 0) InvoiceDetailRowV2("Due Date", dateFormatter.format(java.util.Date(entity.dueDate)))
+                InvoiceDetailRowV2("Total", formatCents(entity.totalAmount))
+                InvoiceDetailRowV2("Amount Paid", formatCents(entity.amountPaid))
+                InvoiceDetailRowV2("Outstanding", formatCents(entity.totalAmount - entity.amountPaid))
+                InvoiceDetailRowV2("Currency", entity.currencyCode)
+            }
+        }
+        if (invoice.items.isNotEmpty()) {
+            HorizontalDivider()
+            SectionHeaderV2("Line Items")
+            invoice.items.forEach { item ->
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = item.description, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+                            Text(text = "Qty: ${item.quantity}  ×  ${formatCents(item.unitPrice.toLong())}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text(text = formatCents((item.unitPrice * item.quantity).toLong()), style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+        entity.notes?.let { notes -> if (notes.isNotBlank()) { HorizontalDivider(); SectionHeaderV2("Notes"); Text(notes, style = MaterialTheme.typography.bodyMedium) } }
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun InvoiceDetailRowV2(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = value, style = MaterialTheme.typography.bodySmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+    }
+}

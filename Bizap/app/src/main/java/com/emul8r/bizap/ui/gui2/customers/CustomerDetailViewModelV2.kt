@@ -60,3 +60,9 @@ class CustomerDetailViewModelV2 @Inject constructor(
     }
 }
 
+
+sealed interface CustomerDetailUiStateV2 {
+    object Loading : CustomerDetailUiStateV2
+    data class Error(val message: String) : CustomerDetailUiStateV2
+    data class Success(val customer: com.emul8r.bizap.domain.model.Customer) : CustomerDetailUiStateV2
+}

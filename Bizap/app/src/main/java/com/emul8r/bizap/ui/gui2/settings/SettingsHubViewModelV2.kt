@@ -31,3 +31,9 @@ class SettingsHubViewModelV2 @Inject constructor(
         )
 }
 
+
+sealed interface SettingsUiStateV2 {
+    object Loading : SettingsUiStateV2
+    data class Error(val message: String) : SettingsUiStateV2
+    data class Success(val businessProfile: com.emul8r.bizap.domain.model.BusinessProfile) : SettingsUiStateV2
+}

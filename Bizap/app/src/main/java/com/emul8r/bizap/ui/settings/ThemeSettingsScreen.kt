@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -20,10 +21,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.ThemePreference
 import com.emul8r.bizap.presentation.viewmodel.SettingsViewModel
+import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.theme.ThemePresets
 
 /**
- * Theme settings screen (GUI1 "App Appearance").
+ * Theme settings screen — unified for GUI1 and GUI2.
  *
  * Uses [ThemeViewModel] for the seed-colour / preset selection (stored in
  * [ThemeRepository]) **and** [SettingsViewModel] for the LIGHT/DARK/AUTO
@@ -33,16 +35,35 @@ import com.emul8r.bizap.ui.theme.ThemePresets
  * [SettingsViewModel.setThemePreference] is called so that [ThemeProvider] — which
  * reads from [SettingsRepository] — immediately reflects the change.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeSettingsScreen(
+    guiMode: GuiMode = GuiMode.GUI1,
+    businessId: Long? = null,
+    onBack: () -> Unit = {},
+    viewModel: ThemeViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
+) {
+    when (guiMode) {
+        GuiMode.GUI1 -> ThemeSettingsScreenV1Content(
+            viewModel = viewModel,
+            settingsViewModel = settingsViewModel,
+        )
+        GuiMode.GUI2 -> ThemeSettingsScreenV2Content(
+            businessId = businessId ?: 1L,
+            onBack = onBack,
+        )
+    }
+}
+
+@Composable
+private fun ThemeSettingsScreenV1Content(
     viewModel: ThemeViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val config by viewModel.themeConfig.collectAsStateWithLifecycle()
     val themePreference by settingsViewModel.themePreference.collectAsStateWithLifecycle()
 
-    // Derive the displayed dark-mode state from the authoritative SettingsRepository,
-    // falling back to ThemeRepository for backward compatibility.
     val isDarkMode = themePreference == ThemePreference.DARK
 
     LazyColumn(modifier = Modifier
@@ -58,7 +79,6 @@ fun ThemeSettingsScreen(
             Text("Quick Presets", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
 
-            // Light mode presets
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemePresets.allLightPresets.forEach { preset ->
                     PresetButton(
@@ -66,7 +86,6 @@ fun ThemeSettingsScreen(
                         isSelected = config.seedColorHex == preset.colorHex && !isDarkMode,
                         onSelect = {
                             viewModel.applyPreset(preset)
-                            // Keep SettingsRepository in sync when a light preset is chosen
                             if (preset.isDarkModePreset) {
                                 settingsViewModel.setThemePreference(ThemePreference.DARK)
                             } else {
@@ -94,7 +113,6 @@ fun ThemeSettingsScreen(
                     checked = isDarkMode,
                     onCheckedChange = { enabled ->
                         viewModel.updateDarkMode(enabled)
-                        // Sync the change into SettingsRepository so ThemeProvider picks it up
                         settingsViewModel.setThemePreference(
                             if (enabled) ThemePreference.DARK else ThemePreference.LIGHT
                         )
@@ -104,7 +122,6 @@ fun ThemeSettingsScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Dark mode presets
             if (isDarkMode) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ThemePresets.allDarkPresets.forEach { preset ->
@@ -113,7 +130,6 @@ fun ThemeSettingsScreen(
                             isSelected = config.seedColorHex == preset.colorHex && isDarkMode,
                             onSelect = {
                                 viewModel.applyPreset(preset)
-                                // Keep SettingsRepository in sync when a dark preset is chosen
                                 settingsViewModel.setThemePreference(ThemePreference.DARK)
                             }
                         )
@@ -162,14 +178,12 @@ fun PresetButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Color preview circle
             Surface(
                 modifier = Modifier.size(40.dp),
                 shape = CircleShape,
                 color = Color(android.graphics.Color.parseColor(preset.colorHex))
             ) {}
 
-            // Preset info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     preset.name,
@@ -182,7 +196,191 @@ fun PresetButton(
                 )
             }
 
-            // Selection indicator
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Selected",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThemeSettingsScreenV2Content(
+    businessId: Long,
+    onBack: () -> Unit,
+    themeViewModel: ThemeViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
+) {
+    val config by themeViewModel.themeConfig.collectAsStateWithLifecycle()
+    val themePreference by settingsViewModel.themePreference.collectAsStateWithLifecycle()
+
+    val isDarkMode = themePreference == ThemePreference.DARK
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Theme Settings") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            item {
+                Text("App Appearance", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(24.dp))
+            }
+
+            item {
+                Text(
+                    "Quick Presets",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(12.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ThemePresets.allLightPresets.forEach { preset ->
+                        ThemePresetButtonV2(
+                            preset = preset,
+                            isSelected = config.seedColorHex == preset.colorHex && !isDarkMode,
+                            onSelect = {
+                                themeViewModel.applyPreset(preset)
+                                if (preset.isDarkModePreset) {
+                                    settingsViewModel.setThemePreference(ThemePreference.DARK)
+                                } else {
+                                    settingsViewModel.setThemePreference(ThemePreference.LIGHT)
+                                }
+                            }
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+            }
+
+            item {
+                Text(
+                    "Dark Mode",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Enable Dark Mode", style = MaterialTheme.typography.bodyLarge)
+                    Switch(
+                        checked = isDarkMode,
+                        onCheckedChange = { enabled ->
+                            themeViewModel.updateDarkMode(enabled)
+                            settingsViewModel.setThemePreference(
+                                if (enabled) ThemePreference.DARK else ThemePreference.LIGHT
+                            )
+                        }
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                if (isDarkMode) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ThemePresets.allDarkPresets.forEach { preset ->
+                            ThemePresetButtonV2(
+                                preset = preset,
+                                isSelected = config.seedColorHex == preset.colorHex && isDarkMode,
+                                onSelect = {
+                                    themeViewModel.applyPreset(preset)
+                                    settingsViewModel.setThemePreference(ThemePreference.DARK)
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+            }
+
+            item {
+                Text(
+                    "Custom Colour",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Current color: ${config.seedColorHex}",
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemePresetButtonV2(
+    preset: com.emul8r.bizap.ui.theme.ThemePreset,
+    isSelected: Boolean,
+    onSelect: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSelect() },
+        shape = RoundedCornerShape(8.dp),
+        border = if (isSelected)
+            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        else
+            BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = CircleShape,
+                color = Color(android.graphics.Color.parseColor(preset.colorHex))
+            ) {}
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    preset.name,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    preset.description,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+
             if (isSelected) {
                 Icon(
                     imageVector = Icons.Default.Check,

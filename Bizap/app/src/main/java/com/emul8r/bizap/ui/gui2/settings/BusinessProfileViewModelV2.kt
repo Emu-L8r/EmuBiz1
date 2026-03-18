@@ -44,3 +44,9 @@ class BusinessProfileViewModelV2 @Inject constructor(
     }
 }
 
+
+sealed interface BusinessProfileUiStateV2 {
+    object Loading : BusinessProfileUiStateV2
+    data class Error(val message: String) : BusinessProfileUiStateV2
+    data class Success(val businessProfile: com.emul8r.bizap.domain.model.BusinessProfile) : BusinessProfileUiStateV2
+}
