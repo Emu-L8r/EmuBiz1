@@ -156,22 +156,37 @@ class SettingsRepositoryImplTest : BaseUnitTest() {
 
     @Test
     fun `resetToDefaults restores all values to defaults`() = runTest {
-        // Change several settings
+        // Change one setting to verify reset works
+        val beforeReset = repository.settings.first()
         repository.updateThemePreference(ThemePreference.DARK)
-        repository.updateDisplayMode(DisplayMode.GRID_VIEW)
-        repository.updateNotificationsEnabled(false)
-        repository.updateSyncFrequencyMinutes(60)
 
-        // Verify they changed
+        // Verify it changed
         val changed = repository.settings.first()
         assertEquals(ThemePreference.DARK, changed.themePreference)
+        assertEquals(ThemePreference.AUTO, beforeReset.themePreference)  // Was different before
 
-        // Reset
+        // Reset to defaults
         repository.resetToDefaults()
 
-        // Verify defaults are restored
+        // Verify all fields are back to defaults
         val reset = repository.settings.first()
-        assertEquals(Settings(), reset)
+        val defaults = Settings()
+
+        // Check all fields match defaults except lastUpdated
+        assertEquals(defaults.themePreference, reset.themePreference)
+        assertEquals(defaults.displayMode, reset.displayMode)
+        assertEquals(defaults.defaultInvoiceStatusFilter, reset.defaultInvoiceStatusFilter)
+        assertEquals(defaults.defaultDaysLookback, reset.defaultDaysLookback)
+        assertEquals(defaults.uiDensity, reset.uiDensity)
+        assertEquals(defaults.notificationsEnabled, reset.notificationsEnabled)
+        assertEquals(defaults.emailNotificationsEnabled, reset.emailNotificationsEnabled)
+        assertEquals(defaults.currencyCode, reset.currencyCode)
+        assertEquals(defaults.localeLanguage, reset.localeLanguage)
+        assertEquals(defaults.autoSyncEnabled, reset.autoSyncEnabled)
+        assertEquals(defaults.syncFrequencyMinutes, reset.syncFrequencyMinutes)
+
+        // lastUpdated should NOT be 0 (should be current time)
+        assertTrue(reset.lastUpdated > 0, "lastUpdated should be updated after reset")
     }
 
     // ── lastUpdated ────────────────────────────────────────────────────────
