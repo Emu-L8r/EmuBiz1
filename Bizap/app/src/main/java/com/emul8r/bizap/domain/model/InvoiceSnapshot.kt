@@ -28,7 +28,12 @@ data class InvoiceSnapshot(
     val headerText: String = "",
     val subheaderText: String = "",
     val footerText: String = "",
-    val notes: String = ""
+    val notes: String = "",
+    // Bank / payment details — shown in the PDF "Payment Details" section
+    val bankAccountName: String = "",
+    val bankAccountNumber: String = "",
+    val bankBsb: String = "",
+    val bankName: String = ""
 )
 
 data class LineItemSnapshot(
