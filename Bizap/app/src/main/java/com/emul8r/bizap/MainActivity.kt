@@ -278,6 +278,7 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 }
                 composable<Screen.Invoices> {
                     InvoiceListScreen(
+                        guiMode = GuiMode.GUI1,
                         onInvoiceClick = { invoiceId ->
                             navController.navigate(Screen.InvoiceDetail(invoiceId))
                         },

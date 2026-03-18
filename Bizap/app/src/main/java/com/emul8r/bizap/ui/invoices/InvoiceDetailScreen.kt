@@ -8,6 +8,7 @@ import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.common.SectionHeaderV2
 import com.emul8r.bizap.ui.gui2.common.formatCents
 import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailViewModelV2
+import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailUiStateV2
 import com.emul8r.bizap.ui.landing.GuiMode
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -703,13 +704,11 @@ private fun InvoiceDetailScreenV2Content(
             )
         }
     ) { paddingValues ->
-        when (val state = uiState) {
+        when (uiState) {
             is InvoiceDetailUiStateV2.Loading -> LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
             is InvoiceDetailUiStateV2.NotFound -> ErrorStateV2(message = "Invoice #$invoiceId not found.", modifier = Modifier.padding(paddingValues))
-            is InvoiceDetailUiStateV2.Error -> ErrorStateV2(message = state.message, modifier = Modifier.padding(paddingValues))
-            is InvoiceDetailUiStateV2.Success -> {
-                InvoiceDetailV2Content(invoice = state.invoice, modifier = Modifier.padding(paddingValues))
-            }
+            is InvoiceDetailUiStateV2.Error -> ErrorStateV2(message = (uiState as InvoiceDetailUiStateV2.Error).message, modifier = Modifier.padding(paddingValues))
+            is InvoiceDetailUiStateV2.Success -> InvoiceDetailV2Content(invoice = (uiState as InvoiceDetailUiStateV2.Success).invoice, modifier = Modifier.padding(paddingValues))
         }
     }
 }

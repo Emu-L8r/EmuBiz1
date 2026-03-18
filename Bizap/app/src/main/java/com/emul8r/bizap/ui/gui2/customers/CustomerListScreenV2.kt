@@ -180,11 +180,3 @@ private fun CustomerCardV2(
     }
 }
 
-// UI State
-sealed interface CustomerListUiStateV2 {
-    object Loading : CustomerListUiStateV2
-    data class Error(val message: String) : CustomerListUiStateV2
-    data class Success(val customers: List<Customer>) : CustomerListUiStateV2
-}
-
-

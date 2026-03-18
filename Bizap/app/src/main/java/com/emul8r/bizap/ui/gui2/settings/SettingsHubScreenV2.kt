@@ -260,12 +260,3 @@ private fun SettingsCardV2(
     }
 }
 
-sealed interface SettingsUiStateV2 {
-    object Loading : SettingsUiStateV2
-    data class Error(val message: String) : SettingsUiStateV2
-    data class Success(val businessProfile: BusinessProfile) : SettingsUiStateV2
-}
-
-
-
-
