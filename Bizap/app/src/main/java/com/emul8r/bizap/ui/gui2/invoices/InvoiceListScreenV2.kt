@@ -23,8 +23,8 @@ import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.formatCents
-import com.emul8r.bizap.ui.gui2.invoices.InvoiceListViewModelV2
-import com.emul8r.bizap.ui.gui2.invoices.InvoiceListUiStateV2
+import com.emul8r.bizap.ui.invoices.InvoiceListUiState
+import com.emul8r.bizap.ui.invoices.InvoiceListViewModel
 
 /**
  * GUI2 Invoice List Screen
@@ -37,7 +37,7 @@ fun InvoiceListScreenV2(
     onInvoiceClick: (Long) -> Unit,
     onCreateInvoice: () -> Unit,
     onBack: () -> Unit,
-    viewModel: InvoiceListViewModelV2 = hiltViewModel()
+    viewModel: InvoiceListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -59,16 +59,23 @@ fun InvoiceListScreenV2(
         }
     ) { paddingValues ->
         when (val state = uiState) {
-            is InvoiceListUiStateV2.Loading -> {
+            is InvoiceListUiState.Loading -> {
                 LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
             }
-            is InvoiceListUiStateV2.Error -> {
+            is InvoiceListUiState.Error -> {
                 ErrorStateV2(
                     message = state.message,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
-            is InvoiceListUiStateV2.Success -> {
+            is InvoiceListUiState.Empty -> {
+                InvoiceListContent(
+                    invoices = emptyList(),
+                    onInvoiceClick = onInvoiceClick,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            is InvoiceListUiState.Success -> {
                 InvoiceListContent(
                     invoices = state.invoices,
                     onInvoiceClick = onInvoiceClick,

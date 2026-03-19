@@ -14,11 +14,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.emul8r.bizap.data.local.entities.InvoiceWithItems
+import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.ui.gui2.common.*
 import com.emul8r.bizap.ui.gui2.invoices.RecordPaymentDialogV2
 import com.emul8r.bizap.ui.gui2.invoices.StatusUpdateMenuV2
+import com.emul8r.bizap.ui.invoices.InvoiceDetailUiState
+import com.emul8r.bizap.ui.invoices.InvoiceDetailViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -32,7 +34,7 @@ fun InvoiceDetailScreenV2(
     businessId: Long,
     invoiceId: Long,
     onBack: () -> Unit,
-    viewModel: InvoiceDetailViewModelV2 = hiltViewModel()
+    viewModel: InvoiceDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showPaymentDialog by remember { mutableStateOf(false) }
@@ -48,7 +50,7 @@ fun InvoiceDetailScreenV2(
                     }
                 },
                 actions = {
-                    if (uiState is InvoiceDetailUiStateV2.Success) {
+                    if (uiState is InvoiceDetailUiState.Success) {
                         IconButton(onClick = { showPaymentDialog = true }) {
                             Icon(Icons.Default.Payment, contentDescription = "Record Payment")
                         }
@@ -61,34 +63,28 @@ fun InvoiceDetailScreenV2(
         }
     ) { paddingValues ->
         when (val state = uiState) {
-            is InvoiceDetailUiStateV2.Loading -> LoadingIndicatorV2(
+            is InvoiceDetailUiState.Loading -> LoadingIndicatorV2(
                 modifier = Modifier.padding(paddingValues)
             )
-            is InvoiceDetailUiStateV2.NotFound -> ErrorStateV2(
-                message = "Invoice #$invoiceId not found.",
-                modifier = Modifier.padding(paddingValues)
-            )
-            is InvoiceDetailUiStateV2.Error -> ErrorStateV2(
+            is InvoiceDetailUiState.Error -> ErrorStateV2(
                 message = state.message,
                 modifier = Modifier.padding(paddingValues)
             )
-            is InvoiceDetailUiStateV2.Success -> {
+            is InvoiceDetailUiState.Success -> {
                 InvoiceDetailContentV2(
-                    invoice = state.invoice,
+                    invoice = state.data,
                     modifier = Modifier.padding(paddingValues)
                 )
 
                 // Payment Dialog
                 if (showPaymentDialog) {
                     RecordPaymentDialogV2(
-                        invoiceId = state.invoice.invoice.id,
+                        invoiceId = state.data.id,
                         businessId = businessId,
-                        invoiceTotal = state.invoice.invoice.totalAmount,
-                        amountPaid = state.invoice.invoice.amountPaid,
-                        invoiceDate = state.invoice.invoice.date,
-                        invoiceStatus = runCatching {
-                            InvoiceStatus.valueOf(state.invoice.invoice.status)
-                        }.getOrElse { InvoiceStatus.DRAFT },
+                        invoiceTotal = state.data.totalAmount,
+                        amountPaid = state.data.amountPaid,
+                        invoiceDate = state.data.date,
+                        invoiceStatus = state.data.status,
                         onDismiss = { showPaymentDialog = false },
                         onSuccess = { showPaymentDialog = false }
                     )
@@ -96,11 +92,8 @@ fun InvoiceDetailScreenV2(
 
                 // Status Update Menu
                 if (showStatusMenu) {
-                    val currentStatus = runCatching {
-                        InvoiceStatus.valueOf(state.invoice.invoice.status)
-                    }.getOrElse { InvoiceStatus.DRAFT }
                     StatusUpdateMenuV2(
-                        currentStatus = currentStatus,
+                        currentStatus = state.data.status,
                         onStatusSelected = { status: InvoiceStatus ->
                             viewModel.updateInvoiceStatus(status)
                             showStatusMenu = false
@@ -115,11 +108,10 @@ fun InvoiceDetailScreenV2(
 
 @Composable
 private fun InvoiceDetailContentV2(
-    invoice: InvoiceWithItems,
+    invoice: Invoice,
     modifier: Modifier = Modifier
 ) {
     val dateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    val entity = invoice.invoice
 
     Column(
         modifier = modifier
@@ -132,16 +124,16 @@ private fun InvoiceDetailContentV2(
 
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                DetailRowV2("Customer", entity.customerName)
-                DetailRowV2("Status", entity.status)
-                DetailRowV2("Date", dateFormatter.format(Date(entity.date)))
-                if (entity.dueDate > 0) {
-                    DetailRowV2("Due Date", dateFormatter.format(Date(entity.dueDate)))
+                DetailRowV2("Customer", invoice.customerName)
+                DetailRowV2("Status", invoice.status.name)
+                DetailRowV2("Date", dateFormatter.format(Date(invoice.date)))
+                if (invoice.dueDate > 0) {
+                    DetailRowV2("Due Date", dateFormatter.format(Date(invoice.dueDate)))
                 }
-                DetailRowV2("Total", formatCents(entity.totalAmount))
-                DetailRowV2("Amount Paid", formatCents(entity.amountPaid))
-                DetailRowV2("Outstanding", formatCents(entity.totalAmount - entity.amountPaid))
-                DetailRowV2("Currency", entity.currencyCode)
+                DetailRowV2("Total", formatCents(invoice.totalAmount))
+                DetailRowV2("Amount Paid", formatCents(invoice.amountPaid))
+                DetailRowV2("Outstanding", formatCents(invoice.totalAmount - invoice.amountPaid))
+                DetailRowV2("Currency", invoice.currencyCode)
             }
         }
 
@@ -163,7 +155,7 @@ private fun InvoiceDetailContentV2(
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "Qty: ${item.quantity}  ×  ${formatCents(item.unitPrice.toLong())}",
+                                text = "Qty: ${item.quantity}  ×  ${formatCents(item.unitPrice)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -178,7 +170,7 @@ private fun InvoiceDetailContentV2(
             }
         }
 
-        entity.notes?.let { notes ->
+        invoice.notes?.let { notes ->
             if (notes.isNotBlank()) {
                 HorizontalDivider()
                 SectionHeaderV2("Notes")

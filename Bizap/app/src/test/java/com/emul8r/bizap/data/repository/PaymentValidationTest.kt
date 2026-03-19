@@ -205,8 +205,8 @@ class PaymentValidationTest : BaseUnitTest() {
     // ── Helper ───────────────────────────────────────────────────────────────────
 
     /**
-     * Replicates the payment validation logic from InvoiceDetailViewModel and
-     * InvoiceDetailViewModelV2 - amount must be > 0 and ≤ remaining balance.
+     * Replicates the payment validation logic from InvoiceDetailViewModel -
+     * amount must be > 0 and ≤ remaining balance.
      */
     private fun isValidPayment(amount: Long, remainingBalance: Long): Boolean {
         return amount > 0 && amount <= remainingBalance
