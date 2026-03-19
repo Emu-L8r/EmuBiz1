@@ -51,6 +51,14 @@ sealed interface ScreenV2 {
     @Serializable
     data class BusinessProfile(val businessId: Long) : ScreenV2
 
+    /**
+     * Unified App Appearance screen (Phase 4 consolidation).
+     * Combines theme, display mode, and appearance settings.
+     */
+    @Serializable
+    data class AppAppearance(val businessId: Long) : ScreenV2
+
+    // Deprecated: Kept for backward compatibility but no longer used
     @Serializable
     data class ThemeSettings(val businessId: Long) : ScreenV2
 
