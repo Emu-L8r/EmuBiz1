@@ -88,3 +88,19 @@ fun NavHostController.navigateToAppSettingsV2(businessId: Long) {
 fun NavHostController.navigateToHelpV2(businessId: Long) {
     navigate(ScreenV2.Help(businessId))
 }
+
+fun NavHostController.navigateToDunningNoticesV2(businessId: Long) {
+    navigate(ScreenV2.DunningNotices(businessId))
+}
+
+fun NavHostController.navigateToPrefilledItemsV2(businessId: Long) {
+    navigate(ScreenV2.PrefilledItems(businessId))
+}
+
+fun NavHostController.navigateToInvoiceTemplatesV2(businessId: Long) {
+    navigate(ScreenV2.InvoiceTemplates(businessId))
+}
+
+fun NavHostController.navigateToBackupRestoreV2(businessId: Long) {
+    navigate(ScreenV2.BackupRestore(businessId))
+}
