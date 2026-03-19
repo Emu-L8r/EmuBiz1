@@ -54,7 +54,6 @@ import com.emul8r.bizap.ui.settings.BusinessProfileScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.settings.SettingsHubScreen
-import com.emul8r.bizap.ui.settings.ThemeSettingsScreen
 import com.emul8r.bizap.presentation.ui.screens.SettingsScreen as AppSettingsScreen
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.ui.templates.CreateTemplateScreen
@@ -291,7 +290,6 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 composable<Screen.DocumentVault> { DocumentVaultScreen() }
                 composable<Screen.SettingsHub> { SettingsHubScreen(onNavigate = { screen -> navController.navigate(screen) }) }
                 composable<Screen.BusinessProfile> { BusinessProfileScreen() }
-                composable<Screen.ThemeSettings> { ThemeSettingsScreen() }
                 composable<Screen.PrefilledItems> { PrefilledItemsScreen() }
                 composable<Screen.CreateInvoice> { CreateInvoiceScreen(onInvoiceSaved = { navController.popBackStack() }) }
                 composable<Screen.EditInvoice> { backStackEntry ->

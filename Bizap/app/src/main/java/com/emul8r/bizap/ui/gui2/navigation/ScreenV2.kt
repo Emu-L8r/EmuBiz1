@@ -58,20 +58,9 @@ sealed interface ScreenV2 {
     @Serializable
     data class AppAppearance(val businessId: Long) : ScreenV2
 
-    // Deprecated: Kept for backward compatibility but no longer used
-    @Serializable
-    data class ThemeSettings(val businessId: Long) : ScreenV2
-
     @Serializable
     data class InvoiceAnalytics(val businessId: Long) : ScreenV2
 
-    /**
-     * New comprehensive settings screen (Phase 3).
-     * businessId is carried for navigation-graph consistency with all other ScreenV2 routes,
-     * but settings are user-level (not business-scoped) so the screen itself ignores it.
-     */
-    @Serializable
-    data class AppSettings(val businessId: Long) : ScreenV2
 
     @Serializable
     data class Vault(val businessId: Long) : ScreenV2

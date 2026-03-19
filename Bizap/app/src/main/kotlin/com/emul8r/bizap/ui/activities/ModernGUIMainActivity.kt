@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
@@ -14,7 +15,9 @@ import com.emul8r.bizap.MainActivity
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
 import com.emul8r.bizap.ui.landing.LandingViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
-import com.emul8r.bizap.ui.settings.ThemeViewModel
+import com.emul8r.bizap.presentation.viewmodel.SettingsViewModel
+import com.emul8r.bizap.domain.model.ThemeConfig
+import com.emul8r.bizap.domain.model.ThemePreference
 import com.emul8r.bizap.ui.theme.BizapTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -58,8 +61,20 @@ class ModernGUIMainActivity : ComponentActivity() {
         val intentBusinessId = intent.getLongExtra(EXTRA_BUSINESS_ID, -1L)
 
         setContent {
-            val themeViewModel: ThemeViewModel = hiltViewModel()
-            val config by themeViewModel.themeConfig.collectAsStateWithLifecycle()
+            val settingsViewModel: SettingsViewModel = hiltViewModel()
+            val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
+            val isSystemDark = isSystemInDarkTheme()
+
+            val isDark = when (settings.themePreference) {
+                ThemePreference.LIGHT -> false
+                ThemePreference.DARK -> true
+                ThemePreference.AUTO -> isSystemDark
+            }
+
+            val config = ThemeConfig(
+                seedColorHex = "#FF6200EE",
+                isDarkMode = isDark
+            )
 
             BizapTheme(themeConfig = config) {
                 val landingViewModel: LandingViewModel = hiltViewModel()

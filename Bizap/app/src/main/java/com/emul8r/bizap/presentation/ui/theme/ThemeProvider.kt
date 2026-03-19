@@ -8,7 +8,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.ThemeConfig
 import com.emul8r.bizap.domain.model.ThemePreference
 import com.emul8r.bizap.presentation.viewmodel.SettingsViewModel
-import com.emul8r.bizap.ui.settings.ThemeViewModel
 import com.emul8r.bizap.ui.theme.BizapTheme
 
 /**
@@ -21,21 +20,16 @@ import com.emul8r.bizap.ui.theme.BizapTheme
  *
  * This composable is intended to sit at the root of the composition tree (e.g. in
  * `MainActivity`) so that theme changes propagate to the entire app without restarting.
- *
- * The legacy [ThemeViewModel] seed-colour is still respected so that per-business colour
- * customisation continues to work alongside the new three-way theme toggle.
  */
 @Composable
 fun ThemeProvider(
     settingsViewModel: SettingsViewModel = hiltViewModel(),
-    themeViewModel: ThemeViewModel = hiltViewModel(),
     content: @Composable () -> Unit
 ) {
-    val themePreference by settingsViewModel.themePreference.collectAsStateWithLifecycle()
-    val themeConfig by themeViewModel.themeConfig.collectAsStateWithLifecycle()
+    val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
     val isSystemDark = isSystemInDarkTheme()
 
-    val isDark = when (themePreference) {
+    val isDark = when (settings.themePreference) {
         ThemePreference.LIGHT -> false
         ThemePreference.DARK  -> true
         ThemePreference.AUTO  -> isSystemDark
@@ -43,7 +37,7 @@ fun ThemeProvider(
 
     BizapTheme(
         themeConfig = ThemeConfig(
-            seedColorHex = themeConfig.seedColorHex,
+            seedColorHex = "#FF6200EE", // Default Material3 color
             isDarkMode = isDark
         ),
         content = content
