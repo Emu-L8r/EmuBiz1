@@ -21,8 +21,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
-import com.emul8r.bizap.ui.gui2.customers.CustomerListUiStateV2
-import com.emul8r.bizap.ui.gui2.customers.CustomerListViewModelV2
 import com.emul8r.bizap.ui.landing.GuiMode
 import timber.log.Timber
 
@@ -97,7 +95,7 @@ private fun CustomerListScreenV2Content(
     onCustomerClick: (Long) -> Unit,
     onCreateCustomer: () -> Unit,
     onBack: () -> Unit,
-    viewModel: CustomerListViewModelV2 = hiltViewModel()
+    viewModel: CustomerListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -119,16 +117,16 @@ private fun CustomerListScreenV2Content(
         }
     ) { paddingValues ->
         when (val state = uiState) {
-            is CustomerListUiStateV2.Loading -> {
+            is CustomerListUiState.Loading -> {
                 LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
             }
-            is CustomerListUiStateV2.Error -> {
+            is CustomerListUiState.Error -> {
                 ErrorStateV2(
                     message = state.message,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
-            is CustomerListUiStateV2.Success -> {
+            is CustomerListUiState.Success -> {
                 CustomerListV2Content(
                     customers = state.customers,
                     onCustomerClick = onCustomerClick,
