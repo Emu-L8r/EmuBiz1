@@ -109,31 +109,7 @@ fun GuiV2NavGraph(
 
             // ── Customer routes ──
 
-            composable<ScreenV2.Customers> { backStackEntry ->
-                val route: ScreenV2.Customers = backStackEntry.toRoute()
-                CustomerListScreen(
-                    guiMode = GuiMode.GUI2,
-                    businessId = route.businessId,
-                    onCustomerClick = { customerId ->
-                        navController.navigateToCustomerDetailV2(route.businessId, customerId)
-                    },
-                    onCreateCustomer = { navController.navigateToCreateCustomerV2(route.businessId) },
-                    onBack = { navController.popBackStack() }
-                )
-            }
 
-            composable<ScreenV2.CustomerDetail> { backStackEntry ->
-                val route: ScreenV2.CustomerDetail = backStackEntry.toRoute()
-                CustomerDetailScreen(
-                    guiMode = GuiMode.GUI2,
-                    businessId = route.businessId,
-                    customerId = route.customerId,
-                    onEdit = {
-                        navController.navigateToEditCustomerV2(route.businessId, route.customerId)
-                    },
-                    onBack = { navController.popBackStack() }
-                )
-            }
 
             composable<ScreenV2.CreateCustomer> { backStackEntry ->
                 val route: ScreenV2.CreateCustomer = backStackEntry.toRoute()
@@ -209,12 +185,6 @@ fun GuiV2NavGraph(
                 )
             }
 
-            composable<ScreenV2.BusinessProfile> { backStackEntry ->
-                BusinessProfileScreen(
-                    guiMode = GuiMode.GUI2,
-                    onBack = { navController.popBackStack() }
-                )
-            }
 
             composable<ScreenV2.ThemeSettings> { backStackEntry ->
                 val route: ScreenV2.ThemeSettings = backStackEntry.toRoute()

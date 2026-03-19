@@ -352,7 +352,7 @@ private fun BusinessProfileScreenV2Content(
     onBack: () -> Unit,
     viewModel: BusinessProfileViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val profile by viewModel.profileState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -366,27 +366,14 @@ private fun BusinessProfileScreenV2Content(
             )
         }
     ) { paddingValues ->
-        when (val state = uiState) {
-            is BusinessProfileUiState.Loading -> {
-                LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
-            }
-            is BusinessProfileUiState.Error -> {
-                ErrorStateV2(
-                    message = state.message,
-                    modifier = Modifier.padding(paddingValues)
-                )
-            }
-            is BusinessProfileUiState.Success -> {
-                BusinessProfileV2Form(
-                    initialProfile = state.businessProfile,
-                    onSave = { profile ->
-                        viewModel.updateProfile(profile)
-                        onBack()
-                    },
-                    modifier = Modifier.padding(paddingValues)
-                )
-            }
-        }
+        BusinessProfileV2Form(
+            initialProfile = profile,
+            onSave = { updatedProfile ->
+                viewModel.updateProfile(updatedProfile)
+                onBack()
+            },
+            modifier = Modifier.padding(paddingValues)
+        )
     }
 }
 
