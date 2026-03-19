@@ -30,9 +30,9 @@ object Gui2NavAdapter {
         is AppScreen.EditInvoice ->
             ScreenV2.EditInvoice(appScreen.businessId ?: 0L, appScreen.invoiceId)
         is AppScreen.SettingsHub -> ScreenV2.Settings(appScreen.businessId ?: 0L)
-        is AppScreen.AppSettings -> ScreenV2.AppSettings(appScreen.businessId ?: 0L)
+        is AppScreen.AppSettings -> ScreenV2.AppAppearance(appScreen.businessId ?: 0L)
         is AppScreen.BusinessProfile -> ScreenV2.BusinessProfile(appScreen.businessId ?: 0L)
-        is AppScreen.ThemeSettings -> ScreenV2.ThemeSettings(appScreen.businessId ?: 0L)
+        is AppScreen.ThemeSettings -> ScreenV2.AppAppearance(appScreen.businessId ?: 0L)
         is AppScreen.RevenueAnalytics -> ScreenV2.RevenueAnalytics(appScreen.businessId ?: 0L)
         is AppScreen.PaymentAnalytics -> ScreenV2.PaymentAnalytics(appScreen.businessId ?: 0L)
         is AppScreen.RiskAnalytics -> ScreenV2.RiskAnalytics(appScreen.businessId ?: 0L)
@@ -56,6 +56,8 @@ object Gui2NavAdapter {
      * Converts a GUI2 [ScreenV2] route to the equivalent [AppScreen].
      *
      * Useful for recording the current navigation position in a GUI-agnostic way.
+     * 
+     * Phase 4 Update: AppAppearance route maps to AppSettings for unified AppScreen compatibility.
      */
     fun fromScreen(screen: ScreenV2): AppScreen = when (screen) {
         is ScreenV2.Dashboard -> AppScreen.Dashboard(screen.businessId)
@@ -72,6 +74,7 @@ object Gui2NavAdapter {
         is ScreenV2.EditInvoice ->
             AppScreen.EditInvoice(screen.invoiceId, screen.businessId)
         is ScreenV2.Settings -> AppScreen.SettingsHub(screen.businessId)
+        is ScreenV2.AppAppearance -> AppScreen.AppSettings(screen.businessId)
         is ScreenV2.AppSettings -> AppScreen.AppSettings(screen.businessId)
         is ScreenV2.BusinessProfile -> AppScreen.BusinessProfile(screen.businessId)
         is ScreenV2.ThemeSettings -> AppScreen.ThemeSettings(screen.businessId)

@@ -108,11 +108,12 @@ fun AppAppearanceScreenV2(
                 Spacer(Modifier.height(12.dp))
                 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(
-                        DisplayMode.LIST to "List view",
-                        DisplayMode.GRID to "Grid view",
-                        DisplayMode.CARD to "Card view"
-                    ).forEach { (mode, label) ->
+                    val displayModes = listOf(
+                        DisplayMode.LIST_VIEW to "List view",
+                        DisplayMode.GRID_VIEW to "Grid view",
+                        DisplayMode.CARD_VIEW to "Card view"
+                    )
+                    displayModes.forEach { (mode, label) ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
