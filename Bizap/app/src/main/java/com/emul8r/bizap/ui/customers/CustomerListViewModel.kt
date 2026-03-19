@@ -43,8 +43,4 @@ class CustomerListViewModel @Inject constructor(
         )
 }
 
-sealed interface CustomerListUiState {
-    object Loading : CustomerListUiState
-    data class Error(val message: String) : CustomerListUiState
-    data class Success(val customers: List<Customer>) : CustomerListUiState
-}
+

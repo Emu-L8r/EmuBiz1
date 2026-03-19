@@ -17,16 +17,6 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-sealed interface CustomerDetailUiState {
-    object Loading : CustomerDetailUiState
-    data class Success(val customer: Customer) : CustomerDetailUiState
-    data class Error(val message: String) : CustomerDetailUiState
-}
-
-sealed interface CustomerDetailEvent {
-    object CustomerDeleted : CustomerDetailEvent
-    object CustomerUpdated : CustomerDetailEvent
-}
 
 /**
  * Consolidated ViewModel for Customer Detail Screen
@@ -78,7 +68,7 @@ class CustomerDetailViewModel @Inject constructor(
                     _uiState.value = if (customer != null) {
                         CustomerDetailUiState.Success(customer)
                     } else {
-                        CustomerDetailUiState.Error("Customer not found")
+                        CustomerDetailUiState.NotFound
                     }
                 }
         }
