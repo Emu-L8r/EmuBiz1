@@ -12,6 +12,13 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.AutoAwesomeMotion
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +44,13 @@ fun SettingsHubScreenV2(
     onThemeSettingsClick: () -> Unit,
     onAppSettingsClick: () -> Unit = {},
     onHelpClick: () -> Unit = {},
+    onRiskDashboardClick: () -> Unit = {},
+    onPaymentAnalyticsClick: () -> Unit = {},
+    onRevenueDashboardClick: () -> Unit = {},
+    onDunningNoticesClick: () -> Unit = {},
+    onPrefilledItemsClick: () -> Unit = {},
+    onInvoiceTemplatesClick: () -> Unit = {},
+    onBackupRestoreClick: () -> Unit = {},
     onBack: () -> Unit,
     onSwitchToGui1: () -> Unit = {},
     viewModel: SettingsHubViewModelV2 = hiltViewModel()
@@ -72,6 +86,13 @@ fun SettingsHubScreenV2(
                     onThemeSettingsClick = onThemeSettingsClick,
                     onAppSettingsClick = onAppSettingsClick,
                     onHelpClick = onHelpClick,
+                    onRiskDashboardClick = onRiskDashboardClick,
+                    onPaymentAnalyticsClick = onPaymentAnalyticsClick,
+                    onRevenueDashboardClick = onRevenueDashboardClick,
+                    onDunningNoticesClick = onDunningNoticesClick,
+                    onPrefilledItemsClick = onPrefilledItemsClick,
+                    onInvoiceTemplatesClick = onInvoiceTemplatesClick,
+                    onBackupRestoreClick = onBackupRestoreClick,
                     onSwitchToGui1 = onSwitchToGui1,
                     modifier = Modifier.padding(paddingValues)
                 )
@@ -87,6 +108,13 @@ private fun SettingsContent(
     onThemeSettingsClick: () -> Unit,
     onAppSettingsClick: () -> Unit = {},
     onHelpClick: () -> Unit = {},
+    onRiskDashboardClick: () -> Unit = {},
+    onPaymentAnalyticsClick: () -> Unit = {},
+    onRevenueDashboardClick: () -> Unit = {},
+    onDunningNoticesClick: () -> Unit = {},
+    onPrefilledItemsClick: () -> Unit = {},
+    onInvoiceTemplatesClick: () -> Unit = {},
+    onBackupRestoreClick: () -> Unit = {},
     onSwitchToGui1: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -141,6 +169,75 @@ private fun SettingsContent(
             title = "Help & About",
             description = "App information, version, and support",
             onClick = onHelpClick
+        )
+
+        Divider()
+
+        // Analytics Section
+        Text(
+            text = "Analytics",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        SettingsCardV2(
+            icon = Icons.AutoMirrored.Filled.ShowChart,
+            title = "Risk Dashboard",
+            description = "View customer risk and outstanding invoice analytics",
+            onClick = onRiskDashboardClick
+        )
+
+        SettingsCardV2(
+            icon = Icons.Default.BarChart,
+            title = "Payment Analytics",
+            description = "Analyse payment trends and cash flow forecasts",
+            onClick = onPaymentAnalyticsClick
+        )
+
+        SettingsCardV2(
+            icon = Icons.AutoMirrored.Filled.TrendingUp,
+            title = "Revenue Dashboard",
+            description = "View revenue metrics and business performance",
+            onClick = onRevenueDashboardClick
+        )
+
+        SettingsCardV2(
+            icon = Icons.Default.Notifications,
+            title = "Dunning Notices",
+            description = "Manage overdue invoice payment reminders",
+            onClick = onDunningNoticesClick
+        )
+
+        Divider()
+
+        // Tools Section
+        Text(
+            text = "Tools",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        SettingsCardV2(
+            icon = Icons.AutoMirrored.Filled.PlaylistAdd,
+            title = "Pre-filled Items",
+            description = "Manage your saved line items for faster invoicing",
+            onClick = onPrefilledItemsClick
+        )
+
+        SettingsCardV2(
+            icon = Icons.Default.Description,
+            title = "Invoice Templates",
+            description = "Create and manage reusable invoice templates",
+            onClick = onInvoiceTemplatesClick
+        )
+
+        SettingsCardV2(
+            icon = Icons.Default.Backup,
+            title = "Backup & Restore",
+            description = "Export or restore your app database",
+            onClick = onBackupRestoreClick
         )
 
         Divider()
