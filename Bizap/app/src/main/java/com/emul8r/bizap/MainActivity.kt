@@ -279,10 +279,13 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 composable<Screen.Invoices> {
                     InvoiceListScreen(
                         guiMode = GuiMode.GUI1,
+                        businessId = null,
                         onInvoiceClick = { invoiceId ->
                             navController.navigate(Screen.InvoiceDetail(invoiceId))
                         },
-                        onViewAnalytics = { navController.navigate(Screen.RevenueDashboard) }
+                        onCreateInvoice = {},
+                        onViewAnalytics = { navController.navigate(Screen.RevenueDashboard) },
+                        onBack = {}
                     )
                 }
                 composable<Screen.DocumentVault> { DocumentVaultScreen() }
