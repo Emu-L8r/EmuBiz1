@@ -222,8 +222,7 @@ fun GuiV2NavGraph(
                 )
             }
 
-            composable<ScreenV2.BusinessProfile> { backStackEntry ->
-                val route: ScreenV2.BusinessProfile = backStackEntry.toRoute()
+            composable<ScreenV2.BusinessProfile> {
                 BusinessProfileScreen(
                     guiMode = GuiMode.GUI2,
                     onBack = { navController.popBackStack() }
