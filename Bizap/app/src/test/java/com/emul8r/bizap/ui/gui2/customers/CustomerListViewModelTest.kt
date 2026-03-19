@@ -4,6 +4,7 @@ package com.emul8r.bizap.ui.gui2.customers
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
+import com.emul8r.bizap.ui.customers.CustomerListUiState
 import io.mockk.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -14,10 +15,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 /**
- * Unit tests for [CustomerListViewModelV2].
+ * Unit tests for [CustomerListViewModel][com.emul8r.bizap.ui.customers.CustomerListViewModel].
  *
  * Verifies that the ViewModel correctly transforms [CustomerRepository] flows
- * into the expected [CustomerListUiStateV2] emissions.
+ * into the expected [CustomerListUiState] emissions.
  */
 class CustomerListViewModelTest : BaseUnitTest() {
 
@@ -63,25 +64,25 @@ class CustomerListViewModelTest : BaseUnitTest() {
         every { customerRepository.getAllCustomers() } returns flowOf(testCustomers)
 
         val customers = customerRepository.getAllCustomers().first()
-        val state = CustomerListUiStateV2.Success(customers)
+        val state = CustomerListUiState.Success(customers)
 
-        assertIs<CustomerListUiStateV2.Success>(state)
+        assertIs<CustomerListUiState.Success>(state)
         assertEquals(testCustomers.size, state.customers.size)
     }
 
     @Test
     fun `uiState_Emission - Loading state is the initial state`() {
-        val loadingState: CustomerListUiStateV2 = CustomerListUiStateV2.Loading
-        assertIs<CustomerListUiStateV2.Loading>(loadingState)
+        val loadingState: CustomerListUiState = CustomerListUiState.Loading
+        assertIs<CustomerListUiState.Loading>(loadingState)
     }
 
     @Test
     fun `uiState_Emission - Error state contains error message`() {
         val errorMessage = "Network error"
-        val errorState: CustomerListUiStateV2 = CustomerListUiStateV2.Error(errorMessage)
+        val errorState: CustomerListUiState = CustomerListUiState.Error(errorMessage)
 
-        assertIs<CustomerListUiStateV2.Error>(errorState)
-        assertEquals(errorMessage, (errorState as CustomerListUiStateV2.Error).message)
+        assertIs<CustomerListUiState.Error>(errorState)
+        assertEquals(errorMessage, (errorState as CustomerListUiState.Error).message)
     }
 
     // ── searchCustomers_Filters ───────────────────────────────────────────────
