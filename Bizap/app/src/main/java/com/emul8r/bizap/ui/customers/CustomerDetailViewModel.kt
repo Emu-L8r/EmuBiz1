@@ -1,9 +1,12 @@
 package com.emul8r.bizap.ui.customers
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
+import com.emul8r.bizap.ui.navigation.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,16 +28,43 @@ sealed interface CustomerDetailEvent {
     object CustomerUpdated : CustomerDetailEvent
 }
 
+/**
+ * Consolidated ViewModel for Customer Detail Screen
+ *
+ * Works for both GUI1 and GUI2 modes. Handles:
+ * - Loading individual customer details
+ * - Updating customer information
+ * - Deleting customers
+ * - Error handling and events
+ */
 @HiltViewModel
 class CustomerDetailViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val repository: CustomerRepository
 ) : ViewModel() {
+
+    // Extract customer ID from SavedStateHandle (works for both GUI1 and GUI2)
+    val customerId: Long = try {
+        val route: Screen.CustomerDetail = savedStateHandle.toRoute()
+        route.customerId
+    } catch (e: Exception) {
+        Timber.w(e, "CustomerDetailViewModel: Failed to extract customerId from route")
+        0L  // Invalid ID - will trigger error state
+    }
 
     private val _uiState = MutableStateFlow<CustomerDetailUiState>(CustomerDetailUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
     private val _event = MutableSharedFlow<CustomerDetailEvent>()
     val event = _event.asSharedFlow()
+
+    init {
+        if (customerId > 0) {
+            loadCustomer(customerId)
+        } else {
+            _uiState.value = CustomerDetailUiState.Error("Invalid customer ID")
+        }
+    }
 
     fun loadCustomer(id: Long) {
         viewModelScope.launch {
