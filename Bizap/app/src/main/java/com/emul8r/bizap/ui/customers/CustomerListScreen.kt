@@ -95,7 +95,7 @@ private fun CustomerListScreenV2Content(
     onCustomerClick: (Long) -> Unit,
     onCreateCustomer: () -> Unit,
     onBack: () -> Unit,
-    viewModel: CustomerListViewModelNew = hiltViewModel()
+    viewModel: CustomerListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
