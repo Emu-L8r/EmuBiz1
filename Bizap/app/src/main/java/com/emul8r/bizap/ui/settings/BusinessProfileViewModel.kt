@@ -8,10 +8,18 @@ import com.emul8r.bizap.domain.model.BusinessProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
+
+sealed interface BusinessProfileUiState {
+    object Loading : BusinessProfileUiState
+    data class Error(val message: String) : BusinessProfileUiState
+    data class Success(val businessProfile: BusinessProfile) : BusinessProfileUiState
+}
 
 @HiltViewModel
 class BusinessProfileViewModel @Inject constructor(
@@ -23,6 +31,21 @@ class BusinessProfileViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = BusinessProfile()
+        )
+
+    val uiState: StateFlow<BusinessProfileUiState> = repository.activeProfile
+        .map { profile ->
+            Timber.d("BusinessProfileViewModel: Loaded profile")
+            BusinessProfileUiState.Success(profile) as BusinessProfileUiState
+        }
+        .catch { exception ->
+            Timber.e(exception, "BusinessProfileViewModel: Failed to load profile")
+            emit(BusinessProfileUiState.Error(exception.message ?: "Unknown error"))
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = BusinessProfileUiState.Loading
         )
 
     fun updateProfile(newProfile: BusinessProfile) {
