@@ -36,13 +36,14 @@ import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 /**
  * GUI2 Settings Hub Screen
  * Central location for app settings and preferences.
+ * 
+ * Phase 4 Update: Consolidated "Theme" and "App Settings" into single "App Appearance" card.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsHubScreenV2(
     onBusinessProfileClick: () -> Unit,
-    onThemeSettingsClick: () -> Unit,
-    onAppSettingsClick: () -> Unit = {},
+    onAppAppearanceClick: () -> Unit,
     onHelpClick: () -> Unit = {},
     onRiskDashboardClick: () -> Unit = {},
     onPaymentAnalyticsClick: () -> Unit = {},
@@ -83,8 +84,7 @@ fun SettingsHubScreenV2(
                 SettingsContent(
                     businessProfile = state.businessProfile,
                     onBusinessProfileClick = onBusinessProfileClick,
-                    onThemeSettingsClick = onThemeSettingsClick,
-                    onAppSettingsClick = onAppSettingsClick,
+                    onAppAppearanceClick = onAppAppearanceClick,
                     onHelpClick = onHelpClick,
                     onRiskDashboardClick = onRiskDashboardClick,
                     onPaymentAnalyticsClick = onPaymentAnalyticsClick,
@@ -105,8 +105,7 @@ fun SettingsHubScreenV2(
 private fun SettingsContent(
     businessProfile: BusinessProfile,
     onBusinessProfileClick: () -> Unit,
-    onThemeSettingsClick: () -> Unit,
-    onAppSettingsClick: () -> Unit = {},
+    onAppAppearanceClick: () -> Unit,
     onHelpClick: () -> Unit = {},
     onRiskDashboardClick: () -> Unit = {},
     onPaymentAnalyticsClick: () -> Unit = {},
@@ -152,16 +151,9 @@ private fun SettingsContent(
 
         SettingsCardV2(
             icon = Icons.Default.Palette,
-            title = "Theme",
-            description = "Customize colors and appearance",
-            onClick = onThemeSettingsClick
-        )
-
-        SettingsCardV2(
-            icon = Icons.Default.Tune,
-            title = "App Settings",
-            description = "Theme mode, display, notifications and sync",
-            onClick = onAppSettingsClick
+            title = "App Appearance",
+            description = "Theme, display mode, colors, and presets",
+            onClick = onAppAppearanceClick
         )
 
         SettingsCardV2(
@@ -211,9 +203,9 @@ private fun SettingsContent(
 
         Divider()
 
-        // Tools Section
+        // Management Section
         Text(
-            text = "Tools",
+            text = "Management",
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(top = 8.dp)
@@ -242,51 +234,7 @@ private fun SettingsContent(
 
         Divider()
 
-        // App Info Section
-        Text(
-            text = "About",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-
-        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("App Name", style = MaterialTheme.typography.bodySmall)
-                    Text("Bizap", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Version", style = MaterialTheme.typography.bodySmall)
-                    Text("1.0.0", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Build Date", style = MaterialTheme.typography.bodySmall)
-                    Text("March 8, 2026", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         // GUI Switch Section
-        Divider()
         Text(
             text = "Interface",
             style = MaterialTheme.typography.labelLarge,
@@ -297,11 +245,11 @@ private fun SettingsContent(
         SettingsCardV2(
             icon = Icons.Default.AutoAwesomeMotion,
             title = "Switch to GUI1",
-            description = "Go back to the traditional interface",
+            description = "Use the original interface version",
             onClick = onSwitchToGui1
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -310,23 +258,27 @@ private fun SettingsCardV2(
     icon: ImageVector,
     title: String,
     description: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    OutlinedCard(
-        modifier = Modifier
+    Card(
+        modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = null,
+                contentDescription = title,
                 modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -334,12 +286,12 @@ private fun SettingsCardV2(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    .fillMaxWidth()
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = description,
@@ -350,10 +302,9 @@ private fun SettingsCardV2(
 
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
+                contentDescription = "Navigate",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
-

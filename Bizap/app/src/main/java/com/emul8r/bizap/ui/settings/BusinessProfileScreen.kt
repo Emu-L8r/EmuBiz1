@@ -64,7 +64,7 @@ fun BusinessProfileScreen(
 ) {
     when (guiMode) {
         GuiMode.GUI1 -> BusinessProfileScreenV1Content(viewModel = viewModel)
-        GuiMode.GUI2 -> BusinessProfileScreenV2Content(onBack = onBack)
+        GuiMode.GUI2 -> BusinessProfileScreenV2Content(onBack = onBack, viewModel = viewModel)
     }
 }
 
