@@ -26,8 +26,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
-import com.emul8r.bizap.ui.gui2.customers.CustomerDetailUiStateV2
-import com.emul8r.bizap.ui.gui2.customers.CustomerDetailViewModelV2
 import com.emul8r.bizap.ui.landing.GuiMode
 import kotlinx.coroutines.flow.collectLatest
 import timber.log.Timber
@@ -212,10 +210,14 @@ private fun CustomerDetailScreenV2Content(
     customerId: Long,
     onEdit: () -> Unit,
     onBack: () -> Unit,
-    viewModel: CustomerDetailViewModelV2 = hiltViewModel()
+    viewModel: CustomerDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(customerId) {
+        viewModel.loadCustomer(customerId)
+    }
 
     Scaffold(
         topBar = {
@@ -227,7 +229,7 @@ private fun CustomerDetailScreenV2Content(
                     }
                 },
                 actions = {
-                    if (uiState is CustomerDetailUiStateV2.Success) {
+                    if (uiState is CustomerDetailUiState.Success) {
                         IconButton(onClick = onEdit) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit")
                         }
@@ -240,16 +242,16 @@ private fun CustomerDetailScreenV2Content(
         }
     ) { paddingValues ->
         when (val state = uiState) {
-            is CustomerDetailUiStateV2.Loading -> {
+            is CustomerDetailUiState.Loading -> {
                 LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
             }
-            is CustomerDetailUiStateV2.Error -> {
+            is CustomerDetailUiState.Error -> {
                 ErrorStateV2(
                     message = state.message,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
-            is CustomerDetailUiStateV2.Success -> {
+            is CustomerDetailUiState.Success -> {
                 CustomerDetailV2Content(
                     customer = state.customer,
                     modifier = Modifier.padding(paddingValues)
@@ -266,7 +268,7 @@ private fun CustomerDetailScreenV2Content(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteCustomer()
+                        viewModel.deleteCustomer(customerId)
                         showDeleteDialog = false
                         onBack()
                     }
