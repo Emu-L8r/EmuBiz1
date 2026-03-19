@@ -37,6 +37,7 @@ fun DashboardScreenV2(
     onNavigateToCustomers: () -> Unit,
     onNavigateToInvoices: () -> Unit,
     onNavigateToInvoiceAnalytics: () -> Unit = {},
+    onNavigateToDunningNotices: () -> Unit = {},
     onNavigateToVault: () -> Unit = {},
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
@@ -74,6 +75,7 @@ fun DashboardScreenV2(
                 onNavigateToCustomers = onNavigateToCustomers,
                 onNavigateToInvoices = onNavigateToInvoices,
                 onNavigateToInvoiceAnalytics = onNavigateToInvoiceAnalytics,
+                onNavigateToDunningNotices = onNavigateToDunningNotices,
                 onNavigateToVault = onNavigateToVault,
                 onCreateCustomer = onCreateCustomer,
                 onCreateInvoice = onCreateInvoice,
@@ -92,6 +94,7 @@ private fun DashboardContentV2(
     onNavigateToCustomers: () -> Unit,
     onNavigateToInvoices: () -> Unit,
     onNavigateToInvoiceAnalytics: () -> Unit = {},
+    onNavigateToDunningNotices: () -> Unit = {},
     onNavigateToVault: () -> Unit = {},
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
@@ -185,6 +188,14 @@ private fun DashboardContentV2(
                 accentColor = StatusColors.Outstanding,
                 modifier = Modifier.fillMaxWidth()
             )
+        }
+        OutlinedButton(
+            onClick = onNavigateToRevenue,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("View Revenue Dashboard")
+            Spacer(Modifier.width(4.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
         }
 
         HorizontalDivider()
@@ -298,6 +309,21 @@ private fun DashboardContentV2(
         ) {
             Text("View Risk Dashboard")
             Spacer(Modifier.width(4.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+        }
+
+        HorizontalDivider()
+
+        // ── Dunning Notices quick link ──
+        SectionHeaderV2(title = "Dunning Notices")
+        OutlinedButton(
+            onClick = onNavigateToDunningNotices,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("Manage Overdue Reminders")
+            Spacer(Modifier.weight(1f))
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
         }
 

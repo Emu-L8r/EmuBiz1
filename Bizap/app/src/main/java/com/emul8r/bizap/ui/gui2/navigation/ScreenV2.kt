@@ -74,4 +74,22 @@ sealed interface ScreenV2 {
      */
     @Serializable
     data class Help(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class DunningNotices(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class PrefilledItems(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class InvoiceTemplates(val businessId: Long, val businessProfileId: Long = 1L) : ScreenV2
+
+    @Serializable
+    data class CreateTemplate(val businessId: Long, val businessProfileId: Long) : ScreenV2
+
+    @Serializable
+    data class EditTemplate(val businessId: Long, val templateId: String) : ScreenV2
+
+    @Serializable
+    data class BackupRestore(val businessId: Long) : ScreenV2
 }
