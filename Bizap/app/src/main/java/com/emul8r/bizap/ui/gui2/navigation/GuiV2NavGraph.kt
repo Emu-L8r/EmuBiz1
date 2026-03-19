@@ -29,7 +29,6 @@ import com.emul8r.bizap.ui.gui2.settings.AppAppearanceScreenV2
 import com.emul8r.bizap.ui.settings.backup.BackupRestoreScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileScreen
 import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
-import com.emul8r.bizap.ui.settings.SettingsScreen as AppSettingsScreenV2
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.ui.templates.CreateTemplateScreen
 import com.emul8r.bizap.ui.templates.EditTemplateScreen
@@ -55,7 +54,12 @@ fun GuiV2NavGraph(
                     onNavigateToInvoices = { navController.navigate(ScreenV2.Invoices(route.businessId)) },
                     onNavigateToCustomers = { navController.navigate(ScreenV2.Customers(route.businessId)) },
                     onNavigateToSettings = { navController.navigateToSettingsV2(route.businessId) },
-                    onNavigateToAnalytics = { navController.navigate(ScreenV2.RiskAnalytics(route.businessId)) }
+                    onNavigateToRevenue = { navController.navigate(ScreenV2.RevenueAnalytics(route.businessId)) },
+                    onNavigateToPayment = { navController.navigate(ScreenV2.PaymentAnalytics(route.businessId)) },
+                    onNavigateToRisk = { navController.navigate(ScreenV2.RiskAnalytics(route.businessId)) },
+                    onNavigateToInvoice = { invoiceId -> navController.navigate(ScreenV2.InvoiceDetail(route.businessId, invoiceId)) },
+                    onCreateCustomer = { navController.navigate(ScreenV2.CreateCustomer(route.businessId)) },
+                    onCreateInvoice = { navController.navigate(ScreenV2.CreateInvoice(route.businessId)) }
                 )
             }
         }
@@ -64,15 +68,13 @@ fun GuiV2NavGraph(
             val route: ScreenV2.Invoices = backStackEntry.toRoute()
             InvoiceListScreenV2(
                 businessId = route.businessId,
-                onNavigateToDetail = { invoiceId ->
+                onInvoiceClick = { invoiceId ->
                     navController.navigate(ScreenV2.InvoiceDetail(route.businessId, invoiceId))
                 },
-                onNavigateToCreate = {
+                onCreateInvoice = {
                     navController.navigate(ScreenV2.CreateInvoice(route.businessId))
                 },
-                onNavigateToEdit = { invoiceId ->
-                    navController.navigate(ScreenV2.EditInvoice(route.businessId, invoiceId))
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -81,10 +83,7 @@ fun GuiV2NavGraph(
             InvoiceDetailScreenV2(
                 businessId = route.businessId,
                 invoiceId = route.invoiceId,
-                onBack = { navController.popBackStack() },
-                onNavigateToEdit = {
-                    navController.navigate(ScreenV2.EditInvoice(route.businessId, route.invoiceId))
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -186,7 +185,7 @@ fun GuiV2NavGraph(
                     navController.navigateToBusinessProfileV2(route.businessId)
                 },
                 onAppAppearanceClick = {
-                    navController.navigateToAppAppearanceV2(route.businessId)
+                    navController.navigate(ScreenV2.AppAppearance(route.businessId))
                 },
                 onHelpClick = {
                     navController.navigateToHelpV2(route.businessId)
@@ -209,9 +208,6 @@ fun GuiV2NavGraph(
                 onInvoiceTemplatesClick = {
                     navController.navigateToInvoiceTemplatesV2(route.businessId)
                 },
-                onBackupRestoreClick = {
-                    navController.navigateToBackupRestoreV2(route.businessId)
-                },
                 onBack = { navController.popBackStack() },
                 onSwitchToGui1 = onSwitchToGui1
             )
@@ -221,7 +217,10 @@ fun GuiV2NavGraph(
             val route: ScreenV2.AppAppearance = backStackEntry.toRoute()
             AppAppearanceScreenV2(
                 businessId = route.businessId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onBusinessProfileClick = { navController.navigateToBusinessProfileV2(route.businessId) },
+                onHelpClick = { navController.navigate(ScreenV2.Help(route.businessId)) },
+                onBackupRestoreClick = { navController.navigate(ScreenV2.BackupRestore(route.businessId)) }
             )
         }
 
@@ -240,26 +239,30 @@ fun GuiV2NavGraph(
             )
         }
 
-        composable<ScreenV2.Vault> {
+        composable<ScreenV2.Vault> { backStackEntry ->
+            val route: ScreenV2.Vault = backStackEntry.toRoute()
             DocumentVaultScreen(
                 onBack = { navController.popBackStack() }
             )
         }
 
         // HelpScreen is shared between GUI1 and GUI2.
-        composable<ScreenV2.Help> {
+        composable<ScreenV2.Help> { backStackEntry ->
+            val route: ScreenV2.Help = backStackEntry.toRoute()
             HelpScreen(
                 onBack = { navController.popBackStack() }
             )
         }
 
-        composable<ScreenV2.DunningNotices> {
+        composable<ScreenV2.DunningNotices> { backStackEntry ->
+            val route: ScreenV2.DunningNotices = backStackEntry.toRoute()
             DunningNoticesScreen(
                 onBackClick = { navController.popBackStack() }
             )
         }
 
-        composable<ScreenV2.PrefilledItems> {
+        composable<ScreenV2.PrefilledItems> { backStackEntry ->
+            val route: ScreenV2.PrefilledItems = backStackEntry.toRoute()
             PrefilledItemsScreen()
         }
 
@@ -294,7 +297,8 @@ fun GuiV2NavGraph(
             )
         }
 
-        composable<ScreenV2.BackupRestore> {
+        composable<ScreenV2.BackupRestore> { backStackEntry ->
+            val route: ScreenV2.BackupRestore = backStackEntry.toRoute()
             BackupRestoreScreen(
                 onBack = { navController.popBackStack() }
             )
