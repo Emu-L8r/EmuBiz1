@@ -65,6 +65,10 @@ fun NavHostController.navigateToSettingsV2(businessId: Long) {
     navigate(ScreenV2.Settings(businessId))
 }
 
+fun NavHostController.navigateToAppAppearanceV2(businessId: Long) {
+    navigate(ScreenV2.AppAppearance(businessId))
+}
+
 fun NavHostController.navigateToBusinessProfileV2(businessId: Long) {
     navigate(ScreenV2.BusinessProfile(businessId))
 }
