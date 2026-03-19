@@ -37,8 +37,6 @@ import com.emul8r.bizap.ui.components.SkeletonLoadingItem
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.common.formatCents
-import com.emul8r.bizap.ui.gui2.invoices.InvoiceListUiStateV2
-import com.emul8r.bizap.ui.gui2.invoices.InvoiceListViewModelV2
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.theme.getStatusColor
 import com.emul8r.bizap.ui.theme.getBackgroundColor
@@ -206,7 +204,7 @@ private fun InvoiceListScreenV2Content(
     onInvoiceClick: (Long) -> Unit,
     onCreateInvoice: () -> Unit,
     onBack: () -> Unit,
-    viewModel: InvoiceListViewModelV2 = hiltViewModel()
+    viewModel: InvoiceListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -228,9 +226,14 @@ private fun InvoiceListScreenV2Content(
         }
     ) { paddingValues ->
         when (val state = uiState) {
-            is InvoiceListUiStateV2.Loading -> LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
-            is InvoiceListUiStateV2.Error -> ErrorStateV2(message = state.message, modifier = Modifier.padding(paddingValues))
-            is InvoiceListUiStateV2.Success -> InvoiceListV2Content(
+            is InvoiceListUiState.Loading -> LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
+            is InvoiceListUiState.Error -> ErrorStateV2(message = state.message, modifier = Modifier.padding(paddingValues))
+            is InvoiceListUiState.Empty -> InvoiceListV2Content(
+                invoices = emptyList(),
+                onInvoiceClick = onInvoiceClick,
+                modifier = Modifier.padding(paddingValues)
+            )
+            is InvoiceListUiState.Success -> InvoiceListV2Content(
                 invoices = state.invoices,
                 onInvoiceClick = onInvoiceClick,
                 modifier = Modifier.padding(paddingValues)

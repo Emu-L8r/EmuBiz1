@@ -192,6 +192,10 @@ class InvoiceDetailViewModel @Inject constructor(
         }
     }
 
+    fun updateInvoiceStatus(newStatus: InvoiceStatus) {
+        updateStatus(_currentInvoiceId.value, newStatus.name)
+    }
+
     fun shareInternalPdf() {
         checkAndProceedWithPdfGeneration(share = true)
     }
