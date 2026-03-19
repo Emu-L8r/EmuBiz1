@@ -93,6 +93,11 @@ private fun CustomerDetailScreenV1Content(
                     CircularProgressIndicator()
                 }
             }
+            is CustomerDetailUiState.NotFound -> {
+                Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                    Text(text = "Customer not found", color = MaterialTheme.colorScheme.error)
+                }
+            }
             is CustomerDetailUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                     Text(text = state.message, color = MaterialTheme.colorScheme.error)
@@ -244,6 +249,12 @@ private fun CustomerDetailScreenV2Content(
         when (val state = uiState) {
             is CustomerDetailUiState.Loading -> {
                 LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
+            }
+            is CustomerDetailUiState.NotFound -> {
+                ErrorStateV2(
+                    message = "Customer not found",
+                    modifier = Modifier.padding(paddingValues)
+                )
             }
             is CustomerDetailUiState.Error -> {
                 ErrorStateV2(

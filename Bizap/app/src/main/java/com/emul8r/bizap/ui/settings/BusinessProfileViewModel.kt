@@ -9,6 +9,8 @@ import com.emul8r.bizap.domain.model.BusinessProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -39,6 +41,15 @@ class BusinessProfileViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,  // Eagerly to ensure state is always available
             initialValue = BusinessProfile()
+        )
+
+    val uiState: StateFlow<BusinessProfileUiState> = repository.activeProfile
+        .map { profile -> BusinessProfileUiState.Success(profile) as BusinessProfileUiState }
+        .catch { e -> emit(BusinessProfileUiState.Error(e.message ?: "Unknown error")) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = BusinessProfileUiState.Loading
         )
 
     fun updateProfile(newProfile: BusinessProfile) {
