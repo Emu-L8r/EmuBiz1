@@ -8,23 +8,24 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.emul8r.bizap.ui.components.SyncStatusIndicator
+import com.emul8r.bizap.ui.customers.CustomerDetailScreen
+import com.emul8r.bizap.ui.customers.CustomerListScreen
 import com.emul8r.bizap.ui.documents.DocumentVaultScreen
 import com.emul8r.bizap.ui.gui2.analytics.InvoiceAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.PaymentAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.RevenueAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.RiskAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.customers.CreateCustomerScreenV2
-import com.emul8r.bizap.ui.gui2.customers.CustomerDetailScreenV2
-import com.emul8r.bizap.ui.gui2.customers.CustomerListScreenV2
 import com.emul8r.bizap.ui.gui2.customers.EditCustomerScreenV2
 import com.emul8r.bizap.ui.gui2.dashboard.DashboardScreenV2
 import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailScreenV2
 import com.emul8r.bizap.ui.gui2.invoices.CreateInvoiceScreenV2
 import com.emul8r.bizap.ui.gui2.invoices.EditInvoiceScreenV2
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListScreenV2
-import com.emul8r.bizap.ui.gui2.settings.BusinessProfileScreenV2
 import com.emul8r.bizap.ui.gui2.settings.SettingsHubScreenV2
 import com.emul8r.bizap.ui.gui2.settings.ThemeSettingsScreenV2
+import com.emul8r.bizap.ui.landing.GuiMode
+import com.emul8r.bizap.ui.settings.BusinessProfileScreen
 import com.emul8r.bizap.presentation.ui.screens.SettingsScreen as AppSettingsScreenV2
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
 
@@ -110,7 +111,8 @@ fun GuiV2NavGraph(
 
             composable<ScreenV2.Customers> { backStackEntry ->
                 val route: ScreenV2.Customers = backStackEntry.toRoute()
-                CustomerListScreenV2(
+                CustomerListScreen(
+                    guiMode = GuiMode.GUI2,
                     businessId = route.businessId,
                     onCustomerClick = { customerId ->
                         navController.navigateToCustomerDetailV2(route.businessId, customerId)
@@ -122,9 +124,10 @@ fun GuiV2NavGraph(
 
             composable<ScreenV2.CustomerDetail> { backStackEntry ->
                 val route: ScreenV2.CustomerDetail = backStackEntry.toRoute()
-                CustomerDetailScreenV2(
-                    businessId = route.businessId,
+                CustomerDetailScreen(
+                    guiMode = GuiMode.GUI2,
                     customerId = route.customerId,
+                    businessId = route.businessId,
                     onEdit = {
                         navController.navigateToEditCustomerV2(route.businessId, route.customerId)
                     },
@@ -207,7 +210,8 @@ fun GuiV2NavGraph(
             }
 
             composable<ScreenV2.BusinessProfile> { backStackEntry ->
-                BusinessProfileScreenV2(
+                BusinessProfileScreen(
+                    guiMode = GuiMode.GUI2,
                     onBack = { navController.popBackStack() }
                 )
             }

@@ -8,21 +8,56 @@ import com.emul8r.bizap.domain.model.BusinessProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * Consolidated UI state for BusinessProfileScreen.
+ * Shared between GUI1 and GUI2 implementations.
+ * Replaces: BusinessProfileUiStateV2 (GUI2).
+ */
+sealed interface BusinessProfileUiState {
+    object Loading : BusinessProfileUiState
+    data class Error(val message: String) : BusinessProfileUiState
+    data class Success(val businessProfile: BusinessProfile) : BusinessProfileUiState
+}
+
+/**
+ * Consolidated ViewModel for BusinessProfileScreen.
+ * Serves both GUI1 (profileState) and GUI2 (uiState with loading/error handling).
+ * Replaces: BusinessProfileViewModelV2 (GUI2).
+ */
 @HiltViewModel
 class BusinessProfileViewModel @Inject constructor(
     private val repository: BusinessProfileRepository
 ) : ViewModel() {
 
+    /** Used by GUI1 content which directly observes the raw profile. */
     val profileState: StateFlow<BusinessProfile> = repository.activeProfile
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = BusinessProfile()
+        )
+
+    /** Used by GUI2 content which needs loading/error state wrapping. */
+    val uiState: StateFlow<BusinessProfileUiState> = repository.activeProfile
+        .map { profile ->
+            Timber.d("BusinessProfileViewModel: Loaded profile")
+            BusinessProfileUiState.Success(profile) as BusinessProfileUiState
+        }
+        .catch { exception ->
+            Timber.e(exception, "BusinessProfileViewModel: Failed to load profile")
+            emit(BusinessProfileUiState.Error(exception.message ?: "Unknown error"))
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = BusinessProfileUiState.Loading
         )
 
     fun updateProfile(newProfile: BusinessProfile) {
@@ -31,6 +66,9 @@ class BusinessProfileViewModel @Inject constructor(
                 .onFailure { e -> Timber.e(e, "Failed to update business profile") }
         }
     }
+
+    /** Called by GUI2 content to update the business profile. */
+    fun updateBusinessProfile(profile: BusinessProfile) = updateProfile(profile)
 
     /**
      * PRAGMATIC SEEDING FIX: Manual trigger for business profile test data.

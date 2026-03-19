@@ -47,8 +47,6 @@ import com.emul8r.bizap.BuildConfig
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
-import com.emul8r.bizap.ui.gui2.settings.BusinessProfileUiStateV2
-import com.emul8r.bizap.ui.gui2.settings.BusinessProfileViewModelV2
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.utils.ImageCompressor
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +64,7 @@ fun BusinessProfileScreen(
 ) {
     when (guiMode) {
         GuiMode.GUI1 -> BusinessProfileScreenV1Content(viewModel = viewModel)
-        GuiMode.GUI2 -> BusinessProfileScreenV2Content(onBack = onBack)
+        GuiMode.GUI2 -> BusinessProfileScreenV2Content(onBack = onBack, viewModel = viewModel)
     }
 }
 
@@ -352,7 +350,7 @@ private fun BusinessProfileScreenV1Content(viewModel: BusinessProfileViewModel =
 @Composable
 private fun BusinessProfileScreenV2Content(
     onBack: () -> Unit,
-    viewModel: BusinessProfileViewModelV2 = hiltViewModel()
+    viewModel: BusinessProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -369,16 +367,16 @@ private fun BusinessProfileScreenV2Content(
         }
     ) { paddingValues ->
         when (val state = uiState) {
-            is BusinessProfileUiStateV2.Loading -> {
+            is BusinessProfileUiState.Loading -> {
                 LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
             }
-            is BusinessProfileUiStateV2.Error -> {
+            is BusinessProfileUiState.Error -> {
                 ErrorStateV2(
                     message = state.message,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
-            is BusinessProfileUiStateV2.Success -> {
+            is BusinessProfileUiState.Success -> {
                 BusinessProfileV2Form(
                     initialProfile = state.businessProfile,
                     onSave = { profile ->
