@@ -43,14 +43,44 @@ android {
     signingConfigs {
         create("release") {
             // Load signing credentials from environment variables for security
-            storeFile = System.getenv("KEYSTORE_PATH")?.let { file(it) }
-                ?: file("../release-key.jks") // Fallback for local development
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-                ?: throw GradleException("KEYSTORE_PASSWORD environment variable not set")
-            keyAlias = System.getenv("KEY_ALIAS")
-                ?: throw GradleException("KEY_ALIAS environment variable not set")
-            keyPassword = System.getenv("KEY_PASSWORD")
-                ?: throw GradleException("KEY_PASSWORD environment variable not set")
+            // For debug builds, these can be optional
+            val keystorePath = System.getenv("KEYSTORE_PATH")
+            val storePass = System.getenv("KEYSTORE_PASSWORD")
+            val alias = System.getenv("KEY_ALIAS")
+            val keyPass = System.getenv("KEY_PASSWORD")
+            
+            // Only require environment variables for release builds
+            if (keystorePath != null && storePass != null && alias != null && keyPass != null) {
+                storeFile = file(keystorePath)
+                storePassword = storePass
+                keyAlias = alias
+                keyPassword = keyPass
+            } else {
+                // Fallback to local keystore for development (NOT for production!)
+                val localKeystore = file("../release-key.jks")
+                if (localKeystore.exists()) {
+                    logger.warn("""
+                        ⚠️  Using local keystore for development.
+                        Set environment variables for production builds:
+                        - KEYSTORE_PATH
+                        - KEYSTORE_PASSWORD
+                        - KEY_ALIAS
+                        - KEY_PASSWORD
+                    """.trimIndent())
+                    storeFile = localKeystore
+                    storePassword = "bizap123" // Dev only - DO NOT use in production
+                    keyAlias = "bizap-key"
+                    keyPassword = "bizap123" // Dev only - DO NOT use in production
+                } else {
+                    throw GradleException("""
+                        ❌ Release signing configuration missing!
+                        
+                        Either:
+                        1. Set environment variables: KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+                        2. Place a development keystore at: ../release-key.jks
+                    """.trimIndent())
+                }
+            }
         }
     }
 
