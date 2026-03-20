@@ -72,9 +72,9 @@ android {
                     keyAlias = "bizap-key"
                     keyPassword = "bizap123" // Dev only - DO NOT use in production
                 } else {
-                    throw GradleException("""
-                        ❌ Release signing configuration missing!
-                        
+                    logger.warn("""
+                        ⚠️  Release signing configuration missing!
+                        Release builds will be unsigned and may fail.
                         Either:
                         1. Set environment variables: KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
                         2. Place a development keystore at: ../release-key.jks
@@ -92,13 +92,18 @@ android {
         release {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
-            isShrinkResources = false  // Disabled: causes FileSystemAlreadyExistsException in resource shrinking
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+
+    androidResources {
+        noCompress += listOf("proto", "pb")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

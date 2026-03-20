@@ -61,7 +61,6 @@ import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.presentation.ui.theme.ThemeProvider
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
 import com.emul8r.bizap.ui.notes.NotesScreen
-import com.emul8r.bizap.ui.landing.LandingScreen
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.onboarding.FirstLaunchWarningDialog
 import dagger.hilt.android.AndroidEntryPoint
@@ -112,48 +111,38 @@ class MainActivity : ComponentActivity() {
                         onDismiss = { appStateViewModel.markFirstLaunchWarningShown() }
                     )
 
-                    is AppState.GUISelection -> LandingScreen(
-                        onSelectGui1 = { appStateViewModel.selectGui(GuiMode.GUI1) },
-                        onSelectGui2 = { appStateViewModel.selectGui(GuiMode.GUI2) }
-                    )
+                    is AppState.GUISelection -> {
+                        // GUI selection is no longer shown in v2.0; default to GUI2
+                        appStateViewModel.selectGui(GuiMode.GUI2)
+                    }
 
-                    is AppState.AppReady -> when (state.gui) {
-                        GuiMode.GUI1 -> MainScreen(
-                            onSwitchGui = { appStateViewModel.resetGuiMode() }
-                        )
-                        GuiMode.GUI2 -> {
-                            val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
-                            val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
-                            val gui2NavController = rememberNavController()
-                            
-                            // Validate business ID before proceeding
-                            val businessId = businessProfile.id.takeIf { it > 0 }
-                            if (businessId != null) {
-                                GuiV2NavGraph(
-                                    navController = gui2NavController,
-                                    startBusinessId = businessId,
-                                    onSwitchToGui1 = { appStateViewModel.resetGuiMode() }
-                                )
-                            } else {
-                                // Show loading or prompt to create business profile
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
+                    is AppState.AppReady -> {
+                        val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
+                        val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
+                        val gui2NavController = rememberNavController()
+                        
+                        // Validate business ID before proceeding
+                        val businessId = businessProfile.id.takeIf { it > 0 }
+                        if (businessId != null) {
+                            GuiV2NavGraph(
+                                navController = gui2NavController,
+                                startBusinessId = businessId
+                            )
+                        } else {
+                            // Show loading or prompt to create business profile
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                                    ) {
-                                        CircularProgressIndicator()
-                                        Text(
-                                            text = "Loading business profile...",
-                                            style = MaterialTheme.typography.bodyLarge
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Button(onClick = { appStateViewModel.resetGuiMode() }) {
-                                            Text("Switch to Classic UI")
-                                        }
-                                    }
+                                    CircularProgressIndicator()
+                                    Text(
+                                        text = "Loading business profile...",
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
                                 }
                             }
                         }
