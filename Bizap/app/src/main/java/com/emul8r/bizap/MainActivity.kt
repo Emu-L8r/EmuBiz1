@@ -112,7 +112,9 @@ class MainActivity : ComponentActivity() {
                     )
 
                     is AppState.GUISelection -> {
-                        // GUI selection is no longer shown in v2.0; default to GUI2
+                        // This state should never occur in v2.0 since AppStateViewModel
+                        // always defaults to AppReady(GUI2). Log if reached unexpectedly.
+                        android.util.Log.w("MainActivity", "Unexpected GUISelection state in v2.0; defaulting to GUI2")
                         appStateViewModel.selectGui(GuiMode.GUI2)
                     }
 
