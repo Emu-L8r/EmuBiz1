@@ -96,8 +96,9 @@ class Gui1NavAdapterTest {
     }
 
     @Test
-    fun `ThemeSettings maps to Screen ThemeSettings`() {
-        assertEquals(Screen.ThemeSettings, Gui1NavAdapter.toScreen(AppScreen.ThemeSettings()))
+    fun `ThemeSettings maps to Screen AppSettings in GUI1 due to consolidation`() {
+        // Updated for Phase 4 consolidation: ThemeSettings now routes to AppSettings in GUI1
+        assertEquals(Screen.AppSettings, Gui1NavAdapter.toScreen(AppScreen.ThemeSettings()))
     }
 
     @Test
