@@ -32,4 +32,6 @@ fun Screen.getTitleResId(): Int = when (this) {
     is Screen.CustomerAnalytics -> R.string.screen_title_customer_analytics
     is Screen.Notes -> R.string.screen_title_notes
     is Screen.Help -> R.string.screen_title_help
+    // Default fallback for any future Screen types not explicitly handled
+    else -> R.string.screen_title_default
 }
