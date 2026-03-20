@@ -9,12 +9,9 @@ import org.junit.Test
  * Unit tests for [Gui2NavAdapter].
  *
  * Verifies that every [AppScreen] destination maps to the correct [ScreenV2] route
- * (with businessId applied from either the AppScreen or the fallback) and that
- * GUI1-only screens return `null`.
+ * (with businessId from the AppScreen) and that GUI1-only screens return `null`.
  */
 class Gui2NavAdapterTest {
-
-    private val fallback = 10L
 
     // ── toScreen: core screens ─────────────────────────────────────────────────
 
@@ -22,69 +19,69 @@ class Gui2NavAdapterTest {
     fun `Dashboard uses businessId from AppScreen`() {
         assertEquals(
             ScreenV2.Dashboard(5L),
-            Gui2NavAdapter.toScreen(AppScreen.Dashboard(5L), fallback)
+            Gui2NavAdapter.toScreen(AppScreen.Dashboard(5L))
         )
     }
 
     @Test
-    fun `Dashboard falls back to fallbackBusinessId when AppScreen has no id`() {
+    fun `Dashboard defaults to 0L when no businessId provided`() {
         assertEquals(
-            ScreenV2.Dashboard(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.Dashboard(null), fallback)
+            ScreenV2.Dashboard(0L),
+            Gui2NavAdapter.toScreen(AppScreen.Dashboard(null))
         )
     }
 
     @Test
     fun `CustomerList maps to ScreenV2 Customers`() {
         assertEquals(
-            ScreenV2.Customers(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.CustomerList(), fallback)
+            ScreenV2.Customers(0L),
+            Gui2NavAdapter.toScreen(AppScreen.CustomerList())
         )
     }
 
     @Test
     fun `CustomerDetail maps to ScreenV2 CustomerDetail with both ids`() {
         assertEquals(
-            ScreenV2.CustomerDetail(businessId = fallback, customerId = 42L),
-            Gui2NavAdapter.toScreen(AppScreen.CustomerDetail(customerId = 42L), fallback)
+            ScreenV2.CustomerDetail(businessId = 0L, customerId = 42L),
+            Gui2NavAdapter.toScreen(AppScreen.CustomerDetail(customerId = 42L))
         )
     }
 
     @Test
     fun `CreateCustomer maps to ScreenV2 CreateCustomer`() {
         assertEquals(
-            ScreenV2.CreateCustomer(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.CreateCustomer(), fallback)
+            ScreenV2.CreateCustomer(0L),
+            Gui2NavAdapter.toScreen(AppScreen.CreateCustomer())
         )
     }
 
     @Test
     fun `InvoiceList maps to ScreenV2 Invoices`() {
         assertEquals(
-            ScreenV2.Invoices(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.InvoiceList(), fallback)
+            ScreenV2.Invoices(0L),
+            Gui2NavAdapter.toScreen(AppScreen.InvoiceList())
         )
     }
 
     @Test
     fun `InvoiceDetail maps to ScreenV2 InvoiceDetail with invoiceId`() {
         assertEquals(
-            ScreenV2.InvoiceDetail(businessId = fallback, invoiceId = 7L),
-            Gui2NavAdapter.toScreen(AppScreen.InvoiceDetail(invoiceId = 7L), fallback)
+            ScreenV2.InvoiceDetail(businessId = 0L, invoiceId = 7L),
+            Gui2NavAdapter.toScreen(AppScreen.InvoiceDetail(invoiceId = 7L))
         )
     }
 
     @Test
     fun `CreateInvoice maps to ScreenV2 CreateInvoice`() {
         assertEquals(
-            ScreenV2.CreateInvoice(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.CreateInvoice(), fallback)
+            ScreenV2.CreateInvoice(0L),
+            Gui2NavAdapter.toScreen(AppScreen.CreateInvoice())
         )
     }
 
     @Test
     fun `InvoicePdf returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.InvoicePdf(1L, false), fallback))
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.InvoicePdf(1L, false)))
     }
 
     // ── toScreen: settings screens ─────────────────────────────────────────────
@@ -92,35 +89,59 @@ class Gui2NavAdapterTest {
     @Test
     fun `SettingsHub maps to ScreenV2 Settings`() {
         assertEquals(
-            ScreenV2.Settings(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.SettingsHub(), fallback)
+            ScreenV2.Settings(3L),
+            Gui2NavAdapter.toScreen(AppScreen.SettingsHub(3L))
         )
     }
 
     @Test
-    fun `AppSettings maps to ScreenV2 AppSettings`() {
+    fun `AppSettings maps to ScreenV2 AppAppearance`() {
         assertEquals(
-            ScreenV2.AppSettings(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.AppSettings(), fallback)
+            ScreenV2.AppAppearance(4L),
+            Gui2NavAdapter.toScreen(AppScreen.AppSettings(4L))
+        )
+    }
+
+    @Test
+    fun `ThemeSettings maps to ScreenV2 AppAppearance`() {
+        assertEquals(
+            ScreenV2.AppAppearance(5L),
+            Gui2NavAdapter.toScreen(AppScreen.ThemeSettings(5L))
         )
     }
 
     @Test
     fun `BusinessProfile maps to ScreenV2 BusinessProfile`() {
         assertEquals(
-            ScreenV2.BusinessProfile(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.BusinessProfile(), fallback)
+            ScreenV2.BusinessProfile(6L),
+            Gui2NavAdapter.toScreen(AppScreen.BusinessProfile(6L))
         )
     }
 
     @Test
-    fun `PrefilledItems returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.PrefilledItems, fallback))
+    fun `DocumentVault maps to ScreenV2 Vault`() {
+        assertEquals(
+            ScreenV2.Vault(0L),
+            Gui2NavAdapter.toScreen(AppScreen.DocumentVault())
+        )
     }
 
     @Test
-    fun `BackupRestore returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.BackupRestore, fallback))
+    fun `Help maps to ScreenV2 Help`() {
+        assertEquals(
+            ScreenV2.Help(0L),
+            Gui2NavAdapter.toScreen(AppScreen.Help)
+        )
+    }
+
+    @Test
+    fun `DunningNotices returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.DunningNotices))
+    }
+
+    @Test
+    fun `Notes returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.Notes))
     }
 
     // ── toScreen: analytics screens ────────────────────────────────────────────
@@ -128,61 +149,56 @@ class Gui2NavAdapterTest {
     @Test
     fun `RevenueAnalytics maps to ScreenV2 RevenueAnalytics`() {
         assertEquals(
-            ScreenV2.RevenueAnalytics(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.RevenueAnalytics(), fallback)
+            ScreenV2.RevenueAnalytics(2L),
+            Gui2NavAdapter.toScreen(AppScreen.RevenueAnalytics(2L))
         )
     }
 
     @Test
     fun `PaymentAnalytics maps to ScreenV2 PaymentAnalytics`() {
         assertEquals(
-            ScreenV2.PaymentAnalytics(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.PaymentAnalytics(), fallback)
+            ScreenV2.PaymentAnalytics(3L),
+            Gui2NavAdapter.toScreen(AppScreen.PaymentAnalytics(3L))
         )
     }
 
     @Test
     fun `RiskAnalytics maps to ScreenV2 RiskAnalytics`() {
         assertEquals(
-            ScreenV2.RiskAnalytics(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.RiskAnalytics(), fallback)
+            ScreenV2.RiskAnalytics(4L),
+            Gui2NavAdapter.toScreen(AppScreen.RiskAnalytics(4L))
         )
     }
 
     @Test
     fun `InvoiceAnalytics maps to ScreenV2 InvoiceAnalytics`() {
         assertEquals(
-            ScreenV2.InvoiceAnalytics(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.InvoiceAnalytics(), fallback)
+            ScreenV2.InvoiceAnalytics(5L),
+            Gui2NavAdapter.toScreen(AppScreen.InvoiceAnalytics(5L))
         )
     }
 
     // ── toScreen: misc screens ─────────────────────────────────────────────────
 
     @Test
-    fun `DocumentVault maps to ScreenV2 Vault`() {
+    fun `PrefilledItems returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.PrefilledItems))
+    }
+
+    @Test
+    fun `EditInvoice maps to ScreenV2 EditInvoice with both ids`() {
         assertEquals(
-            ScreenV2.Vault(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.DocumentVault(), fallback)
+            ScreenV2.EditInvoice(businessId = 2L, invoiceId = 30L),
+            Gui2NavAdapter.toScreen(AppScreen.EditInvoice(invoiceId = 30L, businessId = 2L))
         )
     }
 
     @Test
-    fun `Help maps to ScreenV2 Help`() {
+    fun `EditCustomer maps to ScreenV2 EditCustomer with both ids`() {
         assertEquals(
-            ScreenV2.Help(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.Help, fallback)
+            ScreenV2.EditCustomer(businessId = 3L, customerId = 50L),
+            Gui2NavAdapter.toScreen(AppScreen.EditCustomer(customerId = 50L, businessId = 3L))
         )
-    }
-
-    @Test
-    fun `DunningNotices returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.DunningNotices, fallback))
-    }
-
-    @Test
-    fun `Notes returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.Notes, fallback))
     }
 
     // ── fromScreen: round-trip verification ────────────────────────────────────
@@ -225,58 +241,18 @@ class Gui2NavAdapterTest {
     }
 
     @Test
-    fun `fromScreen Invoices preserves businessId`() {
-        assertEquals(
-            AppScreen.InvoiceList(4L),
-            Gui2NavAdapter.fromScreen(ScreenV2.Invoices(4L))
-        )
-    }
-
-    @Test
-    fun `fromScreen CreateInvoice preserves businessId`() {
-        assertEquals(
-            AppScreen.CreateInvoice(3L),
-            Gui2NavAdapter.fromScreen(ScreenV2.CreateInvoice(3L))
-        )
-    }
-
-    @Test
-    fun `fromScreen InvoiceDetail preserves both ids`() {
-        assertEquals(
-            AppScreen.InvoiceDetail(invoiceId = 20L, businessId = 2L),
-            Gui2NavAdapter.fromScreen(ScreenV2.InvoiceDetail(businessId = 2L, invoiceId = 20L))
-        )
-    }
-
-    @Test
-    fun `fromScreen EditInvoice preserves both ids`() {
-        assertEquals(
-            AppScreen.EditInvoice(invoiceId = 15L, businessId = 6L),
-            Gui2NavAdapter.fromScreen(ScreenV2.EditInvoice(businessId = 6L, invoiceId = 15L))
-        )
-    }
-
-    @Test
-    fun `fromScreen CreateCustomer preserves businessId`() {
-        assertEquals(
-            AppScreen.CreateCustomer(8L),
-            Gui2NavAdapter.fromScreen(ScreenV2.CreateCustomer(8L))
-        )
-    }
-
-    @Test
-    fun `fromScreen EditCustomer preserves both ids`() {
-        assertEquals(
-            AppScreen.EditCustomer(customerId = 11L, businessId = 9L),
-            Gui2NavAdapter.fromScreen(ScreenV2.EditCustomer(businessId = 9L, customerId = 11L))
-        )
-    }
-
-    @Test
     fun `fromScreen Settings maps to AppScreen SettingsHub`() {
         assertEquals(
             AppScreen.SettingsHub(2L),
             Gui2NavAdapter.fromScreen(ScreenV2.Settings(2L))
+        )
+    }
+
+    @Test
+    fun `fromScreen AppAppearance maps to AppScreen AppSettings`() {
+        assertEquals(
+            AppScreen.AppSettings(3L),
+            Gui2NavAdapter.fromScreen(ScreenV2.AppAppearance(3L))
         )
     }
 
@@ -341,50 +317,90 @@ class Gui2NavAdapterTest {
     @Test
     fun `EditInvoice maps to ScreenV2 EditInvoice with both ids`() {
         assertEquals(
-            ScreenV2.EditInvoice(businessId = fallback, invoiceId = 30L),
-            Gui2NavAdapter.toScreen(AppScreen.EditInvoice(invoiceId = 30L), fallback)
+            ScreenV2.EditInvoice(businessId = 0L, invoiceId = 30L),
+            Gui2NavAdapter.toScreen(AppScreen.EditInvoice(invoiceId = 30L))
         )
     }
 
     @Test
-    fun `EditCustomer maps to ScreenV2 EditCustomer with both ids`() {
+    fun `CreateCustomer preserves businessId`() {
         assertEquals(
-            ScreenV2.EditCustomer(businessId = fallback, customerId = 25L),
-            Gui2NavAdapter.toScreen(AppScreen.EditCustomer(customerId = 25L), fallback)
+            ScreenV2.CreateCustomer(8L),
+            Gui2NavAdapter.toScreen(AppScreen.CreateCustomer(8L))
         )
     }
 
     @Test
-    fun `ThemeSettings maps to ScreenV2 ThemeSettings`() {
+    fun `EditCustomer preserves both ids`() {
         assertEquals(
-            ScreenV2.ThemeSettings(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.ThemeSettings(), fallback)
+            ScreenV2.EditCustomer(businessId = 9L, customerId = 11L),
+            Gui2NavAdapter.toScreen(AppScreen.EditCustomer(customerId = 11L, businessId = 9L))
         )
     }
 
     @Test
-    fun `CustomerSegments returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.CustomerSegments, fallback))
-    }
-
-    @Test
-    fun `CustomerAnalytics returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.CustomerAnalytics, fallback))
-    }
-
-    @Test
-    fun `InvoiceDetail uses businessId from AppScreen when present`() {
+    fun `fromScreen Invoices preserves businessId`() {
         assertEquals(
-            ScreenV2.InvoiceDetail(businessId = 3L, invoiceId = 7L),
-            Gui2NavAdapter.toScreen(AppScreen.InvoiceDetail(invoiceId = 7L, businessId = 3L), fallback)
+            AppScreen.InvoiceList(12L),
+            Gui2NavAdapter.fromScreen(ScreenV2.Invoices(12L))
         )
     }
 
     @Test
-    fun `CreateInvoice uses businessId from AppScreen when present`() {
+    fun `fromScreen InvoiceDetail preserves both ids`() {
         assertEquals(
-            ScreenV2.CreateInvoice(businessId = 11L),
-            Gui2NavAdapter.toScreen(AppScreen.CreateInvoice(businessId = 11L), fallback)
+            AppScreen.InvoiceDetail(invoiceId = 15L, businessId = 6L),
+            Gui2NavAdapter.fromScreen(ScreenV2.InvoiceDetail(businessId = 6L, invoiceId = 15L))
+        )
+    }
+
+    @Test
+    fun `fromScreen CreateCustomer preserves businessId`() {
+        assertEquals(
+            AppScreen.CreateCustomer(8L),
+            Gui2NavAdapter.fromScreen(ScreenV2.CreateCustomer(8L))
+        )
+    }
+
+    @Test
+    fun `fromScreen EditCustomer preserves both ids`() {
+        assertEquals(
+            AppScreen.EditCustomer(customerId = 11L, businessId = 9L),
+            Gui2NavAdapter.fromScreen(ScreenV2.EditCustomer(businessId = 9L, customerId = 11L))
+        )
+    }
+
+    @Test
+    fun `fromScreen EditInvoice preserves both ids`() {
+        assertEquals(
+            AppScreen.EditInvoice(invoiceId = 15L, businessId = 6L),
+            Gui2NavAdapter.fromScreen(ScreenV2.EditInvoice(businessId = 6L, invoiceId = 15L))
+        )
+    }
+
+    @Test
+    fun `fromScreen DunningNotices maps to AppScreen DunningNotices`() {
+        assertEquals(
+            AppScreen.DunningNotices,
+            Gui2NavAdapter.fromScreen(ScreenV2.DunningNotices(1L))
+        )
+    }
+
+    @Test
+    fun `fromScreen PrefilledItems maps to AppScreen PrefilledItems`() {
+        assertEquals(
+            AppScreen.PrefilledItems,
+            Gui2NavAdapter.fromScreen(ScreenV2.PrefilledItems(1L))
+        )
+    }
+
+    @Test
+    fun `fromScreen BackupRestore maps to AppScreen BackupRestore`() {
+        assertEquals(
+            AppScreen.BackupRestore,
+            Gui2NavAdapter.fromScreen(ScreenV2.BackupRestore(1L))
         )
     }
 }
+
+
