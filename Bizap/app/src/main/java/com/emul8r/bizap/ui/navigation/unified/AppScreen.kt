@@ -167,18 +167,6 @@ sealed interface AppScreen {
     @Serializable
     object DunningNotices : AppScreen
 
-    /** Invoice template list (GUI1 only). */
-    @Serializable
-    data class InvoiceTemplates(val businessProfileId: Long = 1L) : AppScreen
-
-    /** Create invoice template (GUI1 only). */
-    @Serializable
-    data class CreateTemplate(val businessProfileId: Long) : AppScreen
-
-    /** Edit invoice template (GUI1 only). */
-    @Serializable
-    data class EditTemplate(val templateId: String) : AppScreen
-
     /** Customer segments view (GUI1 only). */
     @Serializable
     object CustomerSegments : AppScreen

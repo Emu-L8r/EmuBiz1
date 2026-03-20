@@ -41,9 +41,6 @@ object Gui2NavAdapter {
         is AppScreen.Help -> ScreenV2.Help(0L) // Help doesn't require businessId in ScreenV2
         is AppScreen.DunningNotices -> ScreenV2.DunningNotices(0L)
         is AppScreen.PrefilledItems -> ScreenV2.PrefilledItems(0L)
-        is AppScreen.InvoiceTemplates -> ScreenV2.InvoiceTemplates(0L, appScreen.businessProfileId)
-        is AppScreen.CreateTemplate -> ScreenV2.CreateTemplate(0L, appScreen.businessProfileId)
-        is AppScreen.EditTemplate -> ScreenV2.EditTemplate(0L, appScreen.templateId)
         is AppScreen.BackupRestore -> ScreenV2.BackupRestore(0L)
         // GUI1-only screens return null
         is AppScreen.InvoicePdf -> null
@@ -84,9 +81,6 @@ object Gui2NavAdapter {
         is ScreenV2.Help -> AppScreen.Help
         is ScreenV2.DunningNotices -> AppScreen.DunningNotices
         is ScreenV2.PrefilledItems -> AppScreen.PrefilledItems
-        is ScreenV2.InvoiceTemplates -> AppScreen.InvoiceTemplates(screen.businessProfileId)
-        is ScreenV2.CreateTemplate -> AppScreen.CreateTemplate(screen.businessProfileId)
-        is ScreenV2.EditTemplate -> AppScreen.EditTemplate(screen.templateId)
         is ScreenV2.BackupRestore -> AppScreen.BackupRestore
     }
 }

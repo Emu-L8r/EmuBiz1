@@ -133,12 +133,6 @@ private fun SettingsHubScreenV1Content(onNavigate: (Screen) -> Unit) {
             onClick = { onNavigate(Screen.DunningNotices) }
         )
         SettingsItem(
-            icon = Icons.Default.Description,
-            title = "Invoice Templates",
-            subtitle = "Create and manage reusable invoice templates",
-            onClick = { onNavigate(Screen.InvoiceTemplates()) }
-        )
-        SettingsItem(
             icon = Icons.Default.Backup,
             title = "Backup & Restore",
             subtitle = "Export or restore your app database",
