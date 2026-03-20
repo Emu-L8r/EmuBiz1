@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.model.DisplayMode
 import com.emul8r.bizap.domain.model.ThemePreference
 import com.emul8r.bizap.domain.repository.SettingsRepository
+import com.emul8r.bizap.ui.theme.AppTheme
+import com.emul8r.bizap.ui.theme.ThemeManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,11 +18,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AppAppearanceViewModelV2 @Inject constructor(
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val themeManager: ThemeManager
 ) : ViewModel() {
 
     data class AppSettingsUiState(
         val themePreference: ThemePreference = ThemePreference.AUTO,
+        val themeStyle: AppTheme = AppTheme.MODERN,
         val displayMode: DisplayMode = DisplayMode.LIST_VIEW,
         val isLoading: Boolean = false,
         val error: String? = null
@@ -36,13 +40,22 @@ class AppAppearanceViewModelV2 @Inject constructor(
     private fun loadSettings() {
         viewModelScope.launch {
             try {
-                settingsRepository.settings.collect { settings ->
-                    _uiState.update {
-                        it.copy(
-                            themePreference = settings.themePreference,
-                            displayMode = settings.displayMode,
-                            isLoading = false
-                        )
+                // Load settings and theme style concurrently
+                launch {
+                    settingsRepository.settings.collect { settings ->
+                        _uiState.update {
+                            it.copy(
+                                themePreference = settings.themePreference,
+                                displayMode = settings.displayMode,
+                                isLoading = false
+                            )
+                        }
+                    }
+                }
+                
+                launch {
+                    themeManager.theme.collect { theme ->
+                        _uiState.update { it.copy(themeStyle = theme) }
                     }
                 }
             } catch (e: Exception) {
@@ -59,6 +72,18 @@ class AppAppearanceViewModelV2 @Inject constructor(
                 _uiState.update { it.copy(themePreference = preference) }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to update theme preference")
+                _uiState.update { it.copy(error = e.message) }
+            }
+        }
+    }
+
+    fun updateThemeStyle(style: AppTheme) {
+        viewModelScope.launch {
+            try {
+                themeManager.setTheme(style)
+                _uiState.update { it.copy(themeStyle = style) }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to update theme style")
                 _uiState.update { it.copy(error = e.message) }
             }
         }
