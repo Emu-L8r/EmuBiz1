@@ -21,18 +21,66 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
+        
+        // API Key validation - fail-fast if not configured
+        val exchangeRateKey = project.findProperty("EXCHANGE_RATE_API_KEY") as String?
+        if (exchangeRateKey.isNullOrBlank()) {
+            logger.warn("""
+                ⚠️  EXCHANGE_RATE_API_KEY not found!
+                
+                Exchange rate features will be disabled.
+                To enable, add to local.properties or gradle.properties:
+                EXCHANGE_RATE_API_KEY=your_api_key_here
+                
+                Get a free key at: https://www.exchangerate-api.com/
+            """.trimIndent())
+            buildConfigField("String", "EXCHANGE_RATE_API_KEY", "\"\"")
+        } else {
+            buildConfigField("String", "EXCHANGE_RATE_API_KEY", "\"$exchangeRateKey\"")
         }
-        buildConfigField("String", "EXCHANGE_RATE_API_KEY", "\"${project.findProperty("EXCHANGE_RATE_API_KEY") ?: ""}\"")
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file("../release-key.jks")
-            storePassword = "bizap123"
-            keyAlias = "bizap-key"
-            keyPassword = "bizap123"
+            // Load signing credentials from environment variables for security
+            // For debug builds, these can be optional
+            val keystorePath = System.getenv("KEYSTORE_PATH")
+            val storePass = System.getenv("KEYSTORE_PASSWORD")
+            val alias = System.getenv("KEY_ALIAS")
+            val keyPass = System.getenv("KEY_PASSWORD")
+            
+            // Only require environment variables for release builds
+            if (keystorePath != null && storePass != null && alias != null && keyPass != null) {
+                storeFile = file(keystorePath)
+                storePassword = storePass
+                keyAlias = alias
+                keyPassword = keyPass
+            } else {
+                // Fallback to local keystore for development (NOT for production!)
+                val localKeystore = file("../release-key.jks")
+                if (localKeystore.exists()) {
+                    logger.warn("""
+                        ⚠️  Using local keystore for development.
+                        Set environment variables for production builds:
+                        - KEYSTORE_PATH
+                        - KEYSTORE_PASSWORD
+                        - KEY_ALIAS
+                        - KEY_PASSWORD
+                    """.trimIndent())
+                    storeFile = localKeystore
+                    storePassword = "bizap123" // Dev only - DO NOT use in production
+                    keyAlias = "bizap-key"
+                    keyPassword = "bizap123" // Dev only - DO NOT use in production
+                } else {
+                    throw GradleException("""
+                        ❌ Release signing configuration missing!
+                        
+                        Either:
+                        1. Set environment variables: KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+                        2. Place a development keystore at: ../release-key.jks
+                    """.trimIndent())
+                }
+            }
         }
     }
 
