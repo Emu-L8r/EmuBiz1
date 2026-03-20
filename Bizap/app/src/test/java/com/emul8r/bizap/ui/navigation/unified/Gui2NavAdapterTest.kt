@@ -363,21 +363,6 @@ class Gui2NavAdapterTest {
     }
 
     @Test
-    fun `InvoiceTemplates returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.InvoiceTemplates(1L), fallback))
-    }
-
-    @Test
-    fun `CreateTemplate returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.CreateTemplate(businessProfileId = 1L), fallback))
-    }
-
-    @Test
-    fun `EditTemplate returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.EditTemplate(templateId = "t1"), fallback))
-    }
-
-    @Test
     fun `CustomerSegments returns null because it is GUI1 only`() {
         assertNull(Gui2NavAdapter.toScreen(AppScreen.CustomerSegments, fallback))
     }

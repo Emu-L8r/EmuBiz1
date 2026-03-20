@@ -56,9 +56,6 @@ import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.settings.SettingsHubScreen
 import com.emul8r.bizap.presentation.ui.screens.SettingsScreen as AppSettingsScreen
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
-import com.emul8r.bizap.ui.templates.CreateTemplateScreen
-import com.emul8r.bizap.ui.templates.EditTemplateScreen
-import com.emul8r.bizap.ui.templates.TemplateListScreen
 import com.emul8r.bizap.presentation.ui.theme.ThemeProvider
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
 import com.emul8r.bizap.ui.notes.NotesScreen
@@ -192,9 +189,6 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                     currentDestination?.hasRoute<Screen.PaymentAnalytics>() == true -> "Payment Analytics"
                     currentDestination?.hasRoute<Screen.BackupRestore>() == true -> "Backup & Restore"
                     currentDestination?.hasRoute<Screen.DunningNotices>() == true -> "Dunning Notices"
-                    currentDestination?.hasRoute<Screen.InvoiceTemplates>() == true -> "Invoice Templates"
-                    currentDestination?.hasRoute<Screen.CreateTemplate>() == true -> "Create Template"
-                    currentDestination?.hasRoute<Screen.EditTemplate>() == true -> "Edit Template"
                     currentDestination?.hasRoute<Screen.CustomerSegments>() == true -> "Customer Segments"
                     currentDestination?.hasRoute<Screen.CustomerAnalytics>() == true -> "Customer Analytics"
                     currentDestination?.hasRoute<Screen.Notes>() == true -> "Notes"
@@ -329,30 +323,6 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 }
                 composable<Screen.BackupRestore> { BackupRestoreScreen(onBack = { navController.popBackStack() }) }
                 composable<Screen.DunningNotices> { DunningNoticesScreen(onBackClick = { navController.popBackStack() }) }
-                composable<Screen.InvoiceTemplates> { backStackEntry ->
-                    val route: Screen.InvoiceTemplates = backStackEntry.toRoute()
-                    TemplateListScreen(
-                        businessProfileId = route.businessProfileId,
-                        onNavigateToCreate = { bpId -> navController.navigate(Screen.CreateTemplate(bpId)) },
-                        onNavigateToEdit = { templateId -> navController.navigate(Screen.EditTemplate(templateId)) }
-                    )
-                }
-                composable<Screen.CreateTemplate> { backStackEntry ->
-                    val route: Screen.CreateTemplate = backStackEntry.toRoute()
-                    CreateTemplateScreen(
-                        businessProfileId = route.businessProfileId,
-                        onNavigateBack = { navController.popBackStack() },
-                        onTemplateCreated = { navController.popBackStack() }
-                    )
-                }
-                composable<Screen.EditTemplate> { backStackEntry ->
-                    val route: Screen.EditTemplate = backStackEntry.toRoute()
-                    EditTemplateScreen(
-                        templateId = route.templateId,
-                        onNavigateBack = { navController.popBackStack() },
-                        onTemplateUpdated = { navController.popBackStack() }
-                    )
-                }
                 composable<Screen.CustomerSegments> {
                     CustomerSegmentationScreen()
                 }
