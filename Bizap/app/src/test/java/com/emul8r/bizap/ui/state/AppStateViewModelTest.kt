@@ -11,6 +11,7 @@ import com.emul8r.bizap.domain.service.AuthenticationManager
 import com.emul8r.bizap.ui.landing.GuiMode
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -30,6 +31,7 @@ import org.junit.Test
  * Tests are framework-free (no Android context required) by using MockK to
  * stub [AuthenticationManager] and [DataStore].
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class AppStateViewModelTest : BaseUnitTest() {
 
     private lateinit var authManager: AuthenticationManager

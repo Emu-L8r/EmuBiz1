@@ -178,7 +178,6 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                     currentDestination?.hasRoute<Screen.DocumentVault>() == true -> "Document Vault"
                     currentDestination?.hasRoute<Screen.SettingsHub>() == true -> "Settings"
                     currentDestination?.hasRoute<Screen.BusinessProfile>() == true -> "Business Profile"
-                    currentDestination?.hasRoute<Screen.ThemeSettings>() == true -> "Theme Settings"
                     currentDestination?.hasRoute<Screen.PrefilledItems>() == true -> "Prefilled Items"
                     currentDestination?.hasRoute<Screen.CreateInvoice>() == true -> "Create Invoice"
                     currentDestination?.hasRoute<Screen.EditInvoice>() == true -> "Edit Invoice"
@@ -192,7 +191,9 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                     currentDestination?.hasRoute<Screen.CustomerSegments>() == true -> "Customer Segments"
                     currentDestination?.hasRoute<Screen.CustomerAnalytics>() == true -> "Customer Analytics"
                     currentDestination?.hasRoute<Screen.Notes>() == true -> "Notes"
-                    currentDestination?.hasRoute<Screen.AppSettings>() == true -> "App Settings"
+                    // Consolidated: Both AppSettings and ThemeSettings routes now show as "App Appearance"
+                    currentDestination?.hasRoute<Screen.AppSettings>() == true -> "App Appearance"
+                    currentDestination?.hasRoute<Screen.ThemeSettings>() == true -> "App Appearance"
                     currentDestination?.hasRoute<Screen.Help>() == true -> "Help & About"
                     else -> "Bizap"
                 }

@@ -46,7 +46,8 @@ object Gui1NavAdapter {
         is AppScreen.SettingsHub -> Screen.SettingsHub
         is AppScreen.AppSettings -> Screen.AppSettings
         is AppScreen.BusinessProfile -> Screen.BusinessProfile
-        is AppScreen.ThemeSettings -> Screen.ThemeSettings
+        // Consolidated: ThemeSettings now routes to AppSettings in GUI1 to avoid crashes
+        is AppScreen.ThemeSettings -> Screen.AppSettings
         AppScreen.PrefilledItems -> Screen.PrefilledItems
         AppScreen.BackupRestore -> Screen.BackupRestore
 
@@ -84,6 +85,7 @@ object Gui1NavAdapter {
         Screen.SettingsHub -> AppScreen.SettingsHub()
         Screen.AppSettings -> AppScreen.AppSettings()
         Screen.BusinessProfile -> AppScreen.BusinessProfile()
+        // Screen.ThemeSettings is deprecated/broken in GUI1, but we keep mapping for backward compatibility if ever reached
         Screen.ThemeSettings -> AppScreen.ThemeSettings()
         Screen.PrefilledItems -> AppScreen.PrefilledItems
         Screen.BackupRestore -> AppScreen.BackupRestore

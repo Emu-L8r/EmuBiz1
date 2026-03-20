@@ -93,13 +93,7 @@ private fun SettingsHubScreenV1Content(onNavigate: (Screen) -> Unit) {
         SettingsItem(
             icon = Icons.Default.Palette,
             title = "App Appearance",
-            subtitle = "Customize the look and feel of the app",
-            onClick = { onNavigate(Screen.ThemeSettings) }
-        )
-        SettingsItem(
-            icon = Icons.Default.Tune,
-            title = "App Settings",
-            subtitle = "Theme, display mode, notifications and sync",
+            subtitle = "Customize theme, display mode, and appearance",
             onClick = { onNavigate(Screen.AppSettings) }
         )
         SettingsItem(
@@ -393,6 +387,3 @@ private fun SettingsCardV2(
         }
     }
 }
-
-
-
