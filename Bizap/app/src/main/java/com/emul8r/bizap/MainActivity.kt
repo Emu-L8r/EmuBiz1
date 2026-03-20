@@ -22,7 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -45,6 +45,7 @@ import com.emul8r.bizap.ui.invoices.*
 import com.emul8r.bizap.ui.components.BizapTopAppBar
 import com.emul8r.bizap.ui.components.SyncStatusIndicator
 import com.emul8r.bizap.ui.navigation.Screen
+import com.emul8r.bizap.ui.navigation.getTitleResId
 import com.emul8r.bizap.ui.revenue.RevenueDashboardScreen
 import com.emul8r.bizap.ui.risk.RiskDashboardScreen
 import com.emul8r.bizap.ui.invoice.analytics.PaymentAnalyticsScreen
@@ -123,11 +124,37 @@ class MainActivity : ComponentActivity() {
                             val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
                             val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
                             val gui2NavController = rememberNavController()
-                            GuiV2NavGraph(
-                                navController = gui2NavController,
-                                startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L,
-                                onSwitchToGui1 = { appStateViewModel.resetGuiMode() }
-                            )
+                            
+                            // Validate business ID before proceeding
+                            val businessId = businessProfile.id.takeIf { it > 0 }
+                            if (businessId != null) {
+                                GuiV2NavGraph(
+                                    navController = gui2NavController,
+                                    startBusinessId = businessId,
+                                    onSwitchToGui1 = { appStateViewModel.resetGuiMode() }
+                                )
+                            } else {
+                                // Show loading or prompt to create business profile
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        CircularProgressIndicator()
+                                        Text(
+                                            text = "Loading business profile...",
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Button(onClick = { appStateViewModel.resetGuiMode() }) {
+                                            Text("Switch to Classic UI")
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -162,6 +189,34 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
         currentDestination?.hasRoute(item.screen::class) == true 
     }
 
+    // Get the title resource ID for the current screen using centralized mapping
+    val currentTitleResId = when {
+        currentDestination?.hasRoute<Screen.Dashboard>() == true -> Screen.Dashboard.getTitleResId()
+        currentDestination?.hasRoute<Screen.Customers>() == true -> Screen.Customers.getTitleResId()
+        currentDestination?.hasRoute<Screen.CustomerDetail>() == true -> Screen.CustomerDetail(0).getTitleResId()
+        currentDestination?.hasRoute<Screen.Invoices>() == true -> Screen.Invoices.getTitleResId()
+        currentDestination?.hasRoute<Screen.DocumentVault>() == true -> Screen.DocumentVault.getTitleResId()
+        currentDestination?.hasRoute<Screen.SettingsHub>() == true -> Screen.SettingsHub.getTitleResId()
+        currentDestination?.hasRoute<Screen.BusinessProfile>() == true -> Screen.BusinessProfile.getTitleResId()
+        currentDestination?.hasRoute<Screen.PrefilledItems>() == true -> Screen.PrefilledItems.getTitleResId()
+        currentDestination?.hasRoute<Screen.CreateInvoice>() == true -> Screen.CreateInvoice.getTitleResId()
+        currentDestination?.hasRoute<Screen.EditInvoice>() == true -> Screen.EditInvoice(0).getTitleResId()
+        currentDestination?.hasRoute<Screen.InvoiceDetail>() == true -> Screen.InvoiceDetail(0).getTitleResId()
+        currentDestination?.hasRoute<Screen.InvoicePdf>() == true -> Screen.InvoicePdf(0, false).getTitleResId()
+        currentDestination?.hasRoute<Screen.RevenueDashboard>() == true -> Screen.RevenueDashboard.getTitleResId()
+        currentDestination?.hasRoute<Screen.RiskDashboard>() == true -> Screen.RiskDashboard.getTitleResId()
+        currentDestination?.hasRoute<Screen.PaymentAnalytics>() == true -> Screen.PaymentAnalytics().getTitleResId()
+        currentDestination?.hasRoute<Screen.BackupRestore>() == true -> Screen.BackupRestore.getTitleResId()
+        currentDestination?.hasRoute<Screen.DunningNotices>() == true -> Screen.DunningNotices.getTitleResId()
+        currentDestination?.hasRoute<Screen.CustomerSegments>() == true -> Screen.CustomerSegments.getTitleResId()
+        currentDestination?.hasRoute<Screen.CustomerAnalytics>() == true -> Screen.CustomerAnalytics.getTitleResId()
+        currentDestination?.hasRoute<Screen.Notes>() == true -> Screen.Notes.getTitleResId()
+        currentDestination?.hasRoute<Screen.AppSettings>() == true -> Screen.AppSettings.getTitleResId()
+        currentDestination?.hasRoute<Screen.ThemeSettings>() == true -> Screen.ThemeSettings.getTitleResId()
+        currentDestination?.hasRoute<Screen.Help>() == true -> Screen.Help.getTitleResId()
+        else -> R.string.screen_title_default
+    }
+
     // Global Sync and Offline Status Indicator
     Column(modifier = Modifier.fillMaxSize()) {
         SyncStatusIndicator()
@@ -170,34 +225,7 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
             modifier = Modifier.weight(1f),
             contentWindowInsets = WindowInsets.safeDrawing,
             topBar = {
-                val title = when {
-                    currentDestination?.hasRoute<Screen.Dashboard>() == true -> "Dashboard"
-                    currentDestination?.hasRoute<Screen.Customers>() == true -> "Customers"
-                    currentDestination?.hasRoute<Screen.CustomerDetail>() == true -> "Customer Detail"
-                    currentDestination?.hasRoute<Screen.Invoices>() == true -> "Invoices"
-                    currentDestination?.hasRoute<Screen.DocumentVault>() == true -> "Document Vault"
-                    currentDestination?.hasRoute<Screen.SettingsHub>() == true -> "Settings"
-                    currentDestination?.hasRoute<Screen.BusinessProfile>() == true -> "Business Profile"
-                    currentDestination?.hasRoute<Screen.PrefilledItems>() == true -> "Prefilled Items"
-                    currentDestination?.hasRoute<Screen.CreateInvoice>() == true -> "Create Invoice"
-                    currentDestination?.hasRoute<Screen.EditInvoice>() == true -> "Edit Invoice"
-                    currentDestination?.hasRoute<Screen.InvoiceDetail>() == true -> "Invoice Detail"
-                    currentDestination?.hasRoute<Screen.InvoicePdf>() == true -> "PDF Preview"
-                    currentDestination?.hasRoute<Screen.RevenueDashboard>() == true -> "Revenue Dashboard"
-                    currentDestination?.hasRoute<Screen.RiskDashboard>() == true -> "Risk Dashboard"
-                    currentDestination?.hasRoute<Screen.PaymentAnalytics>() == true -> "Payment Analytics"
-                    currentDestination?.hasRoute<Screen.BackupRestore>() == true -> "Backup & Restore"
-                    currentDestination?.hasRoute<Screen.DunningNotices>() == true -> "Dunning Notices"
-                    currentDestination?.hasRoute<Screen.CustomerSegments>() == true -> "Customer Segments"
-                    currentDestination?.hasRoute<Screen.CustomerAnalytics>() == true -> "Customer Analytics"
-                    currentDestination?.hasRoute<Screen.Notes>() == true -> "Notes"
-                    // Consolidated: Both AppSettings and ThemeSettings routes now show as "App Appearance"
-                    currentDestination?.hasRoute<Screen.AppSettings>() == true -> "App Appearance"
-                    currentDestination?.hasRoute<Screen.ThemeSettings>() == true -> "App Appearance"
-                    currentDestination?.hasRoute<Screen.Help>() == true -> "Help & About"
-                    else -> "Bizap"
-                }
-
+                val title = stringResource(currentTitleResId)
                 val showLogo = currentDestination?.hasRoute<Screen.Dashboard>() == true
 
                 BizapTopAppBar(

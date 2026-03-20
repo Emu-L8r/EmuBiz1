@@ -21,18 +21,36 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
+        
+        // API Key validation - fail-fast if not configured
+        val exchangeRateKey = project.findProperty("EXCHANGE_RATE_API_KEY") as String?
+        if (exchangeRateKey.isNullOrBlank()) {
+            logger.warn("""
+                ⚠️  EXCHANGE_RATE_API_KEY not found!
+                
+                Exchange rate features will be disabled.
+                To enable, add to local.properties or gradle.properties:
+                EXCHANGE_RATE_API_KEY=your_api_key_here
+                
+                Get a free key at: https://www.exchangerate-api.com/
+            """.trimIndent())
+            buildConfigField("String", "EXCHANGE_RATE_API_KEY", "\"\"")
+        } else {
+            buildConfigField("String", "EXCHANGE_RATE_API_KEY", "\"$exchangeRateKey\"")
         }
-        buildConfigField("String", "EXCHANGE_RATE_API_KEY", "\"${project.findProperty("EXCHANGE_RATE_API_KEY") ?: ""}\"")
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file("../release-key.jks")
-            storePassword = "bizap123"
-            keyAlias = "bizap-key"
-            keyPassword = "bizap123"
+            // Load signing credentials from environment variables for security
+            storeFile = System.getenv("KEYSTORE_PATH")?.let { file(it) }
+                ?: file("../release-key.jks") // Fallback for local development
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+                ?: throw GradleException("KEYSTORE_PASSWORD environment variable not set")
+            keyAlias = System.getenv("KEY_ALIAS")
+                ?: throw GradleException("KEY_ALIAS environment variable not set")
+            keyPassword = System.getenv("KEY_PASSWORD")
+                ?: throw GradleException("KEY_PASSWORD environment variable not set")
         }
     }
 
