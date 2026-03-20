@@ -15,4 +15,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Bizap"
+include(":domain")
+include(":data")
 include(":app")
