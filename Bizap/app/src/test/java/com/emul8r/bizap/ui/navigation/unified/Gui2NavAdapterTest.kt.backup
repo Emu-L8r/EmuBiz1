@@ -115,12 +115,12 @@ class Gui2NavAdapterTest {
 
     @Test
     fun `PrefilledItems returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.PrefilledItems))
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.PrefilledItems, fallback))
     }
 
     @Test
     fun `BackupRestore returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.BackupRestore))
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.BackupRestore, fallback))
     }
 
     // ── toScreen: analytics screens ────────────────────────────────────────────
@@ -171,18 +171,18 @@ class Gui2NavAdapterTest {
     fun `Help maps to ScreenV2 Help`() {
         assertEquals(
             ScreenV2.Help(fallback),
-            Gui2NavAdapter.toScreen(AppScreen.Help)
+            Gui2NavAdapter.toScreen(AppScreen.Help, fallback)
         )
     }
 
     @Test
     fun `DunningNotices returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.DunningNotices))
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.DunningNotices, fallback))
     }
 
     @Test
     fun `Notes returns null because it is GUI1 only`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.Notes))
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.Notes, fallback))
     }
 
     // ── fromScreen: round-trip verification ────────────────────────────────────
@@ -363,6 +363,21 @@ class Gui2NavAdapterTest {
     }
 
     @Test
+    fun `InvoiceTemplates returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.InvoiceTemplates(1L), fallback))
+    }
+
+    @Test
+    fun `CreateTemplate returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.CreateTemplate(businessProfileId = 1L), fallback))
+    }
+
+    @Test
+    fun `EditTemplate returns null because it is GUI1 only`() {
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.EditTemplate(templateId = "t1"), fallback))
+    }
+
+    @Test
     fun `CustomerSegments returns null because it is GUI1 only`() {
         assertNull(Gui2NavAdapter.toScreen(AppScreen.CustomerSegments))
     }
@@ -388,6 +403,5 @@ class Gui2NavAdapterTest {
         )
     }
 }
-
 
 
