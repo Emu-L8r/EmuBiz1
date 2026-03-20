@@ -40,23 +40,19 @@ class AppAppearanceViewModelV2 @Inject constructor(
     private fun loadSettings() {
         viewModelScope.launch {
             try {
-                // Load settings and theme style concurrently
-                launch {
-                    settingsRepository.settings.collect { settings ->
-                        _uiState.update {
-                            it.copy(
-                                themePreference = settings.themePreference,
-                                displayMode = settings.displayMode,
-                                isLoading = false
-                            )
-                        }
-                    }
-                }
-                
-                launch {
-                    themeManager.theme.collect { theme ->
-                        _uiState.update { it.copy(themeStyle = theme) }
-                    }
+                // Combine settings and theme style into a single flow to avoid race conditions
+                kotlinx.coroutines.flow.combine(
+                    settingsRepository.settings,
+                    themeManager.theme
+                ) { settings, themeStyle ->
+                    AppSettingsUiState(
+                        themePreference = settings.themePreference,
+                        themeStyle = themeStyle,
+                        displayMode = settings.displayMode,
+                        isLoading = false
+                    )
+                }.collect { newState ->
+                    _uiState.value = newState
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load app settings")
@@ -69,7 +65,7 @@ class AppAppearanceViewModelV2 @Inject constructor(
         viewModelScope.launch {
             try {
                 settingsRepository.updateThemePreference(preference)
-                _uiState.update { it.copy(themePreference = preference) }
+                // State will be updated reactively via the combine flow
             } catch (e: Exception) {
                 Timber.e(e, "Failed to update theme preference")
                 _uiState.update { it.copy(error = e.message) }
@@ -81,7 +77,7 @@ class AppAppearanceViewModelV2 @Inject constructor(
         viewModelScope.launch {
             try {
                 themeManager.setTheme(style)
-                _uiState.update { it.copy(themeStyle = style) }
+                // State will be updated reactively via the combine flow
             } catch (e: Exception) {
                 Timber.e(e, "Failed to update theme style")
                 _uiState.update { it.copy(error = e.message) }
@@ -93,7 +89,7 @@ class AppAppearanceViewModelV2 @Inject constructor(
         viewModelScope.launch {
             try {
                 settingsRepository.updateDisplayMode(mode)
-                _uiState.update { it.copy(displayMode = mode) }
+                // State will be updated reactively via the combine flow
             } catch (e: Exception) {
                 Timber.e(e, "Failed to update display mode")
                 _uiState.update { it.copy(error = e.message) }
