@@ -20,7 +20,12 @@ import javax.inject.Singleton
  */
 enum class AppTheme {
     CLASSIC,
-    MODERN
+    MODERN;
+    
+    companion object {
+        /** Default theme style for new installations */
+        val DEFAULT = MODERN
+    }
 }
 
 /**
@@ -40,7 +45,7 @@ class ThemeManager @Inject constructor(
         val APP_THEME_KEY = stringPreferencesKey("app_theme")
     }
 
-    private val _theme = MutableStateFlow(AppTheme.MODERN)
+    private val _theme = MutableStateFlow(AppTheme.DEFAULT)
     val theme: StateFlow<AppTheme> = _theme.asStateFlow()
 
     /**
@@ -54,9 +59,9 @@ class ThemeManager @Inject constructor(
                     try {
                         AppTheme.valueOf(themeName)
                     } catch (e: IllegalArgumentException) {
-                        AppTheme.MODERN // Default if invalid
+                        AppTheme.DEFAULT
                     }
-                } ?: AppTheme.MODERN // Default if not set
+                } ?: AppTheme.DEFAULT
             }
             .first()
         

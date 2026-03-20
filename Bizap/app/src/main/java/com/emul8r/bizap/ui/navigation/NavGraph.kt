@@ -48,7 +48,11 @@ fun NavGraph(
     // Get business profile for GUI2 start business ID
     val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
     val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
-    val startBusinessId = businessProfile.id.takeIf { it > 0 } ?: 1L
+    
+    // Default business ID when no valid business profile is available
+    // This matches the default used in ModernGUIMainActivity
+    val DEFAULT_BUSINESS_ID = 1L
+    val startBusinessId = businessProfile.id.takeIf { it > 0 } ?: DEFAULT_BUSINESS_ID
     
     // Switch between GUI implementations based on theme
     when (theme) {
