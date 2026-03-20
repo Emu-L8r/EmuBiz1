@@ -230,6 +230,20 @@ Solution: Clean gradle caches
 
 ## 📖 Documentation
 
+### 6-Week Technical Debt Elimination Plan 🚀
+**NEW**: Comprehensive strategy to eliminate technical debt and exit "migration purgatory"
+
+- 📋 **[Executive Summary](docs/EXECUTIVE-SUMMARY-6-WEEK-PLAN.md)** - Quick 3-min read
+- 📚 **[Full Implementation Plan](docs/6-WEEK-TECHNICAL-DEBT-PLAN.md)** - Detailed 30-min guide
+
+**What's Included:**
+- ✅ **Phase 2A**: Fix resource shrinking (1 week) → -3 MB APK size
+- ✅ **Phase 2B**: Complete GUI2 feature parity (2-3 weeks) → 100% ready
+- ✅ **Phase 2C**: Validate clean architecture (1 week) → Prevent regression
+- ✅ **Phase 2D**: Delete GUI1 (1 week) → 30% velocity boost
+
+**Current Status**: Analysis complete, ready for implementation
+
 ### Week 3 Deliverables
 - ✅ **Domain Validation System** - Type-safe error handling with Result pattern
 - ✅ **MockK Conversion** - Modernized test infrastructure (Mockito → MockK)
@@ -238,13 +252,18 @@ Solution: Clean gradle caches
 
 ### Key Documents
 ```
+docs/
+├── EXECUTIVE-SUMMARY-6-WEEK-PLAN.md  ← 🆕 Start here for 6-week plan
+├── 6-WEEK-TECHNICAL-DEBT-PLAN.md     ← 🆕 Full implementation guide
+├── DOMAIN_VALIDATION_COMPLETE.md
+└── ...
+
 Bizap/
-├── WEEK_3_MASTER_INDEX.md         ← Start here for overview
-├── WEEK_3_COMPLETION_SUMMARY.md   ← Week 3 achievements
-├── QUICK_REFERENCE.md              ← MockK syntax reference
+├── WEEK_3_MASTER_INDEX.md            ← Week 3 overview
+├── WEEK_3_COMPLETION_SUMMARY.md      ← Week 3 achievements
+├── QUICK_REFERENCE.md                ← MockK syntax reference
 ├── VALIDATION_IMPLEMENTATION_SUMMARY.md
-├── docs/DOMAIN_VALIDATION_COMPLETE.md
-└── README.md                        ← This file
+└── README.md                          ← This file
 ```
 
 ---
