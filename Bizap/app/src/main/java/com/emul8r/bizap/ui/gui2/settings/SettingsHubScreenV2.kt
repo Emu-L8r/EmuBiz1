@@ -50,7 +50,6 @@ fun SettingsHubScreenV2(
     onRevenueDashboardClick: () -> Unit = {},
     onDunningNoticesClick: () -> Unit = {},
     onPrefilledItemsClick: () -> Unit = {},
-    onInvoiceTemplatesClick: () -> Unit = {},
     onBackupRestoreClick: () -> Unit = {},
     onBack: () -> Unit,
     onSwitchToGui1: () -> Unit = {},
@@ -91,7 +90,6 @@ fun SettingsHubScreenV2(
                     onRevenueDashboardClick = onRevenueDashboardClick,
                     onDunningNoticesClick = onDunningNoticesClick,
                     onPrefilledItemsClick = onPrefilledItemsClick,
-                    onInvoiceTemplatesClick = onInvoiceTemplatesClick,
                     onBackupRestoreClick = onBackupRestoreClick,
                     onSwitchToGui1 = onSwitchToGui1,
                     modifier = Modifier.padding(paddingValues)
@@ -112,7 +110,6 @@ private fun SettingsContent(
     onRevenueDashboardClick: () -> Unit = {},
     onDunningNoticesClick: () -> Unit = {},
     onPrefilledItemsClick: () -> Unit = {},
-    onInvoiceTemplatesClick: () -> Unit = {},
     onBackupRestoreClick: () -> Unit = {},
     onSwitchToGui1: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -216,13 +213,6 @@ private fun SettingsContent(
             title = "Pre-filled Items",
             description = "Manage your saved line items for faster invoicing",
             onClick = onPrefilledItemsClick
-        )
-
-        SettingsCardV2(
-            icon = Icons.Default.Description,
-            title = "Invoice Templates",
-            description = "Create and manage reusable invoice templates",
-            onClick = onInvoiceTemplatesClick
         )
 
         SettingsCardV2(

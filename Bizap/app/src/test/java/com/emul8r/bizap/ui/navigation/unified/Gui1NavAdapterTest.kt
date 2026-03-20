@@ -279,30 +279,6 @@ class Gui1NavAdapterTest {
     }
 
     @Test
-    fun `fromScreen InvoiceTemplates preserves businessProfileId`() {
-        assertEquals(
-            AppScreen.InvoiceTemplates(businessProfileId = 5L),
-            Gui1NavAdapter.fromScreen(Screen.InvoiceTemplates(businessProfileId = 5L))
-        )
-    }
-
-    @Test
-    fun `fromScreen CreateTemplate preserves businessProfileId`() {
-        assertEquals(
-            AppScreen.CreateTemplate(businessProfileId = 2L),
-            Gui1NavAdapter.fromScreen(Screen.CreateTemplate(businessProfileId = 2L))
-        )
-    }
-
-    @Test
-    fun `fromScreen EditTemplate preserves templateId`() {
-        assertEquals(
-            AppScreen.EditTemplate(templateId = "template-abc"),
-            Gui1NavAdapter.fromScreen(Screen.EditTemplate(templateId = "template-abc"))
-        )
-    }
-
-    @Test
     fun `fromScreen CustomerSegments round-trips to AppScreen CustomerSegments`() {
         assertEquals(AppScreen.CustomerSegments, Gui1NavAdapter.fromScreen(Screen.CustomerSegments))
     }
@@ -317,31 +293,7 @@ class Gui1NavAdapterTest {
         assertEquals(AppScreen.Notes, Gui1NavAdapter.fromScreen(Screen.Notes))
     }
 
-    // ── toScreen: template and misc screens ───────────────────────────────────
-
-    @Test
-    fun `InvoiceTemplates maps to Screen InvoiceTemplates with businessProfileId`() {
-        assertEquals(
-            Screen.InvoiceTemplates(businessProfileId = 3L),
-            Gui1NavAdapter.toScreen(AppScreen.InvoiceTemplates(businessProfileId = 3L))
-        )
-    }
-
-    @Test
-    fun `CreateTemplate maps to Screen CreateTemplate with businessProfileId`() {
-        assertEquals(
-            Screen.CreateTemplate(businessProfileId = 7L),
-            Gui1NavAdapter.toScreen(AppScreen.CreateTemplate(businessProfileId = 7L))
-        )
-    }
-
-    @Test
-    fun `EditTemplate maps to Screen EditTemplate with templateId`() {
-        assertEquals(
-            Screen.EditTemplate(templateId = "tmpl-123"),
-            Gui1NavAdapter.toScreen(AppScreen.EditTemplate(templateId = "tmpl-123"))
-        )
-    }
+    // ── toScreen: misc screens ────────────────────────────────────────────────
 
     @Test
     fun `CustomerSegments maps to Screen CustomerSegments`() {
