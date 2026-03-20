@@ -1,9 +1,0 @@
-<resources>
-    <string name="app_name">Bizap</string>
-
-    <!-- Bottom navigation labels -->
-    <string name="nav_invoices">Invoices</string>
-    <string name="nav_customers">Customers</string>
-    <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_settings">Settings</string>
-</resources>
