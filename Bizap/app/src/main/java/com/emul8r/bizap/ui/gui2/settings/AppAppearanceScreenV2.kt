@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.DisplayMode
 import com.emul8r.bizap.domain.model.ThemePreference
+import com.emul8r.bizap.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +80,13 @@ fun AppAppearanceScreenV2(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
+                        ThemeStyleCard(
+                            currentStyle = uiState.themeStyle,
+                            onStyleChange = { viewModel.updateThemeStyle(it) }
+                        )
+                    }
+
+                    item {
                         ThemePreferenceCard(
                             currentPreference = uiState.themePreference,
                             onPreferenceChange = { viewModel.updateThemePreference(it) }
@@ -131,6 +139,49 @@ fun AppAppearanceScreenV2(
 }
 
 @Composable
+private fun ThemeStyleCard(
+    currentStyle: AppTheme,
+    onStyleChange: (AppTheme) -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "Theme Style",
+                style = MaterialTheme.typography.labelMedium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Choose between Classic (Material 2) or Modern (Material 3) design",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AppTheme.entries.forEach { style ->
+                    FilterChip(
+                        selected = currentStyle == style,
+                        onClick = { onStyleChange(style) },
+                        label = { 
+                            Text(
+                                when (style) {
+                                    AppTheme.CLASSIC -> "Classic"
+                                    AppTheme.MODERN -> "Modern"
+                                }
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ThemePreferenceCard(
     currentPreference: ThemePreference,
     onPreferenceChange: (ThemePreference) -> Unit
@@ -138,8 +189,14 @@ private fun ThemePreferenceCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                "Theme",
+                "Theme Mode",
                 style = MaterialTheme.typography.labelMedium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Control light or dark appearance",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(
