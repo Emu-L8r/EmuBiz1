@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- White background for the splash screen -->
+    <item android:drawable="@android:color/white" />
+
+    <!--
+        Center the logo and force it to be 180dp.
+        This ensures it's clearly visible without being 'zoomed'
+        regardless of the image's original resolution.
+    -->
+    <item
+        android:width="180dp"
+        android:height="180dp"
+        android:gravity="center"
+        android:drawable="@drawable/company_logo" />
+</layer-list>
