@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
@@ -21,6 +23,12 @@ class InvoiceListViewModelV2 @Inject constructor(
     private val route: ScreenV2.Invoices = savedStateHandle.toRoute()
     val businessId: Long = route.businessId
 
+    // Phase 4: Use pagination instead of loading all invoices at once
+    val pagingData: Flow<PagingData<Invoice>> = invoiceRepository
+        .getInvoicesPaged(businessId)
+        .cachedIn(viewModelScope)
+
+    // Fallback: Keep old uiState for compatibility, but it's deprecated
     val uiState: StateFlow<InvoiceListUiStateV2> = invoiceRepository
         .getAllInvoicesWithItems()
         .map { invoices ->
