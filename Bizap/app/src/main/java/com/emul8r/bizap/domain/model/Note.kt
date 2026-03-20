@@ -1,15 +1,13 @@
 package com.emul8r.bizap.domain.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
 /**
- * Note entity - can be linked to either a Customer or Invoice
- * Only one of customerId or invoiceId should be set
+ * Note domain model - can be linked to either a Customer or Invoice.
+ * Only one of customerId or invoiceId should be set.
+ * 
+ * This is a pure domain model without infrastructure concerns.
+ * The data layer will map this to/from the Room entity.
  */
-@Entity(tableName = "notes")
 data class Note(
-    @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val businessProfileId: Long,
     val customerId: Long? = null,  // If note is for a customer

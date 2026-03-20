@@ -4,12 +4,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.emul8r.bizap.data.local.entities.*
+import com.emul8r.bizap.data.local.entity.NoteEntity
 import com.emul8r.bizap.data.local.dao.*
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTimeTypeConverter
 import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
-import com.emul8r.bizap.domain.model.Note
 
 @Database(
     entities = [
@@ -35,7 +35,7 @@ import com.emul8r.bizap.domain.model.Note
         OfflineOperation::class,
         InvoiceItemEntity::class,
         PaymentEntity::class,
-        Note::class
+        NoteEntity::class
     ],
     version = 35,
     exportSchema = true
