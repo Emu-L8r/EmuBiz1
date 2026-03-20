@@ -36,6 +36,10 @@ private val KEY_FIRST_LAUNCH_WARNING_SHOWN = booleanPreferencesKey("first_launch
  * The initial value is [AppState.SplashLoading], which persists until DataStore
  * has completed its first read. This removes the previous hardcoded 2500 ms splash
  * delay while still ensuring the branded splash is visible during actual data loading.
+ *
+ * As of v2.0, GUI2 is the only supported interface. GUI1 is no longer offered
+ * and the GUI selection screen is never shown. Any previously stored GUI1 preference
+ * is silently upgraded to GUI2.
  */
 @HiltViewModel
 class AppStateViewModel @Inject constructor(
@@ -93,8 +97,9 @@ class AppStateViewModel @Inject constructor(
         is AuthState.NotInitialized -> AppState.PINSetup
         is AuthState.Authenticated -> when {
             !warningShown -> AppState.FirstLaunchWarning
-            selectedMode == null -> AppState.GUISelection
-            else -> AppState.AppReady(selectedMode)
+            // GUI2 is now the only supported interface. GUI1 is no longer offered.
+            // Any stored preference (including null or GUI1) defaults to GUI2.
+            else -> AppState.AppReady(GuiMode.GUI2)
         }
         else -> AppState.Login
     }
@@ -119,23 +124,18 @@ class AppStateViewModel @Inject constructor(
     }
 
     /**
-     * Persists the user's GUI mode selection, immediately transitioning
-     * [appState] to [AppState.AppReady] without launching a new activity.
+     * No-op in v2.0. GUI2 is always used; the GUI mode preference is ignored.
+     * Kept for backward compatibility with code that may call this method.
      */
     fun selectGui(mode: GuiMode) {
-        Timber.d("AppStateViewModel: user selected $mode")
-        viewModelScope.launch {
-            dataStore.edit { it[KEY_GUI_MODE] = mode.name }
-        }
+        Timber.d("AppStateViewModel: selectGui($mode) called — GUI2 is always used in v2.0")
     }
 
     /**
-     * Clears the persisted GUI mode, transitioning [appState] back to
-     * [AppState.GUISelection] so the landing screen is shown again.
+     * No-op in v2.0. GUI2 is always used; there is no GUI selection screen to return to.
+     * Kept for backward compatibility with code that may call this method.
      */
     fun resetGuiMode() {
-        viewModelScope.launch {
-            dataStore.edit { it.remove(KEY_GUI_MODE) }
-        }
+        Timber.d("AppStateViewModel: resetGuiMode() called — no-op in v2.0")
     }
 }

@@ -9,7 +9,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.AutoAwesomeMotion
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Backup
@@ -52,7 +51,6 @@ fun SettingsHubScreenV2(
     onPrefilledItemsClick: () -> Unit = {},
     onBackupRestoreClick: () -> Unit = {},
     onBack: () -> Unit,
-    onSwitchToGui1: () -> Unit = {},
     viewModel: SettingsHubViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -91,7 +89,6 @@ fun SettingsHubScreenV2(
                     onDunningNoticesClick = onDunningNoticesClick,
                     onPrefilledItemsClick = onPrefilledItemsClick,
                     onBackupRestoreClick = onBackupRestoreClick,
-                    onSwitchToGui1 = onSwitchToGui1,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -111,7 +108,6 @@ private fun SettingsContent(
     onDunningNoticesClick: () -> Unit = {},
     onPrefilledItemsClick: () -> Unit = {},
     onBackupRestoreClick: () -> Unit = {},
-    onSwitchToGui1: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -220,23 +216,6 @@ private fun SettingsContent(
             title = "Backup & Restore",
             description = "Export or restore your app database",
             onClick = onBackupRestoreClick
-        )
-
-        Divider()
-
-        // GUI Switch Section
-        Text(
-            text = "Interface",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-
-        SettingsCardV2(
-            icon = Icons.Default.AutoAwesomeMotion,
-            title = "Switch to GUI1",
-            description = "Use the original interface version",
-            onClick = onSwitchToGui1
         )
 
         Spacer(modifier = Modifier.height(24.dp))
