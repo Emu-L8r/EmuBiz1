@@ -30,9 +30,6 @@ import com.emul8r.bizap.ui.settings.backup.BackupRestoreScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileScreen
 import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
-import com.emul8r.bizap.ui.templates.CreateTemplateScreen
-import com.emul8r.bizap.ui.templates.EditTemplateScreen
-import com.emul8r.bizap.ui.templates.TemplateListScreen
 
 @Composable
 fun GuiV2NavGraph(
@@ -205,9 +202,6 @@ fun GuiV2NavGraph(
                 onPrefilledItemsClick = {
                     navController.navigateToPrefilledItemsV2(route.businessId)
                 },
-                onInvoiceTemplatesClick = {
-                    navController.navigateToInvoiceTemplatesV2(route.businessId)
-                },
                 onBack = { navController.popBackStack() },
                 onSwitchToGui1 = onSwitchToGui1
             )
@@ -264,37 +258,6 @@ fun GuiV2NavGraph(
         composable<ScreenV2.PrefilledItems> { backStackEntry ->
             val route: ScreenV2.PrefilledItems = backStackEntry.toRoute()
             PrefilledItemsScreen()
-        }
-
-        composable<ScreenV2.InvoiceTemplates> { backStackEntry ->
-            val route: ScreenV2.InvoiceTemplates = backStackEntry.toRoute()
-            TemplateListScreen(
-                businessProfileId = route.businessProfileId,
-                onNavigateToCreate = { bpId ->
-                    navController.navigate(ScreenV2.CreateTemplate(route.businessId, bpId))
-                },
-                onNavigateToEdit = { templateId ->
-                    navController.navigate(ScreenV2.EditTemplate(route.businessId, templateId))
-                }
-            )
-        }
-
-        composable<ScreenV2.CreateTemplate> { backStackEntry ->
-            val route: ScreenV2.CreateTemplate = backStackEntry.toRoute()
-            CreateTemplateScreen(
-                businessProfileId = route.businessProfileId,
-                onNavigateBack = { navController.popBackStack() },
-                onTemplateCreated = { navController.popBackStack() }
-            )
-        }
-
-        composable<ScreenV2.EditTemplate> { backStackEntry ->
-            val route: ScreenV2.EditTemplate = backStackEntry.toRoute()
-            EditTemplateScreen(
-                templateId = route.templateId,
-                onNavigateBack = { navController.popBackStack() },
-                onTemplateUpdated = { navController.popBackStack() }
-            )
         }
 
         composable<ScreenV2.BackupRestore> { backStackEntry ->

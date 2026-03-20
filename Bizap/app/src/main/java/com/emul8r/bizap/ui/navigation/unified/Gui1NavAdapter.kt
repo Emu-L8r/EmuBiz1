@@ -62,9 +62,6 @@ object Gui1NavAdapter {
         // Misc
         AppScreen.Help -> Screen.Help
         AppScreen.DunningNotices -> Screen.DunningNotices
-        is AppScreen.InvoiceTemplates -> Screen.InvoiceTemplates(appScreen.businessProfileId)
-        is AppScreen.CreateTemplate -> Screen.CreateTemplate(appScreen.businessProfileId)
-        is AppScreen.EditTemplate -> Screen.EditTemplate(appScreen.templateId)
         AppScreen.CustomerSegments -> Screen.CustomerSegments
         AppScreen.CustomerAnalytics -> Screen.CustomerAnalytics
         AppScreen.Notes -> Screen.Notes
@@ -95,9 +92,6 @@ object Gui1NavAdapter {
         is Screen.PaymentAnalytics -> AppScreen.PaymentAnalytics(screen.businessId)
         Screen.RiskDashboard -> AppScreen.RiskAnalytics()
         Screen.DunningNotices -> AppScreen.DunningNotices
-        is Screen.InvoiceTemplates -> AppScreen.InvoiceTemplates(screen.businessProfileId)
-        is Screen.CreateTemplate -> AppScreen.CreateTemplate(screen.businessProfileId)
-        is Screen.EditTemplate -> AppScreen.EditTemplate(screen.templateId)
         Screen.CustomerSegments -> AppScreen.CustomerSegments
         Screen.CustomerAnalytics -> AppScreen.CustomerAnalytics
         Screen.Notes -> AppScreen.Notes

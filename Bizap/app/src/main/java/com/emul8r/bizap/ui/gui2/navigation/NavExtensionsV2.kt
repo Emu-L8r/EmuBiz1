@@ -43,10 +43,6 @@ fun NavHostController.navigateToPrefilledItemsV2(businessId: Long) {
     navigate(ScreenV2.PrefilledItems(businessId))
 }
 
-fun NavHostController.navigateToInvoiceTemplatesV2(businessId: Long) {
-    navigate(ScreenV2.InvoiceTemplates(businessId))
-}
-
 fun NavHostController.navigateToRevenueAnalyticsV2(businessId: Long) {
     navigate(ScreenV2.RevenueAnalytics(businessId))
 }
