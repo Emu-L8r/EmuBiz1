@@ -134,11 +134,11 @@ class AppStateViewModelTest : BaseUnitTest() {
     }
 
     // -------------------------------------------------------------------------
-    // GUISelection state
+    // GUISelection state — superseded by GUI2-only in v2.0
     // -------------------------------------------------------------------------
 
     @Test
-    fun `appState is GUISelection when authenticated, warning shown, no GUI stored`() = runTest {
+    fun `appState is AppReady GUI2 when authenticated, warning shown, no GUI stored`() = runTest {
         every { authManager.checkSessionValidity() } returns AuthState.Authenticated
         val prefs = mockk<Preferences>(relaxed = true)
         every { prefs[booleanPreferencesKey("first_launch_warning_shown")] } returns true
@@ -150,7 +150,8 @@ class AppStateViewModelTest : BaseUnitTest() {
         advanceUntilIdle()
         job.cancel()
 
-        assertEquals(AppState.GUISelection, viewModel.appState.value)
+        // In v2.0, no GUI mode stored means default to GUI2 (never GUISelection)
+        assertEquals(AppState.AppReady(GuiMode.GUI2), viewModel.appState.value)
     }
 
     // -------------------------------------------------------------------------
@@ -174,7 +175,7 @@ class AppStateViewModelTest : BaseUnitTest() {
     }
 
     @Test
-    fun `appState is AppReady with GUI1 when authenticated and GUI1 stored`() = runTest {
+    fun `appState is AppReady with GUI2 when authenticated and legacy GUI1 stored`() = runTest {
         every { authManager.checkSessionValidity() } returns AuthState.Authenticated
         val prefs = mockk<Preferences>(relaxed = true)
         every { prefs[booleanPreferencesKey("first_launch_warning_shown")] } returns true
@@ -186,11 +187,12 @@ class AppStateViewModelTest : BaseUnitTest() {
         advanceUntilIdle()
         job.cancel()
 
-        assertEquals(AppState.AppReady(GuiMode.GUI1), viewModel.appState.value)
+        // GUI1 is no longer supported — any stored preference defaults to GUI2
+        assertEquals(AppState.AppReady(GuiMode.GUI2), viewModel.appState.value)
     }
 
     @Test
-    fun `appState is GUISelection when stored GUI mode is unrecognised`() = runTest {
+    fun `appState is AppReady GUI2 when stored GUI mode is unrecognised`() = runTest {
         every { authManager.checkSessionValidity() } returns AuthState.Authenticated
         val prefs = mockk<Preferences>(relaxed = true)
         every { prefs[booleanPreferencesKey("first_launch_warning_shown")] } returns true
@@ -202,8 +204,8 @@ class AppStateViewModelTest : BaseUnitTest() {
         advanceUntilIdle()
         job.cancel()
 
-        // Unrecognised mode falls back to null → GUISelection
-        assertEquals(AppState.GUISelection, viewModel.appState.value)
+        // Unrecognised mode defaults to GUI2 (never GUISelection) in v2.0
+        assertEquals(AppState.AppReady(GuiMode.GUI2), viewModel.appState.value)
     }
 
     // -------------------------------------------------------------------------

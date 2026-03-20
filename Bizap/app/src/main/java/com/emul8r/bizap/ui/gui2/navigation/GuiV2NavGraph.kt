@@ -35,7 +35,7 @@ import com.emul8r.bizap.ui.shared.screens.HelpScreen
 fun GuiV2NavGraph(
     navController: NavHostController,
     startBusinessId: Long = 1L,
-    onSwitchToGui1: () -> Unit
+    onSwitchToGui1: () -> Unit = {}
 ) {
     NavHost(
         navController = navController,
@@ -202,8 +202,7 @@ fun GuiV2NavGraph(
                 onPrefilledItemsClick = {
                     navController.navigateToPrefilledItemsV2(route.businessId)
                 },
-                onBack = { navController.popBackStack() },
-                onSwitchToGui1 = onSwitchToGui1
+                onBack = { navController.popBackStack() }
             )
         }
 

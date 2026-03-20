@@ -157,6 +157,10 @@ class CreateInvoiceViewModel @Inject constructor(
         _uiState.update { it.copy(photoUris = it.photoUris + uri) }
     }
 
+    fun removePhoto(uri: String) {
+        _uiState.update { state -> state.copy(photoUris = state.photoUris.filter { it != uri }) }
+    }
+
     /**
      * Returns calculated invoice metrics (subtotal, tax, total) for the current UI state.
      * Uses [CalculateInvoiceMetricsUseCase] as single source of truth for all calculations.
