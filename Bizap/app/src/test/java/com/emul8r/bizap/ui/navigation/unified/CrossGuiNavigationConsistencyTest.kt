@@ -50,7 +50,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `InvoiceList is reachable in GUI2`() {
-        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.InvoiceList(), bizId))
+        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.InvoiceList(bizId)))
     }
 
     @Test
@@ -60,7 +60,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `SettingsHub is reachable in GUI2`() {
-        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.SettingsHub(), bizId))
+        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.SettingsHub(bizId)))
     }
 
     @Test
@@ -70,7 +70,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `AppSettings is reachable in GUI2`() {
-        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.AppSettings(), bizId))
+        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.AppSettings(bizId)))
     }
 
     @Test
@@ -80,7 +80,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `BusinessProfile is reachable in GUI2`() {
-        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.BusinessProfile(), bizId))
+        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.BusinessProfile(bizId)))
     }
 
     @Test
@@ -90,7 +90,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `Help is reachable in GUI2`() {
-        assertEquals(ScreenV2.Help(bizId), Gui2NavAdapter.toScreen(AppScreen.Help, bizId))
+        assertEquals(ScreenV2.Help(bizId), Gui2NavAdapter.toScreen(AppScreen.Help))
     }
 
     @Test
@@ -100,7 +100,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `CreateInvoice is reachable in GUI2`() {
-        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.CreateInvoice(), bizId))
+        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.CreateInvoice(bizId)))
     }
 
     @Test
@@ -110,7 +110,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `DocumentVault is reachable in GUI2`() {
-        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.DocumentVault(), bizId))
+        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.DocumentVault(bizId)))
     }
 
     // ── GUI1-only screens: must map in GUI1, return null in GUI2 ──────────────
@@ -122,7 +122,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `InvoicePdf is GUI1 only - returns null in GUI2`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.InvoicePdf(invoiceId = 1L, isQuote = false), bizId))
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.InvoicePdf(invoiceId = 1L, isQuote = false)))
     }
 
     @Test
@@ -132,7 +132,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `PrefilledItems is GUI1 only - returns null in GUI2`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.PrefilledItems, bizId))
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.PrefilledItems))
     }
 
     @Test
@@ -142,7 +142,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `DunningNotices is GUI1 only - returns null in GUI2`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.DunningNotices, bizId))
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.DunningNotices))
     }
 
     @Test
@@ -152,14 +152,14 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `Notes is GUI1 only - returns null in GUI2`() {
-        assertNull(Gui2NavAdapter.toScreen(AppScreen.Notes, bizId))
+        assertNull(Gui2NavAdapter.toScreen(AppScreen.Notes))
     }
 
     // ── GUI2-only screens: must map in GUI2, return null in GUI1 ─────────────
 
     @Test
     fun `InvoiceAnalytics is GUI2 only - maps in GUI2`() {
-        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.InvoiceAnalytics(), bizId))
+        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.InvoiceAnalytics(bizId)))
     }
 
     @Test
@@ -169,7 +169,7 @@ class CrossGuiNavigationConsistencyTest {
 
     @Test
     fun `CreateCustomer is GUI2 only - maps in GUI2`() {
-        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.CreateCustomer(), bizId))
+        assertNotNull(Gui2NavAdapter.toScreen(AppScreen.CreateCustomer(bizId)))
     }
 
     @Test
@@ -225,48 +225,48 @@ class CrossGuiNavigationConsistencyTest {
     @Test
     fun `GUI2 round-trip Dashboard preserves businessId`() {
         val appScreen = AppScreen.Dashboard(bizId)
-        val route = Gui2NavAdapter.toScreen(appScreen, bizId)!!
+        val route = Gui2NavAdapter.toScreen(appScreen)!!
         assertEquals(appScreen, Gui2NavAdapter.fromScreen(route))
     }
 
     @Test
     fun `GUI2 round-trip CustomerList preserves businessId`() {
         val appScreen = AppScreen.CustomerList(bizId)
-        val route = Gui2NavAdapter.toScreen(appScreen, bizId)!!
+        val route = Gui2NavAdapter.toScreen(appScreen)!!
         assertEquals(appScreen, Gui2NavAdapter.fromScreen(route))
     }
 
     @Test
     fun `GUI2 round-trip CustomerDetail preserves both ids`() {
         val appScreen = AppScreen.CustomerDetail(customerId = 88L, businessId = bizId)
-        val route = Gui2NavAdapter.toScreen(appScreen, bizId)!!
+        val route = Gui2NavAdapter.toScreen(appScreen)!!
         assertEquals(appScreen, Gui2NavAdapter.fromScreen(route))
     }
 
     @Test
     fun `GUI2 round-trip InvoiceDetail preserves both ids`() {
         val appScreen = AppScreen.InvoiceDetail(invoiceId = 44L, businessId = bizId)
-        val route = Gui2NavAdapter.toScreen(appScreen, bizId)!!
+        val route = Gui2NavAdapter.toScreen(appScreen)!!
         assertEquals(appScreen, Gui2NavAdapter.fromScreen(route))
     }
 
     @Test
     fun `GUI2 round-trip Help maps to AppScreen Help regardless of businessId`() {
-        val route = Gui2NavAdapter.toScreen(AppScreen.Help, bizId)!!
+        val route = Gui2NavAdapter.toScreen(AppScreen.Help)!!
         assertEquals(AppScreen.Help, Gui2NavAdapter.fromScreen(route))
     }
 
     @Test
     fun `GUI2 round-trip CreateInvoice preserves businessId`() {
         val appScreen = AppScreen.CreateInvoice(bizId)
-        val route = Gui2NavAdapter.toScreen(appScreen, bizId)!!
+        val route = Gui2NavAdapter.toScreen(appScreen)!!
         assertEquals(appScreen, Gui2NavAdapter.fromScreen(route))
     }
 
     @Test
     fun `GUI2 round-trip DocumentVault preserves businessId`() {
         val appScreen = AppScreen.DocumentVault(bizId)
-        val route = Gui2NavAdapter.toScreen(appScreen, bizId)!!
+        val route = Gui2NavAdapter.toScreen(appScreen)!!
         assertEquals(appScreen, Gui2NavAdapter.fromScreen(route))
     }
 }
