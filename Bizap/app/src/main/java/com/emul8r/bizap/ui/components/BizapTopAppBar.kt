@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -39,6 +40,7 @@ import com.emul8r.bizap.utils.ImageCompressor
  * @param onBackClick Callback for back button click
  * @param onActionClick Optional callback for action button (e.g., switch GUI)
  * @param actionButtonLabel Optional label for the action button
+ * @param onSettingsClick Optional callback for settings button
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +51,8 @@ fun BizapTopAppBar(
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
     onActionClick: (() -> Unit)? = null,
-    actionButtonLabel: String? = null
+    actionButtonLabel: String? = null,
+    onSettingsClick: (() -> Unit)? = null
 ) {
     TopAppBar(
         title = {
@@ -95,6 +98,16 @@ fun BizapTopAppBar(
             }
         },
         actions = {
+            // Settings button (if provided)
+            if (onSettingsClick != null) {
+                IconButton(onClick = onSettingsClick) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings"
+                    )
+                }
+            }
+            // Switch GUI button (if provided)
             if (onActionClick != null) {
                 IconButton(onClick = onActionClick) {
                     Icon(

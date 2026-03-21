@@ -55,6 +55,9 @@ fun DashboardScreenV2(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
+                    IconButton(onClick = onSwitchToGui1) {
+                        Icon(Icons.Default.SwapHoriz, contentDescription = "Switch to Classic UI")
+                    }
                 }
             )
         }

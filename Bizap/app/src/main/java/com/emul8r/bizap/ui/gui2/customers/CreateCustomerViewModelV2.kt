@@ -25,14 +25,19 @@ class CreateCustomerViewModelV2 @Inject constructor(
         viewModelScope.launch {
             try {
                 Timber.d("CreateCustomerViewModelV2: Creating customer ${customer.name}")
-                customerRepository.insert(customer)
-                Timber.d("CreateCustomerViewModelV2: Customer created successfully")
-                onSuccess()
+                val result = customerRepository.insert(customer)
+
+                result.onSuccess { id ->
+                    Timber.d("CreateCustomerViewModelV2: Customer created successfully with ID $id")
+                    onSuccess()
+                }.onFailure { error ->
+                    Timber.e(error, "CreateCustomerViewModelV2: Failed to create customer")
+                    onError(error.message ?: "Unknown error")
+                }
             } catch (e: Exception) {
-                Timber.e(e, "CreateCustomerViewModelV2: Failed to create customer")
+                Timber.e(e, "CreateCustomerViewModelV2: Exception creating customer")
                 onError(e.message ?: "Unknown error")
             }
         }
     }
 }
-

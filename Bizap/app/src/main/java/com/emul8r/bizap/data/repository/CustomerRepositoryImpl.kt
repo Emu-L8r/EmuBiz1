@@ -32,7 +32,7 @@ class CustomerRepositoryImpl @Inject constructor(
     override suspend fun insert(customer: Customer): Result<Long> = runCatching {
         // ✅ NULL SAFETY: Validate customer before insert
         require(customer.name.isNotBlank()) { "Customer name cannot be blank" }
-        require((customer.email ?: "").isNotBlank()) { "Customer email cannot be blank" }
+        // Email is optional - no validation required
 
         val id = customerDao.insert(customer.toEntity())
         require(id > 0) { "Failed to insert customer: DAO returned invalid ID $id" }
@@ -67,7 +67,7 @@ class CustomerRepositoryImpl @Inject constructor(
         // ✅ NULL SAFETY: Validate customer before update
         require(customer.id > 0) { "Customer ID must be positive, got ${customer.id}" }
         require(customer.name.isNotBlank()) { "Customer name cannot be blank" }
-        require((customer.email ?: "").isNotBlank()) { "Customer email cannot be blank" }
+        // Email is optional - no validation required
 
         customerDao.update(customer.toEntity())
 
@@ -114,7 +114,7 @@ class CustomerRepositoryImpl @Inject constructor(
     override suspend fun createCustomerRemote(customer: Customer): Result<Customer> = runCatching {
         // ✅ NULL SAFETY: Validate before remote call
         require(customer.name.isNotBlank()) { "Customer name cannot be blank for remote create" }
-        require((customer.email ?: "").isNotBlank()) { "Customer email cannot be blank for remote create" }
+        // Email is optional - no validation required
 
         val response = customerApi.createCustomer(customer)
         if (response.isSuccessful) {
@@ -128,7 +128,7 @@ class CustomerRepositoryImpl @Inject constructor(
         // ✅ NULL SAFETY: Validate before remote call
         require(customer.id > 0) { "Customer ID must be positive for remote update" }
         require(customer.name.isNotBlank()) { "Customer name cannot be blank for remote update" }
-        require((customer.email ?: "").isNotBlank()) { "Customer email cannot be blank for remote update" }
+        // Email is optional - no validation required
 
         // Using updatedAt as a simple optimistic lock version (assuming server expects timestamp)
         val response = customerApi.updateCustomer(customer.id, customer, customer.updatedAt)

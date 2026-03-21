@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.domain.model.DisplayMode
 
@@ -19,15 +20,35 @@ fun DisplayModeSettingsCard(
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Display Mode",
-                style = MaterialTheme.typography.titleMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Display Mode",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                // Coming Soon Badge
+                Surface(
+                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        "Coming Soon",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
             Spacer(Modifier.height(12.dp))
 
             DisplayMode.entries.forEach { mode ->
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .alpha(0.6f),  // Show as disabled
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -37,7 +58,8 @@ fun DisplayModeSettingsCard(
                     )
                     RadioButton(
                         selected = mode == currentMode,
-                        onClick = { onModeSelected(mode) }
+                        onClick = { /* Disabled for now */ },
+                        enabled = false  // Disable clicking
                     )
                 }
             }

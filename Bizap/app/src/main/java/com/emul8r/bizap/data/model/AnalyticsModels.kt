@@ -34,7 +34,8 @@ data class InvoiceVelocity(
     val date: Long,               // Stored as epoch milliseconds
     val avgDaysFromCreationToSent: Double,
     val invoicesCreatedCount: Int,
-    val invoicesSentCount: Int,
+    val invoicesSentCount: Int,   // Count of SENT invoices only
+    val invoicesPaidCount: Int,   // NEW: Count of PAID invoices
     val invoicesInDraftCount: Int
 )
 

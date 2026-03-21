@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,6 +27,7 @@ fun AppAppearanceScreenV2(
     businessId: Long,
     onBack: () -> Unit,
     onBusinessProfileClick: () -> Unit = {},
+    onThemeSettingsClick: () -> Unit = {},
     onHelpClick: () -> Unit = {},
     onBackupRestoreClick: () -> Unit = {},
     viewModel: AppAppearanceViewModelV2 = hiltViewModel()
@@ -91,6 +93,37 @@ fun AppAppearanceScreenV2(
                             currentPreference = uiState.themePreference,
                             onPreferenceChange = { viewModel.updateThemePreference(it) }
                         )
+                    }
+
+                    item {
+                        // ── Theme Customization ──
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onThemeSettingsClick() }
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        "Advanced Color Themes",
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                    Text(
+                                        "Customize colors for your style",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
                     }
 
                     item {
@@ -224,10 +257,28 @@ private fun DisplayModeCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                "Display Mode",
-                style = MaterialTheme.typography.labelMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Text(
+                    "Display Mode",
+                    style = MaterialTheme.typography.labelMedium
+                )
+                // Coming Soon Badge
+                androidx.compose.material3.Surface(
+                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        "Coming Soon",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier
@@ -238,8 +289,10 @@ private fun DisplayModeCard(
                 DisplayMode.entries.forEach { mode ->
                     FilterChip(
                         selected = currentMode == mode,
-                        onClick = { onModeChange(mode) },
-                        label = { Text(mode.name) }
+                        onClick = { /* Disabled for now */ },
+                        label = { Text(mode.name) },
+                        enabled = false,  // Disable clicking
+                        modifier = Modifier.alpha(0.6f)  // Show as disabled
                     )
                 }
             }

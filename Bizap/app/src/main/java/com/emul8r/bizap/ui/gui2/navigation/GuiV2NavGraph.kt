@@ -56,7 +56,8 @@ fun GuiV2NavGraph(
                     onNavigateToRisk = { navController.navigate(ScreenV2.RiskAnalytics(route.businessId)) },
                     onNavigateToInvoice = { invoiceId -> navController.navigate(ScreenV2.InvoiceDetail(route.businessId, invoiceId)) },
                     onCreateCustomer = { navController.navigate(ScreenV2.CreateCustomer(route.businessId)) },
-                    onCreateInvoice = { navController.navigate(ScreenV2.CreateInvoice(route.businessId)) }
+                    onCreateInvoice = { navController.navigate(ScreenV2.CreateInvoice(route.businessId)) },
+                    onSwitchToGui1 = onSwitchToGui1
                 )
             }
         }
@@ -212,8 +213,16 @@ fun GuiV2NavGraph(
                 businessId = route.businessId,
                 onBack = { navController.popBackStack() },
                 onBusinessProfileClick = { navController.navigateToBusinessProfileV2(route.businessId) },
+                onThemeSettingsClick = { navController.navigate(ScreenV2.ThemeSettings(route.businessId)) },
                 onHelpClick = { navController.navigate(ScreenV2.Help(route.businessId)) },
                 onBackupRestoreClick = { navController.navigate(ScreenV2.BackupRestore(route.businessId)) }
+            )
+        }
+
+        composable<ScreenV2.ThemeSettings> { backStackEntry ->
+            val route: ScreenV2.ThemeSettings = backStackEntry.toRoute()
+            com.emul8r.bizap.ui.theme.UnifiedThemeSettingsScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 

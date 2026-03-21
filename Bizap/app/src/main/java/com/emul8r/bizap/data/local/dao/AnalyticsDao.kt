@@ -133,7 +133,8 @@ interface AnalyticsDao {
                  julianday(datetime(createdAt / 1000, 'unixepoch')))
                 AS REAL)), 0.0) as avgDaysFromCreationToSent,
             COUNT(*) as invoicesCreatedCount,
-            COUNT(CASE WHEN status IN ('SENT', 'PAID') THEN 1 END) as invoicesSentCount,
+            COUNT(CASE WHEN status = 'SENT' THEN 1 END) as invoicesSentCount,
+            COUNT(CASE WHEN status = 'PAID' THEN 1 END) as invoicesPaidCount,
             COUNT(CASE WHEN status = 'DRAFT' THEN 1 END) as invoicesInDraftCount
         FROM invoices
         WHERE businessProfileId = :businessId
