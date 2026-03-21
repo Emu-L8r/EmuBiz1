@@ -24,6 +24,13 @@ import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 fun SettingsScreen(viewModel: BusinessProfileViewModel = hiltViewModel()) {
     val profile by viewModel.profileState.collectAsStateWithLifecycle()
 
+    // Use safe defaults if profile is null
+    val businessName = profile?.businessName ?: ""
+    val abn = profile?.abn ?: ""
+    val address = profile?.address ?: ""
+    val email = profile?.email ?: ""
+    val phone = profile?.phone ?: ""
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -39,39 +46,39 @@ fun SettingsScreen(viewModel: BusinessProfileViewModel = hiltViewModel()) {
         )
 
         OutlinedTextField(
-            value = profile.businessName,
-            onValueChange = { viewModel.updateProfile(profile.copy(businessName = it)) },
+            value = businessName,
+            onValueChange = { newValue -> profile?.let { viewModel.updateProfile(it.copy(businessName = newValue)) } },
             label = { Text("Trading Name") },
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
-            value = profile.abn,
-            onValueChange = { viewModel.updateProfile(profile.copy(abn = it)) },
+            value = abn,
+            onValueChange = { newValue -> profile?.let { viewModel.updateProfile(it.copy(abn = newValue)) } },
             label = { Text("ABN") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
-            value = profile.address,
-            onValueChange = { viewModel.updateProfile(profile.copy(address = it)) },
+            value = address,
+            onValueChange = { newValue -> profile?.let { viewModel.updateProfile(it.copy(address = newValue)) } },
             label = { Text("Business Address") },
             minLines = 2,
             modifier = Modifier.fillMaxWidth()
         )
         
         OutlinedTextField(
-            value = profile.email,
-            onValueChange = { viewModel.updateProfile(profile.copy(email = it)) },
+            value = email,
+            onValueChange = { newValue -> profile?.let { viewModel.updateProfile(it.copy(email = newValue)) } },
             label = { Text("Email") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
-            value = profile.phone,
-            onValueChange = { viewModel.updateProfile(profile.copy(phone = it)) },
+            value = phone,
+            onValueChange = { newValue -> profile?.let { viewModel.updateProfile(it.copy(phone = newValue)) } },
             label = { Text("Phone") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             modifier = Modifier.fillMaxWidth()
