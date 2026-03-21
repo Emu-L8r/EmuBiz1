@@ -61,6 +61,7 @@ import com.emul8r.bizap.presentation.ui.screens.SettingsScreen as AppSettingsScr
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.presentation.ui.theme.ThemeProvider
 import com.emul8r.bizap.ui.BizapApp
+import com.emul8r.bizap.ui.ErrorBoundary
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.notes.NotesScreen
@@ -68,6 +69,7 @@ import com.emul8r.bizap.ui.onboarding.FirstLaunchWarningDialog
 import com.emul8r.bizap.ui.theme.ThemeManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 data class NavigationItem(
     val screen: Screen,
@@ -97,41 +99,43 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            BizapApp(themeManager = themeManager) {
-                val appStateViewModel: AppStateViewModel = hiltViewModel()
-                val appState by appStateViewModel.appState.collectAsStateWithLifecycle()
+            ErrorBoundary {
+                BizapApp(themeManager = themeManager) {
+                    val appStateViewModel: AppStateViewModel = hiltViewModel()
+                    val appState by appStateViewModel.appState.collectAsStateWithLifecycle()
 
-                // Single when-expression: ONE screen at a time, no layered conditionals
-                when (val state = appState) {
-                    is AppState.SplashLoading -> SplashScreen()
+                    // Single when-expression: ONE screen at a time, no layered conditionals
+                    when (val state = appState) {
+                        is AppState.SplashLoading -> SplashScreen()
 
-                    is AppState.PINSetup -> PINSetupScreen(
-                        onSetupComplete = { appStateViewModel.refreshAuth() }
-                    )
-
-                    is AppState.Login -> LoginScreen(
-                        onAuthenticated = { appStateViewModel.refreshAuth() }
-                    )
-
-                    is AppState.FirstLaunchWarning -> FirstLaunchWarningDialog(
-                        onDismiss = { appStateViewModel.markFirstLaunchWarningShown() }
-                    )
-
-                    is AppState.GUISelection -> {
-                        // This state should never occur in v2.0 since AppStateViewModel
-                        // always defaults to AppReady(GUI2). Log if reached unexpectedly.
-                        android.util.Log.w("MainActivity", "Unexpected GUISelection state in v2.0; defaulting to GUI2")
-                        appStateViewModel.selectGui(GuiMode.GUI2)
-                    }
-
-                    is AppState.AppReady -> {
-                        val navController = rememberNavController()
-                        
-                        // Use unified NavGraph with theme-aware navigation
-                        NavGraph(
-                            navController = navController,
-                            themeManager = themeManager
+                        is AppState.PINSetup -> PINSetupScreen(
+                            onSetupComplete = { appStateViewModel.refreshAuth() }
                         )
+
+                        is AppState.Login -> LoginScreen(
+                            onAuthenticated = { appStateViewModel.refreshAuth() }
+                        )
+
+                        is AppState.FirstLaunchWarning -> FirstLaunchWarningDialog(
+                            onDismiss = { appStateViewModel.markFirstLaunchWarningShown() }
+                        )
+
+                        is AppState.GUISelection -> {
+                            // This state should never occur in v2.0 since AppStateViewModel
+                            // always defaults to AppReady(GUI2). Log if reached unexpectedly.
+                            android.util.Log.w("MainActivity", "Unexpected GUISelection state in v2.0; defaulting to GUI2")
+                            appStateViewModel.selectGui(GuiMode.GUI2)
+                        }
+
+                        is AppState.AppReady -> {
+                            val navController = rememberNavController()
+
+                            // Use unified NavGraph with theme-aware navigation
+                            NavGraph(
+                                navController = navController,
+                                themeManager = themeManager
+                            )
+                        }
                     }
                 }
             }
