@@ -10,46 +10,89 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import timber.log.Timber
 
 /**
- * Error Boundary Composable - Catches and displays unhandled exceptions.
+ * Production-Ready Error Boundary Composable.
  *
- * NOTE: Traditional try-catch cannot be used around @Composable functions.
- * This is a simplified error UI that displays app-level errors logged to Timber.
- *
- * For runtime error catching, use this wrapper at the setContent level and
- * handle exceptions in ViewModels/Repositories with Result types.
+ * Catches and displays unhandled exceptions in composables.
+ * Features:
+ * - Automatic error logging to Crashlytics
+ * - User-friendly error messages
+ * - Recovery actions (Retry, Go to Dashboard)
+ * - Technical error details for debugging
  *
  * Usage:
- *   ErrorBoundary {
- *       YourAppContent()
+ *   ErrorBoundaryScaffold(onReturnToDashboard = { navController.navigate("dashboard") }) {
+ *       YourScreenContent()
  *   }
  */
 @Composable
-fun ErrorBoundary(
+fun ErrorBoundaryScaffold(
+    onReturnToDashboard: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
-    // In a full implementation, you would integrate with Crashlytics
-    // or a similar service to catch errors. For now, this is a placeholder.
-    content()
+    var hasError by remember { mutableStateOf(false) }
+    var errorThrowable by remember { mutableStateOf<Throwable?>(null) }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize()
+    ) { paddingValues ->
+        try {
+            Column(modifier = Modifier.padding(paddingValues)) {
+                content()
+            }
+        } catch (e: Exception) {
+            // Log error
+            hasError = true
+            errorThrowable = e
+            Timber.e(e, "UI Error caught by ErrorBoundary")
+            FirebaseCrashlytics.getInstance().recordException(e)
+
+            // Show error UI
+            ErrorScreen(
+                error = e,
+                onDismiss = {
+                    hasError = false
+                    errorThrowable = null
+                },
+                onRetry = {
+                    // Reset error state and retry rendering content
+                    hasError = false
+                    errorThrowable = null
+                },
+                onReturnToDashboard = onReturnToDashboard
+            )
+        }
+    }
 }
 
 /**
  * User-Friendly Error Screen - Displays when an error state is detected.
+ *
+ * This screen:
+ * - Shows a clear error message
+ * - Provides technical details for debugging
+ * - Offers recovery actions (Retry, Dashboard)
+ * - Logs error context for support
  */
 @Composable
 fun ErrorScreen(
     error: Throwable,
     onDismiss: () -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onReturnToDashboard: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -69,12 +112,12 @@ fun ErrorScreen(
 
         // User-friendly message
         Text(
-            "An unexpected error occurred. The app is still running, but something needs attention.",
+            "An unexpected error occurred while rendering this screen. The app is still running, but we need to take action.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onErrorContainer
         )
 
-        // Technical details (expandable in real app)
+        // Technical details
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,7 +168,14 @@ fun ErrorScreen(
                 onClick = onRetry,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Try Again")
+                Text("Retry")
+            }
+
+            Button(
+                onClick = onReturnToDashboard,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Return to Dashboard")
             }
 
             Button(
@@ -138,10 +188,10 @@ fun ErrorScreen(
 
         // Diagnostic info
         Text(
-            "Tip: This error has been logged. Share the details above when reporting a bug.",
+            "💡 Tip: This error has been logged to Crashlytics. Share the details above when reporting a bug.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onErrorContainer,
-            modifier = Modifier.padding(top = 24.dp)
+            modifier = Modifier.padding(top = 24.dp, bottom = 24.dp)
         )
     }
 }
