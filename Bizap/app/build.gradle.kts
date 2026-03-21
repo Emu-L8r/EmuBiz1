@@ -141,20 +141,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-
-    // CRITICAL FIX: Remove unused native architectures (saves ~17 MB)
-    // Keep only arm64-v8a for modern Android devices
-    packagingOptions {
-        pickFirst("lib/x86/libc++_shared.so")
-        pickFirst("lib/x86_64/libc++_shared.so")
-        pickFirst("lib/armeabi-v7a/libc++_shared.so")
-
-        // Exclude .so files for unused architectures
-        exclude("lib/armeabi-v7a/**")  // 32-bit ARM (legacy)
-        exclude("lib/x86/**")           // x86 (emulator)
-        exclude("lib/x86_64/**")        // x86_64 (emulator)
-        // arm64-v8a is KEPT (modern Android standard)
-    }
 }
 
 dependencies {
