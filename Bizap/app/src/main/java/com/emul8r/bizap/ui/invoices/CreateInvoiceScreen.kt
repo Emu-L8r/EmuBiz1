@@ -130,9 +130,9 @@ fun CreateInvoiceScreen(
 
             item {
                 CurrencySelector(
-                    currencies = uiState.currencies,
-                    selectedCurrencyCode = uiState.selectedCurrencyCode,
-                    onCurrencySelected = viewModel::onCurrencySelected,
+                    selectedCurrency = uiState.selectedCurrencyCode,
+                    onCurrencyChange = viewModel::onCurrencySelected,
+                    isDarkMode = isSystemInDarkTheme(),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
