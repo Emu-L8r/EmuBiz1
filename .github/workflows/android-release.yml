@@ -17,6 +17,11 @@ jobs:
   release:
     runs-on: ubuntu-latest
     
+    # Restrict permissions to minimum required
+    permissions:
+      contents: read  # Read repository contents
+      actions: read   # Read workflow artifacts
+    
     defaults:
       run:
         working-directory: Bizap

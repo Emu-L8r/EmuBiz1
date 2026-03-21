@@ -28,7 +28,11 @@ class ExchangeRateWorker @AssistedInject constructor(
             
             val appId = BuildConfig.EXCHANGE_RATE_API_KEY
 
-            // Check if API key is configured
+            /*
+             * Check if API key is configured.
+             * If missing, attempt to use cached rates as fallback (graceful degradation).
+             * This ensures the app continues to function even without API access.
+             */
             if (appId.isBlank()) {
                 val error = ExchangeRateErrorHandler.ApiError.MissingApiKey
                 ExchangeRateErrorHandler.logError(error)
@@ -52,7 +56,11 @@ class ExchangeRateWorker @AssistedInject constructor(
                 return@withContext Result.success() // Don't fail - app can still function
             }
             
-            // Fetch fresh rates from API
+            /*
+             * Fetch fresh rates from API.
+             * Only executes when API key is present and valid.
+             * Updates database with latest rates and performs cleanup.
+             */
             val response = exchangeRateService.fetchRates(
                 appId = appId,
                 base = "USD"
