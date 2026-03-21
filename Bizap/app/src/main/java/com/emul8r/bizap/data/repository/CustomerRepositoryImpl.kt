@@ -30,16 +30,23 @@ class CustomerRepositoryImpl @Inject constructor(
         }
 
     override suspend fun insert(customer: Customer): Result<Long> = runCatching {
+        // ✅ NULL SAFETY: Validate customer before insert
+        require(customer.name.isNotBlank()) { "Customer name cannot be blank" }
+        require((customer.email ?: "").isNotBlank()) { "Customer email cannot be blank" }
+
         val id = customerDao.insert(customer.toEntity())
+        require(id > 0) { "Failed to insert customer: DAO returned invalid ID $id" }
 
         // ✅ CREATE ANALYTICS SNAPSHOT when customer is created
         try {
             val businessId = businessProfileRepository.getActiveBusinessId()
+            require(businessId > 0) { "Invalid business ID: $businessId" }
+
             customerAnalyticsRepository.createInitialSnapshot(
                 customerId = id,
                 businessId = businessId,
                 customerName = customer.name,
-                customerEmail = customer.email
+                customerEmail = customer.email ?: ""
             ).onSuccess {
                 Timber.d("✅ Created customer analytics snapshot for ID $id")
             }.onFailure { e ->
@@ -57,11 +64,18 @@ class CustomerRepositoryImpl @Inject constructor(
         customerDao.getCustomerById(id).map { it?.toDomain() }
 
     override suspend fun updateCustomer(customer: Customer): Result<Unit> = runCatching {
+        // ✅ NULL SAFETY: Validate customer before update
+        require(customer.id > 0) { "Customer ID must be positive, got ${customer.id}" }
+        require(customer.name.isNotBlank()) { "Customer name cannot be blank" }
+        require((customer.email ?: "").isNotBlank()) { "Customer email cannot be blank" }
+
         customerDao.update(customer.toEntity())
 
         // ✅ SYNC ANALYTICS when customer is updated
         try {
             val businessId = businessProfileRepository.getActiveBusinessId()
+            require(businessId > 0) { "Invalid business ID: $businessId" }
+
             // Recalculate churn risks for the business
             customerAnalyticsRepository.recalculateChurnRisks(businessId)
             Timber.d("✅ Recalculated churn risks for customer ${customer.id}")
@@ -74,6 +88,9 @@ class CustomerRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteCustomer(id: Long): Result<Unit> = runCatching {
+        // ✅ NULL SAFETY: Validate customer ID before deletion
+        require(id > 0) { "Customer ID must be positive for deletion, got $id" }
+
         customerDao.deleteCustomer(id)
 
         // ✅ CLEANUP ANALYTICS snapshot when customer is deleted
@@ -95,25 +112,37 @@ class CustomerRepositoryImpl @Inject constructor(
     // --- PHASE 2: Remote Sync ---
 
     override suspend fun createCustomerRemote(customer: Customer): Result<Customer> = runCatching {
+        // ✅ NULL SAFETY: Validate before remote call
+        require(customer.name.isNotBlank()) { "Customer name cannot be blank for remote create" }
+        require((customer.email ?: "").isNotBlank()) { "Customer email cannot be blank for remote create" }
+
         val response = customerApi.createCustomer(customer)
         if (response.isSuccessful) {
-            response.body() ?: throw Exception("Empty response body")
+            response.body() ?: throw IllegalStateException("Empty response body from createCustomerRemote")
         } else {
             throw Exception("API Error: ${response.code()} ${response.message()}")
         }
     }
 
     override suspend fun updateCustomerRemote(customer: Customer): Result<Customer> = runCatching {
+        // ✅ NULL SAFETY: Validate before remote call
+        require(customer.id > 0) { "Customer ID must be positive for remote update" }
+        require(customer.name.isNotBlank()) { "Customer name cannot be blank for remote update" }
+        require((customer.email ?: "").isNotBlank()) { "Customer email cannot be blank for remote update" }
+
         // Using updatedAt as a simple optimistic lock version (assuming server expects timestamp)
         val response = customerApi.updateCustomer(customer.id, customer, customer.updatedAt)
         if (response.isSuccessful) {
-            response.body() ?: throw Exception("Empty response body")
+            response.body() ?: throw IllegalStateException("Empty response body from updateCustomerRemote")
         } else {
             throw Exception("API Error: ${response.code()} ${response.message()}")
         }
     }
 
     override suspend fun deleteCustomerRemote(id: Long): Result<Unit> = runCatching {
+        // ✅ NULL SAFETY: Validate before remote call
+        require(id > 0) { "Customer ID must be positive for remote delete" }
+
         val response = customerApi.deleteCustomer(id)
         if (!response.isSuccessful) {
             throw Exception("API Error: ${response.code()} ${response.message()}")
@@ -121,9 +150,12 @@ class CustomerRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getCustomerRemote(id: Long): Result<Customer> = runCatching {
+        // ✅ NULL SAFETY: Validate before remote call
+        require(id > 0) { "Customer ID must be positive for remote fetch" }
+
         val response = customerApi.getCustomer(id)
         if (response.isSuccessful) {
-            response.body() ?: throw Exception("Empty response body")
+            response.body() ?: throw IllegalStateException("Empty response body from getCustomerRemote")
         } else {
             throw Exception("API Error: ${response.code()} ${response.message()}")
         }

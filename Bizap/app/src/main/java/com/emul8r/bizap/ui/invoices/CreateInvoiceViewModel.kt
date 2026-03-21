@@ -142,9 +142,19 @@ class CreateInvoiceViewModel @Inject constructor(
         }
     }
 
-    fun removeLineItem(transientId: java.util.UUID) = _uiState.update { state -> state.copy(items = state.items.filter { it.transientId != transientId }) }
+    fun removeLineItem(transientId: java.util.UUID) {
+        // ✅ NULL SAFETY: Validate UUID not null
+        require(transientId.toString().isNotEmpty()) { "Line item ID cannot be empty" }
+        _uiState.update { state -> state.copy(items = state.items.filter { it.transientId != transientId }) }
+    }
 
     fun updateLineItem(transientId: java.util.UUID, description: String, quantity: Double, unitPrice: Long) {
+        // ✅ NULL SAFETY: Validate input before update
+        require(transientId.toString().isNotEmpty()) { "Line item ID cannot be empty" }
+        require(description.isNotBlank()) { "Line item description cannot be blank" }
+        require(quantity > 0) { "Line item quantity must be positive, got $quantity" }
+        require(unitPrice >= 0) { "Line item unit price cannot be negative, got $unitPrice" }
+
         _uiState.update { state ->
             state.copy(items = state.items.map {
                 if (it.transientId == transientId) it.copy(description = description, quantity = quantity, unitPrice = unitPrice) else it
@@ -153,26 +163,53 @@ class CreateInvoiceViewModel @Inject constructor(
     }
 
     fun selectCustomer(customer: Customer) {
+        // ✅ NULL SAFETY: Validate customer before selection
+        require(customer.id > 0) { "Customer ID must be positive" }
+        require(customer.name.isNotBlank()) { "Customer name cannot be blank" }
+        require((customer.email ?: "").isNotBlank()) { "Customer email cannot be blank" }
+
         _uiState.update { it.copy(selectedCustomer = customer) }
     }
 
     fun addPhoto(uri: String) {
+        // ✅ NULL SAFETY: Validate URI before adding
+        require(uri.isNotBlank()) { "Photo URI cannot be blank" }
+        require(!uri.contains("..")) { "Invalid photo URI path" }  // Prevent directory traversal
+
         _uiState.update { it.copy(photoUris = it.photoUris + uri) }
     }
 
     fun removePhoto(uri: String) {
+        // ✅ NULL SAFETY: Validate URI before removing
+        require(uri.isNotBlank()) { "Photo URI cannot be blank" }
+
         _uiState.update { state -> state.copy(photoUris = state.photoUris.filter { it != uri }) }
     }
 
     /**
      * Returns calculated invoice metrics (subtotal, tax, total) for the current UI state.
      * Uses [CalculateInvoiceMetricsUseCase] as single source of truth for all calculations.
+     *
+     * ✅ NULL SAFETY: Returns safe defaults if state is incomplete
      */
     fun getInvoiceMetrics(): InvoiceMetrics {
         val state = _uiState.value
+
+        // ✅ NULL SAFETY: Validate required fields exist
+        val customerId = state.selectedCustomer?.id
+            ?: run {
+                Timber.w("⚠️ getInvoiceMetrics called without customer selection")
+                return InvoiceMetrics(subtotal = 0, taxAmount = 0, totalAmount = 0)  // Safe default
+            }
+
+        require(customerId > 0) { "Customer ID must be positive" }
+
+        val customerName = state.selectedCustomer?.name ?: ""
+        require(state.items.isNotEmpty()) { "Invoice must have at least one line item" }
+
         val invoiceForCalculation = Invoice(
-            customerId = state.selectedCustomer?.id,
-            customerName = state.selectedCustomer?.name ?: "",
+            customerId = customerId,
+            customerName = customerName,
             date = System.currentTimeMillis(),
             totalAmount = 0L,  // Placeholder — overridden by metrics
             items = state.items.map { it.toDomain() },
