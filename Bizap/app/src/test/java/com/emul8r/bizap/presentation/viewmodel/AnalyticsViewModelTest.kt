@@ -38,9 +38,9 @@ class AnalyticsViewModelTest : BaseUnitTest() {
         every { businessContextRepository.observeActiveBusinessId() } returns activeBusinessIdFlow
 
         // Stub all DAO flows for the default businessId = 1
-        stubDaoForBusiness(1L, dso = 15.0, velocity = listOf(InvoiceVelocity(1L, 0L, 2.5, 3, 2, 1)))
+        stubDaoForBusiness(1L, dso = 15.0, velocity = listOf(InvoiceVelocity(1L, 0L, 2.5, 3, 2, 1, 1)))
         // Stub all DAO flows for businessId = 2
-        stubDaoForBusiness(2L, dso = 30.0, velocity = listOf(InvoiceVelocity(2L, 0L, 4.0, 5, 4, 1)))
+        stubDaoForBusiness(2L, dso = 30.0, velocity = listOf(InvoiceVelocity(2L, 0L, 4.0, 5, 4, 2, 1)))
 
         viewModel = AnalyticsViewModel(analyticsDao, businessContextRepository)
     }

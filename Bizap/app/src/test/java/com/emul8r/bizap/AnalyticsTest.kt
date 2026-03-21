@@ -98,6 +98,7 @@ class AnalyticsTest {
             avgDaysFromCreationToSent = 2.5,
             invoicesCreatedCount = 10,
             invoicesSentCount = 8,
+            invoicesPaidCount = 6,  // NEW: Count of PAID invoices
             invoicesInDraftCount = 2
         )
 
@@ -116,6 +117,7 @@ class AnalyticsTest {
             avgDaysFromCreationToSent = 0.0,  // Instant
             invoicesCreatedCount = 5,
             invoicesSentCount = 5,
+            invoicesPaidCount = 0,  // NEW: Count of PAID invoices
             invoicesInDraftCount = 0
         )
 
