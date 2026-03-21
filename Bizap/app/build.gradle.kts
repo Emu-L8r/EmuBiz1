@@ -140,6 +140,16 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+
+        // CRITICAL FIX: Exclude legacy native architectures
+        // Saves ~17 MB by removing obsolete/emulator-only libraries
+        // Keep only arm64-v8a (modern Android standard)
+        excludes += listOf(
+            "lib/armeabi-v7a/**",     // 32-bit ARM (obsolete, ~4 MB)
+            "lib/x86/**",              // x86 (emulator only, ~5 MB)
+            "lib/x86_64/**"            // x86_64 (emulator only, ~7 MB)
+            // arm64-v8a is KEPT (~6 MB, required for modern devices)
+        )
     }
 }
 
