@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -35,7 +36,6 @@ import com.emul8r.bizap.ui.components.LineItemsEditor
 import com.emul8r.bizap.ui.components.InvoiceCustomizationEditor
 import com.emul8r.bizap.ui.components.CurrencySelector
 import com.emul8r.bizap.ui.components.PhotoAttachmentPicker
-import com.emul8r.bizap.ui.common.CurrencySelector
 import java.io.File
 import java.util.Locale
 
