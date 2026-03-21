@@ -80,4 +80,7 @@ sealed interface ScreenV2 {
 
     @Serializable
     data class BackupRestore(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class ThemeSettings(val businessId: Long) : ScreenV2
 }

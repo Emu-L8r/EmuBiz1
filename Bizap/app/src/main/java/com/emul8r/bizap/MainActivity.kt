@@ -214,6 +214,7 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                     showLogo = showLogo,
                     showBackButton = !isTopLevelScreen,
                     onBackClick = { navController.popBackStack() },
+                    onSettingsClick = { navController.navigate(Screen.SettingsHub) },
                     onActionClick = onSwitchGui,
                     actionButtonLabel = "Switch to Modern UI"
                 )
@@ -293,6 +294,11 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 composable<Screen.DocumentVault> { DocumentVaultScreen() }
                 composable<Screen.SettingsHub> { SettingsHubScreen(onNavigate = { screen -> navController.navigate(screen) }) }
                 composable<Screen.BusinessProfile> { BusinessProfileScreen() }
+                composable<Screen.ThemeSettings> {
+                    com.emul8r.bizap.ui.theme.UnifiedThemeSettingsScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
                 composable<Screen.PrefilledItems> { PrefilledItemsScreen() }
                 composable<Screen.CreateInvoice> { CreateInvoiceScreen(onInvoiceSaved = { navController.popBackStack() }) }
                 composable<Screen.EditInvoice> { backStackEntry ->
@@ -344,7 +350,9 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                     NotesScreen(navController)
                 }
                 composable<Screen.AppSettings> {
-                    AppSettingsScreen()
+                    AppSettingsScreen(
+                        onNavigateToThemeSettings = { navController.navigate(Screen.ThemeSettings) }
+                    )
                 }
                 composable<Screen.Help> {
                     HelpScreen(

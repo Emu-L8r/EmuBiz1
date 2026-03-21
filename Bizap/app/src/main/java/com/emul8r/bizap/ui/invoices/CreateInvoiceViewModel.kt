@@ -166,7 +166,7 @@ class CreateInvoiceViewModel @Inject constructor(
         // ✅ NULL SAFETY: Validate customer before selection
         require(customer.id > 0) { "Customer ID must be positive" }
         require(customer.name.isNotBlank()) { "Customer name cannot be blank" }
-        require((customer.email ?: "").isNotBlank()) { "Customer email cannot be blank" }
+        // Email is optional - customers can be created without email
 
         _uiState.update { it.copy(selectedCustomer = customer) }
     }

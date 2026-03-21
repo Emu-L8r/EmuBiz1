@@ -1,10 +1,14 @@
 package com.emul8r.bizap.presentation.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -13,7 +17,6 @@ import com.emul8r.bizap.presentation.ui.components.settings.AboutSettingsCard
 import com.emul8r.bizap.presentation.ui.components.settings.DisplayModeSettingsCard
 import com.emul8r.bizap.presentation.ui.components.settings.NotificationSettingsCard
 import com.emul8r.bizap.presentation.ui.components.settings.SyncSettingsCard
-import com.emul8r.bizap.presentation.ui.components.settings.ThemeSettingsCard
 import com.emul8r.bizap.presentation.viewmodel.SettingsViewModel
 
 private val tabs = listOf("Theme & Display", "Notifications", "Sync & Storage", "About")
@@ -32,6 +35,7 @@ private val tabs = listOf("Theme & Display", "Notifications", "Sync & Storage", 
 @Composable
 fun SettingsScreen(
     onResetConfirmed: () -> Unit = {},
+    onNavigateToThemeSettings: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -67,10 +71,34 @@ fun SettingsScreen(
             when (selectedTabIndex) {
                 0 -> { // Theme & Display
                     item {
-                        ThemeSettingsCard(
-                            currentPreference = settings.themePreference,
-                            onPreferenceSelected = { viewModel.setThemePreference(it) }
-                        )
+                        // ── Advanced Color Themes ──
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onNavigateToThemeSettings() }
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        "Advanced Color Themes",
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                    Text(
+                                        "Customize colors for your style",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
                     }
                     item {
                         DisplayModeSettingsCard(
