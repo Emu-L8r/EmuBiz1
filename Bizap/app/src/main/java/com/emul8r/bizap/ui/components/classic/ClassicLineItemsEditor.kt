@@ -1,8 +1,6 @@
 package com.emul8r.bizap.ui.components.classic
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -30,75 +28,73 @@ fun ClassicLineItemsEditor(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        LazyColumn {
-            items(items.size) { index ->
-                Row(
+        items.forEachIndexed { index, lineItem ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .border(1.dp, Color.Gray, shape = RoundedCornerShape(4.dp))
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Description field
+                OutlinedTextField(
+                    value = lineItem.description,
+                    onValueChange = { newDesc ->
+                        val updated = items.toMutableList()
+                        updated[index] = updated[index].copy(description = newDesc)
+                        onItemsChange(updated)
+                    },
+                    label = { Text("Description") },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .border(1.dp, Color.Gray, shape = RoundedCornerShape(4.dp))
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .weight(2f)
+                        .height(56.dp),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodySmall
+                )
+
+                // Quantity field
+                OutlinedTextField(
+                    value = lineItem.quantity.toString(),
+                    onValueChange = { newQty ->
+                        val updated = items.toMutableList()
+                        updated[index] = updated[index].copy(quantity = newQty.toDoubleOrNull() ?: 1.0)
+                        onItemsChange(updated)
+                    },
+                    label = { Text("Qty") },
+                    modifier = Modifier
+                        .weight(0.8f)
+                        .height(56.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    textStyle = MaterialTheme.typography.bodySmall
+                )
+
+                // Unit Price field
+                OutlinedTextField(
+                    value = lineItem.unitPrice.toString(),
+                    onValueChange = { newPrice ->
+                        val updated = items.toMutableList()
+                        updated[index] = updated[index].copy(unitPrice = newPrice.toLongOrNull() ?: 0L)
+                        onItemsChange(updated)
+                    },
+                    label = { Text("Price") },
+                    modifier = Modifier
+                        .weight(0.8f)
+                        .height(56.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    textStyle = MaterialTheme.typography.bodySmall
+                )
+
+                // Delete button
+                IconButton(
+                    onClick = {
+                        onItemsChange(items.filterIndexed { i, _ -> i != index })
+                    },
+                    modifier = Modifier.size(48.dp)
                 ) {
-                    // Description field
-                    OutlinedTextField(
-                        value = items[index].description,
-                        onValueChange = { newDesc ->
-                            val updated = items.toMutableList()
-                            updated[index] = updated[index].copy(description = newDesc)
-                            onItemsChange(updated)
-                        },
-                        label = { Text("Description") },
-                        modifier = Modifier
-                            .weight(2f)
-                            .height(56.dp),
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodySmall
-                    )
-
-                    // Quantity field
-                    OutlinedTextField(
-                        value = items[index].quantity.toString(),
-                        onValueChange = { newQty ->
-                            val updated = items.toMutableList()
-                            updated[index] = updated[index].copy(quantity = newQty.toDoubleOrNull() ?: 1.0)
-                            onItemsChange(updated)
-                        },
-                        label = { Text("Qty") },
-                        modifier = Modifier
-                            .weight(0.8f)
-                            .height(56.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        textStyle = MaterialTheme.typography.bodySmall
-                    )
-
-                    // Unit Price field
-                    OutlinedTextField(
-                        value = items[index].unitPrice.toString(),
-                        onValueChange = { newPrice ->
-                            val updated = items.toMutableList()
-                            updated[index] = updated[index].copy(unitPrice = newPrice.toLongOrNull() ?: 0L)
-                            onItemsChange(updated)
-                        },
-                        label = { Text("Price") },
-                        modifier = Modifier
-                            .weight(0.8f)
-                            .height(56.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        textStyle = MaterialTheme.typography.bodySmall
-                    )
-
-                    // Delete button
-                    IconButton(
-                        onClick = {
-                            onItemsChange(items.filterIndexed { i, _ -> i != index })
-                        },
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(Icons.Default.Delete, "Delete", tint = Color.Red)
-                    }
+                    Icon(Icons.Default.Delete, "Delete", tint = Color.Red)
                 }
             }
         }
@@ -121,4 +117,3 @@ fun ClassicLineItemsEditor(
         }
     }
 }
-

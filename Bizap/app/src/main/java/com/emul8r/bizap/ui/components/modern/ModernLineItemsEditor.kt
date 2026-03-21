@@ -1,8 +1,6 @@
 package com.emul8r.bizap.ui.components.modern
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -35,105 +33,103 @@ fun ModernLineItemsEditor(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        LazyColumn {
-            items(items.size) { index ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        // Description field
-                        OutlinedTextField(
-                            value = items[index].description,
-                            onValueChange = { newDesc ->
-                                val updated = items.toMutableList()
-                                updated[index] = updated[index].copy(description = newDesc)
-                                onItemsChange(updated)
+        items.forEachIndexed { index, lineItem ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Description field
+                    OutlinedTextField(
+                        value = lineItem.description,
+                        onValueChange = { newDesc ->
+                            val updated = items.toMutableList()
+                            updated[index] = updated[index].copy(description = newDesc)
+                            onItemsChange(updated)
+                        },
+                        label = { Text("Description") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Quantity and Price fields
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 0.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                    OutlinedTextField(
+                        value = lineItem.quantity.toString(),
+                        onValueChange = { newQty ->
+                            val updated = items.toMutableList()
+                            updated[index] = updated[index].copy(quantity = newQty.toDoubleOrNull() ?: 1.0)
+                            onItemsChange(updated)
+                        },
+                        label = { Text("Quantity") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        shape = RoundedCornerShape(12.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium
+                    )
+
+                    OutlinedTextField(
+                        value = lineItem.unitPrice.toString(),
+                        onValueChange = { newPrice ->
+                            val updated = items.toMutableList()
+                            updated[index] = updated[index].copy(unitPrice = newPrice.toLongOrNull() ?: 0L)
+                            onItemsChange(updated)
+                        },
+                        label = { Text("Unit Price") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(12.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium
+                    )
+
+                        // Delete button
+                        IconButton(
+                            onClick = {
+                                onItemsChange(items.filterIndexed { i, _ -> i != index })
                             },
-                            label = { Text("Description") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Quantity and Price fields
-                        Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 0.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                .align(Alignment.CenterVertically)
+                                .size(48.dp)
                         ) {
-                        OutlinedTextField(
-                            value = items[index].quantity.toString(),
-                            onValueChange = { newQty ->
-                                val updated = items.toMutableList()
-                                updated[index] = updated[index].copy(quantity = newQty.toDoubleOrNull() ?: 1.0)
-                                onItemsChange(updated)
-                            },
-                            label = { Text("Quantity") },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(56.dp),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            shape = RoundedCornerShape(12.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium
-                        )
-
-                        OutlinedTextField(
-                            value = items[index].unitPrice.toString(),
-                            onValueChange = { newPrice ->
-                                val updated = items.toMutableList()
-                                updated[index] = updated[index].copy(unitPrice = newPrice.toLongOrNull() ?: 0L)
-                                onItemsChange(updated)
-                            },
-                            label = { Text("Unit Price") },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(56.dp),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            shape = RoundedCornerShape(12.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium
-                        )
-
-                            // Delete button
-                            IconButton(
-                                onClick = {
-                                    onItemsChange(items.filterIndexed { i, _ -> i != index })
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.CenterVertically)
-                                    .size(48.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    "Delete",
-                                    tint = Color.Red,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-
-                        // Total display
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Total:", style = MaterialTheme.typography.bodySmall)
-                            Text(
-                                "%.2f".format(items[index].quantity * items[index].unitPrice.toDouble() / 100),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold
+                            Icon(
+                                Icons.Default.Delete,
+                                "Delete",
+                                tint = Color.Red,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
+                    }
+
+                    // Total display
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Total:", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "%.2f".format(lineItem.quantity * lineItem.unitPrice.toDouble() / 100),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -158,4 +154,3 @@ fun ModernLineItemsEditor(
         }
     }
 }
-
