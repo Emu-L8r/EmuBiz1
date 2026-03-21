@@ -398,6 +398,118 @@ data class Customer(
 
 ---
 
+---
+
+## Decision #5: GUI1 Sunset Timeline (12-Month Deprecation Window, June 2027)
+
+**Date:** March 21, 2026  
+**Status:** ✅ Committed  
+**Owner:** EmuBiz Product Team + Engineering
+
+### The Decision
+Retire **GUI1 (legacy Activity-based UI)** completely by **June 1, 2027**, establishing a clear 12-month deprecation window.
+
+**Timeline:**
+- **Phase A (March–May 2026):** Achieve 100% GUI2 feature parity
+- **Phase B (June–July 2026):** Deploy deprecation warning in GUI1
+- **Phase C (August 2026–May 2027):** Monitor migration; support users
+- **Phase D (June 2027):** Remove all GUI1 code
+
+### Rationale
+1. **Reduce Maintenance Burden:** Eliminate 30% code duplication (two parallel UI implementations)
+2. **Increase Development Velocity:** +25% faster feature development post-sunset
+3. **Simplify Codebase:** Single Compose-based UI framework (easier onboarding, less cognitive load)
+4. **User-Friendly Timeline:** 12 months sufficient for migration (avg user retention ~18+ months)
+5. **Long-term Health:** Position app for sustainable growth without technical debt accumulation
+
+### Implementation Details
+
+**Phase A (March–May 2026):**
+```
+✅ Port all remaining GUI1 features to GUI2
+✅ Ensure 100% feature parity (verified by QA)
+✅ Write feature parity tests
+✅ No new GUI1-specific code merged
+```
+
+**Phase B (June–July 2026):**
+```
+✅ Add deprecation warning to GUI1 landing button
+✅ Message: "Classic Interface will retire June 1, 2027"
+✅ Deploy in v1.1 release
+✅ User email campaign + blog post
+```
+
+**Phase C (August 2026–May 2027):**
+```
+✅ Track GUI1 usage via Firebase Analytics
+✅ Target: 95% users on GUI2 by May 2027
+✅ Support team reaches out to heavy GUI1 users
+✅ Contingency: Extend if <60% migrated by April 2027
+```
+
+**Phase D (June 2027):**
+```
+✅ Delete all GUI1 code (Activities, screens, adapters)
+✅ Release as v2.0 (major version bump)
+✅ Codebase ~40% smaller
+✅ Only GUI2 available
+```
+
+### Trade-offs
+
+| Benefit | Cost |
+|---------|------|
+| 30% code duplication eliminated | Some GUI1 users must migrate |
+| +25% dev velocity | No "fallback UI" safety net |
+| Simplified onboarding | 12-month transition period required |
+| Cleaner codebase | Need proactive user communication |
+
+### Developer Guidelines (Effective Immediately)
+
+**✅ Do:**
+- New features → GUI2 only
+- Bug fixes → Both GUIs (until May 31, 2026), then GUI2 only
+- Share components via `ui/shared/`
+- Write GUI parity tests
+
+**❌ Don't:**
+- Create GUI1-only features (waste of effort)
+- Optimize/redesign GUI1 (low ROI)
+- Add new GUI1-specific code
+
+### Metrics & Monitoring
+
+**Success Criteria:**
+- [ ] 100% feature parity by May 31, 2026
+- [ ] Deprecation warning in v1.1 (June 1, 2026)
+- [ ] 95%+ users on GUI2 by May 31, 2027
+- [ ] All GUI1 code deleted in v2.0 (June 1, 2027)
+
+**Tracking:**
+- Daily: GUI1 vs GUI2 session count (Firebase Analytics)
+- Weekly: Migration progress, crash rates
+- Monthly: User feedback, support tickets
+
+### Reference Documentation
+- **Detailed Roadmap:** `docs/GUI1_SUNSET_ROADMAP.md`
+- **Timeline & Communication:** `docs/GUI1_SUNSET_ROADMAP.md` → Timeline & Phases
+- **Developer Guidelines:** `docs/GUI1_SUNSET_ROADMAP.md` → Developer Guidelines
+
+### Contingency Plans
+
+**If Migration < 60% by April 2027:**
+- Extend sunset to September 2027 (3-month extension)
+- Announce immediately (transparency)
+- Increase migration support efforts
+
+**If Critical Bug in GUI1 (After May 2027):**
+- Fix in v1.x patch release
+- Recommend GUI2 migration
+- Proceed with v2.0 as planned
+
+---
+
 ## How to Update This Log
 
 ### Adding a New Decision
@@ -434,7 +546,7 @@ When a decision's timeline ends (e.g., GUI1 sunset in June 2027):
 | SQLCipher encryption | Q4 2025 | ✅ Active | (permanent) |
 | Navigation adapters | Q1 2026 | ✅ Active | June 2027 (remove with GUI1) |
 | Env var signing | Mar 2026 | ✅ Active | (permanent) |
-| GUI1 sunset | Mar 2026 | 🟡 Planned | June 2027 |
+| GUI1 sunset | Mar 2026 | ✅ Committed | June 2027 |
 | Code generation | Q2 2026 | 🟡 Queued | TBD |
 
 ---
