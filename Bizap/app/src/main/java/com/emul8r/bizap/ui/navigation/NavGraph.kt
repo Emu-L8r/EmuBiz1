@@ -52,8 +52,8 @@ fun NavGraph(
     // Default business ID when no valid business profile is available
     // This matches the default used in ModernGUIMainActivity
     val DEFAULT_BUSINESS_ID = 1L
-    val startBusinessId = businessProfile.id.takeIf { it > 0 } ?: DEFAULT_BUSINESS_ID
-    
+    val startBusinessId = businessProfile?.id?.takeIf { it > 0 } ?: DEFAULT_BUSINESS_ID
+
     // Switch between GUI implementations based on theme
     when (theme) {
         AppTheme.CLASSIC -> {
