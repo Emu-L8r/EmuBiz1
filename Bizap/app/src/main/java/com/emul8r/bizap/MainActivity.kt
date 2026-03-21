@@ -47,6 +47,7 @@ import com.emul8r.bizap.ui.components.BizapTopAppBar
 import com.emul8r.bizap.ui.components.SyncStatusIndicator
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.navigation.getTitleResId
+import com.emul8r.bizap.ui.navigation.NavGraph
 import com.emul8r.bizap.ui.revenue.RevenueDashboardScreen
 import com.emul8r.bizap.ui.risk.RiskDashboardScreen
 import com.emul8r.bizap.ui.invoice.analytics.PaymentAnalyticsScreen
@@ -59,10 +60,12 @@ import com.emul8r.bizap.ui.settings.SettingsHubScreen
 import com.emul8r.bizap.presentation.ui.screens.SettingsScreen as AppSettingsScreen
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.presentation.ui.theme.ThemeProvider
+import com.emul8r.bizap.ui.BizapApp
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
-import com.emul8r.bizap.ui.notes.NotesScreen
 import com.emul8r.bizap.ui.landing.GuiMode
+import com.emul8r.bizap.ui.notes.NotesScreen
 import com.emul8r.bizap.ui.onboarding.FirstLaunchWarningDialog
+import com.emul8r.bizap.ui.theme.ThemeManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -91,7 +94,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            ThemeProvider {
+            val themeManager: ThemeManager = hiltViewModel()
+            
+            BizapApp(themeManager = themeManager) {
                 val appStateViewModel: AppStateViewModel = hiltViewModel()
                 val appState by appStateViewModel.appState.collectAsStateWithLifecycle()
 
@@ -119,35 +124,13 @@ class MainActivity : ComponentActivity() {
                     }
 
                     is AppState.AppReady -> {
-                        val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
-                        val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
-                        val gui2NavController = rememberNavController()
+                        val navController = rememberNavController()
                         
-                        // Validate business ID before proceeding
-                        val businessId = businessProfile.id.takeIf { it > 0 }
-                        if (businessId != null) {
-                            GuiV2NavGraph(
-                                navController = gui2NavController,
-                                startBusinessId = businessId
-                            )
-                        } else {
-                            // Show loading or prompt to create business profile
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    CircularProgressIndicator()
-                                    Text(
-                                        text = "Loading business profile...",
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                }
-                            }
-                        }
+                        // Use unified NavGraph with theme-aware navigation
+                        NavGraph(
+                            navController = navController,
+                            themeManager = themeManager
+                        )
                     }
                 }
             }

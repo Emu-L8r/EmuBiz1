@@ -28,19 +28,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <activity
-            android:name="com.emul8r.bizap.ui.activities.TraditionalGUIMainActivity"
-            android:exported="false"
-            android:parentActivityName="com.emul8r.bizap.MainActivity"
-            android:theme="@style/Theme.Bizap" />
-
-        <activity
-            android:name="com.emul8r.bizap.ui.activities.ModernGUIMainActivity"
-            android:exported="true"
-            android:parentActivityName="com.emul8r.bizap.MainActivity"
-            android:theme="@style/Theme.Bizap">
             <!-- Deep link: bizap://dashboard -->
             <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
