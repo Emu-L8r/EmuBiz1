@@ -133,6 +133,21 @@ fun CreateInvoiceScreenV2(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // Guard: Show loading indicator if customers not yet loaded
+            if (uiState.customers.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                return@LazyColumn  // Stop rendering form until customers loaded
+            }
+
             item {
                 CustomerDropdown(
                     selectedCustomer = uiState.selectedCustomer,
