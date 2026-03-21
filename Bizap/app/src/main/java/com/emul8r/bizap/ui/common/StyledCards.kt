@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -90,7 +92,7 @@ fun StatusBadge(
         InvoiceStatus.SENT -> Triple(
             Color(0xFF2196F3).copy(alpha = 0.12f),
             Color(0xFF1565C0),
-            Icons.Default.Send
+            Icons.AutoMirrored.Filled.Send
         )
         InvoiceStatus.DRAFT -> Triple(
             Color(0xFF999999).copy(alpha = 0.12f),
@@ -152,7 +154,7 @@ fun StatusBadgeFromString(
         "SENT" -> Triple(
             Color(0xFF2196F3).copy(alpha = 0.12f),
             Color(0xFF1565C0),
-            Icons.Default.Send
+            Icons.AutoMirrored.Filled.Send
         )
         "DRAFT" -> Triple(
             Color(0xFF999999).copy(alpha = 0.12f),

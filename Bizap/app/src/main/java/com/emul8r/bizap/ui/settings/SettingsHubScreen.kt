@@ -24,11 +24,12 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -139,7 +140,7 @@ private fun SettingsHubScreenV1Content(onNavigate: (Screen) -> Unit) {
             onClick = { onNavigate(Screen.CustomerSegments) }
         )
         SettingsItem(
-            icon = Icons.Default.HelpOutline,
+            icon = Icons.AutoMirrored.Filled.HelpOutline,
             title = "Help & About",
             subtitle = "App information, version, and support",
             onClick = { onNavigate(Screen.Help) }
@@ -239,11 +240,11 @@ private fun SettingsV2Content(
         SettingsCardV2(
             icon = Icons.Default.Business,
             title = "Business Profile",
-            description = businessProfile.businessName,
+            description = businessProfile.businessName ?: "Not Set",
             onClick = onBusinessProfileClick
         )
 
-        Divider()
+        HorizontalDivider()
 
         Text(
             text = "Appearance",
@@ -267,13 +268,13 @@ private fun SettingsV2Content(
         )
 
         SettingsCardV2(
-            icon = Icons.Default.HelpOutline,
+            icon = Icons.AutoMirrored.Filled.HelpOutline,
             title = "Help & About",
             description = "App information, version, and support",
             onClick = onHelpClick
         )
 
-        Divider()
+        HorizontalDivider()
 
         Text(
             text = "About",
@@ -317,7 +318,7 @@ private fun SettingsV2Content(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Divider()
+        HorizontalDivider()
         Text(
             text = "Interface",
             style = MaterialTheme.typography.labelLarge,
