@@ -365,5 +365,42 @@ See `/docs/RELEASE_SIGNING.md` (WIP) for setup details.
 
 ---
 
-**Happy invoicing! 📋✨**
+## 📚 Documentation
+
+### Canonical Sources (Read These First)
+- **[STATUS.md](STATUS.md)** — Current project health score and active initiatives
+- **[DECISION_LOG.md](DECISION_LOG.md)** — Architectural decisions (GUI1 sunset, etc.)
+- **[docs/](docs/)** — Technical guides and implementation documentation
+
+### Historical Documentation
+- **[docs/ARCHIVE_INDEX.md](docs/ARCHIVE_INDEX.md)** — Guide to archived documentation (100+ files organized by category)
+
+All historical status reports, phase documents, and build diagnostics are archived in `docs/archive/` for reference but should not be considered current project state.
+
+---
+
+## 🚀 Contributing
+
+### Getting Started
+1. Read [STATUS.md](STATUS.md) for current project state
+2. Review [DECISION_LOG.md](DECISION_LOG.md) for architectural context
+3. Check existing PRs for current work
+4. Pick a task from the roadmap
+
+### Code Standards
+- **Tests:** Run `./gradlew test` before submitting PR
+- **Build:** Verify `./gradlew clean build` passes
+- **Format:** Follow Kotlin style guide (auto-formatted by IDE)
+
+### Before Committing
+```bash
+# Run full verification
+./gradlew clean build test
+
+# Expected: BUILD SUCCESSFUL with all tests passing
+```
+
+---
+
+## Version History
 
