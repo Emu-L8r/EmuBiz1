@@ -81,6 +81,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var authManager: AuthenticationManager
 
+    @Inject
+    lateinit var themeManager: ThemeManager
+
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
         // Guard against calls before Hilt injection completes
         if (::authManager.isInitialized) {
@@ -94,8 +97,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            val themeManager: ThemeManager = hiltViewModel()
-            
             BizapApp(themeManager = themeManager) {
                 val appStateViewModel: AppStateViewModel = hiltViewModel()
                 val appState by appStateViewModel.appState.collectAsStateWithLifecycle()
