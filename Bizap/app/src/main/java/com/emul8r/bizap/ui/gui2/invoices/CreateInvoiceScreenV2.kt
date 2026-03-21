@@ -23,7 +23,12 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.emul8r.bizap.domain.model.InvoiceCustomization
 import com.emul8r.bizap.ui.components.InvoiceBottomSummary
+import com.emul8r.bizap.ui.components.LineItemsEditor
+import com.emul8r.bizap.ui.components.InvoiceCustomizationEditor
+import com.emul8r.bizap.ui.components.CurrencySelector
+import com.emul8r.bizap.ui.components.PhotoAttachmentPicker
 import com.emul8r.bizap.ui.common.CurrencySelector
 import com.emul8r.bizap.ui.gui2.invoice.AddPhotoDialogV2
 import com.emul8r.bizap.ui.invoices.CreateInvoiceViewModel
@@ -163,15 +168,30 @@ fun CreateInvoiceScreenV2(
                 )
             }
 
-            items(uiState.items, key = { it.transientId.toString() }) { item ->
-                LineItemEditor(
-                    description = item.description,
-                    quantity = item.quantity,
-                    unitPrice = item.unitPrice,
-                    onUpdate = { desc, qty, price ->
-                        viewModel.updateLineItem(item.transientId, desc, qty, price)
-                    },
-                    onRemove = { viewModel.removeLineItem(item.transientId) }
+            // Phase 2: Line Items Component
+            item {
+                val lineItems = uiState.items.map {
+                    com.emul8r.bizap.domain.model.LineItem(
+                        id = it.transientId.hashCode().toLong(),
+                        description = it.description,
+                        quantity = it.quantity.toInt(),
+                        unitPrice = it.unitPrice.toDouble() / 100.0
+                    )
+                }
+                LineItemsEditor(
+                    items = lineItems,
+                    onItemsChange = { updatedItems ->
+                        updatedItems.forEachIndexed { idx, item ->
+                            if (idx < uiState.items.size) {
+                                viewModel.updateLineItem(
+                                    uiState.items[idx].transientId,
+                                    item.description,
+                                    item.quantity.toDouble(),
+                                    (item.unitPrice * 100).toLong()
+                                )
+                            }
+                        }
+                    }
                 )
             }
 
@@ -201,53 +221,32 @@ fun CreateInvoiceScreenV2(
                 )
             }
 
-            // Photo attachments section
+            // Phase 2: Customization Component
             item {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Photos (${uiState.photoUris.size})",
-                            style = MaterialTheme.typography.titleSmall
-                        )
-                        IconButton(onClick = { showPhotoDialog = true }) {
-                            Icon(Icons.Default.AddAPhoto, contentDescription = "Add Photo")
-                        }
+                val customization = InvoiceCustomization(
+                    companyName = uiState.companyName,
+                    headerText = uiState.header,
+                    footerText = uiState.footer,
+                    templateType = uiState.templateType
+                )
+                InvoiceCustomizationEditor(
+                    customization = customization,
+                    onCustomizationChange = { updated ->
+                        viewModel.updateCompanyName(updated.companyName)
+                        viewModel.updateTemplateType(updated.templateType)
                     }
+                )
+            }
 
-                    if (uiState.photoUris.isNotEmpty()) {
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            items(uiState.photoUris) { uri ->
-                                Box {
-                                    AsyncImage(
-                                        model = uri,
-                                        contentDescription = "Attached photo",
-                                        modifier = Modifier.size(80.dp),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                    IconButton(
-                                        onClick = { viewModel.removePhoto(uri) },
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .size(24.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = "Remove photo",
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
+            // Phase 2: Photo Attachments Component
+            item {
+                PhotoAttachmentPicker(
+                    photos = uiState.photoUris,
+                    onPhotosChange = { updatedPhotos ->
+                        updatedPhotos.filterNot { it in uiState.photoUris }.forEach { viewModel.addPhoto(it) }
+                        uiState.photoUris.filterNot { it in updatedPhotos }.forEach { viewModel.removePhoto(it) }
                     }
-                }
+                )
             }
         }
     }
