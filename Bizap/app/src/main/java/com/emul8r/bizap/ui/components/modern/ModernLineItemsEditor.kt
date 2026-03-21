@@ -1,15 +1,18 @@
 package com.emul8r.bizap.ui.components.modern
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import com.emul8r.bizap.domain.model.LineItem
@@ -66,39 +69,39 @@ fun ModernLineItemsEditor(
                                 .padding(horizontal = 0.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            OutlinedTextField(
-                                value = items[index].quantity.toString(),
-                                onValueChange = { newQty ->
-                                    val updated = items.toMutableList()
-                                    updated[index] = updated[index].copy(quantity = newQty.toIntOrNull() ?: 1)
-                                    onItemsChange(updated)
-                                },
-                                label = { Text("Quantity") },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(56.dp),
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                shape = RoundedCornerShape(12.dp),
-                                textStyle = MaterialTheme.typography.bodyMedium
-                            )
+                        OutlinedTextField(
+                            value = items[index].quantity.toString(),
+                            onValueChange = { newQty ->
+                                val updated = items.toMutableList()
+                                updated[index] = updated[index].copy(quantity = newQty.toDoubleOrNull() ?: 1.0)
+                                onItemsChange(updated)
+                            },
+                            label = { Text("Quantity") },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            shape = RoundedCornerShape(12.dp),
+                            textStyle = MaterialTheme.typography.bodyMedium
+                        )
 
-                            OutlinedTextField(
-                                value = items[index].unitPrice.toString(),
-                                onValueChange = { newPrice ->
-                                    val updated = items.toMutableList()
-                                    updated[index] = updated[index].copy(unitPrice = newPrice.toDoubleOrNull() ?: 0.0)
-                                    onItemsChange(updated)
-                                },
-                                label = { Text("Unit Price") },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(56.dp),
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                shape = RoundedCornerShape(12.dp),
-                                textStyle = MaterialTheme.typography.bodyMedium
-                            )
+                        OutlinedTextField(
+                            value = items[index].unitPrice.toString(),
+                            onValueChange = { newPrice ->
+                                val updated = items.toMutableList()
+                                updated[index] = updated[index].copy(unitPrice = newPrice.toLongOrNull() ?: 0L)
+                                onItemsChange(updated)
+                            },
+                            label = { Text("Unit Price") },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            shape = RoundedCornerShape(12.dp),
+                            textStyle = MaterialTheme.typography.bodyMedium
+                        )
 
                             // Delete button
                             IconButton(
@@ -126,7 +129,7 @@ fun ModernLineItemsEditor(
                         ) {
                             Text("Total:", style = MaterialTheme.typography.bodySmall)
                             Text(
-                                "%.2f".format(items[index].total),
+                                "%.2f".format(items[index].quantity * items[index].unitPrice.toDouble() / 100),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold
                             )
@@ -142,8 +145,8 @@ fun ModernLineItemsEditor(
                 onItemsChange(items + LineItem(
                     id = (items.maxOfOrNull { it.id } ?: 0) + 1,
                     description = "",
-                    quantity = 1,
-                    unitPrice = 0.0
+                    quantity = 1.0,
+                    unitPrice = 0L
                 ))
             },
             modifier = Modifier

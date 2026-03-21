@@ -1,18 +1,19 @@
 package com.emul8r.bizap.ui.components.classic
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.domain.model.LineItem
 
@@ -60,7 +61,7 @@ fun ClassicLineItemsEditor(
                         value = items[index].quantity.toString(),
                         onValueChange = { newQty ->
                             val updated = items.toMutableList()
-                            updated[index] = updated[index].copy(quantity = newQty.toIntOrNull() ?: 1)
+                            updated[index] = updated[index].copy(quantity = newQty.toDoubleOrNull() ?: 1.0)
                             onItemsChange(updated)
                         },
                         label = { Text("Qty") },
@@ -77,7 +78,7 @@ fun ClassicLineItemsEditor(
                         value = items[index].unitPrice.toString(),
                         onValueChange = { newPrice ->
                             val updated = items.toMutableList()
-                            updated[index] = updated[index].copy(unitPrice = newPrice.toDoubleOrNull() ?: 0.0)
+                            updated[index] = updated[index].copy(unitPrice = newPrice.toLongOrNull() ?: 0L)
                             onItemsChange(updated)
                         },
                         label = { Text("Price") },
@@ -108,8 +109,8 @@ fun ClassicLineItemsEditor(
                 onItemsChange(items + LineItem(
                     id = (items.maxOfOrNull { it.id } ?: 0) + 1,
                     description = "",
-                    quantity = 1,
-                    unitPrice = 0.0
+                    quantity = 1.0,
+                    unitPrice = 0L
                 ))
             },
             modifier = Modifier
