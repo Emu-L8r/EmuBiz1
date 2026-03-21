@@ -143,8 +143,8 @@ fun CreateInvoiceScreen(
                     com.emul8r.bizap.domain.model.LineItem(
                         id = it.transientId.hashCode().toLong(),
                         description = it.description,
-                        quantity = it.quantity.toInt(),
-                        unitPrice = it.unitPrice.toDouble() / 100.0
+                        quantity = it.quantity,
+                        unitPrice = it.unitPrice
                     )
                 }
                 LineItemsEditor(
@@ -156,8 +156,8 @@ fun CreateInvoiceScreen(
                                 viewModel.updateLineItem(
                                     uiState.items[idx].transientId,
                                     item.description,
-                                    item.quantity.toDouble(),
-                                    (item.unitPrice * 100).toLong()
+                                    item.quantity,
+                                    item.unitPrice
                                 )
                             }
                         }
