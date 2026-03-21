@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.data.model.CashFlowTrendPoint
-import kotlin.math.max
 
 /**
  * Cash Flow Trend Chart
@@ -48,8 +47,8 @@ fun CashFlowTrendChart(
                 .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            LegendItem("Sent (Outstanding)", Color(0xFF1976D2))  // Blue
             LegendItem("Paid (Collected)", Color(0xFF388E3C))    // Green
+            LegendItem("Outstanding", Color(0xFF1976D2))  // Blue
         }
 
         // Simple bar visualization
@@ -81,7 +80,7 @@ fun CashFlowTrendChart(
 
         // Info text
         Text(
-            text = "💡 Tip: Blue bars show invoices awaiting payment. Green shows collected revenue.",
+            text = "💡 Tip: Green portions show collected revenue. Blue shows invoices awaiting payment.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 12.dp)
@@ -91,10 +90,7 @@ fun CashFlowTrendChart(
 
 @Composable
 private fun SimpleBarChart(trends: List<CashFlowTrendPoint>) {
-    val maxValue = max(
-        trends.maxOfOrNull { it.invoicedCents } ?: 0L,
-        trends.maxOfOrNull { it.paidCents } ?: 0L
-    )
+    val maxValue = trends.maxOfOrNull { it.invoicedCents } ?: 0L
 
     if (maxValue == 0L) {
         Text(
@@ -116,7 +112,7 @@ private fun SimpleBarChart(trends: List<CashFlowTrendPoint>) {
             .padding(12.dp)
     ) {
         Text(
-            text = "Last 30 days: Sent vs Paid",
+            text = "Last 7 days: Paid (Green) vs Outstanding (Blue)",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -139,21 +135,60 @@ private fun SimpleBarChart(trends: List<CashFlowTrendPoint>) {
                     verticalArrangement = Arrangement.Bottom,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Sent (Outstanding) bar - BLUE
+                    // STACKED BAR: Total height represents invoiced amount
+                    val totalHeight = ((trend.invoicedCents.toFloat() / maxValue) * 150).dp
+                    val paidCents = trend.paidCents
+
+                    // Calculate proportions for stacked bar
+                    val paidProportion = if (trend.invoicedCents > 0)
+                        paidCents.toFloat() / trend.invoicedCents
+                    else
+                        0f
+                    val outstandingProportion = 1f - paidProportion
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(0.8f)
-                            .height(((trend.invoicedCents.toFloat() / maxValue) * 150).dp)
-                            .background(Color(0xFF1976D2), shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    // Paid (Collected) bar - GREEN
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .height(((trend.paidCents.toFloat() / maxValue) * 150).dp)
-                            .background(Color(0xFF388E3C), shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                    )
+                            .height(totalHeight)
+                    ) {
+                        // PAID (Green) - Bottom portion
+                        if (paidProportion > 0f) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(paidProportion)
+                                    .background(
+                                        Color(0xFF388E3C),  // Green - Collected
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                            bottomStart = 2.dp,
+                                            bottomEnd = 2.dp,
+                                            topStart = if (outstandingProportion > 0f) 0.dp else 2.dp,
+                                            topEnd = if (outstandingProportion > 0f) 0.dp else 2.dp
+                                        )
+                                    )
+                                    .align(Alignment.BottomStart)
+                            )
+                        }
+
+                        // OUTSTANDING (Blue) - Top portion
+                        if (outstandingProportion > 0f) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(outstandingProportion)
+                                    .background(
+                                        Color(0xFF1976D2),  // Blue - Outstanding
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                            topStart = 2.dp,
+                                            topEnd = 2.dp,
+                                            bottomStart = if (paidProportion > 0f) 0.dp else 2.dp,
+                                            bottomEnd = if (paidProportion > 0f) 0.dp else 2.dp
+                                        )
+                                    )
+                                    .align(Alignment.TopStart)
+                            )
+                        }
+                    }
                 }
             }
         }
