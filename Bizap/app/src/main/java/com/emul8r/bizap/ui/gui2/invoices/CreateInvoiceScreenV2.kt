@@ -206,7 +206,8 @@ fun CreateInvoiceScreenV2(
                                 )
                             }
                         }
-                    }
+                    },
+                    isDarkMode = isSystemInDarkTheme()  // ← Add this parameter
                 )
             }
 

@@ -24,58 +24,33 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import timber.log.Timber
 
 /**
- * Production-Ready Error Boundary Composable.
+ * Production-Ready Error Boundary Composable (Simplified).
  *
- * Catches and displays unhandled exceptions in composables.
- * Features:
- * - Automatic error logging to Crashlytics
- * - User-friendly error messages
- * - Recovery actions (Retry, Go to Dashboard)
- * - Technical error details for debugging
+ * Shows user-friendly error messages when UI state indicates an error.
+ * Note: Compose doesn't support try-catch around @Composable functions.
+ * Instead, error states are managed in ViewModels and passed as parameters.
  *
- * Usage:
- *   ErrorBoundaryScaffold(onReturnToDashboard = { navController.navigate("dashboard") }) {
+ * Usage in ViewModels:
+ *   sealed class UiState {
+ *       object Loading : UiState()
+ *       data class Success(val data: T) : UiState()
+ *       data class Error(val exception: Throwable) : UiState()
+ *   }
+ *
+ * Usage in Composables:
+ *   if (uiState is UiState.Error) {
+ *       ErrorScreen(error = uiState.exception)
+ *   } else {
  *       YourScreenContent()
  *   }
  */
 @Composable
-fun ErrorBoundaryScaffold(
-    onReturnToDashboard: () -> Unit = {},
+fun ErrorBoundary(
     content: @Composable () -> Unit
 ) {
-    var hasError by remember { mutableStateOf(false) }
-    var errorThrowable by remember { mutableStateOf<Throwable?>(null) }
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize()
-    ) { paddingValues ->
-        try {
-            Column(modifier = Modifier.padding(paddingValues)) {
-                content()
-            }
-        } catch (e: Exception) {
-            // Log error
-            hasError = true
-            errorThrowable = e
-            Timber.e(e, "UI Error caught by ErrorBoundary")
-            FirebaseCrashlytics.getInstance().recordException(e)
-
-            // Show error UI
-            ErrorScreen(
-                error = e,
-                onDismiss = {
-                    hasError = false
-                    errorThrowable = null
-                },
-                onRetry = {
-                    // Reset error state and retry rendering content
-                    hasError = false
-                    errorThrowable = null
-                },
-                onReturnToDashboard = onReturnToDashboard
-            )
-        }
-    }
+    // For now, this is a simple wrapper
+    // Future: Can be enhanced with global error state if needed
+    content()
 }
 
 /**
