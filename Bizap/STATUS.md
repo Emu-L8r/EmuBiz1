@@ -24,6 +24,21 @@ Bizap is a production-ready Android invoicing app (9.0/10 health) with dual GUI 
 - **Documentation:** ✅ Comprehensive roadmaps, policies, guides now in place
 - **Security:** ✅ Environment variables for production keys (partial → full in Phase 1)
 
+### GUI1 Sunset Commitment (NEW as of March 21, 2026)
+- **Decision:** ✅ GUI1 will be retired **June 1, 2027** (12-month window)
+- **Status:** Committed (See Decision #5 in DECISION_LOG.md)
+- **Timeline:** 
+  - Phase A (Mar–May 2026): Feature parity completion
+  - Phase B (Jun–Jul 2026): Deprecation warning deployed
+  - Phase C (Aug 2026–May 2027): User migration monitoring
+  - Phase D (Jun 2027): GUI1 code removal
+- **Impact:** 
+  - ✅ New features → GUI2 only (starting now)
+  - ✅ Bug fixes → Both GUIs until May 31, 2026
+  - ✅ ~30% code reduction after June 2027
+  - ✅ +25% development velocity post-sunset
+- **Documentation:** See `docs/GUI1_SUNSET_ROADMAP.md` for full details
+
 ---
 
 ## Current Initiatives (March 2026)
