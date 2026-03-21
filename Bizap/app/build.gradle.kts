@@ -1,28 +1,61 @@
+/*
+ * Bizap Build Configuration
+ * 
+ * This file defines the build configuration for the Bizap Android app.
+ * 
+ * Key Features:
+ * - Gradle 9.2+ compatible (ready for Gradle 10)
+ * - Modern Kotlin DSL with version catalogs
+ * - Secure release signing via environment variables
+ * - Exchange Rate API integration
+ * - SQLCipher database encryption
+ * 
+ * Related Documentation:
+ * - Build Guide: docs/BUILD_GUIDE.md
+ * - Gradle Roadmap: docs/GRADLE_MIGRATION_ROADMAP.md
+ * - Security: docs/SIGNING_SECURITY_POLICY.md
+ */
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.google.ksp)
-    alias(libs.plugins.google.hilt.android)
-    alias(libs.plugins.google.services)
-    alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.kotlin.compose)  // Compose compiler plugin (Kotlin 2.0+)
+    alias(libs.plugins.kotlin.serialization)  // For ScreenV2 @Serializable routes
+    alias(libs.plugins.google.ksp)  // Annotation processing (Room, Hilt)
+    alias(libs.plugins.google.hilt.android)  // Dependency injection
+    alias(libs.plugins.google.services)  // Firebase integration
+    alias(libs.plugins.firebase.crashlytics)  // Crash reporting
 }
 
 android {
     namespace = "com.emul8r.bizap"
-    compileSdk = 35
+    compileSdk = 35  // Target latest stable SDK
 
     defaultConfig {
         applicationId = "com.emul8r.bizap"
-        minSdk = 26
+        minSdk = 26  // Android 8.0+ (required for SQLCipher hardware-backed keystore)
         targetSdk = 35
         versionCode = 2
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        // API Key validation - fail-fast if not configured
+        /*
+         * Exchange Rate API Key Configuration
+         * 
+         * The app uses ExchangeRate-API.com for currency conversion.
+         * If no key is configured, the app will:
+         * - Use cached exchange rates (if available)
+         * - Fall back to default USD rates
+         * - Not crash or fail to build
+         * 
+         * To configure:
+         * 1. Get free key: https://www.exchangerate-api.com/
+         * 2. Add to gradle.properties: EXCHANGE_RATE_API_KEY=your_key_here
+         * 3. For CI/CD: Set as GitHub secret
+         * 
+         * See: docs/EXCHANGE_RATE_API_GUIDE.md
+         */
         val exchangeRateKey = project.findProperty("EXCHANGE_RATE_API_KEY") as String?
         if (exchangeRateKey.isNullOrBlank()) {
             logger.warn("""
@@ -40,6 +73,28 @@ android {
         }
     }
 
+    /*
+     * Release Signing Configuration
+     * 
+     * Production builds MUST use environment variables for security.
+     * Development builds can use a local keystore for convenience.
+     * 
+     * Environment Variables (Production):
+     * - KEYSTORE_PATH: Absolute path to .jks/.keystore file
+     * - KEYSTORE_PASSWORD: Keystore password
+     * - KEY_ALIAS: Key alias within keystore
+     * - KEY_PASSWORD: Key password
+     * 
+     * Development Fallback:
+     * - Place release-key.jks in project root (Bizap/../release-key.jks)
+     * - Uses default password "bizap123" (DO NOT use in production!)
+     * 
+     * GitHub Actions:
+     * - Uses KEYSTORE_BASE64 secret (base64-encoded keystore)
+     * - See: .github/workflows/android-release.yml
+     * 
+     * See: docs/SIGNING_SECURITY_POLICY.md
+     */
     signingConfigs {
         create("release") {
             // Load signing credentials from environment variables for security
