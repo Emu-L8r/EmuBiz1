@@ -120,33 +120,31 @@ private fun DashboardContentV2(
                 color = MaterialTheme.colorScheme.primary
             )
 
-        // ── Quick Actions (Silenced for review) ──
-        /*
-        SectionHeaderV2(title = "Quick Actions")
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(
-                onClick = onCreateCustomer,
-                modifier = Modifier.weight(1f)
+            // ── Quick Actions ──
+            SectionHeaderV2(title = "Quick Actions")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("New Customer")
+                Button(
+                    onClick = onCreateCustomer,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("New Customer")
+                }
+                Button(
+                    onClick = onCreateInvoice,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("New Invoice")
+                }
             }
-            Button(
-                onClick = onCreateInvoice,
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("New Invoice")
-            }
-        }
 
-        HorizontalDivider()
-        */
+            HorizontalDivider()
 
         // ── Revenue section: Expected vs Actual with color coding ──
         SectionHeaderV2(title = "Revenue")

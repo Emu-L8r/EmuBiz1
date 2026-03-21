@@ -69,12 +69,20 @@ class CreateInvoiceViewModelV2 @Inject constructor(
         viewModelScope.launch {
             try {
                 Timber.d("CreateInvoiceViewModelV2: Creating invoice for ${invoice.customerName}")
-                invoiceRepository.saveInvoice(invoice)
-                Timber.d("CreateInvoiceViewModelV2: Invoice created successfully")
-                onSuccess()
+                val result = invoiceRepository.saveInvoice(invoice)
+
+                result.onSuccess { invoiceId ->
+                    Timber.d("✅ CreateInvoiceViewModelV2: Invoice created successfully with ID=$invoiceId")
+                    onSuccess()
+                }
+
+                result.onFailure { exception ->
+                    Timber.e(exception, "❌ CreateInvoiceViewModelV2: Failed to create invoice")
+                    onError(exception.message ?: "Unknown error during invoice creation")
+                }
             } catch (e: Exception) {
-                Timber.e(e, "CreateInvoiceViewModelV2: Failed to create invoice")
-                onError(e.message ?: "Unknown error")
+                Timber.e(e, "❌ CreateInvoiceViewModelV2: Unexpected error during invoice creation")
+                onError(e.message ?: "Unexpected error")
             }
         }
     }

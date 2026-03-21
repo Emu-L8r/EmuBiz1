@@ -1,0 +1,20 @@
+// Studio-specific build configuration to disable Instant Run
+// and ensure native libraries are properly packaged
+//
+// This file contains Android Studio IDE-specific configurations
+// that should NOT affect CLI builds
+
+android {
+    // Disable Android Studio's Instant Run which skips native libraries
+    // Instant Run tries to optimize deployment by sending only changed files,
+    // but this optimization breaks native library loading (libsqlcipher.so)
+
+    // The solution: Force full APK installation for debug builds
+    // This ensures libsqlcipher.so and other native deps are always included
+
+    packagingOptions {
+        // Ensure JNI libs are never excluded in debug builds
+        doNotStrip "lib/arm64-v8a/**"
+    }
+}
+

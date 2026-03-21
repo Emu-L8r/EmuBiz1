@@ -388,6 +388,10 @@ private fun BusinessProfileV2Form(
     var businessAddress by remember(initialProfile) { mutableStateOf(initialProfile.address) }
     var businessPhone by remember(initialProfile) { mutableStateOf(initialProfile.phone) }
     var businessEmail by remember(initialProfile) { mutableStateOf(initialProfile.email) }
+    var bankName by remember(initialProfile) { mutableStateOf(initialProfile.bankName ?: "") }
+    var accountName by remember(initialProfile) { mutableStateOf(initialProfile.accountName ?: "") }
+    var bsbNumber by remember(initialProfile) { mutableStateOf(initialProfile.bsbNumber ?: "") }
+    var accountNumber by remember(initialProfile) { mutableStateOf(initialProfile.accountNumber ?: "") }
     var isSaving by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf<String?>(null) }
 
@@ -398,6 +402,9 @@ private fun BusinessProfileV2Form(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Business Details Section
+        Text("Business Details", style = MaterialTheme.typography.titleMedium)
+
         OutlinedTextField(
             value = businessName,
             onValueChange = {
@@ -439,6 +446,45 @@ private fun BusinessProfileV2Form(
             modifier = Modifier.fillMaxWidth()
         )
 
+        // Billing/Bank Details Section
+        Spacer(modifier = Modifier.height(8.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("Billing Information", style = MaterialTheme.typography.titleMedium)
+        Text("These details appear on your invoices and are used for payment processing",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        OutlinedTextField(
+            value = bankName,
+            onValueChange = { bankName = it },
+            label = { Text("Bank Name") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = accountName,
+            onValueChange = { accountName = it },
+            label = { Text("Account Name") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = bsbNumber,
+            onValueChange = { bsbNumber = it },
+            label = { Text("BSB Number") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+
+        OutlinedTextField(
+            value = accountNumber,
+            onValueChange = { accountNumber = it },
+            label = { Text("Account Number") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
@@ -454,7 +500,11 @@ private fun BusinessProfileV2Form(
                         abn = businessAbn,
                         address = businessAddress,
                         phone = businessPhone,
-                        email = businessEmail
+                        email = businessEmail,
+                        bankName = bankName.takeIf { it.isNotBlank() },
+                        accountName = accountName.takeIf { it.isNotBlank() },
+                        bsbNumber = bsbNumber.takeIf { it.isNotBlank() },
+                        accountNumber = accountNumber.takeIf { it.isNotBlank() }
                     )
                 )
             },

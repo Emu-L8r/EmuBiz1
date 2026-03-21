@@ -84,10 +84,17 @@ android {
         }
     }
 
+    androidResources {
+        noCompress += listOf("proto", "pb")
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
+            // ✅ CRITICAL FIX: Ensure native libraries are always deployed
+            isDebuggable = true
+            isJniDebuggable = true
         }
         release {
             signingConfig = signingConfigs.getByName("release")
@@ -98,10 +105,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-    }
-
-    androidResources {
-        noCompress += listOf("proto", "pb")
     }
 
     compileOptions {
@@ -141,15 +144,16 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
 
-        // CRITICAL FIX: Exclude legacy native architectures
-        // Saves ~17 MB by removing obsolete/emulator-only libraries
-        // Keep only arm64-v8a (modern Android standard)
-        excludes += listOf(
-            "lib/armeabi-v7a/**",     // 32-bit ARM (obsolete, ~4 MB)
-            "lib/x86/**",              // x86 (emulator only, ~5 MB)
-            "lib/x86_64/**"            // x86_64 (emulator only, ~7 MB)
-            // arm64-v8a is KEPT (~6 MB, required for modern devices)
-        )
+        // FIXED: Removed exclusions for x86 and x86_64 to support emulators
+        // and armeabi-v7a for older/budget devices. 
+        // Stripping these saves space but causes UnsatisfiedLinkError on many devices/emulators.
+        jniLibs {
+            excludes += listOf(
+                // "lib/armeabi-v7a/**", 
+                // "lib/x86/**",          
+                // "lib/x86_64/**"        
+            )
+        }
     }
 }
 
@@ -170,7 +174,7 @@ dependencies {
     // Material Design components (AppBarLayout, BottomNavigationView, Toolbar, etc.)
     implementation("com.google.android.material:material:1.11.0")
 
-    // Logging & Monitoring (TASK 1)
+    // Logging & Monitoring
     implementation(libs.timber)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
@@ -195,7 +199,7 @@ dependencies {
     implementation(libs.androidx.paging.runtime.ktx)
 
     // SQLCipher - encrypted database (passphrase stored in Android Keystore)
-    implementation("net.zetetic:sqlcipher-android:4.13.0@aar")
+    implementation("net.zetetic:sqlcipher-android:4.14.0@aar")
     implementation("androidx.sqlite:sqlite-ktx:2.4.0")
 
     // WorkManager
@@ -219,12 +223,12 @@ dependencies {
     implementation(libs.coil.compose)
     implementation("androidx.exifinterface:exifinterface:1.3.7")
 
-    // Charts (TASK 12 - VICO ENGINE)
+    // Charts
     implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")
     implementation("com.patrykandpatrick.vico:compose:1.13.1")
     implementation("com.patrykandpatrick.vico:core:1.13.1")
 
-    // Testing (TASK 2 FOUNDATION)
+    // Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.mockito.core)
@@ -241,17 +245,17 @@ dependencies {
     testImplementation("androidx.test.ext:junit:1.1.5")
     testImplementation("io.mockk:mockk-android:1.13.5")
 
-    // Android Test Dependencies (for instrumented tests on device/emulator)
+    // Android Test Dependencies
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     androidTestImplementation(libs.androidx.room.testing)
 
-    // Kotlin Test Library (for kotlin.test assertions in androidTest)
+    // Kotlin Test Library
     androidTestImplementation(kotlin("test"))
 
-    // AndroidX Test Ext - needed for AndroidJUnit4 runner
+    // AndroidX Test Ext
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.ext:junit-ktx:1.1.5")
     androidTestImplementation("androidx.test:core:1.5.0")
