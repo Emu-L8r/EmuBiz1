@@ -16,7 +16,7 @@ import kotlin.math.max
 /**
  * Cash Flow Trend Chart
  *
- * Shows 30-day invoiced vs. paid trends.
+ * Shows 30-day sent (outstanding) vs. paid trends.
  * Helps users identify seasonal patterns and predict cash flow gaps.
  *
  * Note: Implemented with basic Compose components for reliability.
@@ -41,15 +41,15 @@ fun CashFlowTrendChart(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Legend
+        // Legend with SENT and PAID clearly distinguished
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            LegendItem("Invoiced", Color(0xFF1976D2))
-            LegendItem("Paid", Color(0xFF388E3C))
+            LegendItem("Sent (Outstanding)", Color(0xFF1976D2))  // Blue
+            LegendItem("Paid (Collected)", Color(0xFF388E3C))    // Green
         }
 
         // Simple bar visualization
@@ -70,18 +70,18 @@ fun CashFlowTrendChart(
         if (dailyTrends.isNotEmpty()) {
             val totalInvoiced = dailyTrends.sumOf { it.invoicedCents } / 100.0
             val totalPaid = dailyTrends.sumOf { it.paidCents } / 100.0
-            val gap = totalInvoiced - totalPaid
+            val outstanding = totalInvoiced - totalPaid
 
             Column(modifier = Modifier.padding(top = 12.dp)) {
-                SummaryRow("Total Invoiced", totalInvoiced)
-                SummaryRow("Total Paid", totalPaid)
-                SummaryRow("Gap", gap, textColor = if (gap > 0) Color(0xFFD32F2F) else Color(0xFF388E3C))
+                SummaryRow("Total Sent (Outstanding)", totalInvoiced)
+                SummaryRow("Total Paid (Collected)", totalPaid)
+                SummaryRow("Outstanding Gap", outstanding, textColor = if (outstanding > 0) Color(0xFFD32F2F) else Color(0xFF388E3C))
             }
         }
 
         // Info text
         Text(
-            text = "💡 Tip: Compare invoiced vs. paid to identify cash flow gaps.",
+            text = "💡 Tip: Blue bars show invoices awaiting payment. Green shows collected revenue.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 12.dp)
@@ -116,7 +116,7 @@ private fun SimpleBarChart(trends: List<CashFlowTrendPoint>) {
             .padding(12.dp)
     ) {
         Text(
-            text = "Last 30 days: Invoiced vs Paid",
+            text = "Last 30 days: Sent vs Paid",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -139,7 +139,7 @@ private fun SimpleBarChart(trends: List<CashFlowTrendPoint>) {
                     verticalArrangement = Arrangement.Bottom,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Invoiced bar
+                    // Sent (Outstanding) bar - BLUE
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(0.8f)
@@ -147,7 +147,7 @@ private fun SimpleBarChart(trends: List<CashFlowTrendPoint>) {
                             .background(Color(0xFF1976D2), shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
                     )
                     Spacer(modifier = Modifier.height(2.dp))
-                    // Paid bar
+                    // Paid (Collected) bar - GREEN
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(0.8f)

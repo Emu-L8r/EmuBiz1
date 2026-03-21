@@ -68,9 +68,10 @@ fun SettingsHubScreen(
     onHelpClick: () -> Unit = {},
     onBack: () -> Unit = {},
     onSwitchToGui1: () -> Unit = {},
+    onSwitchToGui2: () -> Unit = {},
 ) {
     when (guiMode) {
-        GuiMode.GUI1 -> SettingsHubScreenV1Content(onNavigate = onNavigate)
+        GuiMode.GUI1 -> SettingsHubScreenV1Content(onNavigate = onNavigate, onSwitchToGui2 = onSwitchToGui2)
         GuiMode.GUI2 -> SettingsHubScreenV2Content(
             onBusinessProfileClick = onBusinessProfileClick,
             onThemeSettingsClick = onThemeSettingsClick,
@@ -83,7 +84,10 @@ fun SettingsHubScreen(
 }
 
 @Composable
-private fun SettingsHubScreenV1Content(onNavigate: (Screen) -> Unit) {
+private fun SettingsHubScreenV1Content(
+    onNavigate: (Screen) -> Unit,
+    onSwitchToGui2: () -> Unit = {}
+) {
     Column {
         SettingsItem(
             icon = Icons.Default.Business,
@@ -144,6 +148,23 @@ private fun SettingsHubScreenV1Content(onNavigate: (Screen) -> Unit) {
             title = "Help & About",
             subtitle = "App information, version, and support",
             onClick = { onNavigate(Screen.Help) }
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+        // ── Interface Section ──
+        Text(
+            text = "Interface",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+        )
+
+        SettingsItem(
+            icon = Icons.Default.AutoAwesomeMotion,
+            title = "Switch to GUI2",
+            subtitle = "Try the modern interface",
+            onClick = onSwitchToGui2
         )
     }
 }
