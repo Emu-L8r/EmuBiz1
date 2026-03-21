@@ -29,7 +29,6 @@ import com.emul8r.bizap.ui.components.LineItemsEditor
 import com.emul8r.bizap.ui.components.InvoiceCustomizationEditor
 import com.emul8r.bizap.ui.components.CurrencySelector
 import com.emul8r.bizap.ui.components.PhotoAttachmentPicker
-import com.emul8r.bizap.ui.common.CurrencySelector
 import com.emul8r.bizap.ui.gui2.invoice.AddPhotoDialogV2
 import com.emul8r.bizap.ui.invoices.CreateInvoiceViewModel
 import com.emul8r.bizap.ui.invoices.CustomerDropdown
@@ -176,9 +175,9 @@ fun CreateInvoiceScreenV2(
 
             item {
                 CurrencySelector(
-                    currencies = uiState.currencies,
-                    selectedCurrencyCode = uiState.selectedCurrencyCode,
-                    onCurrencySelected = viewModel::onCurrencySelected,
+                    selectedCurrency = uiState.selectedCurrencyCode,
+                    onCurrencyChange = viewModel::onCurrencySelected,
+                    isDarkMode = isSystemInDarkTheme(),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
