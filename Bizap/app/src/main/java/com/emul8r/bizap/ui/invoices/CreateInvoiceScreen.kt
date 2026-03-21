@@ -29,7 +29,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import com.emul8r.bizap.BuildConfig
 import com.emul8r.bizap.domain.model.Customer
+import com.emul8r.bizap.domain.model.InvoiceCustomization
 import com.emul8r.bizap.ui.components.InvoiceBottomSummary
+import com.emul8r.bizap.ui.components.LineItemsEditor
+import com.emul8r.bizap.ui.components.InvoiceCustomizationEditor
+import com.emul8r.bizap.ui.components.CurrencySelector
+import com.emul8r.bizap.ui.components.PhotoAttachmentPicker
 import com.emul8r.bizap.ui.common.CurrencySelector
 import java.io.File
 import java.util.Locale
@@ -132,15 +137,31 @@ fun CreateInvoiceScreen(
                 )
             }
 
-            items(uiState.items, key = { it.transientId.toString() }) { item ->
-                LineItemEditor(
-                    description = item.description,
-                    quantity = item.quantity,
-                    unitPrice = item.unitPrice,
-                    onUpdate = { desc, qty, price ->
-                        viewModel.updateLineItem(item.transientId, desc, qty, price)
-                    },
-                    onRemove = { viewModel.removeLineItem(item.transientId) }
+            // Phase 2: Line Items Component
+            item {
+                val lineItems = uiState.items.map {
+                    com.emul8r.bizap.domain.model.LineItem(
+                        id = it.transientId.hashCode().toLong(),
+                        description = it.description,
+                        quantity = it.quantity.toInt(),
+                        unitPrice = it.unitPrice.toDouble() / 100.0
+                    )
+                }
+                LineItemsEditor(
+                    items = lineItems,
+                    onItemsChange = { updatedItems ->
+                        // Update ViewModel with new items
+                        updatedItems.forEachIndexed { idx, item ->
+                            if (idx < uiState.items.size) {
+                                viewModel.updateLineItem(
+                                    uiState.items[idx].transientId,
+                                    item.description,
+                                    item.quantity.toDouble(),
+                                    (item.unitPrice * 100).toLong()
+                                )
+                            }
+                        }
+                    }
                 )
             }
 
@@ -170,23 +191,34 @@ fun CreateInvoiceScreen(
                 )
             }
 
+            // Phase 2: Customization Component
             item {
-                Text("Photos", style = MaterialTheme.typography.titleMedium)
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(uiState.photoUris) { uri ->
-                        Image(
-                            painter = rememberAsyncImagePainter(uri),
-                            contentDescription = null,
-                            modifier = Modifier.size(100.dp),
-                            contentScale = ContentScale.Crop
-                        )
+                val customization = InvoiceCustomization(
+                    companyName = uiState.companyName,
+                    headerText = uiState.header,
+                    footerText = uiState.footer,
+                    templateType = uiState.templateType
+                )
+                InvoiceCustomizationEditor(
+                    customization = customization,
+                    onCustomizationChange = { updated ->
+                        viewModel.updateCompanyName(updated.companyName)
+                        viewModel.updateTemplateType(updated.templateType)
                     }
-                }
-                Button(onClick = { showAddPhotoDialog = true }) {
-                    Icon(Icons.Default.AddAPhoto, contentDescription = "Add Photo")
-                    Spacer(Modifier.width(8.dp))
-                    Text("Add Photo")
-                }
+                )
+            }
+
+            // Phase 2: Photo Attachments Component
+            item {
+                PhotoAttachmentPicker(
+                    photos = uiState.photoUris,
+                    onPhotosChange = { updatedPhotos ->
+                        // Add new photos
+                        updatedPhotos.filterNot { it in uiState.photoUris }.forEach { viewModel.addPhoto(it) }
+                        // Remove deleted photos
+                        uiState.photoUris.filterNot { it in updatedPhotos }.forEach { viewModel.removePhoto(it) }
+                    }
+                )
             }
         }
     }

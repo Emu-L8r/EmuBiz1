@@ -37,7 +37,10 @@ data class CreateInvoiceUiState(
     val isTaxRegistered: Boolean = false,
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    // Phase 2: Customization fields
+    val companyName: String = "",
+    val templateType: String = "standard"
 )
 
 @HiltViewModel
@@ -312,5 +315,14 @@ class CreateInvoiceViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    // Phase 2: Customization functions
+    fun updateCompanyName(name: String) {
+        _uiState.update { it.copy(companyName = name) }
+    }
+
+    fun updateTemplateType(template: String) {
+        _uiState.update { it.copy(templateType = template) }
     }
 }

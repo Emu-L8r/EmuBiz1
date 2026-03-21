@@ -36,7 +36,9 @@ data class Invoice(
     val invoiceSequence: Int = 0,
     val currencyCode: String = "AUD",
     val dailyCounter: Int = 0,
-    val displayName: String = ""
+    val displayName: String = "",
+    // Phase 2: Customization fields
+    val customization: InvoiceCustomization = InvoiceCustomization()
 ) {
     val invoiceId: Long get() = id
     val total: Long get() = totalAmount
