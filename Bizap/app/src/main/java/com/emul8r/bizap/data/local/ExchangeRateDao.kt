@@ -15,6 +15,9 @@ interface ExchangeRateDao {
     @Query("SELECT * FROM exchange_rates WHERE baseCurrencyCode = :base ORDER BY lastUpdated DESC")
     fun getRatesForBase(base: String): Flow<List<ExchangeRateEntity>>
     
+    @Query("SELECT * FROM exchange_rates ORDER BY lastUpdated DESC")
+    suspend fun getAllRates(): List<ExchangeRateEntity>
+    
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRate(rate: ExchangeRateEntity)
     

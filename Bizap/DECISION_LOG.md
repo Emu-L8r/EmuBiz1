@@ -283,54 +283,97 @@ signingConfigs {
 
 ---
 
-## Decision #5: 12-Month GUI1 Sunset Timeline (Planned)
+## Decision #5: GUI1 Sunset Timeline (12-Month Window, June 2027)
 
-**Date:** March 20, 2026  
-**Status:** 🟡 Planned (not yet approved)  
+**Date:** March 21, 2026  
+**Status:** ✅ Committed  
 **Owner:** EmuBiz Product Team
 
-### The Decision (Proposal)
-**Deprecate GUI1 completely** 12 months after achieving GUI2 feature parity. Timeline:
+### The Decision
+Retire GUI1 (legacy Activity-based UI) completely by June 2027, establishing a clear 12-month deprecation window. All new development → GUI2 only.
 
-1. **March–May 2026:** Complete feature parity (GUI1 → GUI2)
-2. **June–July 2026:** Deprecation warning visible in GUI1 ("This interface will retire on June 1, 2027")
-3. **August 2026–May 2027:** Monitor usage; contact users still on GUI1
-4. **June 2027:** Remove GUI1 code from production; GUI2 becomes only option
+### Timeline
+- **Phase A (March–May 2026):** Complete GUI2 feature parity with GUI1
+- **Phase B (June–July 2026):** Deploy deprecation warning in GUI1 UI ("Retiring June 1, 2027")
+- **Phase C (August 2026–May 2027):** Monitor GUI1 usage; contact remaining users
+- **Phase D (June 2027):** Remove all GUI1 code from repository
 
 ### Rationale
-1. **Maintainability:** Eliminate 30% code duplication burden
-2. **Velocity:** Development speed increases ~25% post-GUI1 removal
-3. **User Impact:** 12 months is sufficient for migration (average user keeps app for 18+ months)
-4. **Simplicity:** Codebase becomes 40% simpler; onboarding faster
+1. **Reduce Maintenance Burden:** Eliminate 30% code duplication (two parallel UI stacks)
+2. **Increase Velocity:** +25% faster feature development post-GUI1 removal
+3. **Simplify Onboarding:** New developers won't need to learn two UI frameworks
+4. **Modernize Codebase:** Single, clean Compose-based UI architecture
+5. **User Impact:** 12 months is sufficient migration window (average user retention ~18+ months)
 
-### Risk Mitigation
-- Long runway (12 months) reduces surprise
-- Clear communication in app + release notes
-- Free migration path (tap button in settings)
-- Data preserved (all invoices synced to GUI2)
+### Implementation Details
+
+**What Happens in v1.0 (Now):**
+- Both GUI1 and GUI2 fully functional
+- Users can switch between them
+- No visible changes to existing users
+
+**What Happens in v1.1 (June 2026):**
+- GUI1 landing button shows warning: "Classic Interface will retire June 1, 2027"
+- GUI1 still fully functional
+- Users encouraged to migrate to GUI2
+
+**What Happens in v2.0 (June 2027):**
+- GUI1 code completely removed
+- Only GUI2 available
+- Migration complete
+
+### Developer Guidelines (Effective Immediately)
+
+**From v1.0 forward:**
+- ✅ New features → GUI2 only
+- ✅ Bug fixes → Apply to both GUIs until May 31, 2026 (then GUI2 only)
+- ✅ No new GUI1-specific code or screens
+- ✅ Share common components between GUIs via `ui/shared/` or adapters
+
+**Deprecated (Don't Do):**
+- ❌ Create new GUI1-specific screens
+- ❌ Add GUI1-only features
+- ❌ Spend optimization effort on GUI1
 
 ### Trade-offs
+
 | Benefit | Cost |
 |---------|------|
-| Simpler codebase | Some users forced to migrate |
-| Faster development | Potential 1–2% user churn |
-| Cleaner architecture | Support queries during transition |
-| Reduced QA burden | Must maintain parallel features for 12 months |
+| Reduced maintenance burden | Some GUI1 users must migrate |
+| Faster development | Loss of "fallback UI" safety net |
+| Simplified codebase | 12-month transition period |
+| Modern architecture | Need clear migration communication |
 
-### Alternative Timelines
-- **6-month sunset:** Faster gains but riskier; users feel rushed
-- **18-month sunset:** Safer but delays benefits; users stay on stale GUI1
-- **Never sunset:** Perpetual maintenance burden (rejected)
+### Metrics & Monitoring
 
-### Next Steps
-1. Present to product stakeholders (March 2026)
-2. Get approval (target: March 31, 2026)
-3. Announce in v1.0 release notes
-4. Build deprecation warning UI (April 2026)
+**Before (Current):**
+- Code duplication: ~30% (two UI implementations)
+- Maintenance cost: +25% velocity tax
+- Developer onboarding: Higher (need to learn two frameworks)
 
-### Decision Holder
-- Product: @ProductTeam (pending approval)
-- Engineering: @DevTeam (recommending 12-month timeline)
+**After (June 2027):**
+- Code duplication: 0%
+- Maintenance cost: Normal (single UI framework)
+- Developer onboarding: Faster (Compose only)
+
+**Monitoring (August 2026–May 2027):**
+- Track GUI1 session count via Firebase Analytics
+- Monitor crash rates in GUI1 vs GUI2
+- Reach out to heavy GUI1 users with migration support
+
+### Alternative Approaches Considered
+
+**Option A: Keep Both Indefinitely**
+- ❌ Pros: No migration needed
+- ✅ Cons: Permanent 30% code duplication, slower development
+
+**Option B: Immediate Removal (v1.0)**
+- ✅ Pros: Immediate codebase simplification
+- ❌ Cons: Breaking change, user backlash, no migration time
+
+**Option C: 12-Month Sunset (Chosen)**
+- ✅ Pros: Clear roadmap, sufficient migration time, reduces burden
+- ✅ Cons: Maintains two UIs for 12 months, temporary complexity
 
 ---
 
