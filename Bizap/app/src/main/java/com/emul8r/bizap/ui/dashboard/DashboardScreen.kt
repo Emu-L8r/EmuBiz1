@@ -48,6 +48,7 @@ import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
 import com.emul8r.bizap.ui.theme.DashboardTheme
 import com.emul8r.bizap.ui.theme.StatusColors
+import com.emul8r.bizap.ui.common.LoadingScreen
 import com.emul8r.bizap.utils.CentsFormatter
 import timber.log.Timber
 
@@ -74,6 +75,18 @@ fun DashboardScreen(
     val invoicingVelocity by analyticsViewModel.invoicingVelocity.collectAsStateWithLifecycle()
     var showSwitcher by remember { mutableStateOf(false) }
 
+    // CRITICAL FIX: Check if profile is loaded before rendering
+    if (activeBusiness == null) {
+        LoadingScreen(message = "Loading business profile...")
+        return
+    }
+
+    // CRITICAL FIX: Check if customers data is loaded
+    if (customers == null) {
+        LoadingScreen(message = "Loading customers...")
+        return
+    }
+
     if (showSwitcher) {
         BusinessSwitcherDialog(onDismiss = { showSwitcher = false })
     }
@@ -90,8 +103,8 @@ fun DashboardScreen(
             // ── Business header ────────────────────────────────────────────
             item {
                 HeaderCardBase(
-                    title = activeBusiness.businessName.ifEmpty { "Default Business" },
-                    subtitle = "ABN: ${activeBusiness.abn.ifEmpty { "Not Set" }}",
+                    title = activeBusiness?.businessName?.ifEmpty { "Default Business" } ?: "Default Business",
+                    subtitle = "ABN: ${activeBusiness?.abn?.ifEmpty { "Not Set" } ?: "Not Set"}",
                     accentColor = MaterialTheme.colorScheme.primary,
                     trailingIcon = Icons.Default.SwapHoriz,
                     onTrailingClick = { showSwitcher = true }
