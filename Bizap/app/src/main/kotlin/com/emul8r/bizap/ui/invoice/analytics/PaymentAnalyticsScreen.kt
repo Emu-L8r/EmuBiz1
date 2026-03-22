@@ -740,19 +740,12 @@ private fun InvoiceStatusRow(
     }
 }
 
+@Composable
 private fun getCollectionRateColor(rate: Double): Color {
     return when {
-        rate >= 90 -> Color(0xFF4CAF50)
-        rate >= 70 -> Color(0xFF2196F3)
-        rate >= 50 -> Color(0xFFFFC107)
-        else -> Color(0xFFF44336)
+        rate >= 90 -> MaterialTheme.colorScheme.primary  // Excellent - primary color
+        rate >= 70 -> MaterialTheme.colorScheme.secondary  // Good - secondary color
+        rate >= 50 -> MaterialTheme.colorScheme.tertiary  // Fair - tertiary color
+        else -> MaterialTheme.colorScheme.error  // Poor - error color
     }
 }
-
-
-
-
-
-
-
-

@@ -109,15 +109,16 @@ class ThemeSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Apply a preset theme.
+     * Apply a preset theme - ONLY saves the primary color.
+     * Secondary and tertiary colors are auto-generated from primary by the theme system.
+     * This ensures presets persist properly across app restarts.
      */
     fun applyPreset(preset: PresetTheme) {
-        Timber.d("Applying preset theme: ${preset.name}")
-        _themeState.value = ThemeColors(
-            primary = preset.primary,
-            secondary = preset.secondary,
-            tertiary = preset.tertiary
-        )
+        Timber.d("🎨 Applying preset: ${preset.name}")
+        // Only set primary - theme auto-generates secondary/tertiary from it
+        _themeState.value = _themeState.value.copy(primary = preset.primary)
+        // Save immediately to database so preset persists
+        saveTheme()
     }
 
     /**
@@ -172,4 +173,3 @@ class ThemeSettingsViewModel @Inject constructor(
         }
     }
 }
-

@@ -1,8 +1,11 @@
 package com.emul8r.bizap.ui.theme
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.ui.components.theme.ColorPickerDialog
@@ -281,10 +285,11 @@ private fun PresetThemesSection(
     onPresetSelected: (PresetTheme) -> Unit
 ) {
     val presets = listOf(
+        // Existing presets
         PresetTheme(
             id = "material_default",
-            name = "Material Default",
-            description = "Official Material Design 3 colors",
+            name = "Material Purple",
+            description = "Official Material Design 3",
             primary = Color(0xFF6200EE),
             secondary = Color(0xFF03DAC6),
             tertiary = Color(0xFF018786)
@@ -292,51 +297,211 @@ private fun PresetThemesSection(
         PresetTheme(
             id = "ocean_blue",
             name = "Ocean Blue",
-            description = "Professional ocean-inspired palette",
-            primary = Color(0xFF1976D2),
-            secondary = Color(0xFF0097A7),
-            tertiary = Color(0xFF388E3C)
+            description = "Professional & calm",
+            primary = Color(0xFF0EA5E9),
+            secondary = Color(0xFF06B6D4),
+            tertiary = Color(0xFF0891B2)
         ),
         PresetTheme(
-            id = "sunset",
-            name = "Sunset",
-            description = "Warm and vibrant evening tones",
-            primary = Color(0xFFFF6B35),
-            secondary = Color(0xFFF7931E),
-            tertiary = Color(0xFFFFB627)
+            id = "forest_green",
+            name = "Forest Green",
+            description = "Natural & peaceful",
+            primary = Color(0xFF16A34A),
+            secondary = Color(0xFF15803D),
+            tertiary = Color(0xFF166534)
         ),
         PresetTheme(
-            id = "forest",
-            name = "Forest",
-            description = "Natural green and earthy tones",
-            primary = Color(0xFF2D6A4F),
-            secondary = Color(0xFF40916C),
-            tertiary = Color(0xFF52B788)
+            id = "sunset_orange",
+            name = "Sunset Orange",
+            description = "Warm & energetic",
+            primary = Color(0xFFEA580C),
+            secondary = Color(0xFFF97316),
+            tertiary = Color(0xFFEF4444)
         ),
         PresetTheme(
-            id = "royal_purple",
-            name = "Royal Purple",
-            description = "Elegant and sophisticated purples",
-            primary = Color(0xFF7209B7),
-            secondary = Color(0xFFB5179E),
-            tertiary = Color(0xFFF72585)
+            id = "royal_indigo",
+            name = "Royal Indigo",
+            description = "Elegant & bold",
+            primary = Color(0xFF4F46E5),
+            secondary = Color(0xFF6366F1),
+            tertiary = Color(0xFF818CF8)
         ),
         PresetTheme(
-            id = "tech_dark",
-            name = "Tech Dark",
-            description = "Modern dark tech aesthetic",
-            primary = Color(0xFF00D9FF),
-            secondary = Color(0xFF0099FF),
-            tertiary = Color(0xFF9D4EDD)
+            id = "rose_pink",
+            name = "Rose Pink",
+            description = "Modern & vibrant",
+            primary = Color(0xFFE11D48),
+            secondary = Color(0xFFBE185D),
+            tertiary = Color(0xFF9D174D)
+        ),
+        // New presets
+        PresetTheme(
+            id = "sky_cyan",
+            name = "Sky Cyan",
+            description = "Fresh & airy",
+            primary = Color(0xFF06B6D4),
+            secondary = Color(0xFF0891B2),
+            tertiary = Color(0xFF0E7490)
+        ),
+        PresetTheme(
+            id = "emerald",
+            name = "Emerald",
+            description = "Luxurious & rich",
+            primary = Color(0xFF059669),
+            secondary = Color(0xFF047857),
+            tertiary = Color(0xFF065F46)
+        ),
+        PresetTheme(
+            id = "coral",
+            name = "Coral",
+            description = "Playful & warm",
+            primary = Color(0xFFFF6B6B),
+            secondary = Color(0xFFFF8787),
+            tertiary = Color(0xFFFFA5A5)
+        ),
+        PresetTheme(
+            id = "deep_purple",
+            name = "Deep Purple",
+            description = "Sophisticated & dark",
+            primary = Color(0xFF7C3AED),
+            secondary = Color(0xFF8B5CF6),
+            tertiary = Color(0xFFA78BFA)
+        ),
+        PresetTheme(
+            id = "mint",
+            name = "Mint",
+            description = "Clean & refreshing",
+            primary = Color(0xFF14B8A6),
+            secondary = Color(0xFF2DD4BF),
+            tertiary = Color(0xFF5EEAD4)
+        ),
+        PresetTheme(
+            id = "gold",
+            name = "Gold",
+            description = "Premium & warm",
+            primary = Color(0xFFD97706),
+            secondary = Color(0xFFF59E0B),
+            tertiary = Color(0xFFFBBF24)
         )
     )
 
-    PresetThemeSelector(
-        presets = presets,
-        selectedPreset = null,
-        onPresetSelected = onPresetSelected
+    Text(
+        "Quick Presets",
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(bottom = 8.dp)
     )
+
+    Text(
+        "Choose from professionally curated color themes",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(bottom = 12.dp)
+    )
+
+    // Display presets in 2-column grid
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        presets.chunked(2).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                row.forEach { preset ->
+                    PresetCard(
+                        preset = preset,
+                        onSelected = onPresetSelected,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                // If odd number of presets, add spacer
+                if (row.size < 2) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
 }
 
+/**
+ * Enhanced preset card with visual preview of all 3 colors
+ */
+@Composable
+private fun PresetCard(
+    preset: PresetTheme,
+    onSelected: (PresetTheme) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onSelected(preset) },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Color preview row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(preset.primary, RoundedCornerShape(6.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(preset.secondary, RoundedCornerShape(6.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(preset.tertiary, RoundedCornerShape(6.dp))
+                )
+            }
 
+            // Title and description
+            Text(
+                text = preset.name,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
 
+            Text(
+                text = preset.description,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+
+            // Select button
+            Button(
+                onClick = { onSelected(preset) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = preset.primary
+                )
+            ) {
+                Text("Select", fontSize = 12.sp)
+            }
+        }
+    }
+}

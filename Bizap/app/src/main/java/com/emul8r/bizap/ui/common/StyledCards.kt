@@ -85,28 +85,28 @@ fun StatusBadge(
 ) {
     val (backgroundColor, textColor, icon) = when (status) {
         InvoiceStatus.PAID -> Triple(
-            Color(0xFF4CAF50).copy(alpha = 0.12f),
-            Color(0xFF2E7D32),
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+            MaterialTheme.colorScheme.primary,
             Icons.Default.CheckCircle
         )
         InvoiceStatus.SENT -> Triple(
-            Color(0xFF2196F3).copy(alpha = 0.12f),
-            Color(0xFF1565C0),
+            MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
+            MaterialTheme.colorScheme.secondary,
             Icons.AutoMirrored.Filled.Send
         )
         InvoiceStatus.DRAFT -> Triple(
-            Color(0xFF999999).copy(alpha = 0.12f),
-            Color(0xFF666666),
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+            MaterialTheme.colorScheme.outline,
             Icons.Default.Edit
         )
         InvoiceStatus.OVERDUE -> Triple(
-            Color(0xFFB3261E).copy(alpha = 0.12f),
-            Color(0xFFC62828),
+            MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
+            MaterialTheme.colorScheme.error,
             Icons.Default.Error
         )
         InvoiceStatus.PARTIALLY_PAID -> Triple(
-            Color(0xFFFFA500).copy(alpha = 0.12f),
-            Color(0xFFE65100),
+            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f),
+            MaterialTheme.colorScheme.tertiary,
             Icons.Default.Schedule
         )
     }
