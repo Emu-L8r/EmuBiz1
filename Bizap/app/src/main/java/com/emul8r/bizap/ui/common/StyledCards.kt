@@ -16,11 +16,19 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.ui.designsystem.BizapColors
 
 /**
  * Color-coded metric card with border, background tint, icon and value display.
  * Perfect for dashboard metric displays with visual hierarchy.
+ *
+ * @deprecated Use BizapMetricCard from BizapDesignSystem instead for theme-aware colors.
+ * This function is kept for screens that need custom background/border colors.
  */
+@Deprecated(
+    "Use BizapMetricCard from com.emul8r.bizap.ui.designsystem.BizapDesignSystem instead",
+    ReplaceWith("BizapMetricCard(title, value, icon, modifier)")
+)
 @Composable
 fun MetricCard(
     title: String,
@@ -161,33 +169,33 @@ fun StatusBadgeFromString(
 ) {
     val (backgroundColor, textColor, icon) = when (status.uppercase()) {
         "PAID" -> Triple(
-            Color(0xFF4CAF50).copy(alpha = 0.12f),
-            Color(0xFF2E7D32),
+            BizapColors.StatusPaid.copy(alpha = 0.12f),
+            BizapColors.StatusPaid,
             Icons.Default.CheckCircle
         )
         "SENT" -> Triple(
-            Color(0xFF2196F3).copy(alpha = 0.12f),
-            Color(0xFF1565C0),
+            BizapColors.StatusSent.copy(alpha = 0.12f),
+            BizapColors.StatusSent,
             Icons.AutoMirrored.Filled.Send
         )
         "DRAFT" -> Triple(
-            Color(0xFF999999).copy(alpha = 0.12f),
-            Color(0xFF666666),
+            BizapColors.StatusDraft.copy(alpha = 0.12f),
+            BizapColors.StatusDraft,
             Icons.Default.Edit
         )
         "OVERDUE" -> Triple(
-            Color(0xFFB3261E).copy(alpha = 0.12f),
-            Color(0xFFC62828),
+            BizapColors.StatusOverdue.copy(alpha = 0.12f),
+            BizapColors.StatusOverdue,
             Icons.Default.Error
         )
         "PARTIALLY_PAID" -> Triple(
-            Color(0xFFFFA500).copy(alpha = 0.12f),
-            Color(0xFFE65100),
+            BizapColors.StatusPartiallyPaid.copy(alpha = 0.12f),
+            BizapColors.StatusPartiallyPaid,
             Icons.Default.Schedule
         )
         else -> Triple(
-            Color(0xFF999999).copy(alpha = 0.12f),
-            Color(0xFF666666),
+            BizapColors.StatusDraft.copy(alpha = 0.12f),
+            BizapColors.StatusDraft,
             Icons.Default.Info
         )
     }

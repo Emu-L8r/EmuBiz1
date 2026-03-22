@@ -29,11 +29,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.emul8r.bizap.R
+import com.emul8r.bizap.ui.designsystem.BizapColors
 import java.io.File
 import kotlin.math.roundToInt
 
-private val AmberBrand = Color(0xFFF59E0B)
-private val PrimaryBrand = Color(0xFF5B3BA0)
+private val AmberBrand = BizapColors.AnalyticsWarning  // Material Amber
+private val PrimaryBrand = BizapColors.Presets.Purple  // Material Purple
 
 /**
  * Login screen shown when the app has a saved PIN but no active session.

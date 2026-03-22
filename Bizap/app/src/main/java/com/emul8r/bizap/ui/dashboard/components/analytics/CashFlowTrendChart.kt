@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.data.model.CashFlowTrendPoint
+import com.emul8r.bizap.ui.designsystem.BizapColors
 
 /**
  * Cash Flow Trend Chart
@@ -47,8 +48,8 @@ fun CashFlowTrendChart(
                 .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            LegendItem("Paid (Collected)", Color(0xFF388E3C))    // Green
-            LegendItem("Outstanding", Color(0xFF1976D2))  // Blue
+            LegendItem("Paid (Collected)", BizapColors.StatusPaid)
+            LegendItem("Outstanding", BizapColors.StatusSent)
         }
 
         // Simple bar visualization
@@ -74,7 +75,7 @@ fun CashFlowTrendChart(
             Column(modifier = Modifier.padding(top = 12.dp)) {
                 SummaryRow("Total Sent (Outstanding)", totalInvoiced)
                 SummaryRow("Total Paid (Collected)", totalPaid)
-                SummaryRow("Outstanding Gap", outstanding, textColor = if (outstanding > 0) Color(0xFFD32F2F) else Color(0xFF388E3C))
+                SummaryRow("Outstanding Gap", outstanding, textColor = if (outstanding > 0) BizapColors.StatusOverdue else BizapColors.StatusPaid)
             }
         }
 
@@ -158,7 +159,7 @@ private fun SimpleBarChart(trends: List<CashFlowTrendPoint>) {
                                     .fillMaxWidth()
                                     .fillMaxHeight(paidProportion)
                                     .background(
-                                        Color(0xFF388E3C),  // Green - Collected
+                                        BizapColors.StatusPaid,  // Green - Collected
                                         shape = androidx.compose.foundation.shape.RoundedCornerShape(
                                             bottomStart = 2.dp,
                                             bottomEnd = 2.dp,
@@ -177,7 +178,7 @@ private fun SimpleBarChart(trends: List<CashFlowTrendPoint>) {
                                     .fillMaxWidth()
                                     .fillMaxHeight(outstandingProportion)
                                     .background(
-                                        Color(0xFF1976D2),  // Blue - Outstanding
+                                        BizapColors.StatusSent,  // Blue - Outstanding
                                         shape = androidx.compose.foundation.shape.RoundedCornerShape(
                                             topStart = 2.dp,
                                             topEnd = 2.dp,

@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.network.NetworkMonitor
 import com.emul8r.bizap.domain.repository.OfflineQueueRepository
+import com.emul8r.bizap.ui.designsystem.BizapColors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -113,7 +114,7 @@ fun SyncStatusBanner(
             color = when {
                 !isOnline -> MaterialTheme.colorScheme.errorContainer
                 pendingCount > 0 -> MaterialTheme.colorScheme.tertiaryContainer
-                else -> Color(0xFFE8F5E9) // Success green
+                else -> BizapColors.StatusPaid.copy(alpha = 0.15f)
             },
             shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp),
             tonalElevation = 4.dp,
@@ -157,14 +158,14 @@ fun SyncStatusBanner(
                     Icon(
                         imageVector = Icons.Filled.DoneAll,
                         contentDescription = "Synced",
-                        tint = Color(0xFF2E7D32),
+                        tint = BizapColors.StatusPaid,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "All changes synced",
                         fontSize = 12.sp,
-                        color = Color(0xFF2E7D32)
+                        color = BizapColors.StatusPaid
                     )
                 }
             }

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.data.health.SnapshotHealthReport
 import com.emul8r.bizap.data.health.SnapshotTypeHealth
+import com.emul8r.bizap.ui.designsystem.BizapColors
 
 /**
  * Warning banner displayed when snapshot health check detects issues.
@@ -57,8 +58,8 @@ fun SnapshotHealthWarningBanner(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFFFF3CD)),  // Light yellow warning color
-            color = Color(0xFFFFF3CD),
+                .background(BizapColors.AnalyticsWarning.copy(alpha = 0.15f)),
+            color = BizapColors.AnalyticsWarning.copy(alpha = 0.15f),
             shape = RoundedCornerShape(8.dp)
         ) {
             Row(
@@ -71,7 +72,7 @@ fun SnapshotHealthWarningBanner(
                 Icon(
                     imageVector = Icons.Filled.Warning,
                     contentDescription = "Warning",
-                    tint = Color(0xFFFF9800),
+                    tint = BizapColors.AnalyticsWarning,
                     modifier = Modifier.size(24.dp)
                 )
 
@@ -104,7 +105,7 @@ fun SnapshotHealthWarningBanner(
                         Text(
                             text = "💡 ${healthReport.recommendations.first()}",
                             fontSize = 11.sp,
-                            color = Color(0xFF1976D2),
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }
@@ -120,7 +121,7 @@ fun SnapshotHealthWarningBanner(
                     Icon(
                         imageVector = Icons.Filled.Close,
                         contentDescription = "Dismiss",
-                        tint = Color(0xFF666666),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -145,7 +146,7 @@ fun SnapshotHealthDetailsCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { isExpanded.value = !isExpanded.value },
-        color = Color(0xFFFFF3CD),
+        color = BizapColors.AnalyticsWarning.copy(alpha = 0.15f),
         shape = RoundedCornerShape(8.dp),
         shadowElevation = 2.dp
     ) {

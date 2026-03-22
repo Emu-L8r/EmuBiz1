@@ -36,9 +36,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.R
+import com.emul8r.bizap.ui.designsystem.BizapColors
 
-private val GradientPurpleStart = Color(0xFF5B3BA0)
-private val GradientLavenderEnd = Color(0xFFE8E5F0)
+private val GradientPurpleStart = BizapColors.Presets.Purple      // Material Purple
+private val GradientLavenderEnd = BizapColors.Presets.Purple.copy(alpha = 0.2f)  // Lavender tint
 
 /**
  * Branded splash screen shown while the app is loading preferences from DataStore.

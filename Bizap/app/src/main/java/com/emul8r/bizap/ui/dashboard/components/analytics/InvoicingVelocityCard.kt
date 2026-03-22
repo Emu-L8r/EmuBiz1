@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.data.model.InvoiceVelocity
+import com.emul8r.bizap.ui.designsystem.BizapColors
 import kotlin.math.max
 
 /**
@@ -38,9 +39,9 @@ fun InvoicingVelocityCard(
     }
 
     val velocityColor = when {
-        currentVelocity <= 2.0 -> Color(0xFF388E3C)   // Green - excellent
-        currentVelocity <= 5.0 -> Color(0xFF1976D2)   // Blue - good
-        else -> Color(0xFFF57C00)                     // Orange - slow
+        currentVelocity <= 2.0 -> BizapColors.AnalyticsExcellent   // Green - excellent
+        currentVelocity <= 5.0 -> BizapColors.AnalyticsGood        // Blue - good
+        else -> BizapColors.AnalyticsWarning                       // Orange - slow
     }
 
     Card(
@@ -105,7 +106,7 @@ fun InvoicingVelocityCard(
                         Text(
                             text = "📝 ${currentMetric.invoicesInDraftCount} draft",
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (currentMetric.invoicesInDraftCount > 0) Color(0xFFF57C00) else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (currentMetric.invoicesInDraftCount > 0) BizapColors.AnalyticsWarning else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -121,14 +122,14 @@ fun InvoicingVelocityCard(
                 Text(
                     text = "⚠️ Invoicing speed slowing. Review workflow.",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFFF57C00),
+                    color = BizapColors.AnalyticsWarning,
                     fontWeight = FontWeight.Bold
                 )
             } else if (currentVelocity <= 2.0) {
                 Text(
                     text = "✅ Fast invoicing! Keep it up.",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF388E3C),
+                    color = BizapColors.AnalyticsExcellent,
                     fontWeight = FontWeight.Bold
                 )
             } else {
@@ -179,7 +180,7 @@ private fun VelocityStackedBarChart(data: List<InvoiceVelocity>) {
                                 .fillMaxWidth()
                                 .fillMaxHeight((1f - paidFraction) * totalHeight)
                                 .background(
-                                    color = Color(0xFF1976D2).copy(alpha = 0.6f),  // Blue
+                                    color = BizapColors.StatusSent.copy(alpha = 0.6f),
                                     shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp)
                                 )
                         )
@@ -191,7 +192,7 @@ private fun VelocityStackedBarChart(data: List<InvoiceVelocity>) {
                                 .fillMaxWidth()
                                 .fillMaxHeight(paidFraction * totalHeight)
                                 .background(
-                                    color = Color(0xFF4CAF50).copy(alpha = 0.8f),  // Green
+                                    color = BizapColors.StatusPaid.copy(alpha = 0.8f),
                                     shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp)
                                 )
                         )
