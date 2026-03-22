@@ -46,12 +46,12 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
             )
         )
 
-        every { invoiceDaoV2.observeMTDRevenue(businessId, any(), any()) } returns flowOf(100000L)
-        every { invoiceDaoV2.observeYTDRevenue(businessId, any(), any()) } returns flowOf(150000L)
-        every { invoiceDaoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(150000L)
-        every { invoiceDaoV2.observeTotalPaidRevenue(businessId) } returns flowOf(150000L)
-        every { invoiceDaoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
-        every { invoiceDaoV2.observeOverdueAmount(businessId) } returns flowOf(0L)
+        // OPTIMIZED: Use helper instead of 6 individual mocks
+        stubRevenueMetrics(
+            invoiceDaoV2, businessId,
+            mtd = 100000L, ytd = 150000L, weekly = 150000L, totalPaid = 150000L,
+            trend = trend, overdue = 0L
+        )
 
         // Act
         val result = repository.observeRevenueMetrics(businessId).first()
@@ -70,12 +70,8 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
         // Arrange
         val businessId = 2L
 
-        every { invoiceDaoV2.observeMTDRevenue(businessId, any(), any()) } returns flowOf(0L)
-        every { invoiceDaoV2.observeYTDRevenue(businessId, any(), any()) } returns flowOf(0L)
-        every { invoiceDaoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
-        every { invoiceDaoV2.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
-        every { invoiceDaoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
-        every { invoiceDaoV2.observeOverdueAmount(businessId) } returns flowOf(0L)
+        // OPTIMIZED: Use helper (defaults to 0 for all values)
+        stubRevenueMetrics(invoiceDaoV2, businessId)
 
         // Act
         val result = repository.observeRevenueMetrics(businessId).first()

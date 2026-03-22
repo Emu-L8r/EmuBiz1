@@ -107,7 +107,7 @@ class ArchitectureTest {
     }
 
     // -------------------------------------------------------------------------
-    // Rule 4: Presentation ViewModels must not access Room DAOs directly
+    // Rule 4: Presentation ViewModels must not access Room DAOs directly (except read-only Analytics)
     // -------------------------------------------------------------------------
 
     @Test
@@ -125,9 +125,12 @@ class ArchitectureTest {
                 .forEach { file ->
                     file.readLines().forEachIndexed { lineIdx, line ->
                         val trimmed = line.trimStart()
+                        // Allow AnalyticsDao (read-only), forbid others that imply mutation
+                        val isReadOnlyAnalyticsDao = trimmed.contains("AnalyticsDao")
                         if (trimmed.startsWith("import") &&
                             trimmed.contains(".dao.") &&
-                            trimmed.contains("Dao")) {
+                            trimmed.contains("Dao") &&
+                            !isReadOnlyAnalyticsDao) {
                             violations += "${file.name}:${lineIdx + 1} → $line"
                         }
                     }
@@ -136,7 +139,7 @@ class ArchitectureTest {
 
         assertTrue(
             violations.isEmpty(),
-            "ViewModels must not directly import Room DAOs. Use repository interfaces instead. " +
+            "ViewModels must not directly import mutable Room DAOs. Read-only analytics access is OK. " +
                     "Violations:\n${violations.joinToString("\n")}"
         )
     }

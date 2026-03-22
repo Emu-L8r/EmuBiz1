@@ -3,8 +3,7 @@ package com.emul8r.bizap.integration
 
 import android.content.Context
 import com.emul8r.bizap.BaseUnitTest
-import com.emul8r.bizap.data.local.offline.OfflineQueueService
-import com.emul8r.bizap.data.repository.SnapshotSyncHelper
+import com.emul8r.bizap.domain.repository.OfflineQueueRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.usecase.SaveInvoiceUseCase
 import com.emul8r.bizap.util.TestDataFactory
@@ -23,14 +22,14 @@ import kotlin.test.assertTrue
  * Verifies that:
  * 1. When offline, invoice creation is queued (not lost)
  * 2. When online, invoice is saved directly to the database
- * 3. Snapshot sync failures are handled gracefully (invoice still saved)
- * 4. Offline → online transition queues data correctly
+ * 3. Offline → online transition queues data correctly
+ *
+ * SPRINT 3: Simplified - removed SnapshotSyncRepository dependency
  */
 class OfflineSyncFlowTest : BaseUnitTest() {
 
     private val repository: InvoiceRepository = mockk()
-    private val snapshotSyncHelper: SnapshotSyncHelper = mockk(relaxed = true)
-    private val offlineQueueService: OfflineQueueService = mockk()
+    private val offlineQueueRepository: OfflineQueueRepository = mockk()
     private val context: Context = mockk()
     private lateinit var saveInvoiceUseCase: SaveInvoiceUseCase
 
@@ -39,8 +38,7 @@ class OfflineSyncFlowTest : BaseUnitTest() {
         mockkObject(ConnectivityHelper)
         saveInvoiceUseCase = SaveInvoiceUseCase(
             repository = repository,
-            snapshotSyncHelper = snapshotSyncHelper,
-            offlineQueueService = offlineQueueService,
+            offlineQueueRepository = offlineQueueRepository,
             context = context
         )
     }
@@ -58,12 +56,12 @@ class OfflineSyncFlowTest : BaseUnitTest() {
         val invoice = TestDataFactory.createTestInvoice().copy(
             items = listOf(mockk(relaxed = true))
         )
-        coEvery { offlineQueueService.queueCreateInvoice(invoice) } returns 99L
+        coEvery { offlineQueueRepository.enqueue(any()) } just Runs
 
         val result = saveInvoiceUseCase(invoice)
 
         assertTrue(result.isSuccess)
-        coVerify(exactly = 1) { offlineQueueService.queueCreateInvoice(invoice) }
+        coVerify(exactly = 1) { offlineQueueRepository.enqueue(any()) }
         coVerify(exactly = 0) { repository.saveInvoice(any()) }
     }
 
@@ -73,26 +71,11 @@ class OfflineSyncFlowTest : BaseUnitTest() {
         val invoice = TestDataFactory.createTestInvoice().copy(
             items = listOf(mockk(relaxed = true))
         )
-        coEvery { offlineQueueService.queueCreateInvoice(any()) } returns 1L
+        coEvery { offlineQueueRepository.enqueue(any()) } just Runs
 
         saveInvoiceUseCase(invoice)
 
         coVerify(exactly = 0) { repository.saveInvoice(any()) }
-    }
-
-    @Test
-    fun `offlineMode_QueueId_Returned - operation ID is returned as success result`() = runTest {
-        every { ConnectivityHelper.isNetworkAvailable(context) } returns false
-        val invoice = TestDataFactory.createTestInvoice().copy(
-            items = listOf(mockk(relaxed = true))
-        )
-        val expectedQueueId = 42L
-        coEvery { offlineQueueService.queueCreateInvoice(any()) } returns expectedQueueId
-
-        val result = saveInvoiceUseCase(invoice)
-
-        assertTrue(result.isSuccess)
-        // The queued operation ID is returned so the caller can track it
     }
 
     // ── online mode ──────────────────────────────────────────────────────────
@@ -104,26 +87,11 @@ class OfflineSyncFlowTest : BaseUnitTest() {
             items = listOf(mockk(relaxed = true))
         )
         coEvery { repository.saveInvoice(invoice) } returns Result.success(1L)
-        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
 
         val result = saveInvoiceUseCase(invoice)
 
         assertTrue(result.isSuccess)
         coVerify(exactly = 1) { repository.saveInvoice(invoice) }
-    }
-
-    @Test
-    fun `onlineMode_SnapshotSynced - snapshot sync is called after successful save`() = runTest {
-        every { ConnectivityHelper.isNetworkAvailable(context) } returns true
-        val invoice = TestDataFactory.createTestInvoice().copy(
-            items = listOf(mockk(relaxed = true))
-        )
-        coEvery { repository.saveInvoice(invoice) } returns Result.success(1L)
-        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
-
-        saveInvoiceUseCase(invoice)
-
-        coVerify(exactly = 1) { snapshotSyncHelper.syncAllSnapshots(any(), any()) }
     }
 
     @Test
@@ -133,47 +101,10 @@ class OfflineSyncFlowTest : BaseUnitTest() {
             items = listOf(mockk(relaxed = true))
         )
         coEvery { repository.saveInvoice(invoice) } returns Result.success(1L)
-        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
 
         saveInvoiceUseCase(invoice)
 
-        coVerify(exactly = 0) { offlineQueueService.queueCreateInvoice(any()) }
-    }
-
-    // ── snapshot failure handling ────────────────────────────────────────────
-
-    @Test
-    fun `snapshotFailure_InvoicePreserved - invoice save succeeds even if snapshot sync fails`() = runTest {
-        every { ConnectivityHelper.isNetworkAvailable(context) } returns true
-        val invoice = TestDataFactory.createTestInvoice().copy(
-            items = listOf(mockk(relaxed = true))
-        )
-        coEvery { repository.saveInvoice(invoice) } returns Result.success(1L)
-        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } throws RuntimeException("Snapshot DB error")
-
-        val result = saveInvoiceUseCase(invoice)
-
-        // Invoice save should succeed despite snapshot failure
-        assertTrue(result.isSuccess)
-    }
-
-    @Test
-    fun `snapshotFailure_NoExceptionPropagated - snapshot error does not reach caller`() = runTest {
-        every { ConnectivityHelper.isNetworkAvailable(context) } returns true
-        val invoice = TestDataFactory.createTestInvoice().copy(
-            items = listOf(mockk(relaxed = true))
-        )
-        coEvery { repository.saveInvoice(invoice) } returns Result.success(5L)
-        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } throws RuntimeException("Snapshot failure")
-
-        var threwException = false
-        try {
-            saveInvoiceUseCase(invoice)
-        } catch (e: Exception) {
-            threwException = true
-        }
-
-        assertFalse(threwException, "Snapshot failure should be swallowed gracefully")
+        coVerify(exactly = 0) { offlineQueueRepository.enqueue(any()) }
     }
 
     // ── validation ───────────────────────────────────────────────────────────

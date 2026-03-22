@@ -41,10 +41,24 @@ fun UnifiedThemeSettingsScreen(
 ) {
     val themeState by viewModel.themeState.collectAsStateWithLifecycle()
     val isDarkMode by viewModel.isDarkMode.collectAsStateWithLifecycle()
+    val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
+    val saveSuccess by viewModel.saveSuccess.collectAsStateWithLifecycle()
 
     var showPrimaryColorPicker by remember { mutableStateOf(false) }
     var showSecondaryColorPicker by remember { mutableStateOf(false) }
     var showTertiaryColorPicker by remember { mutableStateOf(false) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show snackbar when save is successful
+    LaunchedEffect(saveSuccess) {
+        if (saveSuccess) {
+            snackbarHostState.showSnackbar(
+                "✅ Theme saved successfully!",
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -56,7 +70,8 @@ fun UnifiedThemeSettingsScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -334,6 +349,5 @@ private fun PresetThemesSection(
         onPresetSelected = onPresetSelected
     )
 }
-
 
 

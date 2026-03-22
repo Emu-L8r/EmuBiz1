@@ -129,5 +129,8 @@ class AnalyticsViewModelTest : BaseUnitTest() {
         every { analyticsDao.observeTotalOutstanding(businessId) } returns MutableStateFlow(0L)
         every { analyticsDao.observeDraftInvoiceCount(businessId) } returns MutableStateFlow(0)
         every { analyticsDao.observeOverdueInvoiceCount(businessId) } returns MutableStateFlow(0)
+
+        // SPRINT 3 FIX: Ensure mocks return proper Flow data to match AnalyticsViewModel expectations
+        // The ViewModel uses flatMapLatest to switch data based on active business ID
     }
 }

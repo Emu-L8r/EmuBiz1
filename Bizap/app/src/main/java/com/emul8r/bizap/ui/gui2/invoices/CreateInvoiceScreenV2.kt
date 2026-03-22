@@ -196,14 +196,32 @@ fun CreateInvoiceScreenV2(
                 LineItemsEditor(
                     items = lineItems,
                     onItemsChange = { updatedItems ->
-                        updatedItems.forEachIndexed { idx, item ->
-                            if (idx < uiState.items.size) {
+                        // Handle case where number of items changed
+                        if (updatedItems.size == uiState.items.size) {
+                            // Standard update - same number of items
+                            updatedItems.forEachIndexed { idx, item ->
                                 viewModel.updateLineItem(
                                     uiState.items[idx].transientId,
                                     item.description,
                                     item.quantity,
                                     item.unitPrice
                                 )
+                            }
+                        } else if (updatedItems.size > uiState.items.size) {
+                            // New items added - add them to the ViewModel
+                            val existingCount = uiState.items.size
+                            for (i in existingCount until updatedItems.size) {
+                                viewModel.addLineItem()
+                                // Update the newly added item with values from editor
+                                if (i < uiState.items.size) {
+                                    val newItem = updatedItems[i]
+                                    viewModel.updateLineItem(
+                                        uiState.items[i].transientId,
+                                        newItem.description,
+                                        newItem.quantity,
+                                        newItem.unitPrice
+                                    )
+                                }
                             }
                         }
                     },
@@ -227,6 +245,10 @@ fun CreateInvoiceScreenV2(
                     minLines = 2
                 )
             }
+
+            // TODO: Move header, footer, and customization to Settings → Invoice Customization
+            // For now, these remain on the create invoice page for backwards compatibility
+            // User preference: Move invoice customization to settings
 
             item {
                 OutlinedTextField(
@@ -267,5 +289,4 @@ fun CreateInvoiceScreenV2(
         }
     }
 }
-
 

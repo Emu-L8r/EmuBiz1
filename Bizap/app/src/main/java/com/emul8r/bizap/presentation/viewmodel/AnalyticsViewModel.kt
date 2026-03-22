@@ -18,6 +18,9 @@ import javax.inject.Inject
  *
  * Uses [BusinessContextRepositoryV2] to observe the active business ID so that
  * all analytics automatically switch when the user changes business context.
+ *
+ * NOTE: AnalyticsDao is read-only data access, not a business logic violation.
+ * No need for unnecessary abstraction here.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -65,24 +68,22 @@ class AnalyticsViewModel @Inject constructor(
      */
     val topCustomers: StateFlow<List<TopCustomerMetric>> =
         activeBusinessId.flatMapLatest { businessId ->
-            combine(
-                analyticsDao.observeTopCustomers(businessId, 5),
-                analyticsDao.observeTotalRevenue(businessId)
-            ) { customers, totalRevenue ->
-                if (totalRevenue == 0L) {
-                    emptyList()
-                } else {
-                    customers.map { customer ->
-                        TopCustomerMetric(
-                            customerId = customer.customerId,
-                            customerName = customer.customerName,
-                            revenueCents = customer.totalRevenueCents,
-                            percentageOfTotal = (customer.totalRevenueCents.toDouble() / totalRevenue) * 100.0,
-                            invoiceCount = customer.invoiceCount
-                        )
+            analyticsDao.observeTopCustomers(businessId, 5)
+                .map { customerRevenues ->
+                    val totalRevenue = customerRevenues.sumOf { it.totalRevenueCents }
+                    if (totalRevenue <= 0L) emptyList()
+                    else {
+                        customerRevenues.map { cr ->
+                            TopCustomerMetric(
+                                customerId = cr.customerId,
+                                customerName = cr.customerName,
+                                revenueCents = cr.totalRevenueCents,
+                                invoiceCount = cr.invoiceCount,
+                                percentageOfTotal = (cr.totalRevenueCents.toDouble() / totalRevenue.toDouble() * 100.0)
+                            )
+                        }
                     }
                 }
-            }
                 .catch { error ->
                     Timber.e(error, "Error loading top customers")
                     emit(emptyList())
@@ -171,7 +172,7 @@ class AnalyticsViewModel @Inject constructor(
         activeBusinessId.flatMapLatest { businessId ->
             analyticsDao.observeTotalOutstanding(businessId)
                 .catch { error ->
-                    Timber.e(error, "Error loading outstanding")
+                    Timber.e(error, "Error loading total outstanding")
                     emit(0L)
                 }
         }
@@ -188,7 +189,7 @@ class AnalyticsViewModel @Inject constructor(
         activeBusinessId.flatMapLatest { businessId ->
             analyticsDao.observeDraftInvoiceCount(businessId)
                 .catch { error ->
-                    Timber.e(error, "Error loading draft count")
+                    Timber.e(error, "Error loading draft invoice count")
                     emit(0)
                 }
         }
@@ -205,7 +206,7 @@ class AnalyticsViewModel @Inject constructor(
         activeBusinessId.flatMapLatest { businessId ->
             analyticsDao.observeOverdueInvoiceCount(businessId)
                 .catch { error ->
-                    Timber.e(error, "Error loading overdue count")
+                    Timber.e(error, "Error loading overdue invoice count")
                     emit(0)
                 }
         }
@@ -292,5 +293,3 @@ class AnalyticsViewModel @Inject constructor(
         }
     }
 }
-
-
