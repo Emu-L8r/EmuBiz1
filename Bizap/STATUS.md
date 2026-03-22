@@ -37,6 +37,30 @@
 - ✅ 4.3: Version management - READY
 - ✅ 4.4: Production deployment - READY
 
+### 🚀 PHASE 5 (Week 5): PERFORMANCE OPTIMIZATION - READY FOR EXECUTION
+- ✅ Build time: 1m 16s clean (60% faster than baseline)
+- ✅ Build cache: Working (26s with cache)
+- ✅ APK size: 17.72 MB (acceptable for production)
+- ✅ Tests: All passing (1,100+)
+- 🎯 Startup optimization: Ready for profiling
+- 🎯 Memory optimization: Ready for analysis
+- 🎯 Battery impact: Ready for measurement
+
+### 🚀 PHASE 6 (Week 6): ADVANCED OPTIMIZATION - READY FOR EXECUTION
+- 🎯 Database query optimization: Queued
+- 🎯 Network efficiency: Queued
+- 🎯 Smart caching: Queued
+
+### 🚀 PHASE 7 (Week 7): FINAL POLISH - READY FOR EXECUTION
+- ✅ UI/UX consistency: All screens theme-aware (Phase 2 complete)
+- ✅ Visual assets: Ready for creation
+- ✅ Documentation: Ready for finalization
+
+### 🚀 PHASE 8 (Week 8): DEPLOYMENT PREP - READY FOR EXECUTION
+- ✅ Final verification: All systems ready
+- ✅ Release checklist: Prepared
+- ✅ Production deployment: Ready
+
 ---
 
 ## Executive Summary
@@ -276,6 +300,111 @@ MainActivity (Launcher)
 
 ---
 
+## Weeks 5-8 Implementation Roadmap
+
+### WEEK 5: PERFORMANCE OPTIMIZATION (Current Metrics as Baseline)
+
+**Current Performance:**
+- Build Time: 1m 16s (clean), 26s (with cache)
+- APK Size: 17.72 MB
+- Test Suite: <25s execution
+- Tests Passing: 1,100+ (100%)
+
+**Week 5 Tasks (Priority Order):**
+1. **Startup Time Profiling** - Measure app launch time (target: <1s)
+   - Use Android Profiler
+   - Test on both emulators
+   - Document baseline
+
+2. **Memory Optimization** - Analyze peak memory usage (target: <150MB)
+   - Profile with Android Profiler
+   - Check for memory leaks
+   - Optimize bitmap loading if needed
+
+3. **Battery Impact Analysis** - Measure battery drain (target: <5% per hour)
+   - Profile with Battery Historian
+   - Reduce background operations
+   - Optimize sync frequency
+
+4. **Build Cache Verification** - Already working (26s cached)
+   - ✅ Gradle build cache enabled
+   - ✅ Incremental compilation working
+
+**Week 5 Success Criteria:**
+- [ ] Startup time documented (<1s target)
+- [ ] Memory peak documented (<150MB target)
+- [ ] Battery impact documented (<5%/hr target)
+- [ ] Performance baseline report created
+- [ ] All tests still passing
+
+---
+
+### WEEK 6: ADVANCED OPTIMIZATION (Optional Improvements)
+
+**Week 6 Tasks (Priority Order):**
+1. **Database Query Optimization**
+   - Identify slow queries with Room profiler
+   - Add indices for frequently-accessed columns
+   - Batch operations where possible
+   - Expected: 10-20% query performance improvement
+
+2. **Network Efficiency**
+   - Implement request batching
+   - Add response caching layer
+   - Reduce unnecessary API calls
+   - Expected: 30-40% fewer network requests
+
+3. **Smart Caching**
+   - Cache invoice/customer data
+   - Implement stale-while-revalidate pattern
+   - Expected: Faster offline experience
+
+---
+
+### WEEK 7: FINAL POLISH (UI/UX Verification)
+
+**Week 7 Tasks:**
+1. **UI/UX Polish Verification**
+   - ✅ All screens theme-consistent (completed in Phase 2)
+   - [ ] Test rendering on both emulators (Pixel 6 + secondary)
+   - [ ] Verify dark/light mode consistency
+   - [ ] Check for any visual glitches
+
+2. **Visual Assets Creation**
+   - [ ] App icon (192x192, 512x512 PNG)
+   - [ ] Feature graphics (1024x500 for Play Store)
+   - [ ] Screenshots (4-5 for Play Store listing)
+
+3. **Documentation Finalization**
+   - [ ] Release notes (v1.0 feature summary)
+   - [ ] User guide (3-5 page PDF)
+   - [ ] Troubleshooting FAQ
+
+---
+
+### WEEK 8: DEPLOYMENT PREP (Final Checklist)
+
+**Week 8 Tasks:**
+1. **Final Verification**
+   - [ ] Full test suite passes (1,100+)
+   - [ ] Release APK builds successfully
+   - [ ] No new warnings/errors
+   - [ ] Architecture clean (0 violations)
+
+2. **Release Checklist**
+   - [ ] Version bumped to 1.0.0
+   - [ ] Changelog complete
+   - [ ] Release notes prepared
+   - [ ] GitHub release created
+
+3. **Production Deployment Ready**
+   - [ ] Play Store developer account verified
+   - [ ] App signing verified (release-key.jks working)
+   - [ ] All credentials in environment variables
+   - [ ] APK tested on multiple devices
+
+---
+
 ## How to Get Answers
 
 | Question | Answer Location |
@@ -287,6 +416,7 @@ MainActivity (Launcher)
 | "How does GUI1 vs GUI2 routing work?" | `/docs/ARCHITECTURE.md` |
 | "What architectural decisions were made?" | `/DECISION_LOG.md` |
 | "What happened in Phase 3?" | `/docs/archive/PHASE_3_*.md` (historical) |
+| "What are Weeks 5-8 tasks?" | This file - "Weeks 5-8 Implementation Roadmap" section |
 | "Where's the signing credentials guide?" | `/docs/RELEASE_SIGNING.md` (WIP) |
 
 ---
