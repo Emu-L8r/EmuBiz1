@@ -60,6 +60,7 @@ import com.emul8r.bizap.ui.settings.SettingsHubScreen
 import com.emul8r.bizap.presentation.ui.screens.SettingsScreen as AppSettingsScreen
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.presentation.ui.theme.ThemeProvider
+import com.emul8r.bizap.domain.repository.ThemeRepository
 import com.emul8r.bizap.ui.BizapApp
 import com.emul8r.bizap.ui.ErrorBoundary
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
@@ -86,6 +87,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var themeManager: ThemeManager
 
+    @Inject
+    lateinit var themeRepository: ThemeRepository
+
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
         // Guard against calls before Hilt injection completes
         if (::authManager.isInitialized) {
@@ -100,7 +104,7 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             ErrorBoundary {
-                BizapApp(themeManager = themeManager) {
+                BizapApp(themeManager = themeManager, themeRepository = themeRepository) {
                     val appStateViewModel: AppStateViewModel = hiltViewModel()
                     val appState by appStateViewModel.appState.collectAsStateWithLifecycle()
 

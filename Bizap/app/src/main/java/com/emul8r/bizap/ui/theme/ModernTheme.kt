@@ -8,50 +8,57 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.emul8r.bizap.domain.model.ThemeConfig
+import timber.log.Timber
 
 /**
  * Modern theme using Material Design 3 style aesthetics.
  * 
  * Features:
- * - Material Design 3 color palette (purple-based primary)
+ * - Dynamically generated color palette from user's seed color
  * - Larger corner radiuses (8-24dp) for a modern, rounded look
  * - Material You inspired colors with enhanced expressiveness
- * 
- * @param isDarkMode Whether to use dark or light color scheme
+ * - Reactive to theme config changes - colors update instantly
+ *
+ * @param themeConfig User's custom theme settings (seed color, dark mode)
  * @param content The composable content to wrap with this theme
  */
 @Composable
 fun ModernTheme(
-    isDarkMode: Boolean = false,
+    themeConfig: ThemeConfig = ThemeConfig(),
     content: @Composable () -> Unit
 ) {
+    val seedColor = parseSeedColor(themeConfig.seedColorHex)
+    Timber.d("🎨 Modern theme: seedColor=${themeConfig.seedColorHex}, isDarkMode=${themeConfig.isDarkMode}")
+
+    // Generate harmonized color scheme from seed color
     val lightColors = lightColorScheme(
-        primary = Color(0xFF6200EE),           // Material Purple (M3 default)
+        primary = seedColor,
         onPrimary = Color.White,
-        primaryContainer = Color(0xFFE3DFFE),  // Light purple container
-        onPrimaryContainer = Color(0xFF1F0054),
-        
-        secondary = Color(0xFF03DAC6),         // Material Teal (M3 secondary)
-        onSecondary = Color(0xFF003735),
-        secondaryContainer = Color(0xFFA2F4EE), // Light teal container
-        onSecondaryContainer = Color(0xFF003735),
-        
-        tertiary = Color(0xFF018786),          // Teal variant
+        primaryContainer = seedColor.lighten(0.85f),
+        onPrimaryContainer = seedColor.darken(0.4f),
+
+        secondary = seedColor.darken(0.1f),
+        onSecondary = Color.White,
+        secondaryContainer = seedColor.lighten(0.8f),
+        onSecondaryContainer = seedColor.darken(0.35f),
+
+        tertiary = seedColor.darken(0.25f),
         onTertiary = Color.White,
-        tertiaryContainer = Color(0xFF97F0EE),
-        onTertiaryContainer = Color(0xFF003735),
-        
-        error = Color(0xFFB00020),             // M3 error color
+        tertiaryContainer = seedColor.lighten(0.75f),
+        onTertiaryContainer = seedColor.darken(0.3f),
+
+        error = Color(0xFFB00020),
         onError = Color.White,
         errorContainer = Color(0xFFFDE7E9),
         onErrorContainer = Color(0xFF8C0009),
         
-        background = Color(0xFFFFFBFE),        // Slightly warm white (M3 style)
+        background = Color(0xFFFFFBFE),
         onBackground = Color(0xFF1C1B1F),
         
         surface = Color(0xFFFFFBFE),
         onSurface = Color(0xFF1C1B1F),
-        surfaceVariant = Color(0xFFE7E0EC),    // Slight purple tint
+        surfaceVariant = seedColor.lighten(0.9f),
         onSurfaceVariant = Color(0xFF49454F),
         
         outline = Color(0xFF79747E),
@@ -59,32 +66,32 @@ fun ModernTheme(
     )
 
     val darkColors = darkColorScheme(
-        primary = Color(0xFFBB86FC),           // Lighter purple for dark mode
-        onPrimary = Color(0xFF3700B3),
-        primaryContainer = Color(0xFF4F378B),
-        onPrimaryContainer = Color(0xFFE3DFFE),
-        
-        secondary = Color(0xFF03DAC6),
-        onSecondary = Color(0xFF003735),
-        secondaryContainer = Color(0xFF005047),
-        onSecondaryContainer = Color(0xFFA2F4EE),
-        
-        tertiary = Color(0xFF03DAC6),
-        onTertiary = Color(0xFF003735),
-        tertiaryContainer = Color(0xFF005047),
-        onTertiaryContainer = Color(0xFF97F0EE),
-        
+        primary = seedColor.lighten(0.4f),
+        onPrimary = seedColor.darken(0.6f),
+        primaryContainer = seedColor.darken(0.2f),
+        onPrimaryContainer = seedColor.lighten(0.7f),
+
+        secondary = seedColor.darken(0.05f),
+        onSecondary = Color.Black,
+        secondaryContainer = seedColor.darken(0.35f),
+        onSecondaryContainer = seedColor.lighten(0.65f),
+
+        tertiary = seedColor.lighten(0.15f),
+        onTertiary = seedColor.darken(0.5f),
+        tertiaryContainer = seedColor.darken(0.3f),
+        onTertiaryContainer = seedColor.lighten(0.7f),
+
         error = Color(0xFFCF6679),
         onError = Color(0xFF5F000B),
         errorContainer = Color(0xFF93000A),
         onErrorContainer = Color(0xFFFDE7E9),
         
-        background = Color(0xFF1C1B1F),        // M3 dark background
+        background = Color(0xFF1C1B1F),
         onBackground = Color(0xFFE6E1E5),
         
         surface = Color(0xFF1C1B1F),
         onSurface = Color(0xFFE6E1E5),
-        surfaceVariant = Color(0xFF49454F),
+        surfaceVariant = seedColor.darken(0.3f),
         onSurfaceVariant = Color(0xFFCAC4D0),
         
         outline = Color(0xFF938F99),
@@ -101,9 +108,37 @@ fun ModernTheme(
     )
 
     MaterialTheme(
-        colorScheme = if (isDarkMode) darkColors else lightColors,
+        colorScheme = if (themeConfig.isDarkMode) darkColors else lightColors,
         shapes = shapes,
-        typography = MaterialTheme.typography,  // Use default Material typography
+        typography = MaterialTheme.typography,
         content = content
     )
 }
+
+// Color manipulation helpers
+private fun Color.darken(factor: Float): Color = copy(
+    red = (red * (1 - factor)).coerceIn(0f, 1f),
+    green = (green * (1 - factor)).coerceIn(0f, 1f),
+    blue = (blue * (1 - factor)).coerceIn(0f, 1f)
+)
+
+private fun Color.lighten(factor: Float): Color = copy(
+    red = (red + (1 - red) * factor).coerceIn(0f, 1f),
+    green = (green + (1 - green) * factor).coerceIn(0f, 1f),
+    blue = (blue + (1 - blue) * factor).coerceIn(0f, 1f)
+)
+
+private fun parseSeedColor(hexString: String?): Color {
+    return try {
+        if (hexString.isNullOrBlank()) {
+            Color(0xFF6750A4) // Default Material Purple
+        } else {
+            val colorInt = android.graphics.Color.parseColor(hexString)
+            Color(colorInt.toLong() and 0xFFFFFFFFL)
+        }
+    } catch (e: Exception) {
+        Timber.e(e, "Failed to parse hex: $hexString")
+        Color(0xFF6750A4)
+    }
+}
+
