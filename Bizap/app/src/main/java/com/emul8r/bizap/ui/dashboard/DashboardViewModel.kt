@@ -2,7 +2,6 @@ package com.emul8r.bizap.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import com.emul8r.bizap.domain.config.BizapConfig
@@ -35,7 +34,6 @@ sealed class DashboardRevenueState {
 class DashboardViewModel @Inject constructor(
     private val revenueRepository: RevenueRepository,
     private val businessContextRepository: BusinessContextRepositoryV2,
-    private val invoiceDaoV2: InvoiceDaoV2,
     private val dateChangeTickerManager: DateChangeTickerManager,
     private val bizapConfig: BizapConfig
 ) : ViewModel(), DateChangeTickerObserver {
@@ -82,7 +80,7 @@ class DashboardViewModel @Inject constructor(
     val statusCounts: StateFlow<Map<String, Int>> =
         activeBusinessId
             .flatMapLatest { businessId ->
-                invoiceDaoV2.observeInvoiceCountByStatus(businessId)
+                businessContextRepository.observeInvoiceCountByStatus(businessId)
                     .map { counts -> counts.associate { it.status to it.count } }
                     .catch { e ->
                         Timber.e(e, "DashboardViewModel: Failed to load invoice status counts")
