@@ -3,8 +3,7 @@ package com.emul8r.bizap.domain.usecase
 
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.emul8r.bizap.data.local.offline.OfflineQueueService
-import com.emul8r.bizap.data.repository.SnapshotSyncHelper
+import com.emul8r.bizap.domain.repository.OfflineQueueRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.util.TestDataFactory
 import com.emul8r.bizap.utils.ConnectivityHelper
@@ -18,13 +17,14 @@ import kotlin.test.assertTrue
 /**
  * Unit tests for SaveInvoiceUseCase
  * Verifies business rules for creating invoices
+ *
+ * SPRINT 3: Simplified - uses only domain repository interfaces
  */
 @RunWith(AndroidJUnit4::class)
 class SaveInvoiceUseCaseTest {
 
     private val repository: InvoiceRepository = mockk()
-    private val snapshotSyncHelper: SnapshotSyncHelper = mockk(relaxed = true)
-    private val offlineQueueService: OfflineQueueService = mockk()
+    private val offlineQueueRepository: OfflineQueueRepository = mockk()
     private val context: Context = mockk()
     private lateinit var useCase: SaveInvoiceUseCase
     
@@ -36,8 +36,7 @@ class SaveInvoiceUseCaseTest {
 
         useCase = SaveInvoiceUseCase(
             repository = repository,
-            snapshotSyncHelper = snapshotSyncHelper,
-            offlineQueueService = offlineQueueService,
+            offlineQueueRepository = offlineQueueRepository,
             context = context
         )
     }
@@ -62,7 +61,6 @@ class SaveInvoiceUseCaseTest {
             items = listOf(mockk(relaxed = true))
         )
         coEvery { repository.saveInvoice(any()) } returns Result.success(1L)
-        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
 
         // Act
         val result = useCase(invoice)
@@ -70,6 +68,5 @@ class SaveInvoiceUseCaseTest {
         // Assert
         assertTrue(result.isSuccess)
         coVerify { repository.saveInvoice(any()) }
-        coVerify { snapshotSyncHelper.syncAllSnapshots(any(), any()) }
     }
 }
