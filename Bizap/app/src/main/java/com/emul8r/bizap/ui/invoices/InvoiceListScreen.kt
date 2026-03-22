@@ -31,7 +31,7 @@ import com.emul8r.bizap.utils.CentsFormatter
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.Invoice
-import com.emul8r.bizap.ui.common.StatusBadge
+import com.emul8r.bizap.ui.designsystem.BizapStatusBadge
 import com.emul8r.bizap.ui.components.ErrorStateView
 import com.emul8r.bizap.ui.components.SkeletonLoadingItem
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
@@ -162,7 +162,7 @@ fun InvoiceList(
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.primary
                         )
-                        StatusBadge(status = invoice.status)
+                        BizapStatusBadge(status = invoice.status)
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))

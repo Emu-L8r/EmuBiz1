@@ -77,7 +77,14 @@ fun MetricCard(
 /**
  * Status badge with icon and colored background.
  * Used to visually indicate invoice status in lists and cards.
+ *
+ * @deprecated Use BizapStatusBadge from BizapDesignSystem instead.
+ * Migrating to centralized design system for consistency.
  */
+@Deprecated(
+    "Use BizapStatusBadge from com.emul8r.bizap.ui.designsystem.BizapDesignSystem instead",
+    ReplaceWith("BizapStatusBadge(status, modifier)", "com.emul8r.bizap.ui.designsystem.BizapStatusBadge")
+)
 @Composable
 fun StatusBadge(
     status: InvoiceStatus,
@@ -139,7 +146,14 @@ fun StatusBadge(
 
 /**
  * Status badge for string-based status (for compatibility with existing code).
+ *
+ * @deprecated Use BizapStatusBadge from BizapDesignSystem instead.
+ * This function is maintained for backward compatibility only.
  */
+@Deprecated(
+    "Use BizapStatusBadge from com.emul8r.bizap.ui.designsystem.BizapDesignSystem instead",
+    ReplaceWith("BizapStatusBadge(InvoiceStatus.valueOf(status), modifier)")
+)
 @Composable
 fun StatusBadgeFromString(
     status: String,
