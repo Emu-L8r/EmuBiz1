@@ -432,6 +432,150 @@ MainActivity (Launcher)
 
 ## Archive & Historical Reference
 
+---
+
+## Comprehensive Testing Execution (March 23, 2026 - LIVE)
+
+**Testing Status:** ✅ LIVE TESTING IN PROGRESS
+
+### TESTING SECTION 1: APP LAUNCH & INITIAL SCREEN
+- ✅ App installed successfully on Pixel 6 emulator (6s build)
+- 🔄 Testing: App launch and landing screen
+- 🔄 Testing: Memory footprint baseline
+- 🔄 Testing: Startup time measurement
+
+**Results:**
+- [ ] App launches without crash - PENDING
+- [ ] Landing screen appears (GUI choice) - PENDING
+- [ ] Both GUI1 and GUI2 buttons visible - PENDING
+- [ ] Startup time < 3 seconds - PENDING
+- [ ] Initial memory < 100MB - PENDING
+
+### TESTING SECTION 2: GUI2 (MODERN INTERFACE) - FULL WORKFLOW
+
+**Dashboard Testing:**
+- [ ] GUI2 dashboard loads without crash - PENDING
+- [ ] All dashboard cards visible - PENDING
+- [ ] Cards properly themed - PENDING
+- [ ] Scroll performance smooth (60fps) - PENDING
+
+**Theme/Color Testing:**
+- [ ] Light mode: All colors correct - PENDING
+- [ ] Dark mode: All colors correct - PENDING
+- [ ] Color persistence: Restart and verify - PENDING
+- [ ] Color customization works - PENDING
+
+**Invoice Creation Testing:**
+- [ ] Create Invoice screen loads - PENDING
+- [ ] Can fill all invoice fields - PENDING
+- [ ] Can add line items - PENDING
+- [ ] Can save invoice - PENDING
+- [ ] Saved invoice appears in list - PENDING
+
+**Payment Recording:**
+- [ ] Can record payment - PENDING
+- [ ] Payment updates correctly - PENDING
+- [ ] Invoice status changes properly - PENDING
+
+### TESTING SECTION 3: GUI1 (CLASSIC INTERFACE) - FULL WORKFLOW
+- [ ] GUI1 launch successful - PENDING
+- [ ] Dashboard displays correctly - PENDING
+- [ ] All screens accessible - PENDING
+- [ ] Theme colors apply to GUI1 - PENDING
+- [ ] Invoice creation works - PENDING
+- [ ] Payment recording works - PENDING
+
+### TESTING SECTION 4: NAVIGATION & GUI SWITCHING
+- [ ] Can switch from GUI2 → GUI1 - PENDING
+- [ ] Can switch from GUI1 → GUI2 - PENDING
+- [ ] No data loss on switch - PENDING
+- [ ] Navigation flows work - PENDING
+- [ ] Back button works - PENDING
+
+### TESTING SECTION 5: OFFLINE MODE
+- [ ] Can create invoices offline - PENDING
+- [ ] Can record payments offline - PENDING
+- [ ] Data queues for sync - PENDING
+- [ ] No crashes without network - PENDING
+
+### TESTING SECTION 6: PERFORMANCE METRICS
+- [ ] Startup time: ___ seconds - PENDING
+- [ ] Peak memory usage: ___ MB - PENDING
+- [ ] Dashboard scroll FPS: ___ - PENDING
+- [ ] List rendering: ___ ms - PENDING
+
+### TESTING SECTION 7: ERROR HANDLING
+- [ ] Network error handling - PENDING
+- [ ] Empty state display - PENDING
+- [ ] Error messages helpful - PENDING
+- [ ] No crashes on edge cases - PENDING
+
+### TESTING SECTION 8: BUILD & INSTALLATION
+- ✅ Debug build: 6s (UP-TO-DATE)
+- ✅ Installation: 45 tasks, 1 executed
+- ✅ App on emulator: Ready for testing
+
+---
+
+## Testing Instructions (For Manual Execution)
+
+### To Perform Live Testing:
+
+1. **Start Emulator:**
+   ```bash
+   # Pixel 6 should already be running
+   # Verify with: adb devices
+   ```
+
+2. **Launch App:**
+   - Open Bizap icon on emulator
+   - Observe: Landing screen with GUI1/GUI2 choice
+
+3. **Test GUI2 (Modern):**
+   - Tap "Get Started" (GUI2)
+   - Observe: Dashboard loads
+   - Test: Dark/light mode toggle
+   - Test: Create invoice workflow
+   - Test: Record payment
+
+4. **Test GUI1 (Classic):**
+   - Go to Settings → GUI preference
+   - Switch to "Classic Experience"
+   - Observe: App restarts with GUI1
+   - Test: Same workflows in GUI1
+
+5. **Test Theme Colors:**
+   - GUI2: Settings → Appearance → Color Theme
+   - Verify: All screens update colors
+   - Verify: Colors persist on restart
+
+6. **Test Offline Mode:**
+   - Enable airplane mode on emulator
+   - Create invoice offline
+   - Record payment offline
+   - Disable airplane mode
+   - Verify: Data syncs
+
+---
+
+## Testing Quick Reference
+
+| Test Area | Pass/Fail | Notes |
+|-----------|-----------|-------|
+| App Launch | ? | PENDING |
+| GUI2 Dashboard | ? | PENDING |
+| GUI1 Dashboard | ? | PENDING |
+| Dark Mode | ? | PENDING |
+| Light Mode | ? | PENDING |
+| Invoice Creation | ? | PENDING |
+| Payment Recording | ? | PENDING |
+| GUI Switching | ? | PENDING |
+| Offline Mode | ? | PENDING |
+| Startup Time | ? | PENDING |
+| Memory Usage | ? | PENDING |
+
+---
+
 For historical phase documentation, implementation reports, and decision logs, see:
 - `/docs/STATUS_ARCHIVE_INDEX.md` — Complete catalog of 120+ archived documents
 - `/docs/archive/` — Physical archive folder (organized by type)
