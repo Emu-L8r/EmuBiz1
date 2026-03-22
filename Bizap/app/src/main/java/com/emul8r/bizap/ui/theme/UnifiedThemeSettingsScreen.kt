@@ -23,14 +23,16 @@ import com.emul8r.bizap.ui.components.theme.PresetThemeSelector
 import timber.log.Timber
 
 /**
- * Unified Theme Customization Screen
- * Available in both GUI1 and GUI2 - single centralized location for all theme settings.
+ * Advanced Color Themes Screen for Bizap
+ * Available in both GUI1 and GUI2 - single centralized location for color customization only.
+ *
+ * NOTE: Dark/Light mode is handled exclusively in Settings → App Appearance → Theme Mode
+ * This screen focuses ONLY on custom color selection to avoid conflicts.
  *
  * Features:
  * - 4-color customization (Primary, Secondary, Tertiary, Background)
  * - Live preview
  * - Preset themes for quick selection
- * - Dark/Light mode toggle
  * - Save/Reset functionality
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,7 +42,6 @@ fun UnifiedThemeSettingsScreen(
     viewModel: ThemeSettingsViewModel = hiltViewModel()
 ) {
     val themeState by viewModel.themeState.collectAsStateWithLifecycle()
-    val isDarkMode by viewModel.isDarkMode.collectAsStateWithLifecycle()
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val saveSuccess by viewModel.saveSuccess.collectAsStateWithLifecycle()
 
@@ -63,7 +64,7 @@ fun UnifiedThemeSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Theme Customization") },
+                title = { Text("Advanced Color Themes") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -81,16 +82,41 @@ fun UnifiedThemeSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // INFO CARD: Direct users to App Appearance for theme mode
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        "Theme Mode (Light/Dark/Auto)",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "To change between Light, Dark, or Auto mode, go to Settings → App Appearance",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+
             // ── LIVE PREVIEW ──────────────────────────────────────────────
             PreviewPanel(colors = themeState)
 
-            // ── THEME MODE ────────────────────────────────────────────────
-            ThemeModeSection(
-                isDarkMode = isDarkMode,
-                onDarkModeToggle = { viewModel.setDarkMode(it) }
-            )
 
-            HorizontalDivider()
+            // INFO CARD - Direct users to App Appearance for theme mode
+            Text(
+                "Preset Themes",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp)
+            )
 
             // ── PRESET THEMES ─────────────────────────────────────────────
             PresetThemesSection(
@@ -249,44 +275,6 @@ private fun PreviewPanel(colors: ThemeColors) {
     }
 }
 
-@Composable
-private fun ThemeModeSection(
-    isDarkMode: Boolean,
-    onDarkModeToggle: (Boolean) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    "Dark Mode",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    if (isDarkMode) "Currently enabled" else "Currently disabled",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Switch(
-                checked = isDarkMode,
-                onCheckedChange = onDarkModeToggle
-            )
-        }
-    }
-}
 
 @Composable
 private fun PresetThemesSection(
@@ -349,5 +337,6 @@ private fun PresetThemesSection(
         onPresetSelected = onPresetSelected
     )
 }
+
 
 
