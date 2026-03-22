@@ -7,6 +7,7 @@ import com.emul8r.bizap.data.local.dao.PaymentDaoV2
 import com.emul8r.bizap.data.local.entities.PaymentEntity
 import com.emul8r.bizap.data.repository.SnapshotSyncHelper
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.payment.repository.PaymentRepository
 import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 import javax.inject.Inject
@@ -18,13 +19,16 @@ import javax.inject.Inject
  * execute inside a single Room transaction to guarantee atomicity.
  *
  * All monetary values are in cents (Long).
+ *
+ * SPRINT 3: Now implements domain PaymentRepository interface to ensure
+ * that domain use cases import the interface, not this implementation.
  */
 class PaymentRepositoryV2 @Inject constructor(
     private val database: AppDatabase,
     private val invoiceDaoV2: InvoiceDaoV2,
     private val paymentDaoV2: PaymentDaoV2,
     private val snapshotSyncHelper: SnapshotSyncHelper
-) {
+) : PaymentRepository {
 
     /**
      * Records a payment for the given invoice.
@@ -35,7 +39,7 @@ class PaymentRepositoryV2 @Inject constructor(
      * @param paymentDate Unix timestamp (ms) of the payment date.
      * @param notes       Optional freeform notes (max 500 chars, truncated if longer).
      */
-    suspend fun recordPayment(
+    override suspend fun recordPayment(
         invoiceId: Long,
         businessId: Long,
         amount: Long,

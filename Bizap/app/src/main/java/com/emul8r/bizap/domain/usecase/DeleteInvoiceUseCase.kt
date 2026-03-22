@@ -2,7 +2,9 @@ package com.emul8r.bizap.domain.usecase
 
 import android.content.Context
 import com.emul8r.bizap.domain.repository.InvoiceRepository
-import com.emul8r.bizap.data.local.offline.OfflineQueueService
+import com.emul8r.bizap.domain.repository.OfflineQueueRepository
+import com.emul8r.bizap.domain.model.PendingOperation
+import com.emul8r.bizap.domain.model.OperationType
 import com.emul8r.bizap.utils.ConnectivityHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
@@ -11,10 +13,13 @@ import javax.inject.Inject
 /**
  * UseCase to delete an invoice.
  * Supports Phase 2: Offline-First Reliability.
+ *
+ * SPRINT 3 FIX: Now imports domain OfflineQueueRepository interface instead of
+ * data layer OfflineQueueService, ensuring layer independence.
  */
 class DeleteInvoiceUseCase @Inject constructor(
     private val repository: InvoiceRepository,
-    private val offlineQueueService: OfflineQueueService,
+    private val offlineQueueRepository: OfflineQueueRepository,
     @ApplicationContext private val context: Context
 ) {
     suspend operator fun invoke(invoiceId: Long, businessId: Long): Result<Unit> {
@@ -25,7 +30,14 @@ class DeleteInvoiceUseCase @Inject constructor(
             if (!isOnline) {
                 // 📝 OFFLINE: Queue the deletion
                 Timber.i("📶 Offline detected. Queueing deletion for sync.")
-                offlineQueueService.queueDeleteInvoice(invoiceId, businessId)
+                offlineQueueRepository.enqueue(
+                    PendingOperation(
+                        operationType = OperationType.DELETE,
+                        entityType = "Invoice",
+                        entityId = invoiceId,
+                        payload = """{"businessId":$businessId,"invoiceId":$invoiceId}"""
+                    )
+                )
                 Timber.d("✅ Deletion queued for invoice $invoiceId")
                 return Result.success(Unit)
             }

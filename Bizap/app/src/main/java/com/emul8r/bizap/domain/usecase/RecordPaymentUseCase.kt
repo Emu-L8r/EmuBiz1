@@ -1,6 +1,6 @@
 package com.emul8r.bizap.domain.usecase
 
-import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
+import com.emul8r.bizap.domain.payment.repository.PaymentRepository
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import timber.log.Timber
 import javax.inject.Inject
@@ -15,9 +15,12 @@ import javax.inject.Inject
  *
  * Date comparisons use midnight values to guarantee consistency with the UI,
  * which always sets paymentDate to midnight of the selected calendar day.
+ *
+ * SPRINT 3 FIX: Now imports domain PaymentRepository interface instead of
+ * data layer PaymentRepositoryV2, ensuring use case layer independence.
  */
 class RecordPaymentUseCase @Inject constructor(
-    private val paymentRepository: PaymentRepositoryV2
+    private val paymentRepository: PaymentRepository
 ) {
     /**
      * @param invoiceId   Target invoice.

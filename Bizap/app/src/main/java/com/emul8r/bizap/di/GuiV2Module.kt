@@ -12,7 +12,9 @@ import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
+import com.emul8r.bizap.domain.payment.repository.PaymentRepository
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,10 +24,18 @@ import javax.inject.Singleton
 /**
  * Hilt module for all GUI2 dependencies.
  * Provides repositories used by GUI2 ViewModels.
+ *
+ * SPRINT 3: Added PaymentRepository binding (domain interface → data implementation)
  */
 @Module
 @InstallIn(SingletonComponent::class)
-object GuiV2Module {
+abstract class GuiV2Module {
+
+    @Binds
+    @Singleton
+    abstract fun bindPaymentRepository(impl: PaymentRepositoryV2): PaymentRepository
+
+    companion object {
 
     @Provides
     @Singleton
@@ -65,9 +75,10 @@ object GuiV2Module {
     @Provides
     @Singleton
     fun provideBusinessContextRepositoryV2(
-        businessProfileRepository: BusinessProfileRepository
+        businessProfileRepository: BusinessProfileRepository,
+        invoiceDaoV2: InvoiceDaoV2
     ): BusinessContextRepositoryV2 =
-        BusinessContextRepositoryV2(businessProfileRepository)
+        BusinessContextRepositoryV2(businessProfileRepository, invoiceDaoV2)
 
     @Provides
     @Singleton
@@ -77,4 +88,5 @@ object GuiV2Module {
         paymentDaoV2: PaymentDaoV2,
         snapshotSyncHelper: SnapshotSyncHelper
     ): PaymentRepositoryV2 = PaymentRepositoryV2(database, invoiceDaoV2, paymentDaoV2, snapshotSyncHelper)
+    }
 }
