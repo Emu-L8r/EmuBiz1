@@ -24,6 +24,7 @@ import com.emul8r.bizap.ui.components.theme.ColorPickerDialog
 import com.emul8r.bizap.ui.components.theme.ColorSelectorButton
 import com.emul8r.bizap.ui.components.theme.PresetTheme
 import com.emul8r.bizap.ui.components.theme.PresetThemeSelector
+import com.emul8r.bizap.ui.designsystem.BizapColors
 import timber.log.Timber
 
 /**
@@ -284,107 +285,107 @@ private fun PreviewPanel(colors: ThemeColors) {
 private fun PresetThemesSection(
     onPresetSelected: (PresetTheme) -> Unit
 ) {
+    // Use BizapColors presets instead of hardcoded colors
     val presets = listOf(
-        // Existing presets
         PresetTheme(
-            id = "material_default",
+            id = "blue",
+            name = "Material Blue",
+            description = "Professional & calm",
+            primary = BizapColors.Presets.Blue,
+            secondary = BizapColors.Presets.Cyan,
+            tertiary = BizapColors.Presets.Indigo
+        ),
+        PresetTheme(
+            id = "purple",
             name = "Material Purple",
             description = "Official Material Design 3",
-            primary = Color(0xFF6200EE),
-            secondary = Color(0xFF03DAC6),
-            tertiary = Color(0xFF018786)
+            primary = BizapColors.Presets.Purple,
+            secondary = BizapColors.Presets.Pink,
+            tertiary = BizapColors.Presets.Red
         ),
         PresetTheme(
-            id = "ocean_blue",
-            name = "Ocean Blue",
-            description = "Professional & calm",
-            primary = Color(0xFF0EA5E9),
-            secondary = Color(0xFF06B6D4),
-            tertiary = Color(0xFF0891B2)
-        ),
-        PresetTheme(
-            id = "forest_green",
+            id = "green",
             name = "Forest Green",
             description = "Natural & peaceful",
-            primary = Color(0xFF16A34A),
-            secondary = Color(0xFF15803D),
-            tertiary = Color(0xFF166534)
+            primary = BizapColors.Presets.Green,
+            secondary = BizapColors.Presets.Teal,
+            tertiary = BizapColors.Presets.Lime
         ),
         PresetTheme(
-            id = "sunset_orange",
+            id = "orange",
             name = "Sunset Orange",
             description = "Warm & energetic",
-            primary = Color(0xFFEA580C),
-            secondary = Color(0xFFF97316),
-            tertiary = Color(0xFFEF4444)
+            primary = BizapColors.Presets.Orange,
+            secondary = BizapColors.Presets.DeepOrange,
+            tertiary = BizapColors.Presets.Red
         ),
         PresetTheme(
-            id = "royal_indigo",
+            id = "indigo",
             name = "Royal Indigo",
             description = "Elegant & bold",
-            primary = Color(0xFF4F46E5),
-            secondary = Color(0xFF6366F1),
-            tertiary = Color(0xFF818CF8)
+            primary = BizapColors.Presets.Indigo,
+            secondary = BizapColors.Presets.Purple,
+            tertiary = BizapColors.Presets.Pink
         ),
         PresetTheme(
-            id = "rose_pink",
+            id = "pink",
             name = "Rose Pink",
             description = "Modern & vibrant",
-            primary = Color(0xFFE11D48),
-            secondary = Color(0xFFBE185D),
-            tertiary = Color(0xFF9D174D)
+            primary = BizapColors.Presets.Pink,
+            secondary = BizapColors.Presets.Red,
+            tertiary = BizapColors.Presets.DeepOrange
         ),
-        // New presets
         PresetTheme(
-            id = "sky_cyan",
+            id = "cyan",
             name = "Sky Cyan",
             description = "Fresh & airy",
-            primary = Color(0xFF06B6D4),
-            secondary = Color(0xFF0891B2),
-            tertiary = Color(0xFF0E7490)
+            primary = BizapColors.Presets.Cyan,
+            secondary = BizapColors.Presets.Blue,
+            tertiary = BizapColors.Presets.Teal
         ),
         PresetTheme(
-            id = "emerald",
-            name = "Emerald",
+            id = "teal",
+            name = "Emerald Teal",
             description = "Luxurious & rich",
-            primary = Color(0xFF059669),
-            secondary = Color(0xFF047857),
-            tertiary = Color(0xFF065F46)
+            primary = BizapColors.Presets.Teal,
+            secondary = BizapColors.Presets.Green,
+            tertiary = BizapColors.Presets.Lime
         ),
         PresetTheme(
-            id = "coral",
-            name = "Coral",
-            description = "Playful & warm",
-            primary = Color(0xFFFF6B6B),
-            secondary = Color(0xFFFF8787),
-            tertiary = Color(0xFFFFA5A5)
+            id = "red",
+            name = "Vibrant Red",
+            description = "Bold & striking",
+            primary = BizapColors.Presets.Red,
+            secondary = BizapColors.Presets.Orange,
+            tertiary = BizapColors.Presets.Pink
         ),
         PresetTheme(
-            id = "deep_purple",
-            name = "Deep Purple",
-            description = "Sophisticated & dark",
-            primary = Color(0xFF7C3AED),
-            secondary = Color(0xFF8B5CF6),
-            tertiary = Color(0xFFA78BFA)
+            id = "deeporange",
+            name = "Deep Orange",
+            description = "Rich & warm",
+            primary = BizapColors.Presets.DeepOrange,
+            secondary = BizapColors.Presets.Orange,
+            tertiary = BizapColors.Presets.Red
         ),
         PresetTheme(
-            id = "mint",
-            name = "Mint",
-            description = "Clean & refreshing",
-            primary = Color(0xFF14B8A6),
-            secondary = Color(0xFF2DD4BF),
-            tertiary = Color(0xFF5EEAD4)
+            id = "lime",
+            name = "Lime Green",
+            description = "Fresh & vibrant",
+            primary = BizapColors.Presets.Lime,
+            secondary = BizapColors.Presets.Green,
+            tertiary = BizapColors.Presets.Teal
         ),
         PresetTheme(
-            id = "gold",
-            name = "Gold",
-            description = "Premium & warm",
-            primary = Color(0xFFD97706),
-            secondary = Color(0xFFF59E0B),
-            tertiary = Color(0xFFFBBF24)
+            id = "bluegrey",
+            name = "Blue Grey",
+            description = "Calm & professional",
+            primary = BizapColors.Presets.BlueGrey,
+            secondary = BizapColors.Presets.Blue,
+            tertiary = BizapColors.Presets.Cyan
         )
     )
 
+    // ── DISPLAY PRESET OPTIONS ────────────────────────────────
     Text(
         "Quick Presets",
         style = MaterialTheme.typography.titleLarge,

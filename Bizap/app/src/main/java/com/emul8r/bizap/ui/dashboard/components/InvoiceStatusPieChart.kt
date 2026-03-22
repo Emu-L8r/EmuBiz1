@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Canvas
+import com.emul8r.bizap.ui.designsystem.BizapColors
 
 /**
  * Simple pie chart component showing invoice status breakdown.
@@ -39,11 +40,11 @@ fun InvoiceStatusPieChart(
 
     val total = statusCounts.values.sum()
     val colors = mapOf(
-        "PAID" to Color(0xFF4CAF50),          // Green
-        "PARTIALLY_PAID" to Color(0xFFFFC107), // Amber
-        "SENT" to Color(0xFF2196F3),          // Blue
-        "OVERDUE" to Color(0xFFF44336),       // Red
-        "DRAFT" to Color(0xFF9E9E9E)          // Gray
+        "PAID" to BizapColors.StatusPaid,
+        "PARTIALLY_PAID" to BizapColors.StatusPartiallyPaid,
+        "SENT" to BizapColors.StatusSent,
+        "OVERDUE" to BizapColors.StatusOverdue,
+        "DRAFT" to BizapColors.StatusDraft
     )
 
     Column(modifier = modifier) {

@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.data.model.TopCustomerMetric
+import com.emul8r.bizap.ui.designsystem.BizapColors
 
 /**
  * Revenue Concentration Chart
@@ -153,7 +154,7 @@ private fun RiskWarningBanner(message: String) {
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                color = Color(0xFFD32F2F).copy(alpha = 0.1f),
+                color = BizapColors.StatusOverdue.copy(alpha = 0.1f),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
             )
             .padding(12.dp),
@@ -162,7 +163,7 @@ private fun RiskWarningBanner(message: String) {
         Text(
             text = "⚠️ $message",
             style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFFD32F2F),
+            color = BizapColors.StatusOverdue,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -175,9 +176,9 @@ private fun RiskWarningBanner(message: String) {
  */
 private fun getRevenueConcentrationColor(percentage: Double): Color {
     return when {
-        percentage > 50.0 -> Color(0xFFD32F2F)      // Red - high risk
-        percentage > 30.0 -> Color(0xFFF57C00)      // Orange - medium risk
-        else -> Color(0xFF388E3C)                   // Green - well distributed
+        percentage > 50.0 -> BizapColors.StatusOverdue          // Red - high risk
+        percentage > 30.0 -> BizapColors.AnalyticsWarning       // Orange - medium risk
+        else -> BizapColors.StatusPaid                          // Green - well distributed
     }
 }
 

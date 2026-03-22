@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.data.model.DaysToPayMetric
 import com.emul8r.bizap.domain.config.BizapConfig
+import com.emul8r.bizap.ui.designsystem.BizapColors
 import kotlin.math.max
 
 /**
@@ -41,9 +42,9 @@ fun AverageDaysToPayMetric(
     modifier: Modifier = Modifier
 ) {
     val statusColor = when {
-        currentDaysToPayment < config.paymentHealthyThresholdDays -> Color(0xFF388E3C)  // Green
-        currentDaysToPayment < config.paymentWarningThresholdDays -> Color(0xFFF57C00)  // Yellow/Orange
-        else -> Color(0xFFD32F2F)  // Red
+        currentDaysToPayment < config.paymentHealthyThresholdDays -> BizapColors.StatusPaid
+        currentDaysToPayment < config.paymentWarningThresholdDays -> BizapColors.AnalyticsWarning
+        else -> BizapColors.StatusOverdue
     }
 
     val statusText = when {
@@ -152,7 +153,7 @@ private fun DaysToPaySparkline(data: List<DaysToPayMetric>) {
                     .weight(1f)
                     .fillMaxHeight(heightFraction)
                     .background(
-                        color = Color(0xFF1976D2).copy(alpha = 0.6f),
+                        color = BizapColors.StatusSent.copy(alpha = 0.6f),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp)
                     )
             )

@@ -3,14 +3,15 @@ package com.emul8r.bizap.ui.gui2.common
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.emul8r.bizap.ui.designsystem.BizapColors
 
-/** Semantic status colours used in GUI2 screens. */
+/** Semantic status colours used in GUI2 screens. Now uses BizapColors for theme consistency */
 object GuiV2Colors {
-    val healthy = Color(0xFF2E7D32)      // green
-    val atRisk = Color(0xFFF57C00)       // amber
-    val highRisk = Color(0xFFC62828)     // red
-    val paid = Color(0xFF1565C0)         // blue
-    val outstanding = Color(0xFF6A1B9A)  // purple
+    val healthy = BizapColors.StatusPaidDark        // green - Excellent health
+    val atRisk = BizapColors.AnalyticsWarning       // amber - Warning level
+    val highRisk = BizapColors.AnalyticsAtRisk      // red - At risk level
+    val paid = BizapColors.StatusSentDark           // blue - Paid/Collected
+    val outstanding = BizapColors.Presets.Purple    // purple - Outstanding balance
 }
 
 /**
