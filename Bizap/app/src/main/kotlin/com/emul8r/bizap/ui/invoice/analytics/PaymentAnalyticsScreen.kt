@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.invoice.model.PaymentAnalyticsSummary
+import com.emul8r.bizap.ui.designsystem.BizapColors
 import java.util.Locale
 
 /**
@@ -248,7 +249,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
             icon = Icons.Filled.AttachMoney,
             label = "Outstanding",
             value = "$" + String.format(Locale.getDefault(), "%.0f", analytics.totalOutstandingAmount),
-            backgroundColor = Color(0xFFFFC107),
+            backgroundColor = BizapColors.AnalyticsWarning,
             modifier = Modifier.weight(1f)
         )
 
@@ -256,7 +257,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
             icon = Icons.AutoMirrored.Filled.TrendingUp,
             label = "Collection Rate",
             value = String.format(Locale.US, "%.1f", analytics.collectionRate) + "%",
-            backgroundColor = Color(0xFF4CAF50),
+            backgroundColor = BizapColors.AnalyticsExcellent,
             modifier = Modifier.weight(1f)
         )
 
@@ -264,7 +265,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
             icon = Icons.Filled.Warning,
             label = "Overdue",
             value = analytics.overdueInvoices.toString(),
-            backgroundColor = Color(0xFFF44336),
+            backgroundColor = BizapColors.AnalyticsAtRisk,
             modifier = Modifier.weight(1f)
         )
     }
@@ -382,7 +383,7 @@ private fun AgingBreakdownSection(analytics: PaymentAnalyticsSummary) {
                 percentage = if (analytics.outstandingByAging.totalOutstanding > 0) {
                     (analytics.outstandingByAging.current / analytics.outstandingByAging.totalOutstanding * 100).toInt()
                 } else 0,
-                color = Color(0xFF4CAF50)
+                color = BizapColors.AnalyticsExcellent
             )
 
             AgingBracketRow(
@@ -391,7 +392,7 @@ private fun AgingBreakdownSection(analytics: PaymentAnalyticsSummary) {
                 percentage = if (analytics.outstandingByAging.totalOutstanding > 0) {
                     (analytics.outstandingByAging.past30 / analytics.outstandingByAging.totalOutstanding * 100).toInt()
                 } else 0,
-                color = Color(0xFF2196F3)
+                color = BizapColors.AnalyticsGood
             )
 
             AgingBracketRow(
@@ -400,7 +401,7 @@ private fun AgingBreakdownSection(analytics: PaymentAnalyticsSummary) {
                 percentage = if (analytics.outstandingByAging.totalOutstanding > 0) {
                     (analytics.outstandingByAging.past60 / analytics.outstandingByAging.totalOutstanding * 100).toInt()
                 } else 0,
-                color = Color(0xFFFFC107)
+                color = BizapColors.AnalyticsWarning
             )
 
             AgingBracketRow(
@@ -409,7 +410,7 @@ private fun AgingBreakdownSection(analytics: PaymentAnalyticsSummary) {
                 percentage = if (analytics.outstandingByAging.totalOutstanding > 0) {
                     (analytics.outstandingByAging.past90 / analytics.outstandingByAging.totalOutstanding * 100).toInt()
                 } else 0,
-                color = Color(0xFFF44336)
+                color = BizapColors.AnalyticsAtRisk
             )
         }
     }
@@ -460,28 +461,28 @@ private fun OutstandingByAgingCards(analytics: PaymentAnalyticsSummary) {
         OutstandingCard(
             label = "0-30 days",
             amount = analytics.outstandingByAging.current,
-            backgroundColor = Color(0xFF4CAF50),
+            backgroundColor = BizapColors.AnalyticsExcellent,
             modifier = Modifier.weight(1f)
         )
 
         OutstandingCard(
             label = "31-60 days",
             amount = analytics.outstandingByAging.past30,
-            backgroundColor = Color(0xFF2196F3),
+            backgroundColor = BizapColors.AnalyticsGood,
             modifier = Modifier.weight(1f)
         )
 
         OutstandingCard(
             label = "61-90 days",
             amount = analytics.outstandingByAging.past60,
-            backgroundColor = Color(0xFFFFC107),
+            backgroundColor = BizapColors.AnalyticsWarning,
             modifier = Modifier.weight(1f)
         )
 
         OutstandingCard(
             label = "90+ days",
             amount = analytics.outstandingByAging.past90,
-            backgroundColor = Color(0xFFF44336),
+            backgroundColor = BizapColors.AnalyticsAtRisk,
             modifier = Modifier.weight(1f)
         )
     }
@@ -558,7 +559,7 @@ private fun CashFlowForecastSection(analytics: PaymentAnalyticsSummary) {
                         text = "$" + String.format(Locale.getDefault(), "%.0f", totalForecast),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (totalForecast > 0) Color(0xFF4CAF50) else Color(0xFFF44336)
+                        color = if (totalForecast > 0) BizapColors.AnalyticsExcellent else BizapColors.AnalyticsAtRisk
                     )
                 }
 
@@ -590,11 +591,11 @@ private fun RiskAlertsSection(analytics: PaymentAnalyticsSummary) {
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                color = Color(0xFFFFF3E0),
+                color = BizapColors.AnalyticsWarning.copy(alpha = 0.15f),
                 shape = RoundedCornerShape(12.dp)
             ),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = Color(0xFFFFF3E0)
+            containerColor = BizapColors.AnalyticsWarning.copy(alpha = 0.15f)
         )
     ) {
         Column(
@@ -611,7 +612,7 @@ private fun RiskAlertsSection(analytics: PaymentAnalyticsSummary) {
                 Icon(
                     imageVector = Icons.Filled.Warning,
                     contentDescription = "Alert",
-                    tint = Color(0xFFFF6F00),
+                    tint = BizapColors.AnalyticsWarning,
                     modifier = Modifier.size(28.dp)
                 )
                 Column(
@@ -621,12 +622,12 @@ private fun RiskAlertsSection(analytics: PaymentAnalyticsSummary) {
                         text = "⚠️ Payment Risk Alert",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFF6F00)
+                        color = BizapColors.AnalyticsWarning
                     )
                     Text(
                         text = "${analytics.riskInvoices.size} invoice(s) at risk",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFE65100)
+                        color = BizapColors.AnalyticsAtRisk
                     )
                 }
             }
@@ -634,7 +635,7 @@ private fun RiskAlertsSection(analytics: PaymentAnalyticsSummary) {
             Text(
                 text = "Take immediate action to recover outstanding amounts.",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFE65100)
+                color = BizapColors.AnalyticsAtRisk
             )
         }
     }
@@ -665,19 +666,19 @@ private fun InvoiceStatusSummary(analytics: PaymentAnalyticsSummary) {
             InvoiceStatusRow(
                 label = "Paid",
                 count = analytics.paidInvoices,
-                color = Color(0xFF4CAF50)
+                color = BizapColors.StatusPaid
             )
 
             InvoiceStatusRow(
                 label = "Unpaid",
                 count = analytics.unpaidInvoices,
-                color = Color(0xFF2196F3)
+                color = BizapColors.StatusSent
             )
 
             InvoiceStatusRow(
                 label = "Overdue",
                 count = analytics.overdueInvoices,
-                color = Color(0xFFF44336)
+                color = BizapColors.StatusOverdue
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

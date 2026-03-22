@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.domain.model.Invoice
+import com.emul8r.bizap.ui.designsystem.BizapStatusBadge
 import com.emul8r.bizap.utils.CentsFormatter
 
 /**
@@ -90,7 +91,7 @@ fun InvoiceListRow(
                     fontWeight = FontWeight.Medium
                 )
             }
-            StatusBadge(status = invoice.status)
+            BizapStatusBadge(status = invoice.status)
         }
     }
 }
