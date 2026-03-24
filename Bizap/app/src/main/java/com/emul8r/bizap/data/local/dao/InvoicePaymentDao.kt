@@ -101,6 +101,24 @@ interface InvoicePaymentDao {
     @Query("SELECT * FROM daily_payment_snapshots WHERE businessProfileId = :businessId ORDER BY snapshotDate DESC LIMIT :days")
     suspend fun getDailySnapshots(businessId: Long, days: Int = 30): List<DailyPaymentSnapshot>
 
+    /**
+     * Observe payment history for a specific invoice.
+     *
+     * Returns snapshots ordered by date DESC (newest first).
+     * Each snapshot represents the payment state at a point in time.
+     *
+     * Used by [PaymentHistoryViewModel] to display payment timeline.
+     *
+     * @param invoiceId Invoice to get history for
+     * @return Flow of payment snapshots, newest first
+     */
+    @Query("""
+        SELECT * FROM invoice_payment_snapshots
+        WHERE invoiceId = :invoiceId
+        ORDER BY lastUpdatedMs DESC
+    """)
+    fun observePaymentHistory(invoiceId: Long): Flow<List<InvoicePaymentSnapshot>>
+
     // ==================== HEALTH CHECK QUERIES ====================
 
     /**
