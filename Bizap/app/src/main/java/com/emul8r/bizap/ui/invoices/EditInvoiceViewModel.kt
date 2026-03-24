@@ -38,6 +38,34 @@ sealed interface EditInvoiceUiState {
     data class Error(val message: String) : EditInvoiceUiState
 }
 
+/**
+ * Manages invoice editing workflow for GUI1.
+ *
+ * **Purpose:**
+ * Allows users to modify existing invoices: customer, line items, amounts, dates, etc.
+ * Coordinates with repositories to load and persist changes.
+ *
+ * **Responsibilities:**
+ * - Load invoice with all related data
+ * - Allow editing of customer, items, dates, amounts
+ * - Calculate updated metrics in real-time
+ * - Validate before saving
+ * - Save changes back to database
+ * - Generate updated PDF
+ *
+ * **Key Operations:**
+ * - updateInvoice(): Save all changes
+ * - updateLineItem(): Modify specific line items
+ * - updateCustomer(): Change invoice customer
+ *
+ * @param context Android context
+ * @param invoiceRepository Invoice data access
+ * @param customerRepository Customer data
+ * @param currencyRepository Currency options
+ * @param invoicePdfService PDF generation
+ * @param businessProfileRepository Business settings
+ * @param savedStateHandle Navigation args (invoiceId)
+ */
 @HiltViewModel
 class EditInvoiceViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
