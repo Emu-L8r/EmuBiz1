@@ -13,9 +13,65 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * Consolidated ViewModel for CustomerListScreen.
- * Serves both GUI1 and GUI2 implementations.
- * Replaces: CustomerListViewModelV2 (GUI2).
+ * Manages customer list screen state and business logic.
+ *
+ * **Architecture:**
+ * - Observes customers from repository
+ * - Transforms flow into UI-friendly state
+ * - Handles loading, success, and error states
+ * - Lifecycle survives configuration changes
+ *
+ * **Responsibilities:**
+ * - Data transformation from repository to UI state
+ * - Error handling and user-friendly messages
+ * - Business context management (businessId from navigation)
+ * - Real-time customer list updates
+ *
+ * **Data Flow:**
+ * ```
+ * CustomerRepository.getAllCustomers()
+ *     ↓
+ * Transform to CustomerListUiState
+ *     ↓
+ * StateFlow<CustomerListUiState>
+ *     ↓
+ * UI collects and displays
+ * ```
+ *
+ * **Usage:**
+ * ```kotlin
+ * @Composable
+ * fun CustomerListScreen() {
+ *     val viewModel: CustomerListViewModel = hiltViewModel()
+ *     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+ *     val businessId = viewModel.businessId
+ *
+ *     when (uiState) {
+ *         is CustomerListUiState.Loading -> LoadingScreen()
+ *         is CustomerListUiState.Success -> {
+ *             val customers = (uiState as CustomerListUiState.Success).customers
+ *             CustomerListContent(customers)
+ *         }
+ *         is CustomerListUiState.Error -> {
+ *             val message = (uiState as CustomerListUiState.Error).message
+ *             ErrorScreen(message)
+ *         }
+ *     }
+ * }
+ * ```
+ *
+ * **State Management:**
+ * - Initial: Loading
+ * - On success: Success with customer list
+ * - On error: Error with message
+ * - Caching: 5-second subscription timeout
+ *
+ * @param savedStateHandle Navigation arguments (contains businessId)
+ * @param customerRepository Source of customer data
+ *
+ * @see CustomerListScreen
+ * @see CustomerRepository
+ * @see CustomerListUiState
  */
 @HiltViewModel
 class CustomerListViewModel @Inject constructor(
@@ -23,9 +79,34 @@ class CustomerListViewModel @Inject constructor(
     private val customerRepository: CustomerRepository
 ) : ViewModel() {
 
+    /**
+     * Navigation route containing businessId for context.
+     *
+     * @see ScreenV2.Customers
+     */
     private val route: ScreenV2.Customers = savedStateHandle.toRoute()
+
+    /**
+     * Active business ID from navigation.
+     *
+     * Used to filter/scope customer queries to the active business context.
+     * Never null - validated at navigation layer.
+     */
     val businessId: Long = route.businessId
 
+    /**
+     * Current UI state as reactive stream.
+     *
+     * Emits updates when:
+     * - Data loads from repository (Loading → Success)
+     * - Error occurs during loading (Loading → Error)
+     * - New data arrives (Success → Success)
+     *
+     * Initial value: [CustomerListUiState.Loading]
+     *
+     * Caching: Subscription timeout of 5 seconds ensures
+     * data is refreshed periodically while screen is visible.
+     */
     val uiState: StateFlow<CustomerListUiState> = customerRepository
         .getAllCustomers()
         .map { customers ->
@@ -43,8 +124,52 @@ class CustomerListViewModel @Inject constructor(
         )
 }
 
+/**
+ * UI state for customer list screen.
+ *
+ * Represents all possible states the customer list can be in:
+ * - [Loading]: Initial state, fetching data from repository
+ * - [Success]: Data loaded, ready to display list
+ * - [Error]: Failed to load data, show error message
+ *
+ * **State Transitions:**
+ * ```
+ * Loading
+ *     → Success (list loaded)
+ *     → Error (fetch failed)
+ *
+ * Success
+ *     → Success (new data arrived)
+ *     → Error (refresh failed)
+ * ```
+ *
+ * **Immutability:**
+ * All states are immutable. New states create new objects.
+ * This ensures proper Compose recomposition when state changes.
+ *
+ * @see CustomerListViewModel
+ */
 sealed interface CustomerListUiState {
+    /**
+     * Initial loading state.
+     *
+     * Indicates data is being fetched from repository.
+     * UI should show loading spinner or skeleton.
+     */
     object Loading : CustomerListUiState
+
+    /**
+     * Error state when data fetch fails.
+     *
+     * @param message Human-readable error message to display to user
+     */
     data class Error(val message: String) : CustomerListUiState
+
+    /**
+     * Success state with loaded customer data.
+     *
+     * @param customers List of customers loaded from repository
+     *                  May be empty if business has no customers
+     */
     data class Success(val customers: List<Customer>) : CustomerListUiState
 }
