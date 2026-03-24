@@ -17,25 +17,131 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * UI state for customer detail screen.
+ *
+ * Represents all possible states while viewing/editing customer details:
+ * - [Loading]: Initial state, fetching customer from repository
+ * - [Success]: Customer loaded successfully
+ * - [Error]: Failed to load customer
+ *
+ * @see CustomerDetailViewModel
+ */
 sealed interface CustomerDetailUiState {
+    /**
+     * Loading state while fetching customer data.
+     *
+     * UI should display loading spinner or skeleton screen.
+     */
     object Loading : CustomerDetailUiState
+
+    /**
+     * Success state with loaded customer.
+     *
+     * @param customer Customer data loaded from repository
+     */
     data class Success(val customer: Customer) : CustomerDetailUiState
+
+    /**
+     * Error state when customer load fails.
+     *
+     * @param message Error message to display to user
+     */
     data class Error(val message: String) : CustomerDetailUiState
 }
 
+/**
+ * Navigation events emitted by CustomerDetailViewModel.
+ *
+ * One-time events to trigger UI/navigation actions.
+ *
+ * @see CustomerDetailViewModel.event
+ */
 sealed interface CustomerDetailEvent {
+    /**
+     * Emitted after successful customer deletion.
+     *
+     * UI should navigate back to customer list.
+     */
     object CustomerDeleted : CustomerDetailEvent
+
+    /**
+     * Emitted after successful customer update.
+     *
+     * UI can refresh display (though data flows automatically).
+     */
     object CustomerUpdated : CustomerDetailEvent
 }
 
 /**
- * Consolidated ViewModel for Customer Detail Screen
+ * Manages customer detail screen state and operations.
  *
- * Works for both GUI1 and GUI2 modes. Handles:
- * - Loading individual customer details
- * - Updating customer information
- * - Deleting customers
- * - Error handling and events
+ * **Architecture:**
+ * - Loads individual customer by ID from navigation
+ * - Manages customer detail, edit, and delete operations
+ * - Emits state for UI to display
+ * - Broadcasts events for navigation (delete, update)
+ * - Works for both GUI1 and GUI2 implementations
+ *
+ * **Responsibilities:**
+ * - Load customer details from repository
+ * - Handle customer updates
+ * - Handle customer deletion
+ * - Manage error states
+ * - Emit navigation events
+ *
+ * **Data Flow:**
+ * ```
+ * Navigation (customerId)
+ *     ↓
+ * Load customer from repository
+ *     ↓
+ * Transform to UiState
+ *     ↓
+ * StateFlow<CustomerDetailUiState>
+ *     ↓
+ * UI displays customer or error
+ * ```
+ *
+ * **Events:**
+ * - [CustomerDetailEvent.CustomerDeleted]: Navigate back after delete
+ * - [CustomerDetailEvent.CustomerUpdated]: Refresh UI after update
+ *
+ * **Usage:**
+ * ```kotlin
+ * @Composable
+ * fun CustomerDetailScreen() {
+ *     val viewModel: CustomerDetailViewModel = hiltViewModel()
+ *     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+ *
+ *     LaunchedEffect(Unit) {
+ *         viewModel.event.collect { event ->
+ *             when (event) {
+ *                 CustomerDetailEvent.CustomerDeleted -> navController.popBackStack()
+ *                 CustomerDetailEvent.CustomerUpdated -> {} // Refresh happens automatically
+ *             }
+ *         }
+ *     }
+ *
+ *     when (uiState) {
+ *         CustomerDetailUiState.Loading -> LoadingScreen()
+ *         is CustomerDetailUiState.Success -> {
+ *             val customer = (uiState as CustomerDetailUiState.Success).customer
+ *             CustomerDetailContent(customer) { viewModel.updateCustomer(it) }
+ *         }
+ *         is CustomerDetailUiState.Error -> {
+ *             val message = (uiState as CustomerDetailUiState.Error).message
+ *             ErrorScreen(message)
+ *         }
+ *     }
+ * }
+ * ```
+ *
+ * @param savedStateHandle Navigation arguments (contains customerId)
+ * @param repository Customer data access and operations
+ *
+ * @see CustomerDetailUiState
+ * @see CustomerDetailEvent
  */
 @HiltViewModel
 class CustomerDetailViewModel @Inject constructor(
@@ -43,7 +149,14 @@ class CustomerDetailViewModel @Inject constructor(
     private val repository: CustomerRepository
 ) : ViewModel() {
 
-    // Extract customer ID from SavedStateHandle (works for both GUI1 and GUI2)
+    /**
+     * Customer ID from navigation parameter.
+     *
+     * Extracted from SavedStateHandle route.
+     * If invalid (0 or missing), loadCustomer() emits error state.
+     *
+     * @see Screen.CustomerDetail
+     */
     val customerId: Long = try {
         val route: Screen.CustomerDetail = savedStateHandle.toRoute()
         route.customerId
@@ -52,9 +165,26 @@ class CustomerDetailViewModel @Inject constructor(
         0L  // Invalid ID - will trigger error state
     }
 
+    /**
+     * Current UI state as reactive state flow.
+     *
+     * Emits updates when:
+     * - Data loads (Loading → Success)
+     * - Error occurs (Any → Error)
+     * - Customer updates (Success → Success)
+     */
     private val _uiState = MutableStateFlow<CustomerDetailUiState>(CustomerDetailUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
+    /**
+     * One-time navigation events.
+     *
+     * Emitted when:
+     * - Customer deleted (navigate back)
+     * - Customer updated (refresh available)
+     *
+     * @see CustomerDetailEvent
+     */
     private val _event = MutableSharedFlow<CustomerDetailEvent>()
     val event = _event.asSharedFlow()
 

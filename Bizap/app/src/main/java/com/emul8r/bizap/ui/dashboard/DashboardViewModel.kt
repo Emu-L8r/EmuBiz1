@@ -15,19 +15,111 @@ import timber.log.Timber
 import java.time.LocalDate
 import javax.inject.Inject
 
+/**
+ * Dashboard revenue state for GUI1 dashboard screen.
+ *
+ * Represents all possible states for revenue metrics display.
+ *
+ * @see DashboardViewModel
+ */
 sealed class DashboardRevenueState {
+    /**
+     * Initial loading state.
+     *
+     * UI displays loading spinner or skeleton.
+     */
     object Loading : DashboardRevenueState()
+
+    /**
+     * Successfully loaded revenue metrics.
+     *
+     * @param metrics Revenue data for display (cash flow, trends, etc.)
+     */
     data class Success(val metrics: RevenueMetricsV2) : DashboardRevenueState()
+
+    /**
+     * Error loading revenue metrics.
+     *
+     * @param message Error message to display to user
+     */
     data class Error(val message: String) : DashboardRevenueState()
 }
 
 /**
- * ViewModel for the GUI1 Dashboard screen.
- * Uses the same V2 repositories as GUI2 to ensure data consistency
- * between both GUIs.
+ * Manages dashboard screen state and revenue metrics aggregation.
  *
- * Implements [DateChangeTickerObserver] to automatically refresh revenue data
- * at midnight when date-dependent calculations become stale.
+ * **Purpose:**
+ * Displays comprehensive business dashboard with revenue metrics, invoice status summaries,
+ * and performance indicators. Works for both GUI1 and GUI2 dashboards.
+ *
+ * **Architecture:**
+ * - Observes active business context from BusinessContextRepositoryV2
+ * - Queries revenue metrics from RevenueRepository
+ * - Observes date changes to refresh daily calculations
+ * - Transforms raw metrics into dashboard-friendly state
+ * - Multi-business support via context awareness
+ *
+ * **Key Features:**
+ * 1. **Revenue Metrics:** Cash flow, revenue trends, forecasts
+ * 2. **Invoice Status Counts:** PAID, SENT, OVERDUE, DRAFT status breakdown
+ * 3. **Date-aware Refresh:** Auto-refresh at midnight (DateChangeTickerObserver)
+ * 4. **Multi-business:** Auto-switches dashboard when business context changes
+ *
+ * **Data Flow:**
+ * ```
+ * Active Business ID observed
+ *     ↓
+ * Revenue Repository queries metrics
+ *     ↓
+ * Database computes aggregations
+ *     ↓
+ * Transform to DashboardRevenueState
+ *     ↓
+ * StateFlow emits updates
+ *     ↓
+ * UI displays metrics
+ * ```
+ *
+ * **Midnight Refresh:**
+ * Implements [DateChangeTickerObserver] to receive date-change notifications at midnight.
+ * When date changes, refresh trigger fires, causing revenueState to re-query with new date params.
+ * This ensures daily calculations (e.g., "days overdue") remain accurate without app restart.
+ *
+ * **Usage:**
+ * ```kotlin
+ * @Composable
+ * fun DashboardScreen() {
+ *     val viewModel: DashboardViewModel = hiltViewModel()
+ *     val revenueState by viewModel.revenueState.collectAsStateWithLifecycle()
+ *     val statusCounts by viewModel.statusCounts.collectAsStateWithLifecycle()
+ *     val topCustomers by viewModel.topCustomers.collectAsStateWithLifecycle()
+ *
+ *     when (revenueState) {
+ *         DashboardRevenueState.Loading -> LoadingScreen()
+ *         is DashboardRevenueState.Success -> {
+ *             val metrics = (revenueState as DashboardRevenueState.Success).metrics
+ *             DashboardContent(
+ *                 metrics = metrics,
+ *                 statusCounts = statusCounts,
+ *                 topCustomers = topCustomers
+ *             )
+ *         }
+ *         is DashboardRevenueState.Error -> {
+ *             val message = (revenueState as DashboardRevenueState.Error).message
+ *             ErrorScreen(message)
+ *         }
+ *     }
+ * }
+ * ```
+ *
+ * @param revenueRepository Provides revenue metrics and aggregations
+ * @param businessContextRepository Provides active business ID context
+ * @param dateChangeTickerManager Notifies at midnight for date-dependent refresh
+ * @param bizapConfig Application configuration
+ *
+ * @see DateChangeTickerObserver
+ * @see RevenueRepository
+ * @see RevenueMetricsV2
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -39,12 +131,44 @@ class DashboardViewModel @Inject constructor(
 ) : ViewModel(), DateChangeTickerObserver {
 
     /**
-     * Emitting to this flow causes the revenue query to restart with fresh date parameters.
+     * Trigger for revenue query refresh.
+     *
+     * Emitting to this flow causes revenueState to restart the query with fresh parameters.
+     * Used when:
+     * - Date changes (midnight) → calls [onDateChanged]
+     * - Business context switches → automatic via combine
+     * - Manual refresh needed → emit from public method
+     *
+     * Replay=1 ensures the latest refresh signal is maintained.
      */
     private val _refreshTrigger = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
 
+    /**
+     * Reactive active business ID stream.
+     *
+     * When user switches business context, this emits new ID
+     * and all downstream metrics automatically recalculate.
+     */
     private val activeBusinessId: Flow<Long> = businessContextRepository.observeActiveBusinessId()
 
+    /**
+     * Revenue metrics as reactive state flow.
+     *
+     * **Data Flow:**
+     * activeBusinessId + refreshTrigger
+     *     ↓
+     * Combine & observe business ID
+     *     ↓
+     * Query RevenueRepository.observeRevenueMetrics()
+     *     ↓
+     * Transform success → DashboardRevenueState.Success
+     * Transform failure → DashboardRevenueState.Error
+     *     ↓
+     * StateFlow emits updates
+     *
+     * **Subscription:** WhileSubscribed (5-second timeout)
+     * **Initial:** Loading
+     */
     val revenueState: StateFlow<DashboardRevenueState> =
         combine(
             activeBusinessId,
@@ -95,6 +219,12 @@ class DashboardViewModel @Inject constructor(
 
     private var tickerStarted = false
 
+    /**
+     * Initialization block.
+     *
+     * Registers for date-change notifications if configured.
+     * This enables auto-refresh at midnight for date-dependent calculations.
+     */
     init {
         if (bizapConfig.dashboardRefreshOnDateChange && bizapConfig.enableAutoRefresh) {
             dateChangeTickerManager.registerObserver(this)
@@ -105,7 +235,14 @@ class DashboardViewModel @Inject constructor(
 
     /**
      * Called automatically at midnight when the date changes.
-     * Triggers a dashboard refresh so date-dependent revenue calculations are updated.
+     *
+     * **Behavior:**
+     * - Emits to refreshTrigger
+     * - Causes revenueState to restart query with new date
+     * - Auto-refreshes date-dependent calculations
+     * - No user action needed
+     *
+     * @param newDate The new date after midnight
      */
     override suspend fun onDateChanged(newDate: LocalDate) {
         Timber.d("DashboardViewModel: Date changed to $newDate, refreshing dashboard data")
@@ -114,6 +251,12 @@ class DashboardViewModel @Inject constructor(
 
     /**
      * Manually trigger a dashboard data refresh.
+     *
+     * **Use when:**
+     * - User pulls to refresh
+     * - Business context changes
+     * - Manual refresh button clicked
+     * - After background data sync
      */
     fun manualRefresh() {
         _refreshTrigger.tryEmit(Unit)

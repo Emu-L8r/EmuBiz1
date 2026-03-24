@@ -18,6 +18,31 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * UI state for login screen.
+ *
+ * **Fields:**
+ * - [pin]: Current PIN entry (masked in UI)
+ * - [attemptCount]: Number of failed login attempts
+ * - [lockoutSecondsRemaining]: Seconds until lockout expires (0 = no lockout)
+ * - [errorMessage]: User-facing error message
+ * - [isLoading]: True while authenticating
+ * - [isAuthenticated]: True after successful login
+ * - [showForgotPINDialog]: True to show forgot PIN modal
+ *
+ * **Lockout Policy:**
+ * - After 3 failed attempts, user is locked out for 60 seconds
+ * - Countdown timer automatically decrements
+ * - Timer resets after successful login
+ *
+ * @property pin User's PIN entry
+ * @property attemptCount Failed login attempts
+ * @property lockoutSecondsRemaining Seconds until lockout lifts
+ * @property errorMessage Error to display
+ * @property isLoading Authentication in progress
+ * @property isAuthenticated Login successful
+ * @property showForgotPINDialog Show forgot PIN flow
+ */
 data class LoginUiState(
     val pin: String = "",
     val attemptCount: Int = 0,
@@ -28,12 +53,84 @@ data class LoginUiState(
     val showForgotPINDialog: Boolean = false
 )
 
+/**
+ * Manages login screen state and authentication.
+ *
+ * **Architecture:**
+ * - Manages PIN entry and validation
+ * - Enforces lockout policy (3 failed attempts = 60s lockout)
+ * - Handles forgot PIN flow
+ * - Integrates with authentication manager
+ * - Manages business profile context
+ *
+ * **Authentication Flow:**
+ * ```
+ * User enters PIN
+ *     ↓
+ * Validate format (6 digits)
+ *     ↓
+ * Call authManager.authenticate(pin)
+ *     ↓
+ * On success: Set isAuthenticated = true
+ * On failure: Increment attemptCount, check for lockout
+ * ```
+ *
+ * **Lockout Behavior:**
+ * - After 3 failed attempts, lockout for 60 seconds
+ * - UI is disabled during lockout (PIN input blocked)
+ * - Countdown timer ticks every second
+ * - Timer auto-stops when lockout expires
+ *
+ * **Usage:**
+ * ```kotlin
+ * @Composable
+ * fun LoginScreen() {
+ *     val viewModel: LoginViewModel = hiltViewModel()
+ *     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+ *     val businessProfile by viewModel.businessProfile.collectAsStateWithLifecycle()
+ *
+ *     when {
+ *         uiState.isAuthenticated -> {
+ *             // Navigate to main app
+ *         }
+ *         uiState.lockoutSecondsRemaining > 0 -> {
+ *             Text("Locked out. Try again in ${uiState.lockoutSecondsRemaining}s")
+ *         }
+ *         else -> {
+ *             PINPadInput(
+ *                 onPINEntered = { viewModel.handlePINEntry(it) },
+ *                 onForgotPIN = { viewModel.showForgotPINFlow() }
+ *             )
+ *         }
+ *     }
+ * }
+ * ```
+ *
+ * **State Management:**
+ * - PIN cleared after each attempt
+ * - Attempt count resets after successful login
+ * - Lockout timer auto-manages countdown
+ *
+ * @param authManager Handles PIN authentication
+ * @param businessProfileRepository Provides business context
+ *
+ * @see AuthenticationManager
+ * @see BusinessProfileRepository
+ */
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authManager: AuthenticationManager,
     private val businessProfileRepository: BusinessProfileRepository
 ) : ViewModel() {
 
+    /**
+     * Active business profile for the current user.
+     *
+     * Provides business context (name, logo, etc.) for login screen display.
+     * Defaults to empty profile if not yet loaded.
+     *
+     * **Subscription:** WhileSubscribed with 5-second timeout
+     */
     val businessProfile: StateFlow<BusinessProfile> = businessProfileRepository.activeProfile
         .stateIn(
             scope = viewModelScope,
@@ -41,6 +138,16 @@ class LoginViewModel @Inject constructor(
             initialValue = BusinessProfile()
         )
 
+    /**
+     * Current login screen UI state.
+     *
+     * Contains all data needed to render login screen:
+     * - PIN entry state
+     * - Error messages
+     * - Loading status
+     * - Lockout countdown
+     * - Authentication result
+     */
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 

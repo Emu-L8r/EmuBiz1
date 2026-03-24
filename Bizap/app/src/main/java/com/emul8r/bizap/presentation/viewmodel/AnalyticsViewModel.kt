@@ -12,15 +12,63 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * ViewModel for analytics dashboard.
- * Aggregates multiple data sources into unified analytics state.
- * Designed for both GUI1 and GUI2 dashboards.
+ * Manages analytics dashboard state and metrics aggregation.
  *
- * Uses [BusinessContextRepositoryV2] to observe the active business ID so that
- * all analytics automatically switch when the user changes business context.
+ * **Purpose:**
+ * Aggregates invoice, payment, and revenue data into unified analytics state for dashboard display.
+ * Works seamlessly with both GUI1 and GUI2 implementations.
  *
- * NOTE: AnalyticsDao is read-only data access, not a business logic violation.
- * No need for unnecessary abstraction here.
+ * **Architecture:**
+ * - Observes active business context from [BusinessContextRepositoryV2]
+ * - Queries analytics data from [AnalyticsDao]
+ * - Transforms raw data into dashboard-friendly state
+ * - Auto-switches analytics when business context changes
+ * - Reactive flows for real-time updates
+ *
+ * **Data Sources:**
+ * - AnalyticsDao: Read-only aggregated analytics queries
+ * - BusinessContextRepository: Active business ID context
+ *
+ * **Multi-Business Handling:**
+ * ```
+ * activeBusinessId observed
+ *     ↓
+ * When user switches business
+ *     ↓
+ * activeBusinessId emits new ID
+ *     ↓
+ * All analytics flows restart with new business context
+ *     ↓
+ * UI automatically updates with new business data
+ * ```
+ *
+ * **State Streams:**
+ * - [cashFlowTrend]: 30-day cash flow trend
+ * - [overdueSummary]: Outstanding and overdue metrics
+ * - [paymentTrend]: Payment patterns over time
+ * - [customerMetrics]: Customer-based analytics
+ * - [invoiceMetrics]: Invoice count and value metrics
+ *
+ * **Usage:**
+ * ```kotlin
+ * @Composable
+ * fun AnalyticsDashboard() {
+ *     val viewModel: AnalyticsViewModel = hiltViewModel()
+ *     val cashFlow by viewModel.cashFlowTrend.collectAsStateWithLifecycle()
+ *     val overdue by viewModel.overdueSummary.collectAsStateWithLifecycle()
+ *
+ *     Column {
+ *         CashFlowChart(cashFlow)
+ *         OverdueCard(overdue)
+ *     }
+ * }
+ * ```
+ *
+ * @param analyticsDao Read-only analytics data access
+ * @param businessContextRepository Provides active business ID context
+ *
+ * @see BusinessContextRepositoryV2
+ * @see AnalyticsDao
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -29,7 +77,15 @@ class AnalyticsViewModel @Inject constructor(
     private val businessContextRepository: BusinessContextRepositoryV2
 ) : ViewModel() {
 
-    /** Reactive active business ID — replaces the former hardcoded constant. */
+    /**
+     * Reactive stream of active business ID.
+     *
+     * When user switches business context, this emits new ID
+     * and all downstream analytics automatically recalculate.
+     *
+     * This enables seamless multi-business support without
+     * manual refresh or reload.
+     */
     private val activeBusinessId: Flow<Long> = businessContextRepository.observeActiveBusinessId()
 
     // ═════════════════════════════════════════════════════════════════

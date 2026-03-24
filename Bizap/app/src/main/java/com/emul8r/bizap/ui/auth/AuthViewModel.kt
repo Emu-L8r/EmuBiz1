@@ -10,23 +10,114 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 /**
- * Top-level ViewModel responsible for exposing the current [AuthState] to
- * [MainActivity]. The activity observes [authState] to decide which root
- * composable to display (PINSetup, Login, or the main content).
+ * Top-level authentication state manager for the entire application.
+ *
+ * **Purpose:**
+ * Exposes current authentication state to MainActivity, which uses it to determine
+ * which screen to display (Initial Setup → Login → Main App).
+ *
+ * **Architecture:**
+ * - Single source of truth for app authentication state
+ * - Observed by MainActivity for root navigation
+ * - Delegates to AuthenticationManager for state checks
+ * - Automatically refreshes state on ViewModel creation
+ *
+ * **Auth State Flow:**
+ * ```
+ * App Start
+ *     ↓
+ * AuthViewModel.init() calls refreshAuthState()
+ *     ↓
+ * authManager.checkSessionValidity()
+ *     ↓
+ * Returns one of: NeedsSetup, RequiresLogin, Authenticated, SessionExpired
+ *     ↓
+ * MainActivity observes authState and displays appropriate screen
+ *     ↓
+ * User goes through setup/login flow
+ *     ↓
+ * State updates automatically
+ * ```
+ *
+ * **State Transitions:**
+ * ```
+ * NeedsSetup
+ *     ↓ (User completes setup)
+ * RequiresLogin
+ *     ↓ (User enters PIN)
+ * Authenticated
+ *     ↓ (Session expires or logout)
+ * SessionExpired → RequiresLogin
+ * ```
+ *
+ * **Usage:**
+ * ```kotlin
+ * @Composable
+ * fun MainActivity() {
+ *     val viewModel: AuthViewModel = hiltViewModel()
+ *     val authState by viewModel.authState.collectAsStateWithLifecycle()
+ *
+ *     when (authState) {
+ *         AuthState.NeedsSetup -> PINSetupScreen()
+ *         AuthState.RequiresLogin -> LoginScreen()
+ *         AuthState.Authenticated -> MainApp()
+ *         AuthState.SessionExpired -> SessionExpiredDialog()
+ *     }
+ * }
+ * ```
+ *
+ * @param authManager Handles authentication state validation
+ *
+ * @see AuthState
+ * @see AuthenticationManager
+ * @see MainActivity
  */
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authManager: AuthenticationManager
 ) : ViewModel() {
 
+    /**
+     * Current authentication state as reactive stream.
+     *
+     * **Initial value:** [AuthState.SessionExpired] (checked in init)
+     *
+     * **Emits updates when:**
+     * - User completes PIN setup
+     * - User logs in successfully
+     * - Session expires
+     * - User logs out
+     *
+     * **Observed by:** MainActivity for root navigation
+     */
     private val _authState = MutableStateFlow<AuthState>(AuthState.SessionExpired)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
+    /**
+     * Initialization block.
+     *
+     * Automatically checks session validity on ViewModel creation.
+     * This ensures the correct authentication screen is shown when app starts.
+     */
     init {
         refreshAuthState()
     }
 
-    /** Re-evaluates session validity and updates the exposed state. */
+    /**
+     * Re-evaluates authentication state.
+     *
+     * **Behavior:**
+     * - Calls authManager.checkSessionValidity()
+     * - Updates authState with current validity
+     * - Called automatically on init
+     * - Can be called manually to refresh state
+     *
+     * **When to call:**
+     * - After user completes PIN setup
+     * - After user logs in
+     * - When session might have expired
+     * - During app lifecycle events
+     */
     fun refreshAuthState() {
         _authState.value = authManager.checkSessionValidity()
     }

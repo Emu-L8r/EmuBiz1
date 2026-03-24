@@ -37,6 +37,77 @@ private val AmberBrand = BizapColors.AnalyticsWarning  // Material Amber
 private val PrimaryBrand = BizapColors.Presets.Purple  // Material Purple
 
 /**
+ * Login screen Composable for PIN authentication.
+ *
+ * **Purpose:**
+ * Displayed when user has set up a PIN but doesn't have an active session.
+ * Allows user to enter PIN to unlock app and access business data.
+ *
+ * **Features:**
+ * - Business branding (logo + name)
+ * - Large lock icon (visual security indicator)
+ * - PIN input field (masked, numeric keyboard)
+ * - Amber unlock button
+ * - Error message display
+ * - Attempt counter
+ * - Lockout countdown (after 3 failed attempts = 60s lockout)
+ * - "Forgot PIN?" flow (warning dialog → reset → PINSetupScreen)
+ *
+ * **Layout:**
+ * ```
+ * ┌─────────────────────┐
+ * │  Business Logo      │  (80dp box)
+ * │  "Business Name"    │
+ * │  "Unlock to continue" │
+ * │                     │
+ * │  [Lock Icon]        │  (120dp)
+ * │                     │
+ * │  [PIN Input]        │  (masked dots)
+ * │                     │
+ * │  [UNLOCK Button]    │  (amber)
+ * │                     │
+ * │  Attempts: 1/3      │
+ * │  "Forgot PIN?"      │
+ * └─────────────────────┘
+ * ```
+ *
+ * **State Management:**
+ * - Observes [LoginViewModel.uiState]
+ * - Updates on PIN entry, lockout, authentication
+ * - Auto-refreshes on date change (midnight)
+ *
+ * **Navigation:**
+ * - On success: Navigate to main app
+ * - On "Forgot PIN?": Show warning dialog → reset app data → PINSetupScreen
+ *
+ * **Animations:**
+ * - Lock icon scales on error (visual feedback)
+ * - Pin entry feedback (haptic + visual)
+ *
+ * **Usage:**
+ * ```kotlin
+ * @Composable
+ * fun AuthNavigation() {
+ *     val authState by viewModel.authState.collectAsStateWithLifecycle()
+ *
+ *     when (authState) {
+ *         AuthState.RequiresLogin -> LoginScreen()
+ *         // ...
+ *     }
+ * }
+ * ```
+ *
+ * @see LoginViewModel
+ * @see PINSetupScreen
+ */
+@Composable
+fun LoginScreen() {
+    val viewModel: LoginViewModel = hiltViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val businessProfile by viewModel.businessProfile.collectAsStateWithLifecycle()
+
+    // ...existing code...
+/**
  * Login screen shown when the app has a saved PIN but no active session.
  *
  * Features:
@@ -48,6 +119,7 @@ private val PrimaryBrand = BizapColors.Presets.Purple  // Material Purple
  * - Attempt counter and error messages
  * - Lockout countdown (30 s after 5 failed attempts)
  * - "Forgot PIN?" with warning dialog → wipes all data → PINSetupScreen
+
  * - Slide-up entrance animation (600ms)
  *
  * @param onAuthenticated Called after a successful PIN entry.

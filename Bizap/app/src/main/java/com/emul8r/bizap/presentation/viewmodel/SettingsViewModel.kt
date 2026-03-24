@@ -23,12 +23,85 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * ViewModel that consolidates all user-preference management for the Settings screen.
+ * Manages all user preferences and settings operations.
  *
- * Exposes the complete [Settings] aggregate as a [StateFlow] and individual derived
- * [StateFlow]s for convenience so composables can observe only the slice they care about.
- * All write operations are launched on the [viewModelScope] and delegate to the
- * corresponding use-case; errors are logged via Timber but do not crash the app.
+ * **Purpose:**
+ * Consolidates all settings management in one place. Handles reading, updating, and resetting
+ * user preferences across display, theme, notifications, and sync settings.
+ *
+ * **Architecture:**
+ * - Exposes full [Settings] aggregate as [StateFlow]
+ * - Provides derived [StateFlow]s for individual settings slices
+ * - Delegates all operations to use-cases
+ * - Errors logged but don't crash app
+ * - Supports atomic updates and reset to defaults
+ *
+ * **Settings Categories:**
+ * 1. **Theme:** Dark mode, light mode, system default
+ * 2. **Display:** UI density, font size, visual preferences
+ * 3. **Notifications:** Push notifications, email alerts, reminder preferences
+ * 4. **Sync:** Auto-sync settings, sync frequency, data sync preferences
+ *
+ * **Data Flow:**
+ * ```
+ * Use Case (GetSettingsUseCase)
+ *     ↓
+ * Settings Repository
+ *     ↓
+ * StateFlow<Settings>
+ *     ↓
+ * Derived flows (theme, displayMode, etc.)
+ *     ↓
+ * UI observes relevant slices
+ * ```
+ *
+ * **User Actions:**
+ * - Change theme → updateTheme()
+ * - Change display → updateDisplayMode()
+ * - Notification preferences → updateNotifications()
+ * - Sync preferences → updateSyncSettings()
+ * - Reset all → resetToDefaults()
+ *
+ * **Usage:**
+ * ```kotlin
+ * @Composable
+ * fun SettingsScreen() {
+ *     val viewModel: SettingsViewModel = hiltViewModel()
+ *     val theme by viewModel.theme.collectAsStateWithLifecycle()
+ *     val displayMode by viewModel.displayMode.collectAsStateWithLifecycle()
+ *
+ *     Column {
+ *         ThemeSelector(
+ *             selected = theme,
+ *             onThemeChange = { viewModel.updateTheme(it) }
+ *         )
+ *         DisplayModeSelector(
+ *             selected = displayMode,
+ *             onDisplayChange = { viewModel.updateDisplayMode(it) }
+ *         )
+ *         ResetButton { viewModel.resetToDefaults() }
+ *     }
+ * }
+ * ```
+ *
+ * **State Persistence:**
+ * - All changes persisted immediately to repository
+ * - Repository backed by local database/preferences
+ * - Settings survive app restarts
+ * - Synced across devices (if backend available)
+ *
+ * @param getSettingsUseCase Retrieves current settings
+ * @param settingsRepository Persists settings changes
+ * @param updateThemeUseCase Handles theme updates
+ * @param updateDisplayModeUseCase Handles display preference updates
+ * @param updateNotificationSettingsUseCase Handles notification settings
+ * @param updateSyncSettingsUseCase Handles sync preferences
+ * @param resetSettingsToDefaultUseCase Resets all settings
+ *
+ * @see Settings
+ * @see ThemePreference
+ * @see DisplayMode
+ * @see UiDensity
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -41,9 +114,23 @@ class SettingsViewModel @Inject constructor(
     private val resetSettingsToDefaultUseCase: ResetSettingsToDefaultUseCase
 ) : ViewModel() {
 
-    // ── Aggregate state ────────────────────────────────────────────────────
-
-    /** Full settings snapshot.  Initial value is the default [Settings] object. */
+    /**
+     * Full settings snapshot as reactive state flow.
+     *
+     * Contains all user settings:
+     * - Theme preference
+     * - Display mode
+     * - UI density
+     * - Notification settings
+     * - Sync preferences
+     *
+     * Initial value: Default [Settings] object
+     * Subscription: Eager (starts immediately)
+     *
+     * **Updates:**
+     * When user changes any setting, this flow emits new Settings object
+     * with only that field changed.
+     */
     val settings: StateFlow<Settings> = getSettingsUseCase()
         .stateIn(
             scope = viewModelScope,
