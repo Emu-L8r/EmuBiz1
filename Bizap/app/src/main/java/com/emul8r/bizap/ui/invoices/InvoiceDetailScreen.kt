@@ -41,6 +41,67 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
 import java.util.*
 
+/**
+ * Invoice detail screen Composable for GUI1 and GUI2.
+ *
+ * **Purpose:**
+ * Displays complete invoice information with all payment details, invoice items,
+ * line items, customer information, and available actions (edit, share, print, delete).
+ *
+ * **Features:**
+ * - Full invoice details (customer, items, totals, dates)
+ * - Payment history timeline
+ * - Invoice versioning picker (for corrections/amendments)
+ * - Action hub with:
+ *   - Edit invoice
+ *   - Share as PDF
+ *   - Export to Downloads
+ *   - Print
+ *   - Delete
+ *   - Create correction
+ * - Status badges and indicators
+ * - Payment recording dialog
+ * - Error handling with snackbars
+ *
+ * **States:**
+ * - Loading: Shows skeleton content
+ * - Success: Displays invoice details
+ * - Error: Shows error message
+ *
+ * **Data Flow:**
+ * ```
+ * Navigate with invoiceId
+ *     ↓
+ * ViewModel loads invoice + versions
+ *     ↓
+ * Emits Success(invoice, versions)
+ *     ↓
+ * UI displays full invoice
+ *     ↓
+ * User taps action (edit, share, print)
+ *     ↓
+ * Callback or dialog triggered
+ * ```
+ *
+ * **Two Implementations:**
+ * - GUI1: Classic interface with max detail
+ * - GUI2: Modern streamlined interface
+ *
+ * @param guiMode GUI1 or GUI2 implementation
+ * @param invoiceId Invoice to display
+ * @param businessId Business context (optional, for GUI2)
+ * @param onEdit Callback when user taps Edit
+ * @param onBack Callback for back button (GUI2)
+ * @param onInvoiceDeleted Callback when invoice is deleted
+ * @param onNavigateToRevenue Revenue dashboard callback
+ * @param onNavigateToPayments Payment history callback
+ * @param viewModel InvoiceDetailViewModel managing state
+ * @param modifier Composable modifier
+ * @param actionSlot Custom actions slot
+ *
+ * @see InvoiceDetailViewModel
+ * @see PaymentHistoryScreen
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvoiceDetailScreen(
