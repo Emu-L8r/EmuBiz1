@@ -19,6 +19,7 @@ import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.ui.gui2.common.*
 import com.emul8r.bizap.ui.gui2.invoices.RecordPaymentDialogV2
 import com.emul8r.bizap.ui.gui2.invoices.StatusUpdateMenuV2
+import com.emul8r.bizap.ui.gui2.invoices.PaymentHistoryScreen
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -118,14 +119,48 @@ private fun InvoiceDetailContentV2(
     invoice: InvoiceWithItems,
     modifier: Modifier = Modifier
 ) {
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf("Details", "Items", "Payment History")
+
+    Column(modifier = modifier.fillMaxSize()) {
+        // Tab bar
+        TabRow(selectedTabIndex = selectedTabIndex) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTabIndex == index,
+                    onClick = { selectedTabIndex = index },
+                    text = { Text(title) }
+                )
+            }
+        }
+
+        // Tab content
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            when (selectedTabIndex) {
+                0 -> InvoiceDetailsTab(invoice)
+                1 -> InvoiceItemsTab(invoice)
+                2 -> PaymentHistoryTab(invoice)
+            }
+        }
+    }
+}
+
+@Composable
+private fun InvoiceDetailsTab(
+    invoice: InvoiceWithItems,
+    modifier: Modifier = Modifier
+) {
     val dateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     val entity = invoice.invoice
 
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SectionHeaderV2("Invoice Info")
@@ -145,9 +180,37 @@ private fun InvoiceDetailContentV2(
             }
         }
 
-        if (invoice.items.isNotEmpty()) {
-            HorizontalDivider()
-            SectionHeaderV2("Line Items")
+        entity.notes?.let { notes ->
+            if (notes.isNotBlank()) {
+                HorizontalDivider()
+                SectionHeaderV2("Notes")
+                Text(notes, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun InvoiceItemsTab(
+    invoice: InvoiceWithItems,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SectionHeaderV2("Line Items")
+
+        if (invoice.items.isEmpty()) {
+            Text(
+                "No line items",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
             invoice.items.forEach { item ->
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Row(
@@ -178,16 +241,19 @@ private fun InvoiceDetailContentV2(
             }
         }
 
-        entity.notes?.let { notes ->
-            if (notes.isNotBlank()) {
-                HorizontalDivider()
-                SectionHeaderV2("Notes")
-                Text(notes, style = MaterialTheme.typography.bodyMedium)
-            }
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
     }
+}
+
+@Composable
+private fun PaymentHistoryTab(
+    invoice: InvoiceWithItems,
+    modifier: Modifier = Modifier
+) {
+    PaymentHistoryScreen(
+        invoiceId = invoice.invoice.id,
+        modifier = modifier.fillMaxWidth()
+    )
 }
 
 @Composable
