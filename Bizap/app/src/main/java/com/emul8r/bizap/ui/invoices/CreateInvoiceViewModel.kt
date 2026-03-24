@@ -148,6 +148,44 @@ class CreateInvoiceViewModel @Inject constructor(
         _uiState.update { state -> state.copy(items = state.items.filter { it.transientId != transientId }) }
     }
 
+    /**
+     * ✅ FIX FOR ISSUE #2: Batch update line items by mapping updated LineItems back to LineItemForms.
+     * This UUID-aware method handles the case where the editor passes updated LineItems
+     * with their stable IDs, and we need to map them back to the ViewModel's LineItemForm objects.
+     *
+     * This prevents index-based mismatch issues when items are deleted or reordered.
+     *
+     * @param updatedItems List of updated LineItem objects from the editor
+     * @param currentItems Current list of LineItemForm objects in ViewModel state
+     */
+    fun updateLineItemsFromEditor(
+        updatedItems: List<com.emul8r.bizap.domain.model.LineItem>,
+        currentItems: List<LineItemForm>
+    ) {
+        _uiState.update { state ->
+            state.copy(items = state.items.map { currentItem ->
+                // Find corresponding updated item by matching ID (UUID.hashCode())
+                val updatedItem = updatedItems.find {
+                    it.id == currentItem.transientId.hashCode().toLong()
+                }
+
+                if (updatedItem != null) {
+                    // Update this item with new values
+                    currentItem.copy(
+                        description = updatedItem.description,
+                        quantity = updatedItem.quantity,
+                        unitPrice = updatedItem.unitPrice
+                    )
+                } else {
+                    // Item not in updated list - keep as is
+                    currentItem
+                }
+            })
+        }
+
+        Timber.d("✅ updateLineItemsFromEditor: Updated ${updatedItems.size} items")
+    }
+
     fun updateLineItem(transientId: java.util.UUID, description: String, quantity: Double, unitPrice: Long) {
         // ✅ NULL SAFETY: Validate input before update
         require(transientId.toString().isNotEmpty()) { "Line item ID cannot be empty" }

@@ -150,19 +150,11 @@ fun CreateInvoiceScreen(
                 LineItemsEditor(
                     items = lineItems,
                     onItemsChange = { updatedItems ->
-                        // Update ViewModel with new items
-                        updatedItems.forEachIndexed { idx, item ->
-                            if (idx < uiState.items.size) {
-                                viewModel.updateLineItem(
-                                    uiState.items[idx].transientId,
-                                    item.description,
-                                    item.quantity,
-                                    item.unitPrice
-                                )
-                            }
-                        }
+                        // ✅ FIX FOR ISSUE #2: Use UUID-aware batch update
+                        // This prevents index-based mismatch when items are deleted or reordered
+                        viewModel.updateLineItemsFromEditor(updatedItems, uiState.items)
                     },
-                    isDarkMode = isSystemInDarkTheme()  // ← Add this parameter
+                    isDarkMode = isSystemInDarkTheme()
                 )
             }
 
