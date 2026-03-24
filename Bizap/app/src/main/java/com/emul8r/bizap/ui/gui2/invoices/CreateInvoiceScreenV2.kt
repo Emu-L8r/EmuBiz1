@@ -196,36 +196,11 @@ fun CreateInvoiceScreenV2(
                 LineItemsEditor(
                     items = lineItems,
                     onItemsChange = { updatedItems ->
-                        // Handle case where number of items changed
-                        if (updatedItems.size == uiState.items.size) {
-                            // Standard update - same number of items
-                            updatedItems.forEachIndexed { idx, item ->
-                                viewModel.updateLineItem(
-                                    uiState.items[idx].transientId,
-                                    item.description,
-                                    item.quantity,
-                                    item.unitPrice
-                                )
-                            }
-                        } else if (updatedItems.size > uiState.items.size) {
-                            // New items added - add them to the ViewModel
-                            val existingCount = uiState.items.size
-                            for (i in existingCount until updatedItems.size) {
-                                viewModel.addLineItem()
-                                // Update the newly added item with values from editor
-                                if (i < uiState.items.size) {
-                                    val newItem = updatedItems[i]
-                                    viewModel.updateLineItem(
-                                        uiState.items[i].transientId,
-                                        newItem.description,
-                                        newItem.quantity,
-                                        newItem.unitPrice
-                                    )
-                                }
-                            }
-                        }
+                        // ✅ FIX FOR ISSUE #2: Use UUID-aware batch update
+                        // This prevents index-based mismatch when items are deleted or reordered
+                        viewModel.updateLineItemsFromEditor(updatedItems, uiState.items)
                     },
-                    isDarkMode = isSystemInDarkTheme()  // ← Add this parameter
+                    isDarkMode = isSystemInDarkTheme()
                 )
             }
 
