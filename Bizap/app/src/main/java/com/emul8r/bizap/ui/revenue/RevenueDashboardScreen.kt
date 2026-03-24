@@ -24,6 +24,84 @@ import com.emul8r.bizap.ui.common.MetricCard
 import com.emul8r.bizap.ui.theme.StatusColors
 import com.emul8r.bizap.utils.CentsFormatter
 
+/**
+ * Revenue dashboard screen Composable for GUI1.
+ *
+ * **Purpose:**
+ * Displays comprehensive revenue metrics and analytics for the active business.
+ * Shows real-time financial KPIs: MTD revenue, outstanding, overdue amounts, payment status.
+ *
+ * **Features:**
+ * - MTD (Month-to-Date) Revenue - Total revenue earned this month
+ * - Outstanding Balance - Invoices awaiting payment
+ * - Overdue Amount - Invoices past due date
+ * - Payment Completion Rate - Percentage of invoices paid
+ * - Metric cards with color-coded status indicators
+ * - Loading spinner while fetching metrics
+ * - Error state with retry capability
+ * - Empty state if no data
+ * - Gradient background for visual polish
+ *
+ * **Metric Cards:**
+ * ```
+ * ┌─────────────────────┐
+ * │ 💰 MTD Revenue      │ → Green (income)
+ * │ $15,234.50         │
+ * └─────────────────────┘
+ *
+ * ┌─────────────────────┐
+ * │ ⏰ Outstanding      │ → Orange (action needed)
+ * │ $3,456.75          │
+ * └─────────────────────┘
+ *
+ * ┌─────────────────────┐
+ * │ ⚠️  Overdue         │ → Red (urgent)
+ * │ $1,234.50          │
+ * └─────────────────────┘
+ *
+ * ┌─────────────────────┐
+ * │ ✅ Paid Rate        │ → Blue (positive)
+ * │ 87%                 │
+ * └─────────────────────┘
+ * ```
+ *
+ * **States:**
+ * - Loading: Shows spinner with "Calculating..."
+ * - Success: Shows all metric cards
+ * - Error: Shows error message with retry button
+ * - Empty: Shows empty state if no invoices
+ *
+ * **Data Flow:**
+ * ```
+ * Screen mounts
+ *     ↓
+ * ViewModel observes active business
+ *     ↓
+ * GetRevenueMetricsUseCase calculates metrics
+ *     ↓
+ * RevenueMetricsV2 emitted with all values
+ *     ↓
+ * UI renders metric cards
+ *     ↓
+ * Auto-updates when business context changes
+ * ```
+ *
+ * **Real-time Updates:**
+ * When user switches business or invoices are updated:
+ * 1. Business context changes
+ * 2. ViewModel detects change via flatMapLatest
+ * 3. Metrics recalculate automatically
+ * 4. UI re-renders with new values
+ * 5. No manual refresh needed
+ *
+ * @param viewModel RevenueDashboardViewModel managing metrics state
+ * @param modifier Composable modifier
+ * @param headerSlot Optional custom header content
+ * @param footerSlot Optional custom footer content
+ *
+ * @see RevenueDashboardViewModel
+ * @see RevenueMetricsV2
+ */
 @Composable
 fun RevenueDashboardScreen(
     viewModel: RevenueDashboardViewModel = hiltViewModel(),
