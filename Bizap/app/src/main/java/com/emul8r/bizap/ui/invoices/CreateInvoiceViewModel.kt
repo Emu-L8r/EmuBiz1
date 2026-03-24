@@ -43,6 +43,45 @@ data class CreateInvoiceUiState(
     val templateType: String = "standard"
 )
 
+/**
+ * Manages invoice creation workflow and form state for GUI1.
+ *
+ * **Purpose:**
+ * Central state manager for the "Create Invoice" screen. Handles user input from invoice forms,
+ * manages real-time calculations, coordinates with repositories for data persistence, and
+ * triggers PDF generation upon save.
+ *
+ * **Responsibilities:**
+ * - Manage invoice form state (customers, line items, tax settings, photos)
+ * - Load customers, currencies, and business profile asynchronously
+ * - Calculate invoice metrics (subtotal, tax, total) in real-time
+ * - Validate invoice data before saving
+ * - Persist invoice to database and generate PDF
+ * - Handle form interactions (add/remove line items, select customer, etc.)
+ *
+ * **Key Operations:**
+ * - selectCustomer(): Update selected customer
+ * - addLineItem(): Add empty line item
+ * - updateLineItem(): Modify existing line item amounts
+ * - onSaveClicked(): Save invoice with full validation + PDF generation
+ * - onCurrencySelected(): Change currency
+ * - addPhoto()/removePhoto(): Manage attachments
+ *
+ * **Data Sources:**
+ * - [InvoiceRepository] - Save invoices
+ * - [CustomerRepository] - Get available customers
+ * - [CurrencyRepository] - Supported currencies
+ * - [BusinessProfileRepository] - Tax settings & branding
+ * - [GenerateAndSaveInvoiceUseCase] - PDF generation
+ * - [CalculateInvoiceMetricsUseCase] - Monetary calculations
+ *
+ * @param invoiceRepository Invoice persistence
+ * @param customerRepository Customer data
+ * @param businessProfileRepository Business settings
+ * @param currencyRepository Currency options
+ * @param generateAndSaveInvoiceUseCase PDF generation
+ * @param calculateMetricsUseCase Calculation engine
+ */
 @HiltViewModel
 class CreateInvoiceViewModel @Inject constructor(
     private val invoiceRepository: InvoiceRepository,
