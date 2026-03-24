@@ -101,30 +101,6 @@ private val PrimaryBrand = BizapColors.Presets.Purple  // Material Purple
  * @see PINSetupScreen
  */
 @Composable
-fun LoginScreen() {
-    val viewModel: LoginViewModel = hiltViewModel()
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val businessProfile by viewModel.businessProfile.collectAsStateWithLifecycle()
-
-    // ...existing code...
-/**
- * Login screen shown when the app has a saved PIN but no active session.
- *
- * Features:
- * - Business icon box (80dp) with logo or Material icon placeholder
- * - Business name and "Unlock to continue" subtitle
- * - Lock icon (120dp, purple)
- * - Masked PIN input (numeric keyboard)
- * - Amber "Unlock" button
- * - Attempt counter and error messages
- * - Lockout countdown (30 s after 5 failed attempts)
- * - "Forgot PIN?" with warning dialog → wipes all data → PINSetupScreen
-
- * - Slide-up entrance animation (600ms)
- *
- * @param onAuthenticated Called after a successful PIN entry.
- */
-@Composable
 fun LoginScreen(
     onAuthenticated: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
