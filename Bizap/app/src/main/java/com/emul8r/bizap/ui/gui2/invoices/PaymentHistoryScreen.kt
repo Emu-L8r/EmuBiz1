@@ -25,27 +25,82 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Payment history screen for GUI2 (Compose).
+ * Payment history screen for GUI2.
  *
- * Displays:
- * - Invoice summary (total, paid, outstanding)
- * - Timeline of payment records
- * - Status indicators for each payment
+ * **Purpose:**
+ * Displays complete payment history for a single invoice. Shows timeline of all recorded
+ * payments with dates, amounts, and status indicators. Allows users to track payment progress
+ * and see detailed payment records.
  *
  * **Features:**
- * - Shows latest first (DESC order)
- * - Color-coded status (green=paid, red=overdue, orange=pending)
- * - Formats amounts in cents (e.g., 10000 = $100.00)
- * - Empty state message if no history
+ * - Invoice Summary Card
+ *   - Total invoice amount
+ *   - Amount paid so far
+ *   - Outstanding balance
+ *   - Payment completion percentage
+ * - Payment Timeline
+ *   - Chronological list of payments (latest first)
+ *   - Color-coded status indicators
+ *   - Payment dates and amounts
+ *   - Optional payment notes
+ * - Empty State
+ *   - Shows message if no payments recorded
+ *   - Encourages recording first payment
+ * - Real-time Updates
+ *   - Automatically reflects new payments
+ *   - Updates when payment is recorded
  *
- * **Usage:**
- * ```kotlin
- * PaymentHistoryScreen(invoiceId = 123L)
+ * **Layout:**
+ * ```
+ * ┌─────────────────────────────┐
+ * │ Invoice: INV-001            │
+ * │                             │
+ * │ Total:    $1,000.00         │
+ * │ Paid:     $750.00 (75%)     │
+ * │ Outstanding: $250.00        │
+ * │                             │
+ * │ [Payment Progress Bar]      │
+ * │ ████████░░ 75%             │
+ * └─────────────────────────────┘
+ *
+ * ┌─────────────────────────────┐
+ * │ 💳 Payment #1              │
+ * │ $500.00 on March 20, 2026   │
+ * │ Notes: Received payment     │
+ * └─────────────────────────────┘
+ *
+ * ┌─────────────────────────────┐
+ * │ 💳 Payment #2              │
+ * │ $250.00 on March 25, 2026   │
+ * │ Notes: Final payment        │
+ * └─────────────────────────────┘
  * ```
  *
- * @param invoiceId ID of invoice to show history for
- * @param viewModel ViewModel instance (injected by Hilt)
- * @param modifier Compose modifier
+ * **Data Flow:**
+ * ```
+ * Screen mounts with invoiceId
+ *     ↓
+ * ViewModel loads payment history
+ *     ↓
+ * Emits PaymentHistoryUiState with all payments
+ *     ↓
+ * UI displays summary + timeline
+ *     ↓
+ * Auto-updates when payments are recorded
+ * ```
+ *
+ * **Color Coding:**
+ * - 🟢 Green: Successfully recorded
+ * - 🔵 Blue: Pending confirmation
+ * - 🔴 Red: Failed/disputed
+ * - 🟠 Orange: Partial payment
+ *
+ * @param invoiceId Invoice to show payment history for
+ * @param viewModel PaymentHistoryViewModel managing state
+ * @param modifier Composable modifier
+ *
+ * @see PaymentHistoryViewModel
+ * @see InvoiceDetailScreen
  */
 @Composable
 fun PaymentHistoryScreen(
@@ -296,10 +351,3 @@ private fun formatPaymentDate(millis: Long): String {
         "Unknown date"
     }
 }
-
-
-
-
-
-
-

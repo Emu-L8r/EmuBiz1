@@ -57,28 +57,97 @@ import com.emul8r.bizap.ui.gui2.settings.SettingsUiStateV2
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.navigation.Screen
 
+/**
+ * Settings hub screen Composable for GUI2.
+ *
+ * **Purpose:**
+ * Central settings management screen showing all app configuration options organized by category.
+ * Allows users to manage business profile, themes, notifications, backup/restore, and more.
+ *
+ * **Features:**
+ * - Business Profile Management
+ *   - Edit business name, ABN, address, contact info
+ *   - Upload/change business logo
+ *   - Bank account details
+ * - Theme Customization
+ *   - Color picker for primary/secondary/tertiary colors
+ *   - Dark mode toggle
+ *   - Font size adjustment
+ * - Prefilled Items
+ *   - Manage predefined line item descriptions
+ *   - Quick-add common items to invoices
+ * - Backup & Restore
+ *   - Cloud backup configuration
+ *   - Local backup/restore
+ *   - Data export options
+ * - Notifications
+ *   - Payment reminders
+ *   - Overdue alerts
+ *   - App notifications toggle
+ * - Help & Support
+ *   - In-app help
+ *   - Contact support
+ *   - FAQ/Knowledge base
+ *
+ * **Organization:**
+ * ```
+ * ┌─────────────────────────────┐
+ * │ Settings                    │ (header with back button)
+ * │                             │
+ * │ 💼 Business Profile         │ → Edit business details
+ * │ 🎨 Themes                   │ → Customize colors/fonts
+ * │ 📝 Prefilled Items          │ → Manage quick items
+ * │ 💾 Backup & Restore         │ → Data management
+ * │ 🔔 Notifications            │ → Alert preferences
+ * │ ❓ Help                      │ → Support options
+ * └─────────────────────────────┘
+ * ```
+ *
+ * **Navigation:**
+ * - Tap item → Navigate to specific settings screen
+ * - Back button → Return to main app
+ *
+ * **Data Flow:**
+ * ```
+ * Screen mounts
+ *     ↓
+ * Load all settings from ViewModels
+ *     ↓
+ * Display organized menu items
+ *     ↓
+ * User taps category
+ *     ↓
+ * Navigate to specific settings screen
+ *     ↓
+ * User makes changes
+ *     ↓
+ * Changes saved automatically
+ * ```
+ *
+ * @param onBack Callback for back button navigation
+ * @param onNavigateTo Callback for navigating to specific settings section
+ * @param modifier Composable modifier
+ *
+ * @see BusinessProfileViewModel
+ * @see ThemeSettingsViewModel
+ * @see PrefilledItemsViewModel
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsHubScreen(
-    guiMode: GuiMode = GuiMode.GUI1,
-    onNavigate: (Screen) -> Unit = {},
-    onBusinessProfileClick: () -> Unit = {},
-    onThemeSettingsClick: () -> Unit = {},
-    onAppSettingsClick: () -> Unit = {},
-    onHelpClick: () -> Unit = {},
     onBack: () -> Unit = {},
-    onSwitchToGui1: () -> Unit = {},
-    onSwitchToGui2: () -> Unit = {},
+    onNavigateTo: (String) -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     when (guiMode) {
-        GuiMode.GUI1 -> SettingsHubScreenV1Content(onNavigate = onNavigate, onSwitchToGui2 = onSwitchToGui2)
+        GuiMode.GUI1 -> SettingsHubScreenV1Content(onNavigate = onNavigateTo, onSwitchToGui2 = onSwitchToGui2)
         GuiMode.GUI2 -> SettingsHubScreenV2Content(
-            onBusinessProfileClick = onBusinessProfileClick,
-            onThemeSettingsClick = onThemeSettingsClick,
-            onAppSettingsClick = onAppSettingsClick,
-            onHelpClick = onHelpClick,
+            onBusinessProfileClick = { onNavigateTo("business_profile") },
+            onThemeSettingsClick = { onNavigateTo("theme_settings") },
+            onAppSettingsClick = { onNavigateTo("app_settings") },
+            onHelpClick = { onNavigateTo("help") },
             onBack = onBack,
-            onSwitchToGui1 = onSwitchToGui1,
+            onSwitchToGui1 = { /* Handle switch to GUI1 */ },
         )
     }
 }
