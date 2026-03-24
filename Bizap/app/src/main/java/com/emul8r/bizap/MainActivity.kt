@@ -296,7 +296,7 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                     )
                 }
                 composable<Screen.DocumentVault> { DocumentVaultScreen() }
-                composable<Screen.SettingsHub> { SettingsHubScreen(onNavigate = { screen -> navController.navigate(screen) }) }
+                composable<Screen.SettingsHub> { SettingsHubScreen(onNavigateTo = { screen -> navController.navigate(screen) }) }
                 composable<Screen.BusinessProfile> { BusinessProfileScreen() }
                 composable<Screen.ThemeSettings> {
                     com.emul8r.bizap.ui.theme.UnifiedThemeSettingsScreen(

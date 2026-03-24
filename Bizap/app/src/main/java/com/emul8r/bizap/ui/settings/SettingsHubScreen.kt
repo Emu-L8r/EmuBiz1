@@ -135,19 +135,24 @@ import com.emul8r.bizap.ui.navigation.Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsHubScreen(
+    guiMode: GuiMode = GuiMode.GUI1,
     onBack: () -> Unit = {},
-    onNavigateTo: (String) -> Unit = {},
+    onNavigateTo: (Screen) -> Unit = {},
+    onSwitchGui: (GuiMode) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     when (guiMode) {
-        GuiMode.GUI1 -> SettingsHubScreenV1Content(onNavigate = onNavigateTo, onSwitchToGui2 = onSwitchToGui2)
+        GuiMode.GUI1 -> SettingsHubScreenV1Content(
+            onNavigate = onNavigateTo,
+            onSwitchToGui2 = { onSwitchGui(GuiMode.GUI2) }
+        )
         GuiMode.GUI2 -> SettingsHubScreenV2Content(
-            onBusinessProfileClick = { onNavigateTo("business_profile") },
-            onThemeSettingsClick = { onNavigateTo("theme_settings") },
-            onAppSettingsClick = { onNavigateTo("app_settings") },
-            onHelpClick = { onNavigateTo("help") },
+            onBusinessProfileClick = { onNavigateTo(Screen.BusinessProfile) },
+            onThemeSettingsClick = { onNavigateTo(Screen.ThemeSettings) },
+            onAppSettingsClick = { onNavigateTo(Screen.AppSettings) },
+            onHelpClick = { onNavigateTo(Screen.Help) },
             onBack = onBack,
-            onSwitchToGui1 = { /* Handle switch to GUI1 */ },
+            onSwitchToGui1 = { onSwitchGui(GuiMode.GUI1) },
         )
     }
 }
