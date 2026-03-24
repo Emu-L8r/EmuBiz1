@@ -53,6 +53,89 @@ import com.emul8r.bizap.utils.CentsFormatter
 import timber.log.Timber
 
 
+/**
+ * Main dashboard screen Composable for GUI1.
+ *
+ * **Purpose:**
+ * Landing screen after login showing business overview with key metrics, analytics,
+ * recent invoices, and quick action buttons. Central hub for all app navigation.
+ *
+ * **Features:**
+ * - Business switcher button (tap to change active business)
+ * - Key metrics at top (revenue, outstanding, overdue, paid rate)
+ * - Cash flow trend chart (last 30 days)
+ * - Invoice status pie chart (breakdown by status)
+ * - Recent invoices list (latest 5-10)
+ * - Quick action buttons (Create Invoice, View Analytics, etc.)
+ * - Notes section
+ * - Analytics cards:
+ *   - Average Days to Pay
+ *   - Revenue Concentration
+ *   - Invoicing Velocity
+ * - Real-time updates when business data changes
+ *
+ * **Analytics Displayed:**
+ * ```
+ * Top Section:
+ * ┌─────────────────────────────┐
+ * │ 💼 Bizap | Switch Business  │ (header with dropdown)
+ * │ [Key Metrics Row]           │
+ * └─────────────────────────────┘
+ *
+ * Middle Section:
+ * ┌─────────────────────────────┐
+ * │ 📈 Cash Flow Trend (30 days)│
+ * │ [Line Chart]                │
+ * └─────────────────────────────┘
+ *
+ * ┌─────────────────────────────┐
+ * │ 📊 Invoice Status          │
+ * │ [Pie Chart]                 │
+ * │ Draft: 5  Sent: 8  Paid: 12│
+ * └─────────────────────────────┘
+ *
+ * Bottom Section:
+ * ┌─────────────────────────────┐
+ * │ 📋 Recent Invoices          │
+ * │ [List of last 5 invoices]   │
+ * └─────────────────────────────┘
+ * ```
+ *
+ * **Real-time Updates:**
+ * - When invoices are created/updated: Dashboard metrics refresh automatically
+ * - When business is switched: All data reloads for new business context
+ * - When payments are recorded: Outstanding amount decreases in real-time
+ *
+ * **Navigation:**
+ * - Tap metric card → Navigate to detailed analytics
+ * - Tap invoice → Navigate to invoice detail
+ * - Tap "Create Invoice" button → Navigate to CreateInvoiceScreen
+ * - Tap business name → Show business switcher dialog
+ *
+ * **Data Flow:**
+ * ```
+ * Screen mounts
+ *     ↓
+ * ViewModel observes active business
+ *     ↓
+ * Load metrics, invoices, analytics
+ *     ↓
+ * Emit DashboardUiState.Success
+ *     ↓
+ * UI renders dashboard with all data
+ *     ↓
+ * Auto-updates on business/invoice changes
+ * ```
+ *
+ * @param navController Navigation controller for routing
+ * @param onNavigateToRevenue Callback for analytics navigation
+ * @param viewModel DashboardViewModel managing dashboard state
+ * @param modifier Composable modifier
+ *
+ * @see DashboardViewModel
+ * @see RevenueDashboardScreen
+ * @see InvoiceListScreen
+ */
 @Composable
 fun DashboardScreen(
     navController: NavController,
