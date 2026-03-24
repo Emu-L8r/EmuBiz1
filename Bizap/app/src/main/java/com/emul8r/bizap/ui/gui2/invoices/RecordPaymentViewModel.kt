@@ -48,6 +48,33 @@ class RecordPaymentViewModel @Inject constructor(
     /**
      * Binds this ViewModel to a specific invoice. Must be called before the dialog
      * is shown. Safe to call multiple times (re-initialises form state).
+     *
+     * **Behavior:**
+     * - Stores invoice context (ID, business ID, amounts, dates)
+     * - Initializes form state with default values
+     * - Calculates outstanding balance = total - amountPaid
+     * - Sets payment date to today at midnight
+     * - Clears any prior validation errors
+     *
+     * **Example:**
+     * ```kotlin
+     * viewModel.initFor(
+     *     invoiceId = 42,
+     *     businessId = 1,
+     *     invoiceTotal = 10000,  // $100.00 in cents
+     *     amountPaid = 5000,     // $50.00 already paid
+     *     invoiceDate = System.currentTimeMillis(),
+     *     invoiceStatus = InvoiceStatus.PARTIAL_PAID
+     * )
+     * // Outstanding = 5000 cents ($50.00)
+     * ```
+     *
+     * @param invoiceId Invoice to record payment for
+     * @param businessId Business context
+     * @param invoiceTotal Total invoice amount in cents
+     * @param amountPaid Amount already paid in cents
+     * @param invoiceDate Invoice creation date (epoch ms)
+     * @param invoiceStatus Current invoice status
      */
     fun initFor(
         invoiceId: Long,
@@ -73,6 +100,22 @@ class RecordPaymentViewModel @Inject constructor(
 
     // ── Field change handlers ──────────────────────────────────────────────────
 
+    /**
+     * Updates payment amount when user types in the amount field.
+     *
+     * **Behavior:**
+     * - Converts string input to cents (multiply by 100)
+     * - Validates amount doesn't exceed outstanding balance
+     * - Re-calculates form validity
+     * - Clears previous validation errors
+     *
+     * **Validation Rules:**
+     * - Cannot be empty
+     * - Must be positive
+     * - Cannot exceed outstanding balance
+     *
+     * @param raw User's input (as dollars, e.g., "50.00")
+     */
     fun onAmountChanged(raw: String) {
         _formState.update { current ->
             val amountCents = raw.toDoubleOrNull()?.let { (it * 100).toLong() }
@@ -89,6 +132,15 @@ class RecordPaymentViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Updates payment date when user selects from date picker.
+     *
+     * **Validation:**
+     * - Cannot be after today
+     * - Cannot be before invoice date
+     *
+     * @param dateMs Selected date in epoch milliseconds
+     */
     fun onDateChanged(dateMs: Long) {
         _formState.update { current ->
             val dateError = dateErrorMessage(dateMs)
@@ -103,12 +155,50 @@ class RecordPaymentViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Updates optional payment notes (max 500 chars).
+     *
+     * **Behavior:**
+     * - Stores notes for record-keeping
+     * - Truncates to 500 characters if needed
+     * - Doesn't affect form validity
+     *
+     * @param notes User-entered notes (optional)
+     */
     fun onNotesChanged(notes: String) {
         _formState.update { it.copy(notes = notes.take(500)) }
     }
 
     // ── Submission ─────────────────────────────────────────────────────────────
 
+    /**
+     * Submits the payment recording to the repository.
+     *
+     * **Validation Before Submit:**
+     * - ViewModel must be initialized (initFor called)
+     * - Form must be valid (valid amount and date)
+     * - Amount must be positive
+     *
+     * **On Success:**
+     * - Payment recorded in database
+     * - Invoice status updated (PAID if fully paid, PARTIAL_PAID if partial)
+     * - Emits PaymentEvent.Success
+     *
+     * **On Failure:**
+     * - Error stored in formState.submissionError
+     * - Emits PaymentEvent.Error with message
+     * - User can retry
+     *
+     * **Example:**
+     * ```kotlin
+     * Button(
+     *     onClick = { viewModel.submit() },
+     *     enabled = formState.isFormValid && !formState.isLoading
+     * ) {
+     *     Text("Record Payment")
+     * }
+     * ```
+     */
     fun submit() {
         val state = _formState.value
         if (invoiceId == -1L) {
