@@ -11,6 +11,26 @@ import kotlinx.coroutines.flow.*
 import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * Manages revenue metrics dashboard state for GUI1 and GUI2.
+ *
+ * **Purpose:**
+ * Displays real-time revenue metrics: MTD (month-to-date) revenue, outstanding, overdue amounts.
+ * Works across multiple businesses with reactive updates when context switches.
+ *
+ * **Responsibilities:**
+ * - Load revenue metrics using GetRevenueMetricsUseCase
+ * - Auto-update when business context changes
+ * - Support business override (for testing/debugging)
+ * - Track loading/error states
+ *
+ * **Reactive Updates:**
+ * When user switches business, metrics automatically recalculate via flatMapLatest.
+ * UI observes stateFlow and recomposes with new data.
+ *
+ * @param getRevenueMetricsUseCase Use case for metric calculations
+ * @param businessProfileRepository Business context
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class RevenueDashboardViewModel @Inject constructor(
