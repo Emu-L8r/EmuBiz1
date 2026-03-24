@@ -39,6 +39,74 @@ import com.emul8r.bizap.ui.components.PhotoAttachmentPicker
 import java.io.File
 import java.util.Locale
 
+/**
+ * Invoice creation screen Composable for GUI1.
+ *
+ * **Purpose:**
+ * Full-featured invoice creation form allowing users to:
+ * - Select customer from dropdown
+ * - Add multiple line items with descriptions, quantities, prices
+ * - Customize invoice headers, footers, notes
+ * - Attach photos to invoice
+ * - See real-time totals (subtotal, tax, final total)
+ * - Save invoice and generate PDF
+ *
+ * **Features:**
+ * - Customer selector dropdown
+ * - Line items editor (add/remove/edit items)
+ * - Currency selector (AUD, USD, etc.)
+ * - Real-time metric calculation (subtotal, tax, total)
+ * - Invoice customization (header, subheader, footer, notes)
+ * - Photo attachment (camera or gallery)
+ * - Save button (with validation)
+ * - Error handling with snackbars
+ *
+ * **Data Flow:**
+ * ```
+ * Screen collects user input
+ *     ↓
+ * ViewModel updates state via methods:
+ * - selectCustomer(), addLineItem(), updateLineItem()
+ * - onCurrencySelected(), onHeaderChange(), etc.
+ *     ↓
+ * getInvoiceMetrics() calculates totals
+ *     ↓
+ * onSaveClicked() validates & saves to database
+ *     ↓
+ * PDF generation triggered
+ *     ↓
+ * Success callback: onInvoiceSaved()
+ * ```
+ *
+ * **Layout Structure:**
+ * ```
+ * Top: Customer selector + currency picker
+ * Middle: Line items editor (scrollable)
+ * Bottom: Invoice totals (subtotal, tax, total)
+ * Floating: Bottom sheet for customization
+ * Dialogs: Photo picker, error messages
+ * ```
+ *
+ * **Validation:**
+ * - Customer must be selected
+ * - At least one line item required
+ * - All items must have valid amounts
+ * - Proper currency selected
+ *
+ * **Error Handling:**
+ * - Validation errors shown in snackbar
+ * - Network errors shown in snackbar
+ * - Loading state shows spinner
+ * - Success navigates back
+ *
+ * @param viewModel CreateInvoiceViewModel managing form state
+ * @param onInvoiceSaved Callback when invoice successfully saved (navigate back)
+ *
+ * @see CreateInvoiceViewModel
+ * @see InvoiceBottomSummary
+ * @see LineItemsEditor
+ * @see InvoiceCustomizationEditor
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateInvoiceScreen(

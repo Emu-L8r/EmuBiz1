@@ -46,6 +46,63 @@ import com.emul8r.bizap.ui.utils.formatDate
 import com.emul8r.bizap.ui.invoices.InvoiceListUiState
 import com.emul8r.bizap.ui.invoices.InvoiceListViewModel
 
+/**
+ * Invoice list screen Composable for GUI1.
+ *
+ * **Purpose:**
+ * Displays all invoices for the active business in a scrollable list.
+ * Allows users to view invoice details, filter by status, and manage invoices.
+ *
+ * **Features:**
+ * - Scrollable invoice list with pagination
+ * - Invoice cards showing:
+ *   - Customer name
+ *   - Invoice date and total amount
+ *   - Status badge (DRAFT, SENT, PAID, OVERDUE, CANCELLED)
+ *   - Invoice number
+ * - Status filter tabs
+ * - Pull-to-refresh retry
+ * - Loading skeleton while fetching
+ * - Error state with retry button
+ * - Click to view invoice details
+ * - FAB (Floating Action Button) to create new invoice
+ *
+ * **States:**
+ * - Loading: Shows skeleton loading cards
+ * - Empty: Shows empty state message when no invoices
+ * - Success: Shows invoice list
+ * - Error: Shows error message with retry button
+ *
+ * **Data Flow:**
+ * ```
+ * Screen mounts
+ *     ↓
+ * ViewModel loads invoices via repository
+ *     ↓
+ * InvoiceListUiState emits:
+ *   - Loading (initial)
+ *   - Success(invoices) or Empty or Error
+ *     ↓
+ * UI recomposes with updated state
+ *     ↓
+ * User taps invoice
+ *     ↓
+ * Navigate to InvoiceDetailScreen(invoiceId)
+ * ```
+ *
+ * **Interactions:**
+ * - Tap invoice card → Navigate to detail screen
+ * - Pull down → Retry load
+ * - FAB → Create new invoice
+ * - Status tab → Filter list (if implemented)
+ *
+ * @param viewModel InvoiceListViewModel managing list state
+ * @param onInvoiceSelected Callback with invoiceId when user taps an invoice
+ * @param onCreateNew Callback when user taps FAB to create invoice
+ *
+ * @see InvoiceListViewModel
+ * @see InvoiceDetailScreen
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvoiceListScreen(
