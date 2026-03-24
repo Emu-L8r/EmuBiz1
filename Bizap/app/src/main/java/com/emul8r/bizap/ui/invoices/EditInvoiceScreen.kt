@@ -32,6 +32,52 @@ import kotlinx.coroutines.delay
 import timber.log.Timber
 import java.io.File
 
+/**
+ * Invoice editing screen Composable for GUI1.
+ *
+ * **Purpose:**
+ * Allows users to modify existing invoices. Provides same form as CreateInvoiceScreen
+ * but with pre-populated data loaded from database.
+ *
+ * **Features:**
+ * - Pre-loaded invoice data (customer, items, customization)
+ * - Edit customer selection
+ * - Edit/add/remove line items
+ * - Edit invoice customization (header, footer, notes)
+ * - Manage photo attachments
+ * - Save updated invoice
+ * - Share updated PDF
+ *
+ * **Data Flow:**
+ * ```
+ * Navigate with invoiceId
+ *     ↓
+ * ViewModel loads invoice from repository
+ *     ↓
+ * UiState emits Success(invoice, customers)
+ *     ↓
+ * UI pre-populates form with invoice data
+ *     ↓
+ * User edits form fields
+ *     ↓
+ * onInvoiceUpdated callback on save success
+ * ```
+ *
+ * **States:**
+ * - Loading: Shows spinner while loading invoice
+ * - Success: Shows editable form with invoice data
+ * - Error: Shows error message
+ *
+ * **Immutability Rules:**
+ * - Once invoice is sent/paid, cannot be edited
+ * - Must create correction instead
+ *
+ * @param onInvoiceUpdated Callback when invoice is successfully saved
+ * @param viewModel EditInvoiceViewModel managing edit state
+ *
+ * @see EditInvoiceViewModel
+ * @see CreateInvoiceScreen
+ */
 @Composable
 fun EditInvoiceScreen(
     onInvoiceUpdated: () -> Unit,
