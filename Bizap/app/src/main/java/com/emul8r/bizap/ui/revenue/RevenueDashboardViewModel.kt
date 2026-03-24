@@ -72,6 +72,21 @@ class RevenueDashboardViewModel @Inject constructor(
         )
 
     // ✅ FIX 3: Accept businessId from navigation
+    /**
+     * Override the business context for metrics calculation.
+     *
+     * **Behavior:**
+     * - When set, uses this business ID instead of active profile
+     * - Triggers re-calculation of all metrics
+     * - Useful for debugging or UI state management
+     *
+     * **Example:**
+     * ```kotlin
+     * viewModel.setBusinessId(42)  // Show metrics for business 42
+     * ```
+     *
+     * @param businessId Business ID to use, or null to revert to active profile
+     */
     fun setBusinessId(businessId: Long?) {
         if (businessId != null) {
             _overrideBusinessId.value = businessId
