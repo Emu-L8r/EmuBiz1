@@ -2,7 +2,7 @@ package com.emul8r.bizap.ui.gui2.invoices
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import com.emul8r.bizap.data.local.dao.InvoicePaymentDao
+import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.utils.CentsFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -69,7 +69,7 @@ data class PaymentHistoryItem(
  */
 @HiltViewModel
 class PaymentHistoryViewModel @Inject constructor(
-    private val invoicePaymentDao: InvoicePaymentDao,
+    private val invoiceRepository: InvoiceRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -94,7 +94,7 @@ class PaymentHistoryViewModel @Inject constructor(
      * ```
      */
     val paymentHistory: Flow<PaymentHistoryUiState> =
-        invoicePaymentDao.observePaymentHistory(invoiceId)
+        invoiceRepository.observePaymentHistory(invoiceId)
             .map { snapshots ->
                 if (snapshots.isEmpty()) {
                     Timber.d("📋 No payment history for invoice $invoiceId")

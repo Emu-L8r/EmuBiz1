@@ -67,4 +67,15 @@ interface InvoiceRepository {
         paymentDate: Long,
         notes: String?
     ): Result<Unit>
+
+    /**
+     * Observes payment history snapshots for an invoice.
+     *
+     * Returns a reactive stream of payment snapshots ordered by date.
+     * Snapshots capture the payment state at each update.
+     *
+     * @param invoiceId The invoice to observe payments for
+     * @return Flow emitting payment history snapshots (empty if no payments)
+     */
+    fun observePaymentHistory(invoiceId: Long): Flow<List<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>>
 }

@@ -830,6 +830,9 @@ class InvoiceRepositoryImpl @Inject constructor(
         val counterPart = counter.toString().padStart(2, '0')
         return "$sanitized-$datePart-$counterPart"
     }
+
+    override fun observePaymentHistory(invoiceId: Long): Flow<List<InvoicePaymentSnapshot>> =
+        paymentDao.observePaymentHistory(invoiceId)
 }
 
 // ==================== EXTENSION FUNCTIONS ====================
