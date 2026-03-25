@@ -8,6 +8,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import timber.log.Timber
 import javax.inject.Singleton
 
 /**
@@ -26,18 +27,35 @@ object FirebaseModule {
      * Firebase automatically initializes from google-services.json.
      * This is a safe singleton that can be injected anywhere.
      *
-     * @return FirebaseAnalytics instance
+     * NOTE: This method is wrapped in error handling to gracefully handle:
+     * - Missing google-services.json (development)
+     * - Firebase initialization errors
+     * - Device with Play Services not installed
+     *
+     * @return FirebaseAnalytics instance (null if initialization fails)
      */
     @Provides
     @Singleton
-    fun provideFirebaseAnalytics(@ApplicationContext context: Context): FirebaseAnalytics {
-        return FirebaseAnalytics.getInstance(context)
+    fun provideFirebaseAnalytics(@ApplicationContext context: Context): FirebaseAnalytics? {
+        return try {
+            val instance = FirebaseAnalytics.getInstance(context)
+            Timber.d("✅ FirebaseAnalytics initialized successfully")
+            instance
+        } catch (e: Exception) {
+            Timber.w(e, "⚠️ Failed to initialize FirebaseAnalytics - app will continue without crash reporting")
+            null  // Allow app to continue without Firebase
+        }
     }
 
     /**
      * Provides FirebaseEventTracker utility.
      *
      * Use this to track events consistently throughout the app.
+     *
+     * The tracker gracefully handles when FirebaseAnalytics fails to initialize:
+     * - Still logs to Timber (visible in Logcat)
+     * - Silently skips Firebase logging
+     * - App continues to function normally
      *
      * Example:
      * ```
@@ -55,12 +73,15 @@ object FirebaseModule {
      * }
      * ```
      *
-     * @param analytics FirebaseAnalytics instance
+     * @param analytics FirebaseAnalytics instance (nullable if initialization failed)
      * @return FirebaseEventTracker configured with analytics
      */
     @Provides
     @Singleton
-    fun provideFirebaseEventTracker(analytics: FirebaseAnalytics): FirebaseEventTracker {
+    fun provideFirebaseEventTracker(analytics: FirebaseAnalytics?): FirebaseEventTracker {
+        if (analytics == null) {
+            Timber.w("⚠️ FirebaseEventTracker initialized with null analytics - events will not be sent to Firebase")
+        }
         return FirebaseEventTracker(analytics)
     }
 }

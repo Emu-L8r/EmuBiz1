@@ -120,16 +120,24 @@ class BizapApplication : Application(), Configuration.Provider {
      *       param("currency", "AUD")
      *       param("line_item_count", 3)
      *   }
+     *
+     * ERROR HANDLING:
+     * - If google-services.json is missing: Firebase will be null, app continues
+     * - If Play Services not available: Firebase will be null, app continues
+     * - If Firebase fails to initialize: try/catch handles it gracefully
+     *
+     * This ensures the app never crashes due to Firebase issues.
      */
     private fun initializeAnalytics() {
         try {
             // Enable collection (important: respects user's data sharing preferences)
             FirebaseAnalytics.getInstance(this).setAnalyticsCollectionEnabled(true)
-            Timber.d("✅ Firebase Analytics initialized")
+            Timber.d("✅ Firebase Analytics initialized - crash reporting enabled")
         } catch (e: Exception) {
             // Firebase might not be initialized if google-services.json is missing
             // This is expected in development environments
-            Timber.w(e, "Firebase Analytics initialization failed (expected if google-services.json missing)")
+            Timber.w(e, "⚠️ Firebase Analytics initialization failed (expected if google-services.json missing)")
+            Timber.w("Crash reporting will NOT be available until Firebase is properly configured")
         }
     }
 
