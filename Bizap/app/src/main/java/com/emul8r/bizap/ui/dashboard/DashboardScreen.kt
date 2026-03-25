@@ -50,6 +50,7 @@ import com.emul8r.bizap.ui.theme.DashboardTheme
 import com.emul8r.bizap.ui.theme.StatusColors
 import com.emul8r.bizap.ui.common.LoadingScreen
 import com.emul8r.bizap.utils.CentsFormatter
+import com.emul8r.bizap.utils.FirebaseEventTracker
 import timber.log.Timber
 
 
@@ -172,6 +173,38 @@ fun DashboardScreen(
 
     if (showSwitcher) {
         BusinessSwitcherDialog(onDismiss = { showSwitcher = false })
+    }
+
+    // 📊 Track screen view when dashboard loads
+    LaunchedEffect(Unit) {
+        dashboardViewModel.eventTracker.trackScreenView(
+            screenName = "DashboardScreen",
+            screenClass = "com.emul8r.bizap.ui.dashboard.DashboardScreen"
+        )
+    }
+
+    // 📊 Track revenue metrics when they load
+    LaunchedEffect(revenueState, activeBusiness) {
+        when (val s = revenueState) {
+            is DashboardRevenueState.Success -> {
+                val businessId = activeBusiness?.id ?: 1L
+                val totalInvoiceCount = statusCounts.values.sum()
+                val paidInvoiceCount = statusCounts["PAID"] ?: 0
+                val paymentPercent = if (totalInvoiceCount > 0) {
+                    ((paidInvoiceCount.toDouble() / totalInvoiceCount.toDouble()) * 100).toInt()
+                } else {
+                    0
+                }
+                dashboardViewModel.eventTracker.trackRevenueMetrics(
+                    businessId = businessId,
+                    mtdRevenue = s.metrics.totalPaidRevenue,
+                    outstandingAmount = s.metrics.outstandingAmount,
+                    overdueAmount = s.metrics.overdueAmount,
+                    paymentCompletionPercent = paymentPercent
+                )
+            }
+            else -> {} // Skip tracking for loading/error states
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize().subtleVerticalGradient()) {

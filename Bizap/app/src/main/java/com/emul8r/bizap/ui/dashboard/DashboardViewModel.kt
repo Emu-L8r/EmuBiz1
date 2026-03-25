@@ -8,6 +8,7 @@ import com.emul8r.bizap.domain.config.BizapConfig
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.domain.usecase.DateChangeTickerManager
 import com.emul8r.bizap.domain.usecase.DateChangeTickerObserver
+import com.emul8r.bizap.utils.FirebaseEventTracker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -127,7 +128,8 @@ class DashboardViewModel @Inject constructor(
     private val revenueRepository: RevenueRepository,
     private val businessContextRepository: BusinessContextRepositoryV2,
     private val dateChangeTickerManager: DateChangeTickerManager,
-    private val bizapConfig: BizapConfig
+    private val bizapConfig: BizapConfig,
+    val eventTracker: FirebaseEventTracker
 ) : ViewModel(), DateChangeTickerObserver {
 
     /**

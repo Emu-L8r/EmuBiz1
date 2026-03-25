@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.usecase.RecordPaymentUseCase
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.utils.FirebaseEventTracker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class RecordPaymentViewModel @Inject constructor(
-    private val recordPaymentUseCase: RecordPaymentUseCase
+    private val recordPaymentUseCase: RecordPaymentUseCase,
+    private val eventTracker: FirebaseEventTracker
 ) : ViewModel() {
 
     // ── Invoice context (set by the screen before showing the dialog) ──────────
@@ -227,6 +229,13 @@ class RecordPaymentViewModel @Inject constructor(
             result.fold(
                 onSuccess = {
                     Timber.d("RecordPaymentViewModel: payment submitted successfully")
+                    // 📊 Track payment recording event
+                    eventTracker.trackPaymentRecorded(
+                        invoiceId = invoiceId,
+                        paymentAmount = state.amountCents ?: 0L,
+                        paymentDate = state.paymentDate,
+                        invoiceTotal = invoiceTotal
+                    )
                     _events.emit(PaymentEvent.Success)
                 },
                 onFailure = { error ->

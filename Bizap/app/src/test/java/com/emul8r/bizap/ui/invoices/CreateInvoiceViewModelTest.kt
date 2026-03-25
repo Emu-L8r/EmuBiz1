@@ -9,6 +9,7 @@ import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.usecase.CalculateInvoiceMetricsUseCase
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
+import com.emul8r.bizap.utils.FirebaseEventTracker
 import io.mockk.*
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Before
@@ -30,17 +31,19 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
     private lateinit var customerRepository: CustomerRepository
     private lateinit var businessProfileRepository: BusinessProfileRepository
     private lateinit var generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase
+    private lateinit var eventTracker: FirebaseEventTracker
     private val calculateMetricsUseCase = CalculateInvoiceMetricsUseCase()
 
     @Before
     fun setup() {
         super.setupBase()
 
-        // Mock repositories
+        // Mock repositories and services
         invoiceRepository = mockk()
         customerRepository = mockk()
         businessProfileRepository = mockk()
         generateAndSaveInvoiceUseCase = mockk()
+        eventTracker = mockk(relaxed = true)
 
         // Setup default mock responses
         every { customerRepository.getAllCustomers() } returns flowOf(
@@ -56,7 +59,8 @@ class CreateInvoiceViewModelTest : BaseUnitTest() {
             businessProfileRepository,
             mockk(), // CurrencyRepository
             generateAndSaveInvoiceUseCase,
-            calculateMetricsUseCase
+            calculateMetricsUseCase,
+            eventTracker
         )
     }
 

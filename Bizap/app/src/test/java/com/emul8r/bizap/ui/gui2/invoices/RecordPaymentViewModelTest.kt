@@ -4,6 +4,7 @@ package com.emul8r.bizap.ui.gui2.invoices
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.usecase.RecordPaymentUseCase
+import com.emul8r.bizap.utils.FirebaseEventTracker
 import io.mockk.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -23,6 +24,7 @@ import kotlin.test.assertFalse
  */
 class RecordPaymentViewModelTest : BaseUnitTest() {
     private lateinit var recordPaymentUseCase: RecordPaymentUseCase
+    private lateinit var eventTracker: FirebaseEventTracker
     private lateinit var viewModel: RecordPaymentViewModel
     private val invoiceId = 1L
     private val businessId = 1L
@@ -33,7 +35,8 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
     @Before
     fun setUp() {
         recordPaymentUseCase = mockk(relaxed = true)
-        viewModel = RecordPaymentViewModel(recordPaymentUseCase)
+        eventTracker = mockk(relaxed = true)
+        viewModel = RecordPaymentViewModel(recordPaymentUseCase, eventTracker)
     }
     private fun initViewModel() {
         viewModel.initFor(
