@@ -16,6 +16,7 @@ import com.emul8r.bizap.domain.usecase.CalculateInvoiceMetricsUseCase
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
 import com.emul8r.bizap.domain.test.TestDataProvider
 import com.emul8r.bizap.domain.validation.ValidationRules
+import com.emul8r.bizap.utils.FirebaseEventTracker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -89,7 +90,8 @@ class CreateInvoiceViewModel @Inject constructor(
     private val businessProfileRepository: BusinessProfileRepository,
     private val currencyRepository: CurrencyRepository,
     private val generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase,
-    private val calculateMetricsUseCase: CalculateInvoiceMetricsUseCase
+    private val calculateMetricsUseCase: CalculateInvoiceMetricsUseCase,
+    private val eventTracker: FirebaseEventTracker
 ) : ViewModel() {
 
     private val TAG = "CreateInvoiceViewModel"
@@ -365,6 +367,15 @@ class CreateInvoiceViewModel @Inject constructor(
                 val invoiceId = invoiceRepository.saveInvoice(invoice).getOrThrow()
                 Timber.d("✅ Invoice saved to database: ID=$invoiceId")
                 val invoiceWithId = invoice.copy(id = invoiceId)
+
+                // 📊 Track invoice creation event
+                eventTracker.trackInvoiceCreated(
+                    invoiceId = invoiceId,
+                    customerId = invoice.customerId ?: 0L,
+                    amount = invoice.totalAmount,
+                    currencyCode = invoice.currencyCode,
+                    lineItemCount = invoice.items.size
+                )
 
                 Timber.d("🔵 Starting PDF generation...")
                 val result = generateAndSaveInvoiceUseCase(
