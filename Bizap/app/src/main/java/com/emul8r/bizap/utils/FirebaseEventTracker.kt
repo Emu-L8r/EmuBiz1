@@ -272,8 +272,13 @@ class FirebaseEventTracker(private val analytics: FirebaseAnalytics?) {
 
     private fun logEvent(eventName: String, params: Bundle) {
         try {
-            analytics?.logEvent(eventName, params)
-            Timber.d("📊 Firebase event logged: $eventName")
+            if (analytics != null) {
+                analytics.logEvent(eventName, params)
+                Timber.d("📊 Firebase event logged: $eventName")
+            } else {
+                // Firebase not available - log to Timber only
+                Timber.d("📊 Firebase event QUEUED (Firebase not available): $eventName")
+            }
         } catch (e: Exception) {
             Timber.w(e, "Failed to log Firebase event: $eventName")
         }
