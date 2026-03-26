@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
 
@@ -45,8 +46,12 @@ class InvoicePdfViewModel @Inject constructor(
     fun preparePreview(invoiceId: Long, isQuote: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val invoice = invoiceRepo.getInvoiceWithItemsById(invoiceId).first() ?: throw IllegalStateException("Invoice not found")
+                Timber.d("📄 Starting PDF preview preparation for invoice: $invoiceId")
+
+                val invoice = invoiceRepo.getInvoiceWithItemsById(invoiceId).first()
+                    ?: throw IllegalStateException("Invoice not found: $invoiceId")
                 val profile = businessProfileRepo.activeProfile.first()
+                    ?: throw IllegalStateException("No active business profile found")
 
                 // Build snapshot for PDF generation
                 val snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
@@ -86,63 +91,120 @@ class InvoicePdfViewModel @Inject constructor(
                     bankName = profile.bankName ?: ""
                 )
 
+                Timber.d("📝 Generated invoice snapshot for ${invoice.customerName}")
+
                 // Generate PDF to a temporary file first
                 val tempPdfFile = pdfService.generateInvoice(snapshot, isQuote)
+                Timber.d("🔄 Temporary PDF generated: ${tempPdfFile.absolutePath}")
 
                 // 1. Move from temporary cache to permanent internal documents folder
                 val permanentFile = documentManager.archiveToInternalStorage(tempPdfFile, invoice.id)
+                Timber.d("📁 PDF archived to internal storage: ${permanentFile.absolutePath}")
 
                 // 2. Update Room immediately so the Vault sees it
                 invoiceRepo.updatePdfPath(invoice.id, permanentFile.absolutePath).getOrThrow()
+                Timber.d("💾 PDF path updated in database")
 
                 // Now, generate a bitmap for the UI preview from the permanent file
                 val bitmap = generateBitmapFromFile(permanentFile)
+                Timber.d("🖼️ PDF preview bitmap created successfully")
 
                 _uiState.value = PdfPreviewUiState.Ready(bitmap, permanentFile)
+                Timber.i("✅ PDF preview ready for invoice: $invoiceId")
 
             } catch (e: Exception) {
-                _uiState.value = PdfPreviewUiState.Error(e.message ?: "An unexpected error occurred")
+                Timber.e(e, "❌ Error preparing PDF preview for invoice: $invoiceId")
+                _uiState.value = PdfPreviewUiState.Error(e.message ?: "An unexpected error occurred during PDF generation")
             }
         }
     }
 
     private fun generateBitmapFromFile(file: File): Bitmap {
-        val renderer = PdfRenderer(context.contentResolver.openFileDescriptor(Uri.fromFile(file), "r")!!)
-        val page = renderer.openPage(0)
-        val bitmap = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
-        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-        page.close()
-        renderer.close()
-        return bitmap
+        return try {
+            // Use FileProvider to get safe URI for internal storage files
+            val fileUri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
+
+            // Open file descriptor safely with error handling
+            val fd = context.contentResolver.openFileDescriptor(fileUri, "r")
+                ?: throw IllegalStateException("Could not open PDF file descriptor: ${file.absolutePath}")
+
+            val renderer = PdfRenderer(fd)
+            val page = renderer.openPage(0)
+            val bitmap = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
+            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+            page.close()
+            renderer.close()
+
+            Timber.d("✅ PDF bitmap generated successfully: ${file.name}")
+            bitmap
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to generate PDF bitmap from: ${file.absolutePath}")
+            throw IllegalStateException("Failed to generate PDF preview: ${e.message}", e)
+        }
     }
 
     fun shareInternalFile() {
         val state = _uiState.value
         if (state is PdfPreviewUiState.Ready) {
-            val contentUri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", state.pdfFile)
-            val shareIntent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_STREAM, contentUri)
-                type = "application/pdf"
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            try {
+                Timber.d("📤 Sharing PDF file: ${state.pdfFile.name}")
+                val contentUri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", state.pdfFile)
+                val shareIntent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_STREAM, contentUri)
+                    type = "application/pdf"
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                val chooser = Intent.createChooser(shareIntent, "Share Invoice via...")
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(chooser)
+                Timber.i("✅ Share intent launched successfully")
+            } catch (e: Exception) {
+                Timber.e(e, "❌ Failed to share PDF file")
             }
-            val chooser = Intent.createChooser(shareIntent, "Share Invoice via...")
-            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(chooser)
+        } else {
+            Timber.w("⚠️ Cannot share: PDF not ready (state=${state::class.simpleName})")
         }
     }
 
     fun exportToPublicDownloads() {
         val state = _uiState.value
         if (state is PdfPreviewUiState.Ready) {
-            viewModelScope.launch(Dispatchers.IO) {
-                documentManager.saveToDownloads(state.pdfFile, state.pdfFile.name)
+            try {
+                Timber.d("💾 Exporting PDF to Downloads: ${state.pdfFile.name}")
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        val result = documentManager.saveToDownloads(state.pdfFile, state.pdfFile.name)
+                        if (result != null) {
+                            Timber.i("✅ PDF exported to Downloads: $result")
+                        } else {
+                            Timber.e("❌ Failed to export PDF to Downloads (returned null)")
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "❌ Error exporting PDF to Downloads")
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "❌ Failed to initiate Downloads export")
             }
+        } else {
+            Timber.w("⚠️ Cannot export: PDF not ready (state=${state::class.simpleName})")
         }
     }
 
     fun launchSystemPrint() {
-        // Note: System Print is a complex operation that needs a PrintDocumentAdapter.
-        // This is a placeholder for the full implementation.
+        val state = _uiState.value
+        if (state is PdfPreviewUiState.Ready) {
+            try {
+                Timber.d("🖨️ Launching system print dialog for: ${state.pdfFile.name}")
+                // Note: System Print is a complex operation that needs a PrintDocumentAdapter.
+                // This is a placeholder for the full implementation.
+                Timber.w("⚠️ System print not yet fully implemented")
+            } catch (e: Exception) {
+                Timber.e(e, "❌ Failed to launch system print")
+            }
+        } else {
+            Timber.w("⚠️ Cannot print: PDF not ready (state=${state::class.simpleName})")
+        }
     }
 }
