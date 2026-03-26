@@ -187,44 +187,69 @@ class DocumentVaultViewModel @Inject constructor(
     val uiState: StateFlow<DocumentVaultUiState> =
         documentRepository.getAllDocuments()
             .combine(_searchTerm) { documents, term ->
-                val items = documents
-                    .filter { File(it.absolutePath).exists() }
-                    .mapNotNull { doc ->
-                        invoiceRepository.getInvoiceWithItemsById(doc.relatedInvoiceId).first()?.let { invoice ->
-                            if (invoice.customerName.contains(term, ignoreCase = true) ||
-                                invoice.invoiceId.toString().contains(term)) {
+                try {
+                    Timber.d("🔍 DocumentVault: Loading ${documents.size} documents from repository")
+
+                    val items = documents
+                        .filter { doc ->
+                            // Null-safe file path check
+                            if (doc.absolutePath.isNullOrBlank()) {
+                                Timber.w("⚠️ Document #${doc.id} has null/blank path, skipping")
+                                false
+                            } else {
+                                val file = File(doc.absolutePath)
+                                val exists = file.exists()
+                                if (!exists) {
+                                    Timber.w("⚠️ Document #${doc.id} file not found: ${doc.absolutePath}")
+                                }
+                                exists
+                            }
+                        }
+                        .mapNotNull { doc ->
+                            try {
+                                val invoice = invoiceRepository.getInvoiceWithItemsById(doc.relatedInvoiceId).first()
+                                if (invoice == null) {
+                                    Timber.w("⚠️ Document #${doc.id} has no associated invoice")
+                                    return@mapNotNull null
+                                }
+
+                                val matchesSearch = invoice.customerName.contains(term, ignoreCase = true) ||
+                                                    invoice.invoiceId.toString().contains(term)
+
+                                if (!matchesSearch && term.isNotBlank()) {
+                                    return@mapNotNull null
+                                }
+
+                                val file = File(doc.absolutePath)
                                 DocumentVaultItem(
-                                    id = doc.id, // Map the ID here
+                                    id = doc.id,
                                     invoice = invoice,
-                                    fileSize = File(doc.absolutePath).length(),
+                                    fileSize = file.length(),
                                     status = doc.status,
                                     fileType = doc.fileType,
                                     absolutePath = doc.absolutePath
                                 )
-                            } else {
+                            } catch (e: Exception) {
+                                Timber.e(e, "❌ Error processing document #${doc.id}")
                                 null
                             }
                         }
-                    }
-                
-                // --- DEBUGGING DUPLICATES ---
-                val paths = items.map { it.absolutePath }
-                val duplicatePaths = paths.groupingBy { it }.eachCount().filter { it.value > 1 }
-                if (duplicatePaths.isNotEmpty()) {
-                    Timber.d("Duplicate paths found: $duplicatePaths")
-                }
 
-                val ids = items.map { it.id }
-                val duplicateIds = ids.groupingBy { it }.eachCount().filter { it.value > 1 }
-                if (duplicateIds.isNotEmpty()) {
-                    Timber.d("Duplicate IDs found: $duplicateIds")
+                    Timber.d("📋 DocumentVault: Loaded ${items.size} valid documents")
+                    items.groupBy { monthYearFormat.format(Date(it.invoice.date)) }
+                } catch (e: Exception) {
+                    Timber.e(e, "❌ Error loading documents in Vault")
+                    throw e
                 }
-                // ----------------------------
-
-                items.groupBy { monthYearFormat.format(Date(it.invoice.date)) }
             }
-            .map<Map<String, List<DocumentVaultItem>>, DocumentVaultUiState> { DocumentVaultUiState.Success(it) }
-            .catch { emit(DocumentVaultUiState.Error(it.message ?: "An error occurred")) }
+            .map<Map<String, List<DocumentVaultItem>>, DocumentVaultUiState> {
+                Timber.d("✅ DocumentVault: UI state updated with ${it.values.sumOf { it.size }} documents")
+                DocumentVaultUiState.Success(it)
+            }
+            .catch { e ->
+                Timber.e(e, "❌ DocumentVault: Error in state flow")
+                emit(DocumentVaultUiState.Error(e.message ?: "An error occurred loading documents"))
+            }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
