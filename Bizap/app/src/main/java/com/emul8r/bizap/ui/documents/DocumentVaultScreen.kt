@@ -21,6 +21,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.data.local.entities.DocumentStatus
+import timber.log.Timber
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -109,18 +110,55 @@ fun DocumentVaultScreen(
                                             ),
                                             onClick = {
                                                 try {
-                                                    if (file.exists()) {
-                                                        val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
-                                                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                                                            setDataAndType(uri, "application/pdf")
-                                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                        }
-                                                        context.startActivity(intent)
+                                                    if (item.absolutePath.isBlank()) {
+                                                        Timber.e("❌ Document #${item.id} has blank file path")
+                                                        android.widget.Toast.makeText(
+                                                            context,
+                                                            "File path is invalid",
+                                                            android.widget.Toast.LENGTH_SHORT
+                                                        ).show()
+                                                        return@ElevatedCard
                                                     }
+
+                                                    if (!file.exists()) {
+                                                        Timber.e("❌ Document #${item.id} file not found: ${item.absolutePath}")
+                                                        android.widget.Toast.makeText(
+                                                            context,
+                                                            "File not found: ${file.name}",
+                                                            android.widget.Toast.LENGTH_SHORT
+                                                        ).show()
+                                                        return@ElevatedCard
+                                                    }
+
+                                                    Timber.d("📂 Opening document: ${file.name}")
+                                                    val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
+                                                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                        setDataAndType(uri, "application/pdf")
+                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                    }
+                                                    context.startActivity(intent)
+                                                    Timber.d("✅ PDF opened successfully")
                                                 } catch (e: IllegalArgumentException) {
-                                                    android.widget.Toast.makeText(context, "Unable to open file", android.widget.Toast.LENGTH_SHORT).show()
+                                                    Timber.e(e, "❌ FileProvider error for document #${item.id}: Invalid path in config?")
+                                                    android.widget.Toast.makeText(
+                                                        context,
+                                                        "Cannot access file - configuration issue",
+                                                        android.widget.Toast.LENGTH_SHORT
+                                                    ).show()
+                                                } catch (e: android.content.ActivityNotFoundException) {
+                                                    Timber.e(e, "❌ No PDF viewer installed")
+                                                    android.widget.Toast.makeText(
+                                                        context,
+                                                        "No PDF viewer app installed",
+                                                        android.widget.Toast.LENGTH_SHORT
+                                                    ).show()
                                                 } catch (e: Exception) {
-                                                    android.widget.Toast.makeText(context, "Unable to open file", android.widget.Toast.LENGTH_SHORT).show()
+                                                    Timber.e(e, "❌ Unexpected error opening document #${item.id}")
+                                                    android.widget.Toast.makeText(
+                                                        context,
+                                                        "Error opening file: ${e.message}",
+                                                        android.widget.Toast.LENGTH_SHORT
+                                                    ).show()
                                                 }
                                             }
                                         ) {
@@ -141,19 +179,49 @@ fun DocumentVaultScreen(
                                                     IconButton(
                                                         onClick = {
                                                             try {
-                                                                if (file.exists()) {
-                                                                    val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
-                                                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                                                        type = "application/pdf"
-                                                                        putExtra(Intent.EXTRA_STREAM, uri)
-                                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                                    }
-                                                                    context.startActivity(Intent.createChooser(intent, "Share PDF"))
+                                                                if (item.absolutePath.isBlank()) {
+                                                                    Timber.e("❌ Document #${item.id} has blank path for sharing")
+                                                                    android.widget.Toast.makeText(
+                                                                        context,
+                                                                        "File path is invalid",
+                                                                        android.widget.Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                    return@IconButton
                                                                 }
+
+                                                                if (!file.exists()) {
+                                                                    Timber.e("❌ Cannot share: File not found: ${item.absolutePath}")
+                                                                    android.widget.Toast.makeText(
+                                                                        context,
+                                                                        "File no longer exists",
+                                                                        android.widget.Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                    return@IconButton
+                                                                }
+
+                                                                Timber.d("📤 Sharing document: ${file.name}")
+                                                                val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
+                                                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                                                    type = "application/pdf"
+                                                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                                }
+                                                                context.startActivity(Intent.createChooser(intent, "Share PDF"))
+                                                                Timber.d("✅ Share dialog launched")
                                                             } catch (e: IllegalArgumentException) {
-                                                                android.widget.Toast.makeText(context, "Unable to share file", android.widget.Toast.LENGTH_SHORT).show()
+                                                                Timber.e(e, "❌ FileProvider error when sharing document #${item.id}")
+                                                                android.widget.Toast.makeText(
+                                                                    context,
+                                                                    "Cannot share file - configuration issue",
+                                                                    android.widget.Toast.LENGTH_SHORT
+                                                                ).show()
                                                             } catch (e: Exception) {
-                                                                android.widget.Toast.makeText(context, "Unable to share file", android.widget.Toast.LENGTH_SHORT).show()
+                                                                Timber.e(e, "❌ Error sharing document #${item.id}")
+                                                                android.widget.Toast.makeText(
+                                                                    context,
+                                                                    "Error sharing file: ${e.message}",
+                                                                    android.widget.Toast.LENGTH_SHORT
+                                                                ).show()
                                                             }
                                                         },
                                                         enabled = file.exists()
