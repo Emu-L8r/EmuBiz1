@@ -181,6 +181,23 @@ class InvoicePdfService @Inject constructor(
 
         currentY += 15f
 
+        // ===== HEADER AND SUBHEADER TEXT (Optional, appears before line items) =====
+        if (snapshot.headerText.isNotBlank() || snapshot.subheaderText.isNotBlank()) {
+            canvas = pageManager.ensureSpace(50f)
+
+            if (snapshot.headerText.isNotBlank()) {
+                canvas.drawText(snapshot.headerText, 40f, pageManager.currentY, headerPaint)
+                pageManager.advanceY(16f)
+            }
+
+            if (snapshot.subheaderText.isNotBlank()) {
+                canvas.drawText(snapshot.subheaderText, 40f, pageManager.currentY, bodyPaint)
+                pageManager.advanceY(12f)
+            }
+
+            pageManager.advanceY(8f)  // Extra spacing after header/subheader
+        }
+
         if (!hideLineItems) {
             // ===== LINE ITEMS TABLE WITH PAGINATION =====
             // Draw table header
