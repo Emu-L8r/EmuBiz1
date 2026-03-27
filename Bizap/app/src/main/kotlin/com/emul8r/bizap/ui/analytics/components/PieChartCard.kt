@@ -1,6 +1,7 @@
 package com.emul8r.bizap.ui.analytics.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -27,12 +28,14 @@ import timber.log.Timber
 fun PieChartCard(
     data: List<Pair<String, Double>>,
     title: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 240.dp, max = 340.dp),
+            .heightIn(min = 240.dp, max = 340.dp)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface

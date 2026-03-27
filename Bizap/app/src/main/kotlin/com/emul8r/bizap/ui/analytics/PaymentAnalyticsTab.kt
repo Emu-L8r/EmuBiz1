@@ -125,28 +125,23 @@ fun PaymentAnalyticsTab(
                 BarChartCard(
                     data = listOf(
                         com.emul8r.bizap.domain.analytics.ChartDataPoint(
-                            "Current",
+                            "0-30d",
                             analytics.outstandingByAging.current.toFloat(),
                             System.currentTimeMillis()
                         ),
                         com.emul8r.bizap.domain.analytics.ChartDataPoint(
-                            "30d",
+                            "31-60d",
                             analytics.outstandingByAging.past30.toFloat(),
                             System.currentTimeMillis()
                         ),
                         com.emul8r.bizap.domain.analytics.ChartDataPoint(
-                            "60d",
+                            "61-90d",
                             analytics.outstandingByAging.past60.toFloat(),
                             System.currentTimeMillis()
                         ),
                         com.emul8r.bizap.domain.analytics.ChartDataPoint(
-                            "90d",
+                            "90+ days",
                             analytics.outstandingByAging.past90.toFloat(),
-                            System.currentTimeMillis()
-                        ),
-                        com.emul8r.bizap.domain.analytics.ChartDataPoint(
-                            "90+",
-                            analytics.outstandingByAging.past90.toFloat(),  // past90 bucket includes 90+ days
                             System.currentTimeMillis()
                         )
                     ),
