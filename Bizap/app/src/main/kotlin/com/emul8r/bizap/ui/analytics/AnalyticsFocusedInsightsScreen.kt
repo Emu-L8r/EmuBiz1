@@ -32,6 +32,7 @@ import timber.log.Timber
 fun AnalyticsFocusedInsightsScreen(
     onBack: () -> Unit = {},
     mainViewModel: AnalyticsFocusedInsightsViewModel = hiltViewModel(),
+    quickReportsViewModel: QuickReportsTabViewModel = hiltViewModel(),
     revenueViewModel: RevenueAnalyticsTabViewModel = hiltViewModel(),
     paymentViewModel: PaymentAnalyticsTabViewModel = hiltViewModel(),
     customerViewModel: CustomerAnalyticsTabViewModel = hiltViewModel(),
@@ -44,7 +45,7 @@ fun AnalyticsFocusedInsightsScreen(
     var showDrillSheet by remember { mutableStateOf(false) }
     var drillData: Pair<String, List<Pair<String, Double>>>? by remember { mutableStateOf(null) }
 
-    val tabTitles = listOf("Revenue", "Payment", "Customers", "Cash Flow")
+    val tabTitles = listOf("Quick Reports", "Revenue", "Payment", "Customers", "Cash Flow")
 
     Scaffold(
         topBar = {
@@ -107,7 +108,15 @@ fun AnalyticsFocusedInsightsScreen(
             // Tab content
             Box(modifier = Modifier.fillMaxSize()) {
                 when (mainUiState.selectedTabIndex) {
-                    0 -> RevenueAnalyticsTab(
+                    0 -> QuickReportsTab(
+                        viewModel = quickReportsViewModel,
+                        dateRange = mainUiState.selectedDateRange,
+                        onDrillClick = { label, items ->
+                            drillData = label to items
+                            showDrillSheet = true
+                        }
+                    )
+                    1 -> RevenueAnalyticsTab(
                         viewModel = revenueViewModel,
                         dateRange = mainUiState.selectedDateRange,
                         onDrillClick = { label, items ->
@@ -115,7 +124,7 @@ fun AnalyticsFocusedInsightsScreen(
                             showDrillSheet = true
                         }
                     )
-                    1 -> PaymentAnalyticsTab(
+                    2 -> PaymentAnalyticsTab(
                         viewModel = paymentViewModel,
                         dateRange = mainUiState.selectedDateRange,
                         onDrillClick = { label, items ->
@@ -123,7 +132,7 @@ fun AnalyticsFocusedInsightsScreen(
                             showDrillSheet = true
                         }
                     )
-                    2 -> CustomerAnalyticsTab(
+                    3 -> CustomerAnalyticsTab(
                         viewModel = customerViewModel,
                         dateRange = mainUiState.selectedDateRange,
                         onDrillClick = { label, items ->
