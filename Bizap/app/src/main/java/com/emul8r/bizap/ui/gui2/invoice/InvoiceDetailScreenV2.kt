@@ -76,6 +76,7 @@ fun InvoiceDetailScreenV2(
             is InvoiceDetailUiStateV2.Success -> {
                 InvoiceDetailContentV2(
                     invoice = state.invoice,
+                    businessId = businessId,  // ✅ FIXED: Pass businessId
                     modifier = Modifier.padding(paddingValues)
                 )
 
@@ -117,6 +118,7 @@ fun InvoiceDetailScreenV2(
 @Composable
 private fun InvoiceDetailContentV2(
     invoice: InvoiceWithItems,
+    businessId: Long,
     modifier: Modifier = Modifier
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
@@ -144,7 +146,7 @@ private fun InvoiceDetailContentV2(
             when (selectedTabIndex) {
                 0 -> InvoiceDetailsTab(invoice)
                 1 -> InvoiceItemsTab(invoice)
-                2 -> PaymentHistoryTab(invoice)
+                2 -> PaymentHistoryTab(invoice, businessId)  // ✅ FIXED: Pass businessId
             }
         }
     }
@@ -248,10 +250,12 @@ private fun InvoiceItemsTab(
 @Composable
 private fun PaymentHistoryTab(
     invoice: InvoiceWithItems,
+    businessId: Long,
     modifier: Modifier = Modifier
 ) {
     PaymentHistoryScreen(
         invoiceId = invoice.invoice.id,
+        businessId = businessId,  // ✅ FIXED: Pass businessId for multi-tenant safety
         modifier = modifier.fillMaxWidth()
     )
 }
