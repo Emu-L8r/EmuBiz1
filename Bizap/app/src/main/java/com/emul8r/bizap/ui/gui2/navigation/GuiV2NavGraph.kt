@@ -48,6 +48,7 @@ fun GuiV2NavGraph(
                 SyncStatusIndicator()
                 DashboardScreenV2(
                     businessId = route.businessId,
+                    navController = navController,
                     onNavigateToInvoices = { navController.navigate(ScreenV2.Invoices(route.businessId)) },
                     onNavigateToCustomers = { navController.navigate(ScreenV2.Customers(route.businessId)) },
                     onNavigateToSettings = { navController.navigateToSettingsV2(route.businessId) },
