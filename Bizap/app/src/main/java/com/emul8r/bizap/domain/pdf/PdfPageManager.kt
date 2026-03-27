@@ -2,6 +2,7 @@ package com.emul8r.bizap.domain.pdf
 
 import android.graphics.Canvas
 import android.graphics.pdf.PdfDocument
+import timber.log.Timber
 
 /**
  * Manages pagination logic for PDF documents.
@@ -14,6 +15,10 @@ class PdfPageManager(
     private val pageWidth: Int = 595,
     private val pageHeight: Int = 842
 ) {
+    companion object {
+        private const val TAG = "PdfPageManager"
+    }
+
     private val topMargin = 40f
     private val bottomMargin = 40f
     private val availableHeight = pageHeight - topMargin - bottomMargin
@@ -85,7 +90,12 @@ class PdfPageManager(
      */
     private fun finishCurrentPage() {
         if (currentPage != null) {
-            pdfDocument.finishPage(currentPage!!)
+            try {
+                pdfDocument.finishPage(currentPage!!)
+            } catch (e: IllegalStateException) {
+                // Document was already closed - this can happen in finalizers
+                Timber.w("$TAG: Page already finished or document closed: ${e.message}")
+            }
         }
     }
 
