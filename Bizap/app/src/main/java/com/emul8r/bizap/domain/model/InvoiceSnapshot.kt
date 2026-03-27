@@ -33,7 +33,9 @@ data class InvoiceSnapshot(
     val bankAccountName: String = "",
     val bankAccountNumber: String = "",
     val bankBsb: String = "",
-    val bankName: String = ""
+    val bankName: String = "",
+    // Invoice status for watermarks (DRAFT, SENT, PAID, OVERDUE, PARTIALLY_PAID, CANCELLED)
+    val invoiceStatus: String = "DRAFT"
 )
 
 data class LineItemSnapshot(

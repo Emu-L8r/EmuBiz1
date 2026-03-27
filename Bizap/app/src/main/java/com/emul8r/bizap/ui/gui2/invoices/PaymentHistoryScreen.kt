@@ -139,17 +139,9 @@ fun PaymentHistoryScreen(
         return
     }
 
-    // Create ViewModel factory with explicit parameters (✅ FIXED: No longer relies on SavedStateHandle)
-    val viewModel: PaymentHistoryViewModel = hiltViewModel(
-        creationCallback = { factory ->
-            factory.create(
-                invoiceId = invoiceId,
-                businessId = businessId
-            )
-        }
-    )
-
-    val uiState by viewModel.paymentHistory.collectAsStateWithLifecycle(
+    // ✅ FIXED: Retrieve ViewModel and initialize with parameters
+    val viewModel: PaymentHistoryViewModel = hiltViewModel()
+    val uiState by viewModel.initialize(invoiceId, businessId).collectAsStateWithLifecycle(
         initialValue = PaymentHistoryUiState.Loading
     )
 

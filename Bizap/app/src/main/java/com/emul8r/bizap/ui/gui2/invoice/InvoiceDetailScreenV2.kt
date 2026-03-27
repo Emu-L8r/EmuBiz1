@@ -1,8 +1,8 @@
 package com.emul8r.bizap.ui.gui2.invoice
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Payment
@@ -24,6 +24,15 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /**
+ * Dialog state to manage multiple dialogs without recomposition issues.
+ */
+private sealed class DialogState {
+    object None : DialogState()
+    object PaymentDialog : DialogState()
+    object StatusMenu : DialogState()
+}
+
+/**
  * GUI2 invoice detail screen.
  * Displays a read-only view of a single invoice's details and line items.
  */
@@ -36,8 +45,7 @@ fun InvoiceDetailScreenV2(
     viewModel: InvoiceDetailViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showPaymentDialog by remember { mutableStateOf(false) }
-    var showStatusMenu by remember { mutableStateOf(false) }
+    var dialogState by remember { mutableStateOf<DialogState>(DialogState.None) }
 
     Scaffold(
         topBar = {
@@ -50,10 +58,10 @@ fun InvoiceDetailScreenV2(
                 },
                 actions = {
                     if (uiState is InvoiceDetailUiStateV2.Success) {
-                        IconButton(onClick = { showPaymentDialog = true }) {
+                        IconButton(onClick = { dialogState = DialogState.PaymentDialog }) {
                             Icon(Icons.Default.Payment, contentDescription = "Record Payment")
                         }
-                        IconButton(onClick = { showStatusMenu = true }) {
+                        IconButton(onClick = { dialogState = DialogState.StatusMenu }) {
                             Icon(Icons.Default.Edit, contentDescription = "Update Status")
                         }
                     }
@@ -76,38 +84,40 @@ fun InvoiceDetailScreenV2(
             is InvoiceDetailUiStateV2.Success -> {
                 InvoiceDetailContentV2(
                     invoice = state.invoice,
-                    businessId = businessId,  // ✅ FIXED: Pass businessId
+                    businessId = businessId,
                     modifier = Modifier.padding(paddingValues)
                 )
 
+                // Memoize status parsing to avoid duplicate conversions
+                val currentStatus = remember(state.invoice.invoice.status) {
+                    runCatching {
+                        InvoiceStatus.valueOf(state.invoice.invoice.status)
+                    }.getOrElse { InvoiceStatus.DRAFT }
+                }
+
                 // Payment Dialog
-                if (showPaymentDialog) {
+                if (dialogState is DialogState.PaymentDialog) {
                     RecordPaymentDialogV2(
                         invoiceId = state.invoice.invoice.id,
                         businessId = businessId,
                         invoiceTotal = state.invoice.invoice.totalAmount,
                         amountPaid = state.invoice.invoice.amountPaid,
                         invoiceDate = state.invoice.invoice.date,
-                        invoiceStatus = runCatching {
-                            InvoiceStatus.valueOf(state.invoice.invoice.status)
-                        }.getOrElse { InvoiceStatus.DRAFT },
-                        onDismiss = { showPaymentDialog = false },
-                        onSuccess = { showPaymentDialog = false }
+                        invoiceStatus = currentStatus,
+                        onDismiss = { dialogState = DialogState.None },
+                        onSuccess = { dialogState = DialogState.None }
                     )
                 }
 
                 // Status Update Menu
-                if (showStatusMenu) {
-                    val currentStatus = runCatching {
-                        InvoiceStatus.valueOf(state.invoice.invoice.status)
-                    }.getOrElse { InvoiceStatus.DRAFT }
+                if (dialogState is DialogState.StatusMenu) {
                     StatusUpdateMenuV2(
                         currentStatus = currentStatus,
                         onStatusSelected = { status: InvoiceStatus ->
                             viewModel.updateInvoiceStatus(status)
-                            showStatusMenu = false
+                            dialogState = DialogState.None
                         },
-                        onDismiss = { showStatusMenu = false }
+                        onDismiss = { dialogState = DialogState.None }
                     )
                 }
             }
@@ -136,17 +146,19 @@ private fun InvoiceDetailContentV2(
             }
         }
 
-        // Tab content
-        Box(
+        // Tab content with LazyColumn for better performance
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .padding(16.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            when (selectedTabIndex) {
-                0 -> InvoiceDetailsTab(invoice)
-                1 -> InvoiceItemsTab(invoice)
-                2 -> PaymentHistoryTab(invoice, businessId)  // ✅ FIXED: Pass businessId
+            item {
+                when (selectedTabIndex) {
+                    0 -> InvoiceDetailsTab(invoice)
+                    1 -> InvoiceItemsTab(invoice)
+                    2 -> PaymentHistoryTab(invoice, businessId)
+                }
             }
         }
     }
