@@ -37,6 +37,18 @@ fun CreateCustomerScreenV2(
     var notes by remember { mutableStateOf("") }
     var isSaving by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf<String?>(null) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show error snackbar when error message changes
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(
+                message = it,
+                duration = SnackbarDuration.Long
+            )
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -48,7 +60,8 @@ fun CreateCustomerScreenV2(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -124,6 +137,7 @@ fun CreateCustomerScreenV2(
                     }
 
                     isSaving = true
+                    errorMessage = null
                     viewModel.createCustomer(
                         Customer(
                             id = 0,
@@ -135,11 +149,14 @@ fun CreateCustomerScreenV2(
                             notes = notes
                         ),
                         onSuccess = {
+                            isSaving = false
+                            Timber.i("Customer created successfully: $name")
                             onCreate()
                         },
-                        onError = {
+                        onError = { error ->
                             isSaving = false
-                            Timber.e("Failed to create customer: $it")
+                            errorMessage = error ?: "Failed to create customer. Please try again."
+                            Timber.e("Failed to create customer: $error")
                         }
                     )
                 },

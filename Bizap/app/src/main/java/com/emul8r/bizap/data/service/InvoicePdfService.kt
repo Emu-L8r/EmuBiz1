@@ -167,19 +167,6 @@ class InvoicePdfService @Inject constructor(
         val subheaderBodyPaint = Paint().apply { typeface = italicTypeface; textSize = 10f; color = colors.textLight; isAntiAlias = true }
         val footerBodyPaint = Paint().apply { typeface = italicTypeface; textSize = 9f; color = Color.GRAY; isAntiAlias = true }
 
-        // Render header and subheader if present
-        if (snapshot.headerText.isNotBlank()) {
-            currentY += 15f
-            canvas.drawLine(40f, currentY, 555f, currentY, separatorPaint)
-            currentY += 12f
-            currentY = drawWrappedText(canvas, snapshot.headerText, 40f, currentY, 515f, sectionHeaderPaint)
-        }
-        if (snapshot.subheaderText.isNotBlank()) {
-            currentY += 4f
-            currentY = drawWrappedText(canvas, snapshot.subheaderText, 40f, currentY, 515f, subheaderBodyPaint)
-        }
-
-        currentY += 15f
 
         // ===== HEADER AND SUBHEADER TEXT (Optional, appears before line items) =====
         if (snapshot.headerText.isNotBlank() || snapshot.subheaderText.isNotBlank()) {

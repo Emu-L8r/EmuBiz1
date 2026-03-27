@@ -6,9 +6,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -27,8 +33,8 @@ import com.emul8r.bizap.ui.gui2.common.MetricCardV2
 import com.emul8r.bizap.ui.gui2.common.SectionHeaderV2
 
 /**
- * GUI2 Invoice Analytics screen.
- * Displays a stacked bar chart of invoices sent vs completed (PAID) per week or month.
+ * GUI2 Analytics Hub - Displays multiple analytics views.
+ * Features tabs for: Invoices, Payments, Customers, Risk
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,11 +44,12 @@ fun InvoiceAnalyticsScreenV2(
     viewModel: InvoiceAnalyticsViewModelV2 = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var selectedTabIndex by remember { mutableStateOf(0) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Invoice Analytics") },
+                title = { Text("Analytics Hub") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -51,18 +58,127 @@ fun InvoiceAnalyticsScreenV2(
             )
         }
     ) { paddingValues ->
-        when {
-            state.isLoading -> LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
-            state.error != null -> ErrorStateV2(
-                message = state.error ?: "Unknown error",
-                modifier = Modifier.padding(paddingValues)
-            )
-            else -> InvoiceAnalyticsContent(
-                state = state,
-                onSetGranularity = viewModel::setGranularity,
-                onSetDateRange = viewModel::setDateRange,
-                modifier = Modifier.padding(paddingValues)
-            )
+        Column(modifier = Modifier.padding(paddingValues)) {
+            // Tab row
+            TabRow(
+                selectedTabIndex = selectedTabIndex,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Tab(
+                    selected = selectedTabIndex == 0,
+                    onClick = { selectedTabIndex = 0 },
+                    text = { Text("Invoices") }
+                )
+                Tab(
+                    selected = selectedTabIndex == 1,
+                    onClick = { selectedTabIndex = 1 },
+                    text = { Text("Payments") }
+                )
+                Tab(
+                    selected = selectedTabIndex == 2,
+                    onClick = { selectedTabIndex = 2 },
+                    text = { Text("Customers") }
+                )
+                Tab(
+                    selected = selectedTabIndex == 3,
+                    onClick = { selectedTabIndex = 3 },
+                    text = { Text("Risk") }
+                )
+            }
+
+            // Tab content
+            when (selectedTabIndex) {
+                0 -> {
+                    when {
+                        state.isLoading -> LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
+                        state.error != null -> ErrorStateV2(
+                            message = state.error ?: "Unknown error",
+                            modifier = Modifier.padding(paddingValues)
+                        )
+                        else -> InvoiceAnalyticsContent(
+                            state = state,
+                            onSetGranularity = viewModel::setGranularity,
+                            onSetDateRange = viewModel::setDateRange,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+                1 -> {
+                    // Payment analytics placeholder
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Payment,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text("Payment Analytics", style = MaterialTheme.typography.titleMedium)
+                            Text("Collection rates, payment trends, and outstanding balances",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                2 -> {
+                    // Customer analytics placeholder
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.People,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text("Customer Analytics", style = MaterialTheme.typography.titleMedium)
+                            Text("Customer segments, lifetime value, and engagement metrics",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                3 -> {
+                    // Risk analytics placeholder
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Warning,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                            Text("Risk Analytics", style = MaterialTheme.typography.titleMedium)
+                            Text("At-risk customers, overdue invoices, and collection status",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -392,8 +392,47 @@ private fun BusinessProfileV2Form(
     var accountName by remember(initialProfile) { mutableStateOf(initialProfile.accountName ?: "") }
     var bsbNumber by remember(initialProfile) { mutableStateOf(initialProfile.bsbNumber ?: "") }
     var accountNumber by remember(initialProfile) { mutableStateOf(initialProfile.accountNumber ?: "") }
+    var logoBase64 by remember(initialProfile) { mutableStateOf(initialProfile.logoBase64) }
     var isSaving by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            scope.launch {
+                val base64 = withContext(Dispatchers.IO) {
+                    ImageCompressor.uriToBase64(context, it)
+                }
+                base64?.let { encoded ->
+                    logoBase64 = encoded
+                }
+            }
+        }
+    }
+
+    val cameraImageUri = remember {
+        val photoFile = File(context.cacheDir, "logo_${System.currentTimeMillis()}.jpg")
+        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            scope.launch {
+                val base64 = withContext(Dispatchers.IO) {
+                    ImageCompressor.uriToBase64(context, cameraImageUri)
+                }
+                base64?.let { encoded ->
+                    logoBase64 = encoded
+                }
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -402,6 +441,81 @@ private fun BusinessProfileV2Form(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Logo Section
+        Text("Business Logo", style = MaterialTheme.typography.titleMedium)
+
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = RoundedCornerShape(8.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (logoBase64 != null) {
+                val bitmap = remember(logoBase64) {
+                    ImageCompressor.base64ToBitmap(logoBase64!!)
+                }
+                bitmap?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = "Business Logo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Image,
+                    contentDescription = "No logo",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedButton(
+                onClick = { cameraLauncher.launch(cameraImageUri) },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.AddAPhoto, contentDescription = null)
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text("Camera")
+            }
+
+            OutlinedButton(
+                onClick = { galleryLauncher.launch("image/*") },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.Image, contentDescription = null)
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text("Gallery")
+            }
+        }
+
+        if (logoBase64 != null) {
+            OutlinedButton(
+                onClick = { logoBase64 = null },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = null)
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text("Remove Logo")
+            }
+        }
+
+        HorizontalDivider()
+
         // Business Details Section
         Text("Business Details", style = MaterialTheme.typography.titleMedium)
 
@@ -504,7 +618,8 @@ private fun BusinessProfileV2Form(
                         bankName = bankName.takeIf { it.isNotBlank() },
                         accountName = accountName.takeIf { it.isNotBlank() },
                         bsbNumber = bsbNumber.takeIf { it.isNotBlank() },
-                        accountNumber = accountNumber.takeIf { it.isNotBlank() }
+                        accountNumber = accountNumber.takeIf { it.isNotBlank() },
+                        logoBase64 = logoBase64
                     )
                 )
             },
