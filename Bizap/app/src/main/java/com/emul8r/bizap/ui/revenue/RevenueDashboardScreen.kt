@@ -21,7 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.common.MetricCard
-import com.emul8r.bizap.ui.theme.StatusColors
+import com.emul8r.bizap.ui.designsystem.BizapColors
 import com.emul8r.bizap.utils.CentsFormatter
 
 /**
@@ -175,18 +175,18 @@ private fun RevenueDashboardContent(
                 title = "MTD Collected",
                 value = CentsFormatter.formatCents(metrics.mtdRevenue),
                 icon = Icons.Default.CheckCircle,
-                backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
-                borderColor = StatusColors.Paid.copy(alpha = 0.3f),
-                accentColor = StatusColors.Paid,
+                backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusPaid,
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
                 title = "YTD Collected",
                 value = CentsFormatter.formatCents(metrics.ytdRevenue),
                 icon = Icons.Default.AttachMoney,
-                backgroundColor = StatusColors.Sent.copy(alpha = 0.08f),
-                borderColor = StatusColors.Sent.copy(alpha = 0.3f),
-                accentColor = StatusColors.Sent,
+                backgroundColor = BizapColors.StatusSent.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusSent.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusSent,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -197,9 +197,9 @@ private fun RevenueDashboardContent(
                 title = "Outstanding (Expected)",
                 value = CentsFormatter.formatCents(metrics.outstandingAmount),
                 icon = Icons.Default.Schedule,
-                backgroundColor = StatusColors.Outstanding.copy(alpha = 0.08f),
-                borderColor = StatusColors.Outstanding.copy(alpha = 0.3f),
-                accentColor = StatusColors.Outstanding,
+                backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusOutstanding,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -210,9 +210,9 @@ private fun RevenueDashboardContent(
                 title = "Overdue",
                 value = CentsFormatter.formatCents(metrics.overdueAmount),
                 icon = Icons.Default.Warning,
-                backgroundColor = StatusColors.Overdue.copy(alpha = 0.08f),
-                borderColor = StatusColors.Overdue.copy(alpha = 0.3f),
-                accentColor = StatusColors.Overdue,
+                backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusOverdue,
                 modifier = Modifier.fillMaxWidth()
             )
         }

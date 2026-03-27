@@ -22,10 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.invoice.model.InvoicePaymentStatus
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.common.MetricCard
-import com.emul8r.bizap.ui.theme.StatusColors
-import com.emul8r.bizap.ui.theme.riskHigh
-import com.emul8r.bizap.ui.theme.riskMedium
-import com.emul8r.bizap.utils.CentsFormatter
+import com.emul8r.bizap.ui.designsystem.BizapColors
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,9 +118,9 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
             title = "Total at Risk",
             value = "$${String.format(Locale.getDefault(), "%.2f", totalAtRisk)}",
             icon = Icons.Default.Error,
-            backgroundColor = StatusColors.Overdue.copy(alpha = 0.08f),
-            borderColor = StatusColors.Overdue.copy(alpha = 0.3f),
-            accentColor = StatusColors.Overdue,
+            backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
+            borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
+            accentColor = BizapColors.StatusOverdue,
             modifier = Modifier.fillMaxWidth()
         )
         
@@ -136,18 +133,18 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
                 title = "Critical (60+ days)",
                 value = "$criticalCount",
                 icon = Icons.Default.Error,
-                backgroundColor = StatusColors.Overdue.copy(alpha = 0.12f),
-                borderColor = StatusColors.Overdue.copy(alpha = 0.4f),
-                accentColor = StatusColors.Overdue,
+                backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.12f),
+                borderColor = BizapColors.StatusOverdue.copy(alpha = 0.4f),
+                accentColor = BizapColors.StatusOverdue,
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
                 title = "At Risk (30-59 days)",
                 value = "$mediumCount",
                 icon = Icons.Default.Warning,
-                backgroundColor = StatusColors.Outstanding.copy(alpha = 0.12f),
-                borderColor = StatusColors.Outstanding.copy(alpha = 0.4f),
-                accentColor = StatusColors.Outstanding,
+                backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.12f),
+                borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.4f),
+                accentColor = BizapColors.StatusOutstanding,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -157,8 +154,8 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
 @Composable
 fun RiskInvoiceCard(invoice: InvoicePaymentStatus) {
     val isHighRisk = invoice.daysOverdue > 60
-    val accentColor = if (isHighRisk) StatusColors.Overdue else StatusColors.Outstanding
-    
+    val accentColor = if (isHighRisk) BizapColors.StatusOverdue else BizapColors.StatusOutstanding
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(

@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.BarChart
@@ -26,8 +28,6 @@ import androidx.compose.material.icons.filled.GetApp
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -120,7 +120,7 @@ fun CategorizedSmartQuickTasks(
                     isPrimary = true
                 ),
                 QuickTaskItem(
-                    icon = Icons.Default.Send,
+                    icon = Icons.AutoMirrored.Filled.Send,
                     title = "Send Reminder",
                     description = "Notify customers",
                     onClick = onSendReminder,
@@ -173,7 +173,7 @@ fun CategorizedSmartQuickTasks(
                     isPrimary = true
                 ),
                 QuickTaskItem(
-                    icon = Icons.Default.TrendingUp,
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
                     title = "View Analytics",
                     description = "Business insights",
                     onClick = onViewReports,
@@ -434,5 +434,3 @@ data class QuickTaskItem(
     val isPrimary: Boolean = false,
     val badge: String? = null
 )
-
-

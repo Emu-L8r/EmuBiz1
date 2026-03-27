@@ -3,7 +3,7 @@ package com.emul8r.bizap.ui.dashboard.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,7 +41,7 @@ fun NotesCard(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(
-                        Icons.Default.Notes,
+                        Icons.AutoMirrored.Filled.Notes,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onTertiaryContainer
                     )
@@ -66,4 +66,3 @@ fun NotesCard(
         }
     }
 }
-

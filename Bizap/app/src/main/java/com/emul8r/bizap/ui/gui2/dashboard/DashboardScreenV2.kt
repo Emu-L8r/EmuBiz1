@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -34,7 +35,6 @@ import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.AnalyticsSearchBar
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.DashboardMetricsWidget
 import com.emul8r.bizap.ui.navigation.Screen
-import com.emul8r.bizap.ui.theme.StatusColors
 import timber.log.Timber
 
 /**
@@ -261,18 +261,18 @@ private fun DashboardContentV2(
                 title = "Expected Revenue",
                 value = com.emul8r.bizap.utils.CentsFormatter.formatCents(expectedRevenue),
                 icon = Icons.Default.TrendingUp,
-                backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
-                borderColor = StatusColors.Paid.copy(alpha = 0.3f),
-                accentColor = StatusColors.Paid,
+                backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusPaid,
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
                 title = "Actual Revenue",
                 value = com.emul8r.bizap.utils.CentsFormatter.formatCents(actualRevenue),
                 icon = Icons.Default.CheckCircle,
-                backgroundColor = StatusColors.Sent.copy(alpha = 0.08f),
-                borderColor = StatusColors.Sent.copy(alpha = 0.3f),
-                accentColor = StatusColors.Sent,
+                backgroundColor = BizapColors.StatusSent.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusSent.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusSent,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -283,9 +283,9 @@ private fun DashboardContentV2(
                 title = "Outstanding",
                 value = com.emul8r.bizap.utils.CentsFormatter.formatCents(state.paymentMetrics.outstandingAmount),
                 icon = Icons.Default.Schedule,
-                backgroundColor = StatusColors.Outstanding.copy(alpha = 0.08f),
-                borderColor = StatusColors.Outstanding.copy(alpha = 0.3f),
-                accentColor = StatusColors.Outstanding,
+                backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusOutstanding,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -343,18 +343,18 @@ private fun DashboardContentV2(
                 title = "Paid",
                 value = "${state.paymentMetrics.paidCount}",
                 icon = Icons.Default.CheckCircle,
-                backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
-                borderColor = StatusColors.Paid.copy(alpha = 0.3f),
-                accentColor = StatusColors.Paid,
+                backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusPaid,
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
                 title = "Overdue",
                 value = "${state.paymentMetrics.overdueCount}",
                 icon = Icons.Default.Error,
-                backgroundColor = StatusColors.Overdue.copy(alpha = 0.08f),
-                borderColor = StatusColors.Overdue.copy(alpha = 0.3f),
-                accentColor = StatusColors.Overdue,
+                backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusOverdue,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -379,27 +379,27 @@ private fun DashboardContentV2(
                 title = "High Risk",
                 value = "${state.riskMetrics.highRiskCount}",
                 icon = Icons.Default.Error,
-                backgroundColor = StatusColors.Overdue.copy(alpha = 0.08f),
-                borderColor = StatusColors.Overdue.copy(alpha = 0.3f),
-                accentColor = StatusColors.Overdue,
+                backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusOverdue,
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
                 title = "At Risk",
                 value = "${state.riskMetrics.atRiskCount}",
                 icon = Icons.Default.Warning,
-                backgroundColor = StatusColors.Outstanding.copy(alpha = 0.08f),
-                borderColor = StatusColors.Outstanding.copy(alpha = 0.3f),
-                accentColor = StatusColors.Outstanding,
+                backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusOutstanding,
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
                 title = "Healthy",
                 value = "${state.riskMetrics.healthyCount}",
                 icon = Icons.Default.CheckCircle,
-                backgroundColor = StatusColors.Paid.copy(alpha = 0.08f),
-                borderColor = StatusColors.Paid.copy(alpha = 0.3f),
-                accentColor = StatusColors.Paid,
+                backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
+                borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
+                accentColor = BizapColors.StatusPaid,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -687,5 +687,3 @@ private fun getMockSearchResults(keyword: String): List<SearchResult> {
 
     return results.take(10)  // Limit to 10 results
 }
-
-

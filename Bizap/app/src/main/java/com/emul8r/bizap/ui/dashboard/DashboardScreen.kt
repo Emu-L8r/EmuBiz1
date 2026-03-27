@@ -47,7 +47,7 @@ import com.emul8r.bizap.ui.notes.NotesViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
 import com.emul8r.bizap.ui.theme.DashboardTheme
-import com.emul8r.bizap.ui.theme.StatusColors
+import com.emul8r.bizap.ui.designsystem.BizapColors
 import com.emul8r.bizap.ui.common.LoadingScreen
 import com.emul8r.bizap.utils.CentsFormatter
 import com.emul8r.bizap.utils.FirebaseEventTracker
@@ -295,14 +295,14 @@ fun DashboardScreen(
                         title = "Invoices Paid",
                         value = "$paidCount",
                         icon = Icons.Default.CheckCircle,
-                        accentColor = StatusColors.Paid,
+                        accentColor = BizapColors.StatusPaid,
                         modifier = Modifier.weight(1f)
                     )
                     MetricCardBase(
                         title = "Invoices Pending",
                         value = "$pendingCount",
                         icon = Icons.Default.Schedule,
-                        accentColor = StatusColors.Outstanding,
+                        accentColor = BizapColors.StatusOutstanding,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -330,14 +330,14 @@ fun DashboardScreen(
                         title = "Expected Revenue",
                         value = CentsFormatter.formatCents(expectedRevenue),
                         icon = Icons.Default.TrendingUp,
-                        accentColor = StatusColors.Paid,
+                        accentColor = BizapColors.StatusPaid,
                         modifier = Modifier.weight(1f)
                     )
                     MetricCardBase(
                         title = "Actual Revenue",
                         value = CentsFormatter.formatCents(actualRevenue),
                         icon = Icons.Default.CheckCircle,
-                        accentColor = StatusColors.Sent,
+                        accentColor = BizapColors.StatusSent,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -366,14 +366,14 @@ fun DashboardScreen(
                         title = "Outstanding",
                         value = CentsFormatter.formatCents(outstandingAmount),
                         icon = Icons.Default.Schedule,
-                        accentColor = StatusColors.Outstanding,
+                        accentColor = BizapColors.StatusOutstanding,
                         modifier = Modifier.weight(1f)
                     )
                     MetricCardBase(
                         title = "Overdue",
                         value = CentsFormatter.formatCents(overdueAmount),
                         icon = Icons.Default.Error,
-                        accentColor = StatusColors.Overdue,
+                        accentColor = BizapColors.StatusOverdue,
                         modifier = Modifier.weight(1f)
                     )
                 }
