@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.GetApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ private sealed class DialogState {
     object None : DialogState()
     object PaymentDialog : DialogState()
     object StatusMenu : DialogState()
+    object ExportPdf : DialogState()
 }
 
 /**
@@ -59,6 +61,9 @@ fun InvoiceDetailScreenV2(
                 },
                 actions = {
                     if (uiState is InvoiceDetailUiStateV2.Success) {
+                        IconButton(onClick = { dialogState = DialogState.ExportPdf }) {
+                            Icon(Icons.Default.GetApp, contentDescription = "Export PDF")
+                        }
                         IconButton(onClick = { dialogState = DialogState.PaymentDialog }) {
                             Icon(Icons.Default.Payment, contentDescription = "Record Payment")
                         }
@@ -120,6 +125,64 @@ fun InvoiceDetailScreenV2(
                         },
                         onDismiss = { dialogState = DialogState.None }
                     )
+                }
+
+                // PDF Export Handler
+                if (dialogState is DialogState.ExportPdf) {
+                    val pdfExportState by viewModel.pdfExportState.collectAsStateWithLifecycle()
+
+                    LaunchedEffect(Unit) {
+                        viewModel.exportToPdf(state.invoice)
+                    }
+
+                    when (pdfExportState) {
+                        is PdfExportState.Loading -> {
+                            // Show loading dialog
+                            AlertDialog(
+                                onDismissRequest = { /* Don't allow dismiss during loading */ },
+                                confirmButton = { /* No action during loading */ },
+                                title = { Text("Exporting PDF") },
+                                text = { Text("Please wait while your invoice is being exported to PDF...") }
+                            )
+                        }
+                        is PdfExportState.Success -> {
+                            // Show success with file details - KEEP DIALOG OPEN
+                            val file = (pdfExportState as PdfExportState.Success).file
+                            AlertDialog(
+                                onDismissRequest = { dialogState = DialogState.None },
+                                confirmButton = {
+                                    Button(onClick = { dialogState = DialogState.None }) {
+                                        Text("Done")
+                                    }
+                                },
+                                title = { Text("✅ PDFs Generated Successfully") },
+                                text = {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text("Both Quote and Invoice PDFs have been generated and saved to the vault.")
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text("Invoice PDF: ${file.name}", style = MaterialTheme.typography.labelSmall)
+                                        Text("Size: ${(file.length() / 1024).toInt()} KB", style = MaterialTheme.typography.labelSmall)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text("Both files are now available in the Vault.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            )
+                        }
+                        is PdfExportState.Error -> {
+                            // Show error with message
+                            AlertDialog(
+                                onDismissRequest = { dialogState = DialogState.None },
+                                confirmButton = {
+                                    Button(onClick = { dialogState = DialogState.None }) {
+                                        Text("OK")
+                                    }
+                                },
+                                title = { Text("Export Failed") },
+                                text = { Text((pdfExportState as PdfExportState.Error).message) }
+                            )
+                        }
+                        else -> {} // Idle state
+                    }
                 }
             }
         }
