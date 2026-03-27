@@ -45,7 +45,7 @@ fun AnalyticsFocusedInsightsScreen(
     var showDrillSheet by remember { mutableStateOf(false) }
     var drillData: Pair<String, List<Pair<String, Double>>>? by remember { mutableStateOf(null) }
 
-    val tabTitles = listOf("Quick Reports", "Revenue", "Payment", "Customers", "Cash Flow")
+    val tabTitles = listOf("Quick Reports", "Revenue", "Payment", "Customers", "Risk", "Cash Flow")
 
     Scaffold(
         topBar = {
@@ -134,6 +134,14 @@ fun AnalyticsFocusedInsightsScreen(
                     )
                     3 -> CustomerAnalyticsTab(
                         viewModel = customerViewModel,
+                        dateRange = mainUiState.selectedDateRange,
+                        onDrillClick = { label, items ->
+                            drillData = label to items
+                            showDrillSheet = true
+                        }
+                    )
+                    4 -> RiskAnalyticsTab(
+                        viewModel = paymentViewModel,
                         dateRange = mainUiState.selectedDateRange,
                         onDrillClick = { label, items ->
                             drillData = label to items
