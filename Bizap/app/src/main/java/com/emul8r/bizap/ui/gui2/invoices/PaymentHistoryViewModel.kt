@@ -6,6 +6,8 @@ import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.utils.CentsFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
@@ -15,22 +17,51 @@ import java.util.*
 /**
  * UI state for payment history display.
  *
- * Contains aggregated payment data for a single invoice:
- * - Total amount on invoice
- * - Amount paid to date
- * - Outstanding balance
- * - Timeline of payment records
+ * Sealed class representing possible states:
+ * - Loading: Initial state while fetching invoice
+ * - Success: Invoice found with payment history
+ * - NotFound: Invoice doesn't exist in database
+ * - Error: Error occurred during loading
  */
-data class PaymentHistoryUiState(
-    val invoiceId: Long,
-    val invoiceName: String,
-    val totalAmount: Long,
-    val paidAmount: Long,
-    val outstandingAmount: Long,
-    val paymentHistory: List<PaymentHistoryItem> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
+sealed interface PaymentHistoryUiState {
+    /**
+     * Initial loading state.
+     */
+    object Loading : PaymentHistoryUiState
+
+    /**
+     * Invoice and payment history successfully loaded.
+     *
+     * Contains aggregated payment data for a single invoice:
+     * - Total amount on invoice
+     * - Amount paid to date
+     * - Outstanding balance
+     * - Timeline of payment records
+     */
+    data class Success(
+        val invoiceId: Long,
+        val invoiceName: String,
+        val totalAmount: Long,
+        val paidAmount: Long,
+        val outstandingAmount: Long,
+        val paymentHistory: List<PaymentHistoryItem> = emptyList()
+    ) : PaymentHistoryUiState
+
+    /**
+     * Invoice not found.
+     *
+     * The invoice doesn't exist in the database.
+     */
+    data class NotFound(val invoiceId: Long) : PaymentHistoryUiState
+
+    /**
+     * Error loading invoice or payment history.
+     *
+     * @param message User-friendly error message
+     * @param invoiceId The invoice ID that failed to load
+     */
+    data class Error(val message: String, val invoiceId: Long) : PaymentHistoryUiState
+}
 
 /**
  * Single payment record in timeline.
@@ -49,92 +80,164 @@ data class PaymentHistoryItem(
  * ViewModel for payment history screen (GUI2).
  *
  * Responsible for:
+ * - Validating invoice exists in database before loading
  * - Loading payment snapshots from database
  * - Transforming into UI-friendly format
- * - Exposing reactive state via Flow
+ * - Exposing reactive state via Flow with proper error handling
+ * - Ensuring data consistency by filtering snapshots by invoiceId AND businessId
  *
  * **Data Flow:**
  * ```
- * Database (invoice_payment_snapshots)
+ * invoiceId + businessId parameters passed from Screen
  *     ↓
- * InvoicePaymentDao.observePaymentHistory()
+ * Validate both parameters are valid (> 0)
  *     ↓
- * Transform to PaymentHistoryUiState
+ * Validate invoice exists via InvoiceRepository.getInvoiceWithItemsById()
+ *     ↓
+ * If not found: emit NotFound state
+ * If found: Observe payment snapshots for that invoice
+ *     ↓
+ * InvoiceRepository.observePaymentHistory(invoiceId, businessId) (filtered query)
+ *     ↓
+ * Transform to PaymentHistoryUiState.Success
  *     ↓
  * UI observes via collectAsStateWithLifecycle()
  * ```
  *
  * @see PaymentHistoryScreen for UI consumption
- * @see InvoicePaymentDao for data layer
+ * @see InvoiceRepository for data layer
  */
 @HiltViewModel
 class PaymentHistoryViewModel @Inject constructor(
+    private val invoiceId: Long,
+    private val businessId: Long,
     private val invoiceRepository: InvoiceRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val invoiceId: Long = checkNotNull(savedStateHandle["invoiceId"])
+    init {
+        // Validate parameters at initialization
+        require(invoiceId > 0) { "invoiceId must be > 0, got: $invoiceId" }
+        require(businessId > 0) { "businessId must be > 0, got: $businessId" }
+        Timber.d("✅ PaymentHistoryViewModel initialized with invoiceId=$invoiceId, businessId=$businessId")
+    }
+
     private val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
     /**
-     * Reactive stream of payment history state.
+     * Initialize ViewModel with explicit invoiceId and businessId parameters.
      *
-     * Emits whenever payment data changes in the database.
+     * This method is kept for backward compatibility but parameters are now
+     * validated in the constructor.
      *
-     * **Behavior:**
-     * - Loads snapshots ordered by date (newest first)
-     * - Transforms to UI state
-     * - Emits null state if no data found
-     *
-     * **Example:**
-     * ```kotlin
-     * val state by viewModel.paymentHistory.collectAsStateWithLifecycle(
-     *     initialValue = PaymentHistoryUiState(...)
-     * )
-     * ```
+     * @param invoiceId The invoice ID to display payment history for
+     * @param businessId The business ID for multi-tenant filtering
+     * @return Flow of payment history states
      */
-    val paymentHistory: Flow<PaymentHistoryUiState> =
-        invoiceRepository.observePaymentHistory(invoiceId)
-            .map { snapshots ->
-                if (snapshots.isEmpty()) {
-                    Timber.d("📋 No payment history for invoice $invoiceId")
-                    PaymentHistoryUiState(
-                        invoiceId = invoiceId,
-                        invoiceName = "",
-                        totalAmount = 0,
-                        paidAmount = 0,
-                        outstandingAmount = 0,
-                        isLoading = false
-                    )
-                } else {
-                    // Latest snapshot has current state
-                    val latest = snapshots.first()
+    fun initialize(invoiceId: Long, businessId: Long): Flow<PaymentHistoryUiState> {
+        return if (invoiceId <= 0 || businessId <= 0) {
+            Timber.e("❌ Invalid parameters: invoiceId=$invoiceId, businessId=$businessId")
+            kotlinx.coroutines.flow.flowOf(
+                PaymentHistoryUiState.Error("Invalid parameters", invoiceId)
+            )
+        } else {
+            createPaymentHistoryFlow(invoiceId, businessId)
+        }
+    }
 
-                    Timber.d(
-                        "📋 Loaded ${snapshots.size} payment records for invoice $invoiceId: " +
-                        "Total=${latest.totalAmount}, Paid=${latest.paidAmount}, Outstanding=${latest.outstandingAmount}"
-                    )
+    /**
+     * Create the payment history Flow for the given invoiceId and businessId.
+     *
+     * Steps:
+     * 1. Start with Loading state
+     * 2. Validate invoice exists and belongs to business
+     * 3. If not found, emit NotFound
+     * 4. If found, load payment history snapshots
+     * 5. Transform snapshots to Success state
+     * 6. Handle errors gracefully
+     */
+    private fun createPaymentHistoryFlow(invoiceId: Long, businessId: Long): Flow<PaymentHistoryUiState> {
+        return kotlinx.coroutines.flow.flow {
+            // Start with loading state
+            emit(PaymentHistoryUiState.Loading)
 
-                    PaymentHistoryUiState(
-                        invoiceId = invoiceId,
-                        invoiceName = latest.invoiceNumber,
-                        totalAmount = latest.totalAmount,
-                        paidAmount = latest.paidAmount,
-                        outstandingAmount = latest.outstandingAmount,
-                        paymentHistory = snapshots.map { snapshot ->
-                            PaymentHistoryItem(
-                                date = snapshot.lastUpdatedMs,
-                                amount = snapshot.paidAmount,
-                                status = snapshot.paymentStatus,
-                                daysSinceDue = snapshot.daysSinceDue,
-                                notes = null
-                            )
-                        },
-                        isLoading = false,
-                        error = null
+            try {
+                // Step 1: Validate invoice exists
+                invoiceRepository.getInvoiceWithItemsById(invoiceId)
+                    .collect { invoice ->
+                        if (invoice == null) {
+                            Timber.w("❌ Invoice not found: $invoiceId")
+                            emit(PaymentHistoryUiState.NotFound(invoiceId))
+                        } else {
+                            // Step 2: Invoice exists, now observe payment history
+                            // ✅ FIXED: Pass both invoiceId AND businessId for multi-tenant safety
+                            Timber.d("✅ Invoice found: $invoiceId (${invoice.invoiceNumber}), loading payment history...")
+                            invoiceRepository.observePaymentHistory(invoiceId, businessId)
+                                .collect { snapshots ->
+                                    if (snapshots.isEmpty()) {
+                                        Timber.d("📋 No payment history for invoice $invoiceId")
+                                        emit(
+                                            PaymentHistoryUiState.Success(
+                                                invoiceId = invoiceId,
+                                                invoiceName = invoice.invoiceNumber,
+                                                totalAmount = invoice.totalAmount,
+                                                paidAmount = invoice.amountPaid,
+                                                outstandingAmount = invoice.totalAmount - invoice.amountPaid,
+                                                paymentHistory = emptyList()
+                                            )
+                                        )
+                                    } else {
+                                        // Latest snapshot has current state
+                                        val latest = snapshots.first()
+
+                                        Timber.d(
+                                            "📋 Loaded ${snapshots.size} payment records for invoice $invoiceId: " +
+                                                    "Total=${latest.totalAmount}, Paid=${latest.paidAmount}, Outstanding=${latest.outstandingAmount}"
+                                        )
+
+                                        emit(
+                                            PaymentHistoryUiState.Success(
+                                                invoiceId = invoiceId,
+                                                invoiceName = latest.invoiceNumber,
+                                                totalAmount = latest.totalAmount,
+                                                paidAmount = latest.paidAmount,
+                                                outstandingAmount = latest.outstandingAmount,
+                                                paymentHistory = snapshots.map { snapshot ->
+                                                    PaymentHistoryItem(
+                                                        date = snapshot.lastUpdatedMs,
+                                                        amount = snapshot.paidAmount,
+                                                        status = snapshot.paymentStatus,
+                                                        daysSinceDue = snapshot.daysSinceDue,
+                                                        notes = null
+                                                    )
+                                                }
+                                            )
+                                        )
+                                    }
+                                }
+                        }
+                    }
+            } catch (e: Exception) {
+                Timber.e(e, "❌ Error loading payment history for invoice $invoiceId, business $businessId")
+                emit(
+                    PaymentHistoryUiState.Error(
+                        message = "Failed to load payment history",
+                        invoiceId = invoiceId
                     )
-                }
+                )
             }
+        }
+    }
+
+    /**
+     * Public Flow that emits payment history states.
+     *
+     * Uses explicit invoiceId and businessId parameters passed to constructor,
+     * ensuring they are always available and valid.
+     *
+     * Emits states in order: Loading → Success/NotFound/Error
+     */
+    val paymentHistory: Flow<PaymentHistoryUiState> = createPaymentHistoryFlow(invoiceId, businessId)
 }
 
 
