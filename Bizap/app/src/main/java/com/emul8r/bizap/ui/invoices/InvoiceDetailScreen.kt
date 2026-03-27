@@ -28,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.InvoiceStatus
@@ -179,26 +178,63 @@ private fun InvoiceDetailScreenV1Content(
 
     LaunchedEffect(Unit) {
         viewModel.exportEvent.collectLatest { file ->
-            val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "application/pdf"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            try {
+                // Use new FileUriProvider utility for safe URI conversion
+                com.emul8r.bizap.utils.FileUriProvider.getUriForFile(context, file)
+                    .onSuccess { uri ->
+                        com.emul8r.bizap.utils.logging.ErrorExportLogger.logShareIntent(
+                            mimeType = "application/pdf",
+                            fileName = file.name
+                        )
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/pdf"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Share Invoice"))
+                        isExporting = false
+                    }
+                    .onFailure { error ->
+                        isExporting = false
+                        snackbarHostState.showSnackbar(
+                            "Failed to share PDF: ${error.message ?: "Unknown error"}"
+                        )
+                        timber.log.Timber.e(error, "PDF sharing failed")
+                    }
+            } catch (e: Exception) {
+                isExporting = false
+                snackbarHostState.showSnackbar("Error: ${e.message}")
+                timber.log.Timber.e(e, "Unexpected error during PDF share")
             }
-            context.startActivity(Intent.createChooser(intent, "Share Invoice"))
-            isExporting = false
         }
     }
 
     LaunchedEffect(Unit) {
         viewModel.csvExportEvent.collectLatest { file ->
-            val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/csv"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            try {
+                com.emul8r.bizap.utils.FileUriProvider.getUriForFile(context, file)
+                    .onSuccess { uri ->
+                        com.emul8r.bizap.utils.logging.ErrorExportLogger.logShareIntent(
+                            mimeType = "text/csv",
+                            fileName = file.name
+                        )
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/csv"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Share CSV"))
+                    }
+                    .onFailure { error ->
+                        snackbarHostState.showSnackbar(
+                            "Failed to share CSV: ${error.message ?: "Unknown error"}"
+                        )
+                        timber.log.Timber.e(error, "CSV sharing failed")
+                    }
+            } catch (e: Exception) {
+                snackbarHostState.showSnackbar("Error: ${e.message}")
+                timber.log.Timber.e(e, "Unexpected error during CSV share")
             }
-            context.startActivity(Intent.createChooser(intent, "Share CSV"))
         }
     }
 

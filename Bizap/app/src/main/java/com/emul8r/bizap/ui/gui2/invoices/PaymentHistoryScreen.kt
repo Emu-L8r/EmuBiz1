@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -96,6 +97,7 @@ import java.util.Locale
  * - 🟠 Orange: Partial payment
  *
  * @param invoiceId Invoice to show payment history for
+ * @param businessId Business ID for multi-tenant data isolation
  * @param viewModel PaymentHistoryViewModel managing state
  * @param modifier Composable modifier
  *
@@ -105,35 +107,146 @@ import java.util.Locale
 @Composable
 fun PaymentHistoryScreen(
     invoiceId: Long,
-    viewModel: PaymentHistoryViewModel = hiltViewModel(),
+    businessId: Long,
     modifier: Modifier = Modifier
 ) {
-    val uiState by viewModel.paymentHistory.collectAsStateWithLifecycle(
-        initialValue = PaymentHistoryUiState(
-            invoiceId = invoiceId,
-            invoiceName = "",
-            totalAmount = 0,
-            paidAmount = 0,
-            outstandingAmount = 0
-        )
+    // Validate both parameters
+    if (invoiceId <= 0 || businessId <= 0) {
+        Timber.e("❌ Invalid parameters: invoiceId=$invoiceId, businessId=$businessId")
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Error,
+                    contentDescription = "Invalid parameters",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.error
+                )
+                Text(
+                    "Invalid invoice or business",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        return
+    }
+
+    // Create ViewModel factory with explicit parameters (✅ FIXED: No longer relies on SavedStateHandle)
+    val viewModel: PaymentHistoryViewModel = hiltViewModel(
+        creationCallback = { factory ->
+            factory.create(
+                invoiceId = invoiceId,
+                businessId = businessId
+            )
+        }
     )
 
-    Timber.d("🎨 Rendering PaymentHistoryScreen for invoice $invoiceId")
+    val uiState by viewModel.paymentHistory.collectAsStateWithLifecycle(
+        initialValue = PaymentHistoryUiState.Loading
+    )
 
+    Timber.d("🎨 Rendering PaymentHistoryScreen for invoice=$invoiceId, business=$businessId, state: $uiState")
+
+    when (uiState) {
+        is PaymentHistoryUiState.Loading -> {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+
+        is PaymentHistoryUiState.Success -> {
+            val successState = uiState as PaymentHistoryUiState.Success
+            PaymentHistoryContent(successState, modifier)
+        }
+
+        is PaymentHistoryUiState.NotFound -> {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Error,
+                        contentDescription = "Not found",
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Text(
+                        "Invoice not found",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+
+        is PaymentHistoryUiState.Error -> {
+            val errorState = uiState as PaymentHistoryUiState.Error
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Error,
+                        contentDescription = "Error",
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Text(
+                        errorState.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PaymentHistoryContent(
+    state: PaymentHistoryUiState.Success,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
         // Header with totals
-        PaymentHistoryHeader(uiState)
+        PaymentHistoryHeader(state)
 
         Spacer(modifier = Modifier.height(16.dp))
         Divider()
         Spacer(modifier = Modifier.height(16.dp))
 
         // Timeline
-        if (uiState.paymentHistory.isEmpty()) {
+        if (state.paymentHistory.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -150,7 +263,7 @@ fun PaymentHistoryScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(
-                    items = uiState.paymentHistory,
+                    items = state.paymentHistory,
                     key = { "${it.date}-${it.status}" }
                 ) { payment ->
                     PaymentHistoryCard(payment)
@@ -161,7 +274,7 @@ fun PaymentHistoryScreen(
 }
 
 @Composable
-private fun PaymentHistoryHeader(state: PaymentHistoryUiState) {
+private fun PaymentHistoryHeader(state: PaymentHistoryUiState.Success) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)

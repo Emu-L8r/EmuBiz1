@@ -11,6 +11,7 @@ import androidx.annotation.RequiresApi
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.pdf.PdfTableRenderer
+import com.emul8r.bizap.domain.service.PdfGenerationService
 import com.emul8r.bizap.ui.templates.TemplateSnapshotManager
 import com.emul8r.bizap.utils.DocumentNamingUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,17 +21,40 @@ import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Data-layer implementation of PDF generation service.
+ *
+ * **Architecture:**
+ * Implements the domain-level [PdfGenerationService] interface, allowing
+ * domain use cases to depend only on domain abstractions while this service
+ * handles the Android-specific details of PDF generation.
+ *
+ * **Responsibility:**
+ * - Generates PDF files from invoice snapshots using Android's PdfDocument API
+ * - Manages internal storage of generated PDFs
+ * - Handles file naming, versioning, and overwrite logic
+ */
 @Singleton
 class InvoicePdfService @Inject constructor(
     @ApplicationContext private val context: Context,
     private val documentRepository: DocumentRepository
-) {
+) : PdfGenerationService {
     companion object {
         private const val TAG = "InvoicePdfService"
     }
 
     private val pdfStyler = PdfStyler()
     private val snapshotManager = TemplateSnapshotManager()
+
+    /**
+     * Domain-level API: Generate a PDF from an invoice snapshot.
+     * Delegates to the internal generateInvoice method.
+     */
+    override suspend fun generatePdf(
+        snapshot: InvoiceSnapshot,
+        isQuote: Boolean,
+        overwriteExisting: Boolean
+    ): File = generateInvoice(snapshot, isQuote, overwriteExisting)
 
     suspend fun checkIfPdfExists(invoiceId: Long, fileType: String): Pair<Boolean, String?> {
         val existingDoc = documentRepository.getDocumentByInvoiceAndType(invoiceId, fileType)
@@ -260,6 +284,34 @@ class InvoicePdfService @Inject constructor(
         pdfDocument.finishPage(page)
         file.outputStream().use { pdfDocument.writeTo(it) }
         pdfDocument.close()
+
+        // 🔍 VALIDATION: Ensure file was actually written and is not empty
+        if (!file.exists()) {
+            throw IllegalStateException("PDF file was not created at: ${file.absolutePath}")
+        }
+
+        val fileSize = file.length()
+        if (fileSize == 0L) {
+            file.delete() // Cleanup empty file
+            throw IllegalStateException("PDF file created but is empty (0 bytes) at: ${file.absolutePath}")
+        }
+
+        // 📝 LOG: PDF generation success with file details
+        timber.log.Timber.d(
+            "✅ PDF generated successfully:\n" +
+            "  File: ${file.name}\n" +
+            "  Path: ${file.absolutePath}\n" +
+            "  Size: $fileSize bytes\n" +
+            "  Type: $fileType"
+        )
+
+        // Log with ErrorExportLogger for structured search
+        com.emul8r.bizap.utils.logging.ErrorExportLogger.logPdfSuccess(
+            invoiceId = snapshot.invoiceId,
+            filePath = file.absolutePath,
+            sizeBytes = fileSize,
+            type = fileType
+        )
 
         return file
     }

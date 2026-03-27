@@ -71,11 +71,25 @@ interface InvoiceRepository {
     /**
      * Observes payment history snapshots for an invoice.
      *
-     * Returns a reactive stream of payment snapshots ordered by date.
+     * Returns a reactive stream of payment snapshots ordered by date (newest first).
      * Snapshots capture the payment state at each update.
      *
-     * @param invoiceId The invoice to observe payments for
-     * @return Flow emitting payment history snapshots (empty if no payments)
+     * **Data Consistency Guarantees:**
+     * - Filters by invoiceId to ensure invoice-specific data only
+     * - Filters by businessId to prevent cross-tenant data leaks (multi-tenant safety)
+     * - Both parameters are required and must be > 0
+     * - Returns empty Flow if invoice doesn't exist or doesn't belong to business
+     *
+     * **Behavior:**
+     * - Validates parameters before executing query
+     * - Returns empty list if no payments recorded yet
+     * - Automatically updates when new payments are recorded
+     * - Orders results by lastUpdatedMs DESC (newest first)
+     *
+     * @param invoiceId The invoice to observe payments for (must be > 0)
+     * @param businessId The business profile ID for multi-tenant filtering (must be > 0)
+     * @return Flow emitting payment history snapshots filtered by both invoiceId and businessId
+     * @throws IllegalArgumentException if invoiceId or businessId <= 0
      */
-    fun observePaymentHistory(invoiceId: Long): Flow<List<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>>
+    fun observePaymentHistory(invoiceId: Long, businessId: Long): Flow<List<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>>
 }

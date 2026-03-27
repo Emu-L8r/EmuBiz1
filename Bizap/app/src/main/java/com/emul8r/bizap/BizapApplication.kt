@@ -80,13 +80,15 @@ class BizapApplication : Application(), Configuration.Provider {
      */
     private fun initializeLogging() {
         if (BuildConfig.DEBUG) {
-            // In DEBUG: Log everything to Logcat
+            // In DEBUG: Log everything to Logcat AND to file
             Timber.plant(Timber.DebugTree())
-            Timber.d("🚀 Bizap initialized in DEBUG mode. Full logging enabled.")
+            Timber.plant(com.emul8r.bizap.utils.logging.FileLoggingTree(this))
+            Timber.d("🚀 Bizap initialized in DEBUG mode. Logging to Logcat and file.")
         } else {
-            // In RELEASE: Log only WARN/ERROR to Firebase Crashlytics
+            // In RELEASE: Log to file and Firebase Crashlytics
+            Timber.plant(com.emul8r.bizap.utils.logging.FileLoggingTree(this))
             Timber.plant(CrashlyticsTree())
-            Timber.i("🚀 Bizap initialized in RELEASE mode. Logging to Firebase Crashlytics.")
+            Timber.i("🚀 Bizap initialized in RELEASE mode. Logging to file and Firebase Crashlytics.")
         }
     }
 

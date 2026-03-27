@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.DocumentManager
+import com.emul8r.bizap.data.local.entities.DocumentStatus
+import com.emul8r.bizap.data.local.entities.GeneratedDocumentEntity
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.CsvExportService
 import com.emul8r.bizap.data.service.InvoicePdfService
@@ -47,6 +49,7 @@ sealed interface InvoiceDetailEvent {
 @HiltViewModel
 class InvoiceDetailViewModel @Inject constructor(
     private val invoiceRepo: InvoiceRepository,
+    private val documentRepository: com.emul8r.bizap.domain.repository.DocumentRepository,
     private val pdfService: InvoicePdfService,
     private val csvExportService: CsvExportService,
     private val businessProfileRepository: BusinessProfileRepository,
@@ -193,10 +196,18 @@ class InvoiceDetailViewModel @Inject constructor(
     }
 
     fun shareInternalPdf() {
+        com.emul8r.bizap.utils.logging.ErrorExportLogger.logPdfAttempt(
+            invoiceId = (uiState.value as? InvoiceDetailUiState.Success)?.data?.id ?: 0,
+            type = "Invoice"
+        )
         checkAndProceedWithPdfGeneration(share = true)
     }
 
     fun exportToDownloads() {
+        com.emul8r.bizap.utils.logging.ErrorExportLogger.logPdfAttempt(
+            invoiceId = (uiState.value as? InvoiceDetailUiState.Success)?.data?.id ?: 0,
+            type = "Invoice"
+        )
         checkAndProceedWithPdfGeneration(share = false)
     }
 
@@ -279,7 +290,58 @@ class InvoiceDetailViewModel @Inject constructor(
                     val quotePdf = quoteResult.getOrThrow()
                     val invoicePdf = invoiceResult.getOrThrow()
 
+                    // Pre-flight validation: Ensure files are shareable before emitting
+                    if (!com.emul8r.bizap.utils.FileUriProvider.isFileSharable(quotePdf)) {
+                        _uiEvent.emit(UiEvent.ShowSnackbar("Generated Quote PDF is invalid or inaccessible"))
+                        return@launch
+                    }
+                    if (!com.emul8r.bizap.utils.FileUriProvider.isFileSharable(invoicePdf)) {
+                        _uiEvent.emit(UiEvent.ShowSnackbar("Generated Invoice PDF is invalid or inaccessible"))
+                        return@launch
+                    }
+
                     invoiceRepo.updatePdfPath(invoiceData.id, invoicePdf.absolutePath).getOrThrow()
+
+                    // 📝 INSERT DOCUMENTS INTO VAULT
+                    // Create document records so they appear in the vault
+                    try {
+                        val quoteDoc = GeneratedDocumentEntity(
+                            id = 0, // Auto-generated
+                            relatedInvoiceId = invoiceData.id,
+                            fileName = quotePdf.name,
+                            absolutePath = quotePdf.absolutePath,
+                            fileType = "Quote",
+                            createdAt = System.currentTimeMillis(),
+                            status = DocumentStatus.ARCHIVED
+                        )
+                        documentRepository.insertDocument(quoteDoc).getOrThrow()
+                        Timber.d("✅ Vault: Inserted Quote PDF for invoice #${invoiceData.id}")
+
+                        val invoiceDoc = GeneratedDocumentEntity(
+                            id = 0, // Auto-generated
+                            relatedInvoiceId = invoiceData.id,
+                            fileName = invoicePdf.name,
+                            absolutePath = invoicePdf.absolutePath,
+                            fileType = "Invoice",
+                            createdAt = System.currentTimeMillis(),
+                            status = DocumentStatus.ARCHIVED
+                        )
+                        documentRepository.insertDocument(invoiceDoc).getOrThrow()
+                        Timber.d("✅ Vault: Inserted Invoice PDF for invoice #${invoiceData.id}")
+                        com.emul8r.bizap.utils.logging.ErrorExportLogger.logPdfSuccess(
+                            invoiceId = invoiceData.id,
+                            filePath = invoicePdf.absolutePath,
+                            sizeBytes = invoicePdf.length(),
+                            type = "Invoice"
+                        )
+                    } catch (e: Exception) {
+                        Timber.e(e, "❌ Failed to insert documents into vault")
+                        com.emul8r.bizap.utils.logging.ErrorExportLogger.logPdfFailure(
+                            invoiceId = invoiceData.id,
+                            error = e,
+                            type = "Vault Insert"
+                        )
+                    }
 
                     if (share) {
                         _exportEvent.emit(invoicePdf)
@@ -354,7 +416,12 @@ class InvoiceDetailViewModel @Inject constructor(
                 )
 
                 result.onSuccess { file ->
-                    printService.printPdf(file)
+                    // Validate file before sending to print service
+                    if (com.emul8r.bizap.utils.FileUriProvider.isFileSharable(file)) {
+                        printService.printPdf(file)
+                    } else {
+                        _uiEvent.emit(UiEvent.ShowSnackbar("Generated PDF is invalid or inaccessible for printing"))
+                    }
                 }.onFailure { e ->
                     _uiEvent.emit(UiEvent.ShowSnackbar("Print Failed: ${e.message}"))
                 }

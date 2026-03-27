@@ -15,6 +15,7 @@ import com.emul8r.bizap.data.repository.PrefilledItemRepositoryImpl
 import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
 import com.emul8r.bizap.data.repository.TaxRepositoryImpl
 import com.emul8r.bizap.data.repository.ThemeRepositoryImpl
+import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.CustomFieldRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
@@ -30,6 +31,7 @@ import com.emul8r.bizap.domain.repository.ThemeRepository
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import com.emul8r.bizap.domain.customer.repository.CustomerAnalyticsRepository
 import com.emul8r.bizap.domain.invoice.repository.PaymentAnalyticsRepository
+import com.emul8r.bizap.domain.service.PdfGenerationService
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -129,4 +131,15 @@ abstract class RepositoryModule {
     abstract fun bindNoteRepository(
         impl: NoteRepositoryImpl
     ): NoteRepository
+
+    /**
+     * Binds the data-layer InvoicePdfService to the domain-level PdfGenerationService interface.
+     * This allows domain use cases to depend on the domain interface rather than the data layer implementation,
+     * maintaining clean architecture principles.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindPdfGenerationService(
+        impl: InvoicePdfService
+    ): PdfGenerationService
 }
