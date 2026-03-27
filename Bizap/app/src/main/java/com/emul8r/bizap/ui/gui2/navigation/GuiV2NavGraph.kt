@@ -14,6 +14,7 @@ import com.emul8r.bizap.ui.gui2.analytics.InvoiceAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.PaymentAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.RevenueAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.RiskAnalyticsScreenV2
+import com.emul8r.bizap.ui.analytics.AnalyticsFocusedInsightsScreen
 import com.emul8r.bizap.ui.customers.CustomerDetailScreen
 import com.emul8r.bizap.ui.customers.CustomerListScreen
 import com.emul8r.bizap.ui.gui2.customers.CreateCustomerScreenV2
@@ -238,6 +239,13 @@ fun GuiV2NavGraph(
             val route: ScreenV2.InvoiceAnalytics = backStackEntry.toRoute()
             InvoiceAnalyticsScreenV2(
                 businessId = route.businessId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.AnalyticsFocusedInsights> { backStackEntry ->
+            val route: ScreenV2.AnalyticsFocusedInsights = backStackEntry.toRoute()
+            AnalyticsFocusedInsightsScreen(
                 onBack = { navController.popBackStack() }
             )
         }

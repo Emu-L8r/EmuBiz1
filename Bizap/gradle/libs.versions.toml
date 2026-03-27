@@ -30,6 +30,7 @@ coordinatorlayout = "1.2.0"
 mockito = "5.5.0"
 mockito-kotlin = "5.1.0"
 paging = "3.3.0"
+vico = "1.14.0"
 
 [libraries]
 # Core AndroidX
@@ -83,6 +84,10 @@ firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashly
 
 # Logging
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+# Charts
+vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
+vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
 
 # Other
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
