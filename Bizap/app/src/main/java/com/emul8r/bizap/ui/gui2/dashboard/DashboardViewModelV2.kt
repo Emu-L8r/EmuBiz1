@@ -8,6 +8,8 @@ import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.InvoiceMetricsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
+import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.domain.repository.NoteRepository
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
@@ -19,6 +21,11 @@ import javax.inject.Inject
 /**
  * ViewModel for the GUI2 dashboard.
  * businessId is guaranteed non-null — extracted from the navigation route.
+ *
+ * Provides:
+ * - uiState: Combined dashboard metrics (revenue, payment, risk, invoices)
+ * - statusCounts: Invoice status breakdown (PAID, SENT, DRAFT, etc.) for pie chart
+ * - currentNotesCount: Count of current notes for notes card
  */
 @HiltViewModel
 class DashboardViewModelV2 @Inject constructor(
@@ -27,12 +34,15 @@ class DashboardViewModelV2 @Inject constructor(
     private val paymentRepository: PaymentAnalyticsRepositoryV2,
     private val riskRepository: RiskAnalyticsRepositoryV2,
     private val businessContextRepository: BusinessContextRepositoryV2,
-    private val invoiceMetricsRepository: InvoiceMetricsRepositoryV2
+    private val invoiceMetricsRepository: InvoiceMetricsRepositoryV2,
+    private val invoiceRepository: InvoiceRepository,
+    private val noteRepository: NoteRepository
 ) : ViewModel() {
 
     private val route: ScreenV2.Dashboard = savedStateHandle.toRoute()
     val businessId: Long = route.businessId
 
+    // ===== MAIN DASHBOARD STATE =====
     val uiState: StateFlow<DashboardUiStateV2> = combine(
         businessContextRepository.activeContext,
         revenueRepository.observeRevenueMetrics(businessId),
@@ -75,6 +85,27 @@ class DashboardViewModelV2 @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = DashboardUiStateV2.Loading
     )
+
+    // ===== INVOICE STATUS COUNTS FOR PIE CHART =====
+    val statusCounts: StateFlow<Map<String, Int>> = invoiceRepository
+        .getAllInvoicesWithItems()
+        .map { invoices ->
+            invoices.groupingBy { it.status.toString() }.eachCount()
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyMap()
+        )
+
+    // ===== NOTES COUNT FOR NOTES CARD =====
+    val currentNotesCount: StateFlow<Int> = noteRepository
+        .getCurrentNotesCount(businessId)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = 0
+        )
 }
 
 sealed class DashboardUiStateV2 {

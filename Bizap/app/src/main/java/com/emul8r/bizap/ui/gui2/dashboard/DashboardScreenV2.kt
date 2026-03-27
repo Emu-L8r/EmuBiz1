@@ -13,14 +13,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
 import com.emul8r.bizap.ui.common.MetricCard
+import com.emul8r.bizap.ui.dashboard.components.InvoiceStatusPieChart
+import com.emul8r.bizap.ui.dashboard.components.NotesCard
 import com.emul8r.bizap.ui.designsystem.BizapColors
 import com.emul8r.bizap.ui.gui2.common.*
 import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
+import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.theme.StatusColors
+import timber.log.Timber
 
 /**
  * GUI2 main dashboard screen.
@@ -31,6 +36,7 @@ import com.emul8r.bizap.ui.theme.StatusColors
 @Composable
 fun DashboardScreenV2(
     businessId: Long,
+    navController: NavController,
     onNavigateToRevenue: () -> Unit,
     onNavigateToPayment: () -> Unit,
     onNavigateToRisk: () -> Unit,
@@ -47,6 +53,8 @@ fun DashboardScreenV2(
     viewModel: DashboardViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val statusCounts by viewModel.statusCounts.collectAsStateWithLifecycle()
+    val currentNotesCount by viewModel.currentNotesCount.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -73,6 +81,9 @@ fun DashboardScreenV2(
             )
             is DashboardUiStateV2.Success -> DashboardContentV2(
                 state = state.state,
+                statusCounts = statusCounts,
+                currentNotesCount = currentNotesCount,
+                navController = navController,
                 onNavigateToRevenue = onNavigateToRevenue,
                 onNavigateToPayment = onNavigateToPayment,
                 onNavigateToRisk = onNavigateToRisk,
@@ -92,6 +103,9 @@ fun DashboardScreenV2(
 @Composable
 private fun DashboardContentV2(
     state: DashboardStateV2,
+    statusCounts: Map<String, Int>,
+    currentNotesCount: Int,
+    navController: NavController,
     onNavigateToRevenue: () -> Unit,
     onNavigateToPayment: () -> Unit,
     onNavigateToRisk: () -> Unit,
@@ -124,33 +138,48 @@ private fun DashboardContentV2(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            // ── Quick Actions ──
-            SectionHeaderV2(title = "Quick Actions")
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = onCreateCustomer,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("New Customer")
-                }
-                Button(
-                    onClick = onCreateInvoice,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("New Invoice")
-                }
-            }
+            // ── Categorized Smart Quick Tasks (Invoices, Payments, Reports) ──
+            CategorizedSmartQuickTasks(
+                overdueCount = statusCounts["OVERDUE"]?.let { overdue ->
+                    statusCounts["PARTIALLY_PAID"]?.let { it + overdue } ?: overdue
+                } ?: 0,
+                draftCount = statusCounts["DRAFT"] ?: 0,
+                totalInvoices = statusCounts.values.sum(),
+                onCreateInvoice = onCreateInvoice,
+                onViewOverdue = {
+                    // Navigate to overdue invoices
+                    onNavigateToRevenue()
+                },
+                onCompleteDrafts = {
+                    // Navigate to draft invoices
+                    onNavigateToInvoices()
+                },
+                onSendReminder = {
+                    // TODO: Navigate to send reminder screen
+                },
+                onViewReports = onNavigateToRevenue,
+                modifier = Modifier
+            )
 
             HorizontalDivider()
 
-        // ── Revenue section: Expected vs Actual with color coding ──
+            // ── Invoice Status Pie Chart ───────────────────────────────────
+            InvoiceStatusPieChart(statusCounts = statusCounts)
+
+            // ── Notes Card ────────────────────────────────────────────────
+            NotesCard(
+                currentNotesCount = currentNotesCount,
+                onClick = {
+                    // Safe navigation with error logging
+                    try {
+                        navController.navigate(Screen.Notes)
+                    } catch (e: IllegalArgumentException) {
+                        Timber.e(e, "Navigation to Notes screen failed")
+                    }
+                }
+            )
+
+            HorizontalDivider()
         SectionHeaderV2(title = "Revenue")
         Row(
             modifier = Modifier.fillMaxWidth(),
