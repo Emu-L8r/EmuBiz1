@@ -279,9 +279,8 @@ dependencies {
     implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     // Charts
-    implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")
-    implementation("com.patrykandpatrick.vico:compose:1.13.1")
-    implementation("com.patrykandpatrick.vico:core:1.13.1")
+    implementation(libs.vico.compose.m3)
+    implementation(libs.vico.compose)
 
     // Testing
     testImplementation(libs.junit)
