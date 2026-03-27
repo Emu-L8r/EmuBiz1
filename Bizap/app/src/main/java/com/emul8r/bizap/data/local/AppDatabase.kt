@@ -35,9 +35,10 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
         OfflineOperation::class,
         InvoiceItemEntity::class,
         PaymentEntity::class,
-        NoteEntity::class
+        NoteEntity::class,
+        AnalyticsEventEntity::class  // NEW: Event tracking
     ],
-    version = 35,
+    version = 36,
     exportSchema = true
 )
 @TypeConverters(
@@ -65,4 +66,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun customerDaoV2(): CustomerDaoV2
     abstract fun paymentDaoV2(): PaymentDaoV2
     abstract fun noteDao(): NoteDao
+    abstract fun analyticsEventDao(): AnalyticsEventDao  // NEW: Event tracking
 }

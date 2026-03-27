@@ -9,11 +9,19 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.emul8r.bizap.domain.analytics.SearchQuery
+import com.emul8r.bizap.domain.analytics.SearchResult
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
@@ -23,6 +31,8 @@ import com.emul8r.bizap.ui.dashboard.components.NotesCard
 import com.emul8r.bizap.ui.designsystem.BizapColors
 import com.emul8r.bizap.ui.gui2.common.*
 import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
+import com.emul8r.bizap.ui.gui2.dashboard.widgets.AnalyticsSearchBar
+import com.emul8r.bizap.ui.gui2.dashboard.widgets.DashboardMetricsWidget
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.theme.StatusColors
 import timber.log.Timber
@@ -138,7 +148,66 @@ private fun DashboardContentV2(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            // ── Categorized Smart Quick Tasks (Invoices, Payments, Reports) ──
+            // ── Analytics Search Bar (NEW) ────────────────────────────────
+            val searchResults = remember { mutableStateOf<List<SearchResult>>(emptyList()) }
+
+            AnalyticsSearchBar(
+                onSearch = { query ->
+                    // TODO: Wire to actual search repository in Week 2
+                    // For now, using mock data to demonstrate search
+                    searchResults.value = getMockSearchResults(query.keyword)
+                },
+                onResultClick = { result ->
+                    // Navigate based on result type
+                    when (result.type) {
+                        com.emul8r.bizap.domain.analytics.SearchType.INVOICE -> {
+                            try {
+                                navController.navigate("invoice/${result.id}")
+                            } catch (e: Exception) {
+                                Timber.e(e, "Failed to navigate to invoice")
+                            }
+                        }
+                        com.emul8r.bizap.domain.analytics.SearchType.CUSTOMER -> {
+                            onNavigateToCustomers()
+                        }
+                        else -> {}
+                    }
+                },
+                searchResults = searchResults.value
+            )
+
+            HorizontalDivider()
+
+            // ── Quick Action Buttons (Top Banner) ──────────────────────────
+            QuickActionButtonsRow(
+                onCreateCustomer = onCreateCustomer,
+                onCreateInvoice = onCreateInvoice,
+                onNavigateToVault = onNavigateToVault,
+                onNavigateToAnalytics = onNavigateToInvoiceAnalytics
+            )
+
+            HorizontalDivider()
+
+            // ── Dashboard Metrics Widget ──────────────────────────────────
+            // TODO: Wire metrics from ViewModel once repository is wired
+            // For now, using mock data to demonstrate UI
+            val mockMetrics = com.emul8r.bizap.domain.repository.DashboardMetrics(
+                unpaidInvoiceCount = statusCounts["SENT"]?.let { it + (statusCounts["PARTIALLY_PAID"] ?: 0) } ?: 0,
+                unpaidAmount = state.paymentMetrics.outstandingAmount,
+                overdueAmount = (state.paymentMetrics.overdueCount * 500).toLong(), // Mock calculation
+                paidThisMonth = state.paymentMetrics.collectedAmount / 2, // Mock
+                totalCustomersOwed = state.paymentMetrics.outstandingAmount,
+                lastUpdatedMs = System.currentTimeMillis()
+            )
+
+            DashboardMetricsWidget(
+                metrics = mockMetrics,
+                onUnpaidClick = { onNavigateToPayment() },
+                onOverdueClick = { onNavigateToPayment() },
+                onPaidClick = { onNavigateToRevenue() }
+            )
+
+            HorizontalDivider()
             CategorizedSmartQuickTasks(
                 overdueCount = statusCounts["OVERDUE"]?.let { overdue ->
                     statusCounts["PARTIALLY_PAID"]?.let { it + overdue } ?: overdue
@@ -397,3 +466,226 @@ private fun DashboardContentV2(
         }
     }
 }
+
+/**
+ * Quick action buttons row at the top of the dashboard.
+ * Provides fast access to common actions:
+ * - Create New Customer
+ * - Create New Invoice
+ * - Open Document Vault
+ * - View Analytics/Visual Data
+ */
+@Composable
+private fun QuickActionButtonsRow(
+    onCreateCustomer: () -> Unit,
+    onCreateInvoice: () -> Unit,
+    onNavigateToVault: () -> Unit,
+    onNavigateToAnalytics: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // First row: New Customer, New Invoice
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // New Customer Button
+            Button(
+                onClick = onCreateCustomer,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BizapColors.AnalyticsExcellent.copy(alpha = 0.9f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        Icons.Default.PersonAdd,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = Color.White
+                    )
+                    Text(
+                        "New Customer",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+
+            // New Invoice Button
+            Button(
+                onClick = onCreateInvoice,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BizapColors.AnalyticsGood.copy(alpha = 0.9f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        Icons.Default.Receipt,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = Color.White
+                    )
+                    Text(
+                        "New Invoice",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+        }
+
+        // Second row: Vault, Analytics
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Vault Button
+            Button(
+                onClick = onNavigateToVault,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BizapColors.AnalyticsWarning.copy(alpha = 0.9f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        Icons.Default.Inventory,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = Color.White
+                    )
+                    Text(
+                        "Vault",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+
+            // Visual Data / Analytics Button
+            Button(
+                onClick = onNavigateToAnalytics,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BizapColors.AnalyticsAtRisk.copy(alpha = 0.9f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        Icons.Default.BarChart,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = Color.White
+                    )
+                    Text(
+                        "Analytics",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Generate mock search results for demonstration.
+ *
+ * TODO: Replace with real search repository in Week 2
+ */
+private fun getMockSearchResults(keyword: String): List<SearchResult> {
+    if (keyword.trim().isEmpty()) return emptyList()
+
+    val keywordLower = keyword.lowercase()
+
+    // Mock invoices
+    val mockInvoices = listOf(
+        SearchResult(
+            id = 1001L,
+            title = "Invoice #2024-001",
+            subtitle = "\$2,500.00",
+            type = com.emul8r.bizap.domain.analytics.SearchType.INVOICE
+        ),
+        SearchResult(
+            id = 1002L,
+            title = "Invoice #2024-002",
+            subtitle = "\$1,850.00",
+            type = com.emul8r.bizap.domain.analytics.SearchType.INVOICE
+        ),
+        SearchResult(
+            id = 1003L,
+            title = "Invoice #2024-003",
+            subtitle = "\$3,200.00",
+            type = com.emul8r.bizap.domain.analytics.SearchType.INVOICE
+        ),
+    )
+
+    // Mock customers
+    val mockCustomers = listOf(
+        SearchResult(
+            id = 2001L,
+            title = "Acme Corporation",
+            subtitle = "acme@company.com",
+            type = com.emul8r.bizap.domain.analytics.SearchType.CUSTOMER
+        ),
+        SearchResult(
+            id = 2002L,
+            title = "Tech Solutions Inc",
+            subtitle = "contact@techsolutions.com",
+            type = com.emul8r.bizap.domain.analytics.SearchType.CUSTOMER
+        ),
+        SearchResult(
+            id = 2003L,
+            title = "Global Enterprises",
+            subtitle = "info@globalent.com",
+            type = com.emul8r.bizap.domain.analytics.SearchType.CUSTOMER
+        ),
+    )
+
+    // Filter by keyword
+    val results = (mockInvoices + mockCustomers).filter { result ->
+        result.title.lowercase().contains(keywordLower) ||
+        result.subtitle.lowercase().contains(keywordLower)
+    }
+
+    return results.take(10)  // Limit to 10 results
+}
+
+

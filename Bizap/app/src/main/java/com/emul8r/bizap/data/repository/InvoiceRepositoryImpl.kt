@@ -397,6 +397,71 @@ class InvoiceRepositoryImpl @Inject constructor(
         }
     }
 
+    // --- QUICK WINS: Dashboard Metrics (NEW) ---
+
+    override suspend fun getDashboardMetrics(businessId: Long): Result<com.emul8r.bizap.domain.repository.DashboardMetrics> =
+        runCatching {
+            val now = System.currentTimeMillis()
+
+            // Calculate month start timestamp
+            val calendar = Calendar.getInstance()
+            calendar.timeInMillis = now
+            calendar.set(Calendar.DAY_OF_MONTH, 1)
+            calendar.set(Calendar.HOUR_OF_DAY, 0)
+            calendar.set(Calendar.MINUTE, 0)
+            calendar.set(Calendar.SECOND, 0)
+            val monthStartMs = calendar.timeInMillis
+
+            // Get all invoices for this business from database (blocking - first from Flow)
+            val allInvoices = invoiceDao.getInvoicesByBusinessId(businessId)
+                .first()  // Get the first emitted list from Flow
+                .map { it.invoice }  // Extract InvoiceEntity from InvoiceWithItems
+
+            // Filter unpaid invoices (where amountPaid < totalAmount)
+            val unpaidInvoices = allInvoices.filter { invoice ->
+                invoice.amountPaid < invoice.totalAmount
+            }
+
+            val unpaidInvoiceCount = unpaidInvoices.size
+            val unpaidAmount = unpaidInvoices.sumOf { it.totalAmount - it.amountPaid }
+
+            // Calculate overdue amount (invoices past due date with outstanding balance)
+            val overdueAmount = unpaidInvoices
+                .filter { invoice ->
+                    invoice.dueDate < now && (invoice.totalAmount - invoice.amountPaid) > 0
+                }
+                .sumOf { it.totalAmount - it.amountPaid }
+
+            // Calculate paid this month (invoices updated/paid in current month)
+            val paidThisMonth = allInvoices
+                .filter { invoice ->
+                    invoice.amountPaid > 0 && invoice.updatedAt >= monthStartMs
+                }
+                .sumOf { it.amountPaid }
+
+            // Total customers owed = sum of all outstanding amounts
+            val totalCustomersOwed = unpaidAmount
+
+            Timber.d(
+                "📊 Dashboard Metrics calculated for business $businessId: " +
+                "unpaid=$unpaidInvoiceCount, " +
+                "unpaidAmount=$unpaidAmount, " +
+                "overdueAmount=$overdueAmount, " +
+                "paidThisMonth=$paidThisMonth"
+            )
+
+            com.emul8r.bizap.domain.repository.DashboardMetrics(
+                unpaidInvoiceCount = unpaidInvoiceCount,
+                unpaidAmount = unpaidAmount,
+                overdueAmount = overdueAmount,
+                paidThisMonth = paidThisMonth,
+                totalCustomersOwed = totalCustomersOwed,
+                lastUpdatedMs = now
+            )
+        }.onFailure { e ->
+            Timber.e(e, "Failed to get dashboard metrics for business $businessId")
+        }
+
     override suspend fun updateInvoiceRemote(invoice: Invoice): Result<Invoice> = runCatching {
         val response = invoiceApi.updateInvoice(invoice.id, invoice, invoice.updatedAt)
         if (response.isSuccessful) {
