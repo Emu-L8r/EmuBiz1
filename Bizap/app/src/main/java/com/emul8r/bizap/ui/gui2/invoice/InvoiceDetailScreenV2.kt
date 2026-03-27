@@ -1,5 +1,6 @@
 package com.emul8r.bizap.ui.gui2.invoice
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -146,17 +147,27 @@ private fun InvoiceDetailContentV2(
             }
         }
 
-        // Tab content - NO parent scroll, let each tab manage its own scrolling
-        // This prevents nested scrolling constraints crash
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            when (selectedTabIndex) {
-                0 -> InvoiceDetailsTab(invoice)
-                1 -> InvoiceItemsTab(invoice)
-                2 -> PaymentHistoryTab(invoice, businessId)
+        // Tab content: Use Crossfade animation for smooth transitions (eliminates flickering)
+        // Crossfade provides a smooth fade animation between tabs instead of abrupt recomposition
+        androidx.compose.animation.Crossfade(
+            targetState = selectedTabIndex,
+            modifier = Modifier.fillMaxSize(),
+            label = "Tab transition"
+        ) { tabIndex ->
+            when (tabIndex) {
+                0 -> InvoiceDetailsTab(
+                    invoice = invoice,
+                    modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())
+                )
+                1 -> InvoiceItemsTab(
+                    invoice = invoice,
+                    modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())
+                )
+                2 -> PaymentHistoryTab(
+                    invoice = invoice,
+                    businessId = businessId,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
@@ -170,11 +181,8 @@ private fun InvoiceDetailsTab(
     val dateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     val entity = invoice.invoice
 
-    // THIS TAB manages its own scrolling
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SectionHeaderV2("Invoice Info")
@@ -211,11 +219,8 @@ private fun InvoiceItemsTab(
     invoice: InvoiceWithItems,
     modifier: Modifier = Modifier
 ) {
-    // THIS TAB manages its own scrolling
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SectionHeaderV2("Line Items")
@@ -267,11 +272,10 @@ private fun PaymentHistoryTab(
     businessId: Long,
     modifier: Modifier = Modifier
 ) {
-    // PaymentHistoryScreen has its own LazyColumn, so we pass fillMaxSize for proper constraints
     PaymentHistoryScreen(
         invoiceId = invoice.invoice.id,
-        businessId = businessId,  // ✅ FIXED: Pass businessId for multi-tenant safety
-        modifier = modifier.fillMaxSize()
+        businessId = businessId,
+        modifier = modifier.fillMaxWidth()
     )
 }
 
