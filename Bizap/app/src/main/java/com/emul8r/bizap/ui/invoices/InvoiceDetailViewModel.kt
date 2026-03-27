@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.DocumentManager
 import com.emul8r.bizap.data.local.entities.DocumentStatus
 import com.emul8r.bizap.data.local.entities.GeneratedDocumentEntity
+import com.emul8r.bizap.domain.analytics.AnalyticsRepository
+import com.emul8r.bizap.domain.analytics.InvoiceAnalyticsEvent
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.CsvExportService
 import com.emul8r.bizap.data.service.InvoicePdfService
@@ -49,6 +51,7 @@ sealed interface InvoiceDetailEvent {
 @HiltViewModel
 class InvoiceDetailViewModel @Inject constructor(
     private val invoiceRepo: InvoiceRepository,
+    private val analyticsRepository: AnalyticsRepository,
     private val documentRepository: com.emul8r.bizap.domain.repository.DocumentRepository,
     private val pdfService: InvoicePdfService,
     private val csvExportService: CsvExportService,
@@ -177,6 +180,21 @@ class InvoiceDetailViewModel @Inject constructor(
                 invoiceRepo.updateInvoiceStatus(invoiceId, status)
                     .onSuccess {
                         Timber.d("✅ Invoice status updated to $newStatus")
+
+                        // Log event to analytics
+                        val businessId = (uiState.value as? InvoiceDetailUiState.Success)
+                            ?.data?.businessProfileId ?: 0L
+                        viewModelScope.launch {
+                            analyticsRepository.logEvent(
+                                InvoiceAnalyticsEvent.StatusChanged(
+                                    businessId = businessId,
+                                    invoiceId = invoiceId,
+                                    newStatus = newStatus,
+                                    timestamp = System.currentTimeMillis()
+                                )
+                            )
+                        }
+
                         val message = if (status == InvoiceStatus.PAID) {
                             "Invoice marked as paid and payment auto-recorded."
                         } else {

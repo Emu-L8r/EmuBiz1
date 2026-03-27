@@ -6,6 +6,19 @@ import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Dashboard metrics for the quick stats widget.
+ * Provides a snapshot of critical business metrics.
+ */
+data class DashboardMetrics(
+    val unpaidInvoiceCount: Int,
+    val unpaidAmount: Long,
+    val overdueAmount: Long,
+    val paidThisMonth: Long,
+    val totalCustomersOwed: Long,
+    val lastUpdatedMs: Long = System.currentTimeMillis()
+)
+
 interface InvoiceRepository {
     /**
      * Saves a new invoice or updates an existing one locally.
@@ -55,6 +68,25 @@ interface InvoiceRepository {
      */
     suspend fun deleteInvoice(id: Long): Result<Unit>
 
+    // --- QUICK WINS: Dashboard Metrics (NEW) ---
+
+    /**
+     * Gets dashboard metrics for the quick stats widget.
+     *
+     * Provides key business metrics at a glance:
+     * - Count of unpaid invoices
+     * - Total amount unpaid
+     * - Overdue amount (past due date)
+     * - Amount collected this month
+     * - Total amount customers owe
+     *
+     * Used by GUI2 dashboard for status widget display.
+     *
+     * @param businessId The business profile ID
+     * @return [Result.success] with DashboardMetrics, or [Result.failure] on error
+     */
+    suspend fun getDashboardMetrics(businessId: Long): Result<DashboardMetrics>
+
     // --- PHASE 2: Remote Sync ---
 
     suspend fun createInvoiceRemote(invoice: Invoice): Result<Invoice>
@@ -93,3 +125,5 @@ interface InvoiceRepository {
      */
     fun observePaymentHistory(invoiceId: Long, businessId: Long): Flow<List<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>>
 }
+
+

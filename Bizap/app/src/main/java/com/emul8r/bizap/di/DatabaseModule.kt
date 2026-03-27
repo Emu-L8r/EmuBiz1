@@ -59,7 +59,8 @@ object DatabaseModule {
             MIGRATION_31_32,
             MIGRATION_32_33,
             MIGRATION_33_34,
-            MIGRATION_34_35
+            MIGRATION_34_35,
+            MIGRATION_35_36
         )
 
         // ✅ PRODUCTION SAFE: Only allow destructive fallback in DEBUG builds
@@ -97,6 +98,8 @@ object DatabaseModule {
     @Provides fun provideCustomerDaoV2(db: AppDatabase): CustomerDaoV2 = db.customerDaoV2()
     @Provides fun providePaymentDaoV2(db: AppDatabase): PaymentDaoV2 = db.paymentDaoV2()
     @Provides fun provideNoteDao(db: AppDatabase): NoteDao = db.noteDao()
+
+    @Provides fun provideAnalyticsEventDao(db: AppDatabase): com.emul8r.bizap.data.local.dao.AnalyticsEventDao = db.analyticsEventDao()
 
     @Provides
     @Singleton

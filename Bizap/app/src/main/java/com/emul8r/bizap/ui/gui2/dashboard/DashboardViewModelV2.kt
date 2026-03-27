@@ -8,6 +8,8 @@ import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.InvoiceMetricsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
+import com.emul8r.bizap.domain.analytics.AnalyticsRepository
+import com.emul8r.bizap.domain.analytics.InvoiceAnalyticsEvent
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.repository.NoteRepository
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
@@ -15,6 +17,7 @@ import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -36,11 +39,25 @@ class DashboardViewModelV2 @Inject constructor(
     private val businessContextRepository: BusinessContextRepositoryV2,
     private val invoiceMetricsRepository: InvoiceMetricsRepositoryV2,
     private val invoiceRepository: InvoiceRepository,
-    private val noteRepository: NoteRepository
+    private val noteRepository: NoteRepository,
+    private val analyticsRepository: AnalyticsRepository
 ) : ViewModel() {
 
     private val route: ScreenV2.Dashboard = savedStateHandle.toRoute()
     val businessId: Long = route.businessId
+
+    init {
+        // Log dashboard view event
+        viewModelScope.launch {
+            analyticsRepository.logEvent(
+                InvoiceAnalyticsEvent.InvoiceViewed(
+                    businessId = businessId,
+                    invoiceId = 0L,  // 0 indicates dashboard view (not a specific invoice)
+                    timestamp = System.currentTimeMillis()
+                )
+            )
+        }
+    }
 
     // ===== MAIN DASHBOARD STATE =====
     val uiState: StateFlow<DashboardUiStateV2> = combine(
