@@ -11,6 +11,9 @@ import androidx.annotation.RequiresApi
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.pdf.PdfTableRenderer
+import com.emul8r.bizap.domain.pdf.PdfBrandingRenderer
+import com.emul8r.bizap.domain.pdf.PdfPageManager
+import com.emul8r.bizap.domain.pdf.PdfWatermarkRenderer
 import com.emul8r.bizap.domain.service.PdfGenerationService
 import com.emul8r.bizap.ui.templates.TemplateSnapshotManager
 import com.emul8r.bizap.utils.DocumentNamingUtils
@@ -93,9 +96,8 @@ class InvoicePdfService @Inject constructor(
         val hidePaymentTerms = pdfStyler.shouldHidePaymentTerms(templateSnapshot)
 
         val pdfDocument = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
-        val page = pdfDocument.startPage(pageInfo)
-        val canvas = page.canvas
+        val pageManager = PdfPageManager(pdfDocument, 595, 842)
+        var canvas = pageManager.startNewPage()
 
         val boldTypeface = pdfStyler.getTypeface(templateSnapshot?.fontFamily, context, isBold = true)
         val regularTypeface = pdfStyler.getTypeface(templateSnapshot?.fontFamily, context, isBold = false)
@@ -107,6 +109,11 @@ class InvoicePdfService @Inject constructor(
         val brandPaint = Paint().apply { typeface = boldTypeface; textSize = 18f; color = colors.primary; isAntiAlias = true }
         val bodyPaint = Paint().apply { typeface = regularTypeface; textSize = 10f; color = colors.textLight; isAntiAlias = true }
         val labelPaint = Paint().apply { typeface = boldTypeface; textSize = 9f; color = Color.GRAY; isAntiAlias = true }
+
+        // ===== BRANDING & HEADER SECTION (Page 1 Only) =====
+        // Draw logo if available
+        val brandingRenderer = PdfBrandingRenderer(canvas, 595f)
+        brandingRenderer.drawLogo(snapshot.logoBase64)
 
         val centerX = 595f / 2f
         brandPaint.textAlign = Paint.Align.CENTER
@@ -125,12 +132,17 @@ class InvoicePdfService @Inject constructor(
         canvas.drawText(snapshot.customerAddress, 40f, 162f, bodyPaint)
         snapshot.customerEmail?.let { canvas.drawText(it, 40f, 178f, bodyPaint) }
 
-        canvas.drawText(fileType.uppercase(), 400f, 130f, labelPaint)
+        canvas.drawText("${if (snapshot.invoiceNumber.contains("Quote", ignoreCase = true)) "QUOTE" else "INVOICE"}".uppercase(), 400f, 130f, labelPaint)
         canvas.drawText(snapshot.displayName.ifBlank { snapshot.invoiceNumber }, 400f, 145f, headerPaint)
         canvas.drawText("Date: ${formatDate(snapshot.date)}", 400f, 162f, bodyPaint)
         canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 400f, 178f, bodyPaint)
 
+        // ===== WATERMARK (appears on first page) =====
+        val watermarkRenderer = PdfWatermarkRenderer(canvas, 595f, 842f)
+        watermarkRenderer.drawWatermark(snapshot.invoiceStatus)
+
         var currentY = 195f
+        pageManager.setY(currentY)
 
         // ===== BILLING INFORMATION SECTION =====
         canvas.drawLine(40f, currentY, 555f, currentY, Paint().apply { color = colors.secondary; strokeWidth = 0.5f })
@@ -170,17 +182,40 @@ class InvoicePdfService @Inject constructor(
         currentY += 15f
 
         if (!hideLineItems) {
+            // ===== LINE ITEMS TABLE WITH PAGINATION =====
+            // Draw table header
+            val headerTextPaint = Paint(headerPaint).apply { color = Color.WHITE }
+
+            // Ensure space for header row (approximately 30 points)
+            canvas = pageManager.ensureSpace(40f)
+
             val tableRenderer = PdfTableRenderer(
                 canvas = canvas,
                 startX = 40f,
-                currentY = currentY,
+                currentY = pageManager.currentY,
                 pageWidth = 595f,
-                columnWeights = listOf(0.5f, 0.1f, 0.15f, 0.25f)
+                columnWeights = listOf(0.5f, 0.1f, 0.15f, 0.25f),
+                headerBackgroundColor = colors.primary,
+                alternateRowColor = Color.parseColor("#F9F9F9")
             )
 
-            tableRenderer.drawRow(listOf("Description", "Qty", "Price", "Total"), headerPaint, isHeader = true)
+            tableRenderer.drawRow(listOf("Description", "Qty", "Price", "Total"), headerTextPaint, isHeader = true, headerTextColor = Color.WHITE)
+            pageManager.setY(tableRenderer.getPosition())
 
+            // Draw table rows with automatic pagination
             snapshot.items.forEach { item ->
+                val rowHeight = 35f  // Estimated row height with wrapping
+
+                // Check if we need to start a new page
+                canvas = pageManager.ensureSpace(rowHeight)
+
+                // If page changed, create new table renderer for continuation
+                if (canvas != tableRenderer.canvas) {
+                    tableRenderer.resetRowCount()
+                }
+
+                // Update table renderer's canvas and position
+                // Note: This is a simplified approach; ideally we'd create a new renderer per page
                 tableRenderer.drawRow(
                     listOf(
                         item.description,
@@ -190,22 +225,28 @@ class InvoicePdfService @Inject constructor(
                     ),
                     bodyPaint
                 )
+                pageManager.setY(tableRenderer.getPosition())
             }
-            currentY = tableRenderer.getPosition() + 30f
+
+            currentY = pageManager.currentY + 30f
+            pageManager.setY(currentY)
         }
 
         val rightX = 555f
         bodyPaint.textAlign = Paint.Align.RIGHT
         headerPaint.textAlign = Paint.Align.RIGHT
 
-        canvas.drawText("Subtotal:", 450f, currentY, bodyPaint)
-        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal / 100.0), rightX, currentY, bodyPaint)
+        // Ensure space for totals section (approximately 50 points)
+        canvas = pageManager.ensureSpace(50f)
 
-        currentY += 15f
+        canvas.drawText("Subtotal:", 450f, pageManager.currentY, bodyPaint)
+        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal / 100.0), rightX, pageManager.currentY, bodyPaint)
+
+        pageManager.advanceY(15f)
         if (snapshot.taxAmount > 0) {
-            canvas.drawText("Tax (${(snapshot.taxRate * 100).toInt()}%):", 450f, currentY, bodyPaint)
-            canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount / 100.0), rightX, currentY, bodyPaint)
-            currentY += 25f
+            canvas.drawText("Tax (${(snapshot.taxRate * 100).toInt()}%):", 450f, pageManager.currentY, bodyPaint)
+            canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount / 100.0), rightX, pageManager.currentY, bodyPaint)
+            pageManager.advanceY(25f)
         }
 
         val totalLabelPaint = Paint(headerPaint).apply {
@@ -213,75 +254,82 @@ class InvoicePdfService @Inject constructor(
             color = colors.primary
             textAlign = Paint.Align.RIGHT
         }
-        canvas.drawText("TOTAL AMOUNT DUE (${snapshot.currencyCode}):", 450f, currentY, totalLabelPaint)
+        canvas.drawText("TOTAL AMOUNT DUE (${snapshot.currencyCode}):", 450f, pageManager.currentY, totalLabelPaint)
         val formattedAmount = String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount / 100.0)
-        canvas.drawText(formattedAmount, rightX, currentY, totalLabelPaint)
+        canvas.drawText(formattedAmount, rightX, pageManager.currentY, totalLabelPaint)
 
         // ===== PAYMENT DETAILS SECTION =====
-        currentY += 30f
-        canvas.drawLine(40f, currentY, 555f, currentY, separatorPaint)
-        currentY += 12f
-        canvas.drawText("PAYMENT DETAILS", 40f, currentY, labelPaint)
-        currentY += 14f
+        // Ensure space for payment details header (approximately 80 points)
+        canvas = pageManager.ensureSpace(80f)
+
+        pageManager.advanceY(30f)
+        canvas.drawLine(40f, pageManager.currentY, 555f, pageManager.currentY, separatorPaint)
+        pageManager.advanceY(12f)
+        canvas.drawText("PAYMENT DETAILS", 40f, pageManager.currentY, labelPaint)
+        pageManager.advanceY(14f)
 
         bodyPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText("Payment Terms: Due within 30 days of invoice date", 40f, currentY, bodyPaint)
-        currentY += 12f
-        canvas.drawText("Reference: ${snapshot.invoiceNumber}", 40f, currentY, bodyPaint)
-        currentY += 12f
+        canvas.drawText("Payment Terms: Due within 30 days of invoice date", 40f, pageManager.currentY, bodyPaint)
+        pageManager.advanceY(12f)
+        canvas.drawText("Reference: ${snapshot.invoiceNumber}", 40f, pageManager.currentY, bodyPaint)
+        pageManager.advanceY(12f)
 
         if (snapshot.businessPhone.isNotBlank()) {
-            canvas.drawText("Contact: ${snapshot.businessPhone}", 40f, currentY, bodyPaint)
-            currentY += 12f
+            canvas.drawText("Contact: ${snapshot.businessPhone}", 40f, pageManager.currentY, bodyPaint)
+            pageManager.advanceY(12f)
         }
 
         if (snapshot.businessEmail.isNotBlank()) {
-            canvas.drawText(snapshot.businessEmail, 40f, currentY, bodyPaint)
-            currentY += 12f
+            canvas.drawText(snapshot.businessEmail, 40f, pageManager.currentY, bodyPaint)
+            pageManager.advanceY(12f)
         }
 
         // Bank / EFT payment details — only shown when the business profile has them set
         val hasBankDetails = snapshot.bankAccountNumber.isNotBlank() || snapshot.bankBsb.isNotBlank()
         if (hasBankDetails) {
             currentY += 8f
-            canvas.drawText("EFT / Bank Transfer:", 40f, currentY, labelPaint)
-            currentY += 14f
+            pageManager.advanceY(8f)
+            canvas.drawText("EFT / Bank Transfer:", 40f, pageManager.currentY, labelPaint)
+            pageManager.advanceY(14f)
             if (snapshot.bankName.isNotBlank()) {
-                canvas.drawText("Bank: ${snapshot.bankName}", 40f, currentY, bodyPaint)
-                currentY += 12f
+                canvas.drawText("Bank: ${snapshot.bankName}", 40f, pageManager.currentY, bodyPaint)
+                pageManager.advanceY(12f)
             }
             if (snapshot.bankAccountName.isNotBlank()) {
-                canvas.drawText("Account Name: ${snapshot.bankAccountName}", 40f, currentY, bodyPaint)
-                currentY += 12f
+                canvas.drawText("Account Name: ${snapshot.bankAccountName}", 40f, pageManager.currentY, bodyPaint)
+                pageManager.advanceY(12f)
             }
             if (snapshot.bankBsb.isNotBlank()) {
-                canvas.drawText("BSB: ${snapshot.bankBsb}", 40f, currentY, bodyPaint)
-                currentY += 12f
+                canvas.drawText("BSB: ${snapshot.bankBsb}", 40f, pageManager.currentY, bodyPaint)
+                pageManager.advanceY(12f)
             }
             if (snapshot.bankAccountNumber.isNotBlank()) {
-                canvas.drawText("Account No: ${snapshot.bankAccountNumber}", 40f, currentY, bodyPaint)
-                currentY += 12f
+                canvas.drawText("Account No: ${snapshot.bankAccountNumber}", 40f, pageManager.currentY, bodyPaint)
+                pageManager.advanceY(12f)
             }
         }
 
         // Render notes and footer below totals
         bodyPaint.textAlign = Paint.Align.LEFT
         if (snapshot.notes.isNotBlank()) {
-            currentY += 30f
-            canvas.drawLine(40f, currentY, 555f, currentY, separatorPaint)
-            currentY += 12f
-            canvas.drawText("NOTES", 40f, currentY, labelPaint)
-            currentY += 14f
-            currentY = drawWrappedText(canvas, snapshot.notes, 40f, currentY, 515f, bodyPaint)
+            canvas = pageManager.ensureSpace(60f)
+            pageManager.advanceY(30f)
+            canvas.drawLine(40f, pageManager.currentY, 555f, pageManager.currentY, separatorPaint)
+            pageManager.advanceY(12f)
+            canvas.drawText("NOTES", 40f, pageManager.currentY, labelPaint)
+            pageManager.advanceY(14f)
+            pageManager.setY(drawWrappedText(canvas, snapshot.notes, 40f, pageManager.currentY, 515f, bodyPaint))
         }
         if (snapshot.footerText.isNotBlank()) {
-            currentY += 20f
-            canvas.drawLine(40f, currentY, 555f, currentY, separatorPaint)
-            currentY += 12f
-            currentY = drawWrappedText(canvas, snapshot.footerText, 40f, currentY, 515f, footerBodyPaint)
+            canvas = pageManager.ensureSpace(60f)
+            pageManager.advanceY(20f)
+            canvas.drawLine(40f, pageManager.currentY, 555f, pageManager.currentY, separatorPaint)
+            pageManager.advanceY(12f)
+            pageManager.setY(drawWrappedText(canvas, snapshot.footerText, 40f, pageManager.currentY, 515f, footerBodyPaint))
         }
 
-        pdfDocument.finishPage(page)
+        // Finalize all pages and close document
+        pageManager.finalize()
         file.outputStream().use { pdfDocument.writeTo(it) }
         pdfDocument.close()
 

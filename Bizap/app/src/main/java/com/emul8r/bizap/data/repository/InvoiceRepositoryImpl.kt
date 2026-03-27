@@ -831,8 +831,15 @@ class InvoiceRepositoryImpl @Inject constructor(
         return "$sanitized-$datePart-$counterPart"
     }
 
-    override fun observePaymentHistory(invoiceId: Long): Flow<List<InvoicePaymentSnapshot>> =
-        paymentDao.observePaymentHistory(invoiceId)
+    override fun observePaymentHistory(invoiceId: Long, businessId: Long): Flow<List<InvoicePaymentSnapshot>> {
+        require(invoiceId > 0) { "invoiceId must be > 0" }
+        require(businessId > 0) { "businessId must be > 0" }
+        return paymentDao.observePaymentHistory(invoiceId, businessId)
+            .catch { e ->
+                timber.log.Timber.e(e, "Error observing payment history for invoice=$invoiceId, business=$businessId")
+                emit(emptyList())
+            }
+    }
 }
 
 // ==================== EXTENSION FUNCTIONS ====================

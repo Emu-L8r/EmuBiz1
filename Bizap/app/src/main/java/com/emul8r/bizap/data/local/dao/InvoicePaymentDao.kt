@@ -107,17 +107,21 @@ interface InvoicePaymentDao {
      * Returns snapshots ordered by date DESC (newest first).
      * Each snapshot represents the payment state at a point in time.
      *
+     * Filters by both invoiceId AND businessProfileId to ensure multi-tenant safety.
+     *
      * Used by [PaymentHistoryViewModel] to display payment timeline.
      *
-     * @param invoiceId Invoice to get history for
+     * @param invoiceId Invoice to get history for (must be > 0)
+     * @param businessId Business ID for multi-tenant filtering (must be > 0)
      * @return Flow of payment snapshots, newest first
      */
     @Query("""
         SELECT * FROM invoice_payment_snapshots
         WHERE invoiceId = :invoiceId
+          AND businessProfileId = :businessId
         ORDER BY lastUpdatedMs DESC
     """)
-    fun observePaymentHistory(invoiceId: Long): Flow<List<InvoicePaymentSnapshot>>
+    fun observePaymentHistory(invoiceId: Long, businessId: Long): Flow<List<InvoicePaymentSnapshot>>
 
     // ==================== HEALTH CHECK QUERIES ====================
 

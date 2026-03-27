@@ -109,20 +109,19 @@ data class PaymentHistoryItem(
  */
 @HiltViewModel
 class PaymentHistoryViewModel @Inject constructor(
-    private val invoiceId: Long,
-    private val businessId: Long,
     private val invoiceRepository: InvoiceRepository,
-    savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    init {
-        // Validate parameters at initialization
-        require(invoiceId > 0) { "invoiceId must be > 0, got: $invoiceId" }
-        require(businessId > 0) { "businessId must be > 0, got: $businessId" }
-        Timber.d("✅ PaymentHistoryViewModel initialized with invoiceId=$invoiceId, businessId=$businessId")
-    }
-
     private val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+
+    // ✅ Parameters passed explicitly from Screen via initialize()
+    private var invoiceId: Long = -1L
+    private var businessId: Long = -1L
+    private var _initialized = false
+
+    // Public field to track payment history flow
+    private var _paymentHistory: Flow<PaymentHistoryUiState>? = null
 
     /**
      * Initialize ViewModel with explicit invoiceId and businessId parameters.
