@@ -209,13 +209,7 @@ class InvoicePdfService @Inject constructor(
                 // Check if we need to start a new page
                 canvas = pageManager.ensureSpace(rowHeight)
 
-                // If page changed, create new table renderer for continuation
-                if (canvas != tableRenderer.canvas) {
-                    tableRenderer.resetRowCount()
-                }
-
-                // Update table renderer's canvas and position
-                // Note: This is a simplified approach; ideally we'd create a new renderer per page
+                // Render row on current canvas
                 tableRenderer.drawRow(
                     listOf(
                         item.description,
