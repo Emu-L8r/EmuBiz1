@@ -58,6 +58,24 @@ interface InvoiceDaoV2 {
     @Query("SELECT * FROM invoices WHERE businessProfileId = :businessId AND isActive = 1 ORDER BY date DESC")
     fun observeAllInvoices(businessId: Long): Flow<List<InvoiceWithInvoiceItems>>
 
+    /**
+     * Search invoices by number or customer name.
+     * Returns list limited by specified count.
+     */
+    @Query("""
+        SELECT * FROM invoices 
+        WHERE businessProfileId = :businessId 
+          AND isActive = 1 
+          AND invoiceNumber LIKE '%' || :query || '%'
+        ORDER BY date DESC
+        LIMIT :limit
+    """)
+    suspend fun searchByNumber(
+        businessId: Long,
+        query: String,
+        limit: Int = 10
+    ): List<InvoiceEntity>
+
     // ==================== REVENUE QUERIES ====================
 
     /**

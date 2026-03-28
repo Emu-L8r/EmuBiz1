@@ -6,18 +6,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.model.gui2.PaymentMetricsV2
 import com.emul8r.bizap.ui.gui2.common.*
 
 /**
  * GUI2 payment analytics screen.
  * Displays outstanding balances, collection metrics, and invoice status breakdown.
+ * Includes status filtering and export functionality.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +28,8 @@ fun PaymentAnalyticsScreenV2(
     viewModel: PaymentAnalyticsViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectedStatuses = remember { mutableStateOf(setOf(InvoiceStatus.SENT, InvoiceStatus.OVERDUE)) }
+    val isExporting = remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -36,22 +39,48 @@ fun PaymentAnalyticsScreenV2(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
+                    ExportMenuButtonV2(
+                        onExportPdf = { isExporting.value = true },
+                        onExportCsv = { isExporting.value = true },
+                        isExporting = isExporting.value
+                    )
                 }
             )
         }
     ) { paddingValues ->
-        when (val state = uiState) {
-            is PaymentAnalyticsUiStateV2.Loading -> LoadingIndicatorV2(
-                modifier = Modifier.padding(paddingValues)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Status filter
+            StatusFilterChipsV2(
+                selectedStatuses = selectedStatuses.value,
+                onStatusesSelected = { selectedStatuses.value = it },
+                modifier = Modifier.padding(vertical = 12.dp)
             )
-            is PaymentAnalyticsUiStateV2.Error -> ErrorStateV2(
-                message = state.message,
-                modifier = Modifier.padding(paddingValues)
-            )
-            is PaymentAnalyticsUiStateV2.Success -> PaymentAnalyticsContentV2(
-                metrics = state.metrics,
-                modifier = Modifier.padding(paddingValues)
-            )
+
+            // Loading indicator if exporting
+            if (isExporting.value) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            // Content
+            when (val state = uiState) {
+                is PaymentAnalyticsUiStateV2.Loading -> LoadingIndicatorV2(
+                    modifier = Modifier.fillMaxSize()
+                )
+                is PaymentAnalyticsUiStateV2.Error -> ErrorStateV2(
+                    message = state.message,
+                    modifier = Modifier.fillMaxSize()
+                )
+                is PaymentAnalyticsUiStateV2.Success -> PaymentAnalyticsContentV2(
+                    metrics = state.metrics,
+                    selectedStatuses = selectedStatuses.value
+                )
+            }
         }
     }
 }
@@ -59,6 +88,7 @@ fun PaymentAnalyticsScreenV2(
 @Composable
 private fun PaymentAnalyticsContentV2(
     metrics: PaymentMetricsV2,
+    selectedStatuses: Set<InvoiceStatus> = setOf(InvoiceStatus.SENT, InvoiceStatus.OVERDUE),
     modifier: Modifier = Modifier
 ) {
     Column(

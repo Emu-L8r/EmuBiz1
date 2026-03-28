@@ -94,6 +94,7 @@ fun DashboardScreenV2(
                 statusCounts = statusCounts,
                 currentNotesCount = currentNotesCount,
                 navController = navController,
+                viewModel = viewModel,
                 onNavigateToRevenue = onNavigateToRevenue,
                 onNavigateToPayment = onNavigateToPayment,
                 onNavigateToRisk = onNavigateToRisk,
@@ -116,6 +117,7 @@ private fun DashboardContentV2(
     statusCounts: Map<String, Int>,
     currentNotesCount: Int,
     navController: NavController,
+    viewModel: DashboardViewModelV2,
     onNavigateToRevenue: () -> Unit,
     onNavigateToPayment: () -> Unit,
     onNavigateToRisk: () -> Unit,
@@ -153,9 +155,10 @@ private fun DashboardContentV2(
 
             AnalyticsSearchBar(
                 onSearch = { query ->
-                    // TODO: Wire to actual search repository in Week 2
-                    // For now, using mock data to demonstrate search
-                    searchResults.value = getMockSearchResults(query.keyword)
+                    // Wire to real search repository via ViewModel
+                    viewModel.performSearch(query.keyword) { results ->
+                        searchResults.value = results
+                    }
                 },
                 onResultClick = { result ->
                     // Navigate based on result type

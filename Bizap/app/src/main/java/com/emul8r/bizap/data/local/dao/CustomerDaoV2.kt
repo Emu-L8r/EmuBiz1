@@ -35,6 +35,23 @@ interface CustomerDaoV2 {
     @Query("SELECT * FROM customers WHERE businessProfileId = :businessId AND isActive = 1 ORDER BY name ASC")
     fun observeAllCustomers(businessId: Long): Flow<List<CustomerEntity>>
 
+    /**
+     * Search customers by name or email.
+     */
+    @Query("""
+        SELECT * FROM customers 
+        WHERE businessProfileId = :businessId 
+          AND isActive = 1 
+          AND (name LIKE '%' || :query || '%' OR email LIKE '%' || :query || '%')
+        ORDER BY name ASC
+        LIMIT :limit
+    """)
+    suspend fun searchByNameOrEmail(
+        businessId: Long,
+        query: String,
+        limit: Int = 10
+    ): List<CustomerEntity>
+
     @Query("SELECT * FROM customers WHERE id = :customerId AND isActive = 1")
     fun observeCustomerById(customerId: Long): Flow<CustomerEntity?>
 }

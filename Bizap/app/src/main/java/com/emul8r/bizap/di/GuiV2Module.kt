@@ -9,6 +9,7 @@ import com.emul8r.bizap.data.repository.analytics.AnalyticsDiagnostics
 import com.emul8r.bizap.data.repository.analytics.AnalyticsEventBus
 import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
+import com.emul8r.bizap.data.repository.gui2.CustomerAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentAnalyticsRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import com.emul8r.bizap.data.repository.gui2.RiskAnalyticsRepositoryV2
@@ -72,6 +73,13 @@ abstract class GuiV2Module {
             invoiceDaoV2: InvoiceDaoV2,
             calculator: AnalyticsCalculator
         ): RiskAnalyticsRepositoryV2 = RiskAnalyticsRepositoryV2(invoiceDaoV2, calculator)
+
+        @Provides
+        @Singleton
+        fun provideCustomerAnalyticsRepositoryV2(
+            invoiceDaoV2: InvoiceDaoV2,
+            calculator: AnalyticsCalculator
+        ): CustomerAnalyticsRepositoryV2 = CustomerAnalyticsRepositoryV2(invoiceDaoV2, calculator)
 
         @Provides
         @Singleton

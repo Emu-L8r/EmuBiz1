@@ -53,30 +53,55 @@ fun LineChartCard(
             )
 
             if (data.isNotEmpty()) {
-                // Placeholder: Show data points as colored bars
+                // Enhanced visualization with real data
+                var hoveredIndex by remember { mutableStateOf(-1) }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.Bottom
                 ) {
                     val maxValue = data.maxOfOrNull { it.value } ?: 1f
-                    data.forEach { point ->
-                        val heightPercent = (point.value / maxValue)
+                    data.forEachIndexed { index, point ->
+                        val heightPercent = (point.value / maxValue).coerceIn(0.05f, 1f)
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxHeight()
+                                .fillMaxHeight(heightPercent)
                                 .background(
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                    color = if (index == hoveredIndex)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                                     shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
                                 )
+                                .padding(top = 4.dp)
                         )
                     }
                 }
 
+                // Data point labels
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    data.take(5).forEach { point ->
+                        Text(
+                            text = point.label.take(3),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                // Summary
                 Text(
-                    "${data.size} data points loaded",
+                    "${data.size} data points | Max: ${data.maxOfOrNull { it.value }?.toInt() ?: 0}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -37,6 +37,7 @@ fun CreateCustomerScreenV2(
     var notes by remember { mutableStateOf("") }
     var isSaving by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -92,12 +93,17 @@ fun CreateCustomerScreenV2(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Email
+            // Email (required)
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    email = it
+                    emailError = null
+                },
+                label = { Text("Email *") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = emailError != null,
+                supportingText = emailError?.let { { Text(it) } }
             )
 
             // Phone
@@ -131,13 +137,30 @@ fun CreateCustomerScreenV2(
             // Save Button
             Button(
                 onClick = {
+                    // Reset previous errors
+                    nameError = null
+                    emailError = null
+                    errorMessage = null
+
+                    // Validate name
                     if (name.isBlank()) {
                         nameError = "Name is required"
                         return@Button
                     }
 
+                    // Validate email (now required)
+                    if (email.isBlank()) {
+                        emailError = "Email is required"
+                        return@Button
+                    }
+
+                    // Validate email format
+                    if (!email.contains("@") || !email.contains(".")) {
+                        emailError = "Please enter a valid email address (e.g., user@example.com)"
+                        return@Button
+                    }
+
                     isSaving = true
-                    errorMessage = null
                     viewModel.createCustomer(
                         Customer(
                             id = 0,
