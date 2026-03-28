@@ -11,6 +11,7 @@ import com.emul8r.bizap.data.repository.InvoiceRepositoryImpl
 import com.emul8r.bizap.data.repository.NoteRepositoryImpl
 import com.emul8r.bizap.data.repository.OfflineQueueRepositoryImpl
 import com.emul8r.bizap.data.repository.PaymentAnalyticsRepositoryImpl
+import com.emul8r.bizap.data.repository.PaymentRecordRepositoryImpl
 import com.emul8r.bizap.data.repository.PDFRepositoryImpl
 import com.emul8r.bizap.data.repository.PrefilledItemRepositoryImpl
 import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
@@ -147,6 +148,20 @@ abstract class RepositoryModule {
     abstract fun bindExportRepository(
         impl: ExportRepositoryImpl
     ): ExportRepository
+
+    // Payment Record Repository binding
+    // @Binds
+    // @Singleton
+    // abstract fun bindPaymentRecordRepository(
+    //     impl: PaymentRecordRepositoryImpl
+    // ): PaymentRecordRepository
+
+    // Invoice Template Repository binding
+    // @Binds
+    // @Singleton
+    // abstract fun bindInvoiceTemplateRepository(
+    //     impl: InvoiceTemplateRepositoryImpl
+    // ): InvoiceTemplateRepository
 
     /**
      * Binds the data-layer InvoicePdfService to the domain-level PdfGenerationService interface.
