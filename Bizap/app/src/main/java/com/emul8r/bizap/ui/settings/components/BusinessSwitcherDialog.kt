@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Business
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,7 +54,7 @@ fun BusinessSwitcherDialog(
                             supportingContent = { Text(profile.abn) },
                             leadingContent = { 
                                 Icon(
-                                    imageVector = Icons.Default.Business, 
+                                    imageVector = Icons.Outlined.Business,
                                     contentDescription = null,
                                     tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                 ) 
@@ -62,7 +62,7 @@ fun BusinessSwitcherDialog(
                             trailingContent = {
                                 if (isActive) {
                                     Icon(
-                                        imageVector = Icons.Default.CheckCircle,
+                                        imageVector = Icons.Outlined.CheckCircle,
                                         contentDescription = "Active",
                                         tint = MaterialTheme.colorScheme.primary
                                     )
@@ -103,7 +103,7 @@ fun BusinessSwitcherDialog(
                 }
             } else {
                 TextButton(onClick = { showAddBusinessField = true }) {
-                    Icon(Icons.Default.Add, contentDescription = null)
+                    Icon(Icons.Outlined.Add, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("Add Business")
                 }

@@ -28,8 +28,6 @@ import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.domain.repository.DashboardMetrics
 import com.emul8r.bizap.ui.designsystem.BizapColors
 
-// ...existing code...
-
 /**
  * Dashboard metrics widget showing key business stats at a glance.
  *
@@ -203,8 +201,7 @@ private fun MetricBox(
                     Text(
                         text = subValue,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 9.sp
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -245,9 +242,3 @@ private fun MetricBox(
         }
     }
 }
-
-
-
-
-
-

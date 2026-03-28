@@ -18,9 +18,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import com.emul8r.bizap.domain.analytics.SearchQuery
 import com.emul8r.bizap.domain.analytics.SearchResult
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
@@ -192,19 +196,32 @@ private fun DashboardContentV2(
             HorizontalDivider()
 
             // ── Dashboard Metrics Widget ──────────────────────────────────
-            // TODO: Wire metrics from ViewModel once repository is wired
-            // For now, using mock data to demonstrate UI
-            val mockMetrics = com.emul8r.bizap.domain.repository.DashboardMetrics(
+            // Uses real data from paymentMetrics in state
+            // Calculate overdue amount based on outstanding (OVERDUE invoices are part of outstanding)
+            val overdueInvoices = statusCounts["OVERDUE"] ?: 0
+            val estimatedOverdueAmount = if (overdueInvoices > 0) {
+                // Rough estimate: divide outstanding by number of non-overdue outstanding invoices
+                val totalOutstanding = statusCounts["SENT"]?.let { it + (statusCounts["PARTIALLY_PAID"] ?: 0) + overdueInvoices } ?: overdueInvoices
+                if (totalOutstanding > 0) {
+                    (state.paymentMetrics.outstandingAmount * overdueInvoices) / totalOutstanding
+                } else {
+                    state.paymentMetrics.outstandingAmount
+                }
+            } else {
+                0L
+            }
+
+            val dashboardMetrics = com.emul8r.bizap.domain.repository.DashboardMetrics(
                 unpaidInvoiceCount = statusCounts["SENT"]?.let { it + (statusCounts["PARTIALLY_PAID"] ?: 0) } ?: 0,
                 unpaidAmount = state.paymentMetrics.outstandingAmount,
-                overdueAmount = (state.paymentMetrics.overdueCount * 500).toLong(), // Mock calculation
-                paidThisMonth = state.paymentMetrics.collectedAmount / 2, // Mock
+                overdueAmount = estimatedOverdueAmount,
+                paidThisMonth = state.paymentMetrics.collectedAmount,
                 totalCustomersOwed = state.paymentMetrics.outstandingAmount,
                 lastUpdatedMs = System.currentTimeMillis()
             )
 
             DashboardMetricsWidget(
-                metrics = mockMetrics,
+                metrics = dashboardMetrics,
                 onUnpaidClick = { onNavigateToPayment() },
                 onOverdueClick = { onNavigateToPayment() },
                 onPaidClick = { onNavigateToRevenue() }
@@ -252,227 +269,261 @@ private fun DashboardContentV2(
             )
 
             HorizontalDivider()
-        SectionHeaderV2(title = "Revenue")
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Expected Revenue = outstanding + collected
-            val expectedRevenue = state.paymentMetrics.outstandingAmount + state.paymentMetrics.collectedAmount
-            val actualRevenue = state.paymentMetrics.collectedAmount
-            MetricCard(
-                title = "Expected Revenue",
-                value = com.emul8r.bizap.utils.CentsFormatter.formatCents(expectedRevenue),
-                icon = Icons.Default.TrendingUp,
-                backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusPaid,
-                modifier = Modifier.weight(1f)
-            )
-            MetricCard(
-                title = "Actual Revenue",
-                value = com.emul8r.bizap.utils.CentsFormatter.formatCents(actualRevenue),
-                icon = Icons.Default.CheckCircle,
-                backgroundColor = BizapColors.StatusSent.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusSent.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusSent,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        
-        // Outstanding amount card
-        if (state.paymentMetrics.outstandingAmount > 0L) {
-            MetricCard(
-                title = "Outstanding",
-                value = com.emul8r.bizap.utils.CentsFormatter.formatCents(state.paymentMetrics.outstandingAmount),
-                icon = Icons.Default.Schedule,
-                backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusOutstanding,
+
+            // ── Navigation links: MANAGE ──
+            SectionHeaderV2(title = "Manage")
+            OutlinedButton(
+                onClick = onNavigateToCustomers,
                 modifier = Modifier.fillMaxWidth()
-            )
-        }
-        OutlinedButton(
-            onClick = onNavigateToRevenue,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("View Revenue Dashboard")
-            Spacer(Modifier.width(4.dp))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            ) {
+                Icon(Icons.Default.People, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("View All Customers")
+                Spacer(Modifier.weight(1f))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
+            OutlinedButton(
+                onClick = onNavigateToInvoices,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Receipt, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("View All Invoices")
+                Spacer(Modifier.weight(1f))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
+            OutlinedButton(
+                onClick = onNavigateToVault,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Inventory, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Document Vault")
+                Spacer(Modifier.weight(1f))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
+
+            HorizontalDivider()
+
+            // ── Invoice Metrics section: INVOICES SENT ──
+            SectionHeaderV2(title = "Invoices Sent")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                MetricCardV2(
+                    label = "Total Invoices",
+                    value = "${state.invoiceMetrics.totalInvoices}",
+                    modifier = Modifier.weight(1f)
+                )
+                MetricCardV2(
+                    label = "Paid",
+                    value = "${state.invoiceMetrics.paidCount}",
+                    modifier = Modifier.weight(1f)
+                )
+                MetricCardV2(
+                    label = "Pending",
+                    value = "${state.invoiceMetrics.pendingCount}",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            OutlinedButton(
+                onClick = onNavigateToInvoiceAnalytics,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("View Invoice Analytics")
+                Spacer(Modifier.width(4.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
+
+            HorizontalDivider()
+
+            // ── Dunning Notices quick link ──
+            SectionHeaderV2(title = "Dunning Notices")
+            OutlinedButton(
+                onClick = onNavigateToDunningNotices,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Manage Overdue Reminders")
+                Spacer(Modifier.weight(1f))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
+
+            HorizontalDivider()
+
+            // ── Risk section with color coding: RISK OVERVIEW ──
+            SectionHeaderV2(title = "Risk Overview")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                MetricCard(
+                    title = "High Risk",
+                    value = "${state.riskMetrics.highRiskCount}",
+                    icon = Icons.Default.Error,
+                    backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
+                    borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
+                    accentColor = BizapColors.StatusOverdue,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricCard(
+                    title = "At Risk",
+                    value = "${state.riskMetrics.atRiskCount}",
+                    icon = Icons.Default.Warning,
+                    backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.08f),
+                    borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.3f),
+                    accentColor = BizapColors.StatusOutstanding,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricCard(
+                    title = "Healthy",
+                    value = "${state.riskMetrics.healthyCount}",
+                    icon = Icons.Default.CheckCircle,
+                    backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
+                    borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
+                    accentColor = BizapColors.StatusPaid,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            OutlinedButton(
+                onClick = onNavigateToRisk,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("View Risk Dashboard")
+                Spacer(Modifier.width(4.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
+
+            HorizontalDivider()
+
+            // ── Payments section with color coding ──
+            SectionHeaderV2(title = "Payments")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                MetricCard(
+                    title = "Paid",
+                    value = "${state.paymentMetrics.paidCount}",
+                    icon = Icons.Default.CheckCircle,
+                    backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
+                    borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
+                    accentColor = BizapColors.StatusPaid,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricCard(
+                    title = "Overdue",
+                    value = "${state.paymentMetrics.overdueCount}",
+                    icon = Icons.Default.Error,
+                    backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
+                    borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
+                    accentColor = BizapColors.StatusOverdue,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            OutlinedButton(
+                onClick = onNavigateToPayment,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("View Payment Analytics")
+                Spacer(Modifier.width(4.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
+
+            HorizontalDivider()
+
+            // ── Revenue section ──
+            SectionHeaderV2(title = "Revenue")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Expected Revenue = outstanding + collected
+                val expectedRevenue = state.paymentMetrics.outstandingAmount + state.paymentMetrics.collectedAmount
+                val actualRevenue = state.paymentMetrics.collectedAmount
+                MetricCard(
+                    title = "Expected Revenue",
+                    value = com.emul8r.bizap.utils.CentsFormatter.formatCents(expectedRevenue),
+                    icon = Icons.Default.TrendingUp,
+                    backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
+                    borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
+                    accentColor = BizapColors.StatusPaid,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricCard(
+                    title = "Actual Revenue",
+                    value = com.emul8r.bizap.utils.CentsFormatter.formatCents(actualRevenue),
+                    icon = Icons.Default.CheckCircle,
+                    backgroundColor = BizapColors.StatusSent.copy(alpha = 0.08f),
+                    borderColor = BizapColors.StatusSent.copy(alpha = 0.3f),
+                    accentColor = BizapColors.StatusSent,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // Outstanding amount card
+            if (state.paymentMetrics.outstandingAmount > 0L) {
+                MetricCard(
+                    title = "Outstanding",
+                    value = com.emul8r.bizap.utils.CentsFormatter.formatCents(state.paymentMetrics.outstandingAmount),
+                    icon = Icons.Default.Schedule,
+                    backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.08f),
+                    borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.3f),
+                    accentColor = BizapColors.StatusOutstanding,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            OutlinedButton(
+                onClick = onNavigateToRevenue,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("View Revenue Dashboard")
+                Spacer(Modifier.width(4.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }  // Close Column
+    }  // Close Box
+}
+
+/**
+ * Provides haptic feedback (vibration) for button clicks.
+ * Compatible with Android 5.0+ devices.
+ * Gracefully handles permission denial or unavailable vibrator.
+ */
+private fun performHapticFeedback(context: android.content.Context) {
+    try {
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            context.getSystemService(Vibrator::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
         }
 
-        HorizontalDivider()
-
-        // ── Invoice Metrics section (replaces old Revenue section) ──
-        SectionHeaderV2(title = "Invoices Sent")
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            MetricCardV2(
-                label = "Total Invoices",
-                value = "${state.invoiceMetrics.totalInvoices}",
-                modifier = Modifier.weight(1f)
-            )
-            MetricCardV2(
-                label = "Paid",
-                value = "${state.invoiceMetrics.paidCount}",
-                modifier = Modifier.weight(1f)
-            )
-            MetricCardV2(
-                label = "Pending",
-                value = "${state.invoiceMetrics.pendingCount}",
-                modifier = Modifier.weight(1f)
-            )
+        vibrator?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                it.vibrate(effect)
+            } else {
+                @Suppress("DEPRECATION")
+                it.vibrate(20L)  // 20ms vibration for older devices
+            }
         }
-        OutlinedButton(
-            onClick = onNavigateToInvoiceAnalytics,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("View Invoice Analytics")
-            Spacer(Modifier.width(4.dp))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-        }
-
-        HorizontalDivider()
-
-        // ── Payments section with color coding ──
-        SectionHeaderV2(title = "Payments")
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            MetricCard(
-                title = "Paid",
-                value = "${state.paymentMetrics.paidCount}",
-                icon = Icons.Default.CheckCircle,
-                backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusPaid,
-                modifier = Modifier.weight(1f)
-            )
-            MetricCard(
-                title = "Overdue",
-                value = "${state.paymentMetrics.overdueCount}",
-                icon = Icons.Default.Error,
-                backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusOverdue,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        OutlinedButton(
-            onClick = onNavigateToPayment,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("View Payment Analytics")
-            Spacer(Modifier.width(4.dp))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-        }
-
-        HorizontalDivider()
-
-        // ── Risk section with color coding ──
-        SectionHeaderV2(title = "Risk Overview")
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            MetricCard(
-                title = "High Risk",
-                value = "${state.riskMetrics.highRiskCount}",
-                icon = Icons.Default.Error,
-                backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusOverdue,
-                modifier = Modifier.weight(1f)
-            )
-            MetricCard(
-                title = "At Risk",
-                value = "${state.riskMetrics.atRiskCount}",
-                icon = Icons.Default.Warning,
-                backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusOutstanding,
-                modifier = Modifier.weight(1f)
-            )
-            MetricCard(
-                title = "Healthy",
-                value = "${state.riskMetrics.healthyCount}",
-                icon = Icons.Default.CheckCircle,
-                backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusPaid,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        OutlinedButton(
-            onClick = onNavigateToRisk,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("View Risk Dashboard")
-            Spacer(Modifier.width(4.dp))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-        }
-
-        HorizontalDivider()
-
-        // ── Dunning Notices quick link ──
-        SectionHeaderV2(title = "Dunning Notices")
-        OutlinedButton(
-            onClick = onNavigateToDunningNotices,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Manage Overdue Reminders")
-            Spacer(Modifier.weight(1f))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-        }
-
-        HorizontalDivider()
-
-        // ── Navigation links ──
-        SectionHeaderV2(title = "Manage")
-        OutlinedButton(
-            onClick = onNavigateToCustomers,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.People, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("View All Customers")
-            Spacer(Modifier.weight(1f))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-        }
-        OutlinedButton(
-            onClick = onNavigateToInvoices,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.Receipt, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("View All Invoices")
-            Spacer(Modifier.weight(1f))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-        }
-        OutlinedButton(
-            onClick = onNavigateToVault,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.Inventory, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Document Vault")
-            Spacer(Modifier.weight(1f))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        }
+    } catch (e: SecurityException) {
+        // Permission denied - silently fail, haptic feedback is optional
+        timber.log.Timber.d("Haptic feedback permission denied: ${e.message}")
+    } catch (e: Exception) {
+        // Other errors (vibrator unavailable, etc.) - silently fail
+        timber.log.Timber.d("Haptic feedback error: ${e.message}")
     }
 }
 
 /**
- * Quick action buttons row at the top of the dashboard.
- * Provides fast access to common actions:
+ * Quick Action Buttons Row - provides fast access to common tasks.
+ * Features:
  * - Create New Customer
  * - Create New Invoice
  * - Open Document Vault
@@ -486,6 +537,8 @@ private fun QuickActionButtonsRow(
     onNavigateToAnalytics: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -497,7 +550,10 @@ private fun QuickActionButtonsRow(
         ) {
             // New Customer Button
             Button(
-                onClick = onCreateCustomer,
+                onClick = {
+                    performHapticFeedback(context)
+                    onCreateCustomer()
+                },
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
@@ -512,8 +568,8 @@ private fun QuickActionButtonsRow(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Icon(
-                        Icons.Default.PersonAdd,
-                        contentDescription = null,
+                        Icons.Default.Person,
+                        contentDescription = "Create a new customer",
                         modifier = Modifier.size(20.dp),
                         tint = Color.White
                     )
@@ -528,7 +584,10 @@ private fun QuickActionButtonsRow(
 
             // New Invoice Button
             Button(
-                onClick = onCreateInvoice,
+                onClick = {
+                    performHapticFeedback(context)
+                    onCreateInvoice()
+                },
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
@@ -544,7 +603,7 @@ private fun QuickActionButtonsRow(
                 ) {
                     Icon(
                         Icons.Default.Receipt,
-                        contentDescription = null,
+                        contentDescription = "Create a new invoice",
                         modifier = Modifier.size(20.dp),
                         tint = Color.White
                     )
@@ -565,7 +624,10 @@ private fun QuickActionButtonsRow(
         ) {
             // Vault Button
             Button(
-                onClick = onNavigateToVault,
+                onClick = {
+                    performHapticFeedback(context)
+                    onNavigateToVault()
+                },
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
@@ -581,7 +643,7 @@ private fun QuickActionButtonsRow(
                 ) {
                     Icon(
                         Icons.Default.Inventory,
-                        contentDescription = null,
+                        contentDescription = "Open document vault",
                         modifier = Modifier.size(20.dp),
                         tint = Color.White
                     )
@@ -596,7 +658,10 @@ private fun QuickActionButtonsRow(
 
             // Visual Data / Analytics Button
             Button(
-                onClick = onNavigateToAnalytics,
+                onClick = {
+                    performHapticFeedback(context)
+                    onNavigateToAnalytics()
+                },
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
@@ -612,7 +677,7 @@ private fun QuickActionButtonsRow(
                 ) {
                     Icon(
                         Icons.Default.BarChart,
-                        contentDescription = null,
+                        contentDescription = "View analytics dashboard",
                         modifier = Modifier.size(20.dp),
                         tint = Color.White
                     )

@@ -312,12 +312,10 @@ private fun SearchResultItem(
                     SearchType.INVOICE -> MaterialTheme.colorScheme.onPrimaryContainer
                     SearchType.CUSTOMER -> MaterialTheme.colorScheme.onSecondaryContainer
                     SearchType.ALL -> MaterialTheme.colorScheme.onTertiaryContainer
-                },
-                fontSize = 9.sp
+                }
             )
         }
     }
 
     Divider(modifier = Modifier.padding(horizontal = 12.dp))
 }
-

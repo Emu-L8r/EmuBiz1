@@ -1,6 +1,8 @@
 package com.emul8r.bizap.di
 
 import com.emul8r.bizap.data.local.AppDatabase
+import com.emul8r.bizap.data.local.dao.CustomerAnalyticsDao
+import com.emul8r.bizap.data.local.dao.CustomerDaoV2
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.dao.PaymentDaoV2
 import com.emul8r.bizap.data.repository.SnapshotSyncHelper
@@ -77,9 +79,13 @@ abstract class GuiV2Module {
         @Provides
         @Singleton
         fun provideCustomerAnalyticsRepositoryV2(
+            customerDaoV2: CustomerDaoV2,
+            customerAnalyticsDao: CustomerAnalyticsDao,
             invoiceDaoV2: InvoiceDaoV2,
             calculator: AnalyticsCalculator
-        ): CustomerAnalyticsRepositoryV2 = CustomerAnalyticsRepositoryV2(invoiceDaoV2, calculator)
+        ): CustomerAnalyticsRepositoryV2 = CustomerAnalyticsRepositoryV2(
+            customerDaoV2, customerAnalyticsDao, invoiceDaoV2, calculator
+        )
 
         @Provides
         @Singleton

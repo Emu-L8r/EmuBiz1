@@ -43,14 +43,15 @@ fun ModernTheme(
         secondaryContainer = seedColor.lighten(0.8f),
         onSecondaryContainer = seedColor.darken(0.35f),
 
-        tertiary = seedColor.darken(0.25f),
+        // SEMANTIC MAPPING: Tertiary = Success/Paid Status (Green)
+        tertiary = Color(0xFF4CAF50),
         onTertiary = Color.White,
-        tertiaryContainer = seedColor.lighten(0.75f),
-        onTertiaryContainer = seedColor.darken(0.3f),
+        tertiaryContainer = Color(0xFFC8E6C9),
+        onTertiaryContainer = Color(0xFF1B5E20),
 
-        error = Color(0xFFB00020),
+        error = Color(0xFFB3261E),
         onError = Color.White,
-        errorContainer = Color(0xFFFDE7E9),
+        errorContainer = Color(0xFFFFEBEE),
         onErrorContainer = Color(0xFF8C0009),
         
         background = Color(0xFFFFFBFE),
@@ -141,4 +142,3 @@ private fun parseSeedColor(hexString: String?): Color {
         Color(0xFF6750A4)
     }
 }
-

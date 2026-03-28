@@ -18,16 +18,19 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AutoAwesomeMotion
-import androidx.compose.material.icons.filled.Backup
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.outlined.AutoAwesomeMotion
+import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Business
+import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ElevatedCard
@@ -164,13 +167,13 @@ private fun SettingsHubScreenV1Content(
 ) {
     Column {
         SettingsItem(
-            icon = Icons.Default.Business,
+            icon = Icons.Outlined.Business,
             title = "Business Profile",
             subtitle = "Manage your business details for invoices",
             onClick = { onNavigate(Screen.BusinessProfile) }
         )
         SettingsItem(
-            icon = Icons.Default.Palette,
+            icon = Icons.Outlined.Palette,
             title = "App Appearance",
             subtitle = "Customize theme, display mode, and appearance",
             onClick = { onNavigate(Screen.AppSettings) }
@@ -188,7 +191,7 @@ private fun SettingsHubScreenV1Content(
             onClick = { onNavigate(Screen.RiskDashboard) }
         )
         SettingsItem(
-            icon = Icons.Default.BarChart,
+            icon = Icons.Outlined.BarChart,
             title = "Payment Analytics",
             subtitle = "Analyse payment trends and cash flow forecasts",
             onClick = { onNavigate(Screen.PaymentAnalytics()) }
@@ -200,25 +203,25 @@ private fun SettingsHubScreenV1Content(
             onClick = { onNavigate(Screen.RevenueDashboard) }
         )
         SettingsItem(
-            icon = Icons.Default.Notifications,
+            icon = Icons.Outlined.Notifications,
             title = "Dunning Notices",
             subtitle = "Manage overdue invoice payment reminders",
             onClick = { onNavigate(Screen.DunningNotices) }
         )
         SettingsItem(
-            icon = Icons.Default.Backup,
+            icon = Icons.Outlined.Backup,
             title = "Backup & Restore",
             subtitle = "Export or restore your app database",
             onClick = { onNavigate(Screen.BackupRestore) }
         )
         SettingsItem(
-            icon = Icons.Default.Groups,
+            icon = Icons.Outlined.Groups,
             title = "Customer Segments",
             subtitle = "View customer segmentation and analytics",
             onClick = { onNavigate(Screen.CustomerSegments) }
         )
         SettingsItem(
-            icon = Icons.AutoMirrored.Filled.HelpOutline,
+            icon = Icons.Filled.Help,
             title = "Help & About",
             subtitle = "App information, version, and support",
             onClick = { onNavigate(Screen.Help) }
@@ -235,7 +238,7 @@ private fun SettingsHubScreenV1Content(
         )
 
         SettingsItem(
-            icon = Icons.Default.AutoAwesomeMotion,
+            icon = Icons.Outlined.AutoAwesomeMotion,
             title = "Switch to GUI2",
             subtitle = "Try the modern interface",
             onClick = onSwitchToGui2
@@ -363,7 +366,7 @@ private fun SettingsV2Content(
         )
 
         SettingsCardV2(
-            icon = Icons.AutoMirrored.Filled.HelpOutline,
+            icon = Icons.Filled.Help,
             title = "Help & About",
             description = "App information, version, and support",
             onClick = onHelpClick
@@ -476,7 +479,7 @@ private fun SettingsCardV2(
             }
 
             Icon(
-                imageVector = Icons.Default.ChevronRight,
+                imageVector = Icons.Filled.ChevronRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )

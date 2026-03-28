@@ -2,6 +2,7 @@ package com.emul8r.bizap.ui.theme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,7 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,12 +21,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.compose.BackHandler
 import com.emul8r.bizap.ui.components.theme.ColorPickerDialog
 import com.emul8r.bizap.ui.components.theme.ColorSelectorButton
 import com.emul8r.bizap.ui.components.theme.PresetTheme
 import com.emul8r.bizap.ui.components.theme.PresetThemeSelector
 import com.emul8r.bizap.ui.designsystem.BizapColors
 import timber.log.Timber
+
+// ── DIALOG STATE MANAGEMENT ─────────────────────────────────────────
+private sealed class ColorPickerState {
+    object Hidden : ColorPickerState()
+    data class Showing(val colorType: ColorType) : ColorPickerState()
+}
+
+private enum class ColorType { PRIMARY, SECONDARY, TERTIARY }
 
 /**
  * Advanced Color Themes Screen for Bizap
@@ -50,20 +60,36 @@ fun UnifiedThemeSettingsScreen(
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val saveSuccess by viewModel.saveSuccess.collectAsStateWithLifecycle()
 
-    var showPrimaryColorPicker by remember { mutableStateOf(false) }
-    var showSecondaryColorPicker by remember { mutableStateOf(false) }
-    var showTertiaryColorPicker by remember { mutableStateOf(false) }
+    var colorPickerState by remember { mutableStateOf<ColorPickerState>(ColorPickerState.Hidden) }
+    var showUnsavedChangesDialog by remember { mutableStateOf(false) }
+    var savedTheme by remember { mutableStateOf(themeState) }
+
+    // Detect unsaved changes using derivedStateOf for efficiency
+    val hasUnsavedChanges by remember {
+        derivedStateOf {
+            themeState.primary != savedTheme.primary ||
+            themeState.secondary != savedTheme.secondary ||
+            themeState.tertiary != savedTheme.tertiary
+        }
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Show snackbar when save is successful
+    // Show snackbar when save is successful and update saved theme
     LaunchedEffect(saveSuccess) {
         if (saveSuccess) {
+            savedTheme = themeState
             snackbarHostState.showSnackbar(
-                "✅ Theme saved successfully!",
-                duration = SnackbarDuration.Short
+                message = "✅ Theme saved successfully!",
+                duration = SnackbarDuration.Long,
+                withDismissAction = true
             )
         }
+    }
+
+    // Handle back press - show dialog if unsaved changes
+    BackHandler(enabled = hasUnsavedChanges) {
+        showUnsavedChangesDialog = true
     }
 
     Scaffold(
@@ -84,8 +110,8 @@ fun UnifiedThemeSettingsScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xxl)
         ) {
             // INFO CARD: Direct users to App Appearance for theme mode
             Card(
@@ -95,8 +121,8 @@ fun UnifiedThemeSettingsScreen(
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.padding(Spacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
                 ) {
                     Text(
                         "Theme Mode (Light/Dark/Auto)",
@@ -120,7 +146,7 @@ fun UnifiedThemeSettingsScreen(
                 "Preset Themes",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = Spacing.sm)
             )
 
             // ── PRESET THEMES ─────────────────────────────────────────────
@@ -142,21 +168,21 @@ fun UnifiedThemeSettingsScreen(
             ColorSelectorButton(
                 label = "Primary Color",
                 color = themeState.primary,
-                onClick = { showPrimaryColorPicker = true },
+                onClick = { colorPickerState = ColorPickerState.Showing(ColorType.PRIMARY) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             ColorSelectorButton(
                 label = "Secondary Color",
                 color = themeState.secondary,
-                onClick = { showSecondaryColorPicker = true },
+                onClick = { colorPickerState = ColorPickerState.Showing(ColorType.SECONDARY) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             ColorSelectorButton(
                 label = "Tertiary Color",
                 color = themeState.tertiary,
-                onClick = { showTertiaryColorPicker = true },
+                onClick = { colorPickerState = ColorPickerState.Showing(ColorType.TERTIARY) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -165,7 +191,7 @@ fun UnifiedThemeSettingsScreen(
             // ── ACTION BUTTONS ────────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
                 OutlinedButton(
                     onClick = { viewModel.resetToDefaults() },
@@ -176,43 +202,81 @@ fun UnifiedThemeSettingsScreen(
 
                 Button(
                     onClick = { viewModel.saveTheme() },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    enabled = !isSaving
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Save Theme")
+                    if (isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(Dimensions.progressIndicatorSize),
+                            strokeWidth = Dimensions.progressIndicatorStroke
+                        )
+                        Spacer(Modifier.width(Spacing.sm))
+                        Text("Saving...")
+                    } else {
+                        Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(Dimensions.iconSizeSmall))
+                        Spacer(Modifier.width(Spacing.sm))
+                        Text("Save Theme")
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.lg))
         }
     }
 
     // ── COLOR PICKERS ──────────────────────────────────────────────────
-    if (showPrimaryColorPicker) {
-        ColorPickerDialog(
-            currentColor = themeState.primary,
-            onColorSelected = { viewModel.setPrimaryColor(it) },
-            onDismiss = { showPrimaryColorPicker = false },
-            title = "Select Primary Color"
-        )
+    when (colorPickerState) {
+        is ColorPickerState.Showing -> {
+            val currentColor = when ((colorPickerState as ColorPickerState.Showing).colorType) {
+                ColorType.PRIMARY -> themeState.primary
+                ColorType.SECONDARY -> themeState.secondary
+                ColorType.TERTIARY -> themeState.tertiary
+            }
+
+            ColorPickerDialog(
+                currentColor = currentColor,
+                onColorSelected = { color ->
+                    when ((colorPickerState as ColorPickerState.Showing).colorType) {
+                        ColorType.PRIMARY -> viewModel.setPrimaryColor(color)
+                        ColorType.SECONDARY -> viewModel.setSecondaryColor(color)
+                        ColorType.TERTIARY -> viewModel.setTertiaryColor(color)
+                    }
+                },
+                onDismiss = { colorPickerState = ColorPickerState.Hidden },
+                title = when ((colorPickerState as ColorPickerState.Showing).colorType) {
+                    ColorType.PRIMARY -> "Select Primary Color"
+                    ColorType.SECONDARY -> "Select Secondary Color"
+                    ColorType.TERTIARY -> "Select Tertiary Color"
+                }
+            )
+        }
+        ColorPickerState.Hidden -> {}
     }
 
-    if (showSecondaryColorPicker) {
-        ColorPickerDialog(
-            currentColor = themeState.secondary,
-            onColorSelected = { viewModel.setSecondaryColor(it) },
-            onDismiss = { showSecondaryColorPicker = false },
-            title = "Select Secondary Color"
-        )
-    }
-
-    if (showTertiaryColorPicker) {
-        ColorPickerDialog(
-            currentColor = themeState.tertiary,
-            onColorSelected = { viewModel.setTertiaryColor(it) },
-            onDismiss = { showTertiaryColorPicker = false },
-            title = "Select Tertiary Color"
+    // ── UNSAVED CHANGES DIALOG ───────────────────────────────────────
+    if (showUnsavedChangesDialog) {
+        AlertDialog(
+            onDismissRequest = { showUnsavedChangesDialog = false },
+            title = { Text("Unsaved Changes") },
+            text = { Text("You have unsaved changes. Do you really want to go back?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Discard changes and navigate back
+                        onBack()
+                    }
+                ) {
+                    Text("Discard")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showUnsavedChangesDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            },
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
@@ -285,105 +349,8 @@ private fun PreviewPanel(colors: ThemeColors) {
 private fun PresetThemesSection(
     onPresetSelected: (PresetTheme) -> Unit
 ) {
-    // Use BizapColors presets instead of hardcoded colors
-    val presets = listOf(
-        PresetTheme(
-            id = "blue",
-            name = "Material Blue",
-            description = "Professional & calm",
-            primary = BizapColors.Presets.Blue,
-            secondary = BizapColors.Presets.Cyan,
-            tertiary = BizapColors.Presets.Indigo
-        ),
-        PresetTheme(
-            id = "purple",
-            name = "Material Purple",
-            description = "Official Material Design 3",
-            primary = BizapColors.Presets.Purple,
-            secondary = BizapColors.Presets.Pink,
-            tertiary = BizapColors.Presets.Red
-        ),
-        PresetTheme(
-            id = "green",
-            name = "Forest Green",
-            description = "Natural & peaceful",
-            primary = BizapColors.Presets.Green,
-            secondary = BizapColors.Presets.Teal,
-            tertiary = BizapColors.Presets.Lime
-        ),
-        PresetTheme(
-            id = "orange",
-            name = "Sunset Orange",
-            description = "Warm & energetic",
-            primary = BizapColors.Presets.Orange,
-            secondary = BizapColors.Presets.DeepOrange,
-            tertiary = BizapColors.Presets.Red
-        ),
-        PresetTheme(
-            id = "indigo",
-            name = "Royal Indigo",
-            description = "Elegant & bold",
-            primary = BizapColors.Presets.Indigo,
-            secondary = BizapColors.Presets.Purple,
-            tertiary = BizapColors.Presets.Pink
-        ),
-        PresetTheme(
-            id = "pink",
-            name = "Rose Pink",
-            description = "Modern & vibrant",
-            primary = BizapColors.Presets.Pink,
-            secondary = BizapColors.Presets.Red,
-            tertiary = BizapColors.Presets.DeepOrange
-        ),
-        PresetTheme(
-            id = "cyan",
-            name = "Sky Cyan",
-            description = "Fresh & airy",
-            primary = BizapColors.Presets.Cyan,
-            secondary = BizapColors.Presets.Blue,
-            tertiary = BizapColors.Presets.Teal
-        ),
-        PresetTheme(
-            id = "teal",
-            name = "Emerald Teal",
-            description = "Luxurious & rich",
-            primary = BizapColors.Presets.Teal,
-            secondary = BizapColors.Presets.Green,
-            tertiary = BizapColors.Presets.Lime
-        ),
-        PresetTheme(
-            id = "red",
-            name = "Vibrant Red",
-            description = "Bold & striking",
-            primary = BizapColors.Presets.Red,
-            secondary = BizapColors.Presets.Orange,
-            tertiary = BizapColors.Presets.Pink
-        ),
-        PresetTheme(
-            id = "deeporange",
-            name = "Deep Orange",
-            description = "Rich & warm",
-            primary = BizapColors.Presets.DeepOrange,
-            secondary = BizapColors.Presets.Orange,
-            tertiary = BizapColors.Presets.Red
-        ),
-        PresetTheme(
-            id = "lime",
-            name = "Lime Green",
-            description = "Fresh & vibrant",
-            primary = BizapColors.Presets.Lime,
-            secondary = BizapColors.Presets.Green,
-            tertiary = BizapColors.Presets.Teal
-        ),
-        PresetTheme(
-            id = "bluegrey",
-            name = "Blue Grey",
-            description = "Calm & professional",
-            primary = BizapColors.Presets.BlueGrey,
-            secondary = BizapColors.Presets.Blue,
-            tertiary = BizapColors.Presets.Cyan
-        )
-    )
+    val presets = remember { PRESET_THEMES }
+    var selectedPresetId by remember { mutableStateOf<String?>(null) }
 
     // ── DISPLAY PRESET OPTIONS ────────────────────────────────
     Text(
@@ -413,7 +380,11 @@ private fun PresetThemesSection(
                 row.forEach { preset ->
                     PresetCard(
                         preset = preset,
-                        onSelected = onPresetSelected,
+                        onSelected = { selected ->
+                            selectedPresetId = selected.id
+                            onPresetSelected(selected)
+                        },
+                        isSelected = selectedPresetId == preset.id,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -426,6 +397,105 @@ private fun PresetThemesSection(
     }
 }
 
+private val PRESET_THEMES = listOf(
+    PresetTheme(
+        id = "blue",
+        name = "Material Blue",
+        description = "Professional & calm",
+        primary = BizapColors.Presets.Blue,
+        secondary = BizapColors.Presets.Cyan,
+        tertiary = BizapColors.Presets.Indigo
+    ),
+    PresetTheme(
+        id = "purple",
+        name = "Material Purple",
+        description = "Official Material Design 3",
+        primary = BizapColors.Presets.Purple,
+        secondary = BizapColors.Presets.Pink,
+        tertiary = BizapColors.Presets.Red
+    ),
+    PresetTheme(
+        id = "green",
+        name = "Forest Green",
+        description = "Natural & peaceful",
+        primary = BizapColors.Presets.Green,
+        secondary = BizapColors.Presets.Teal,
+        tertiary = BizapColors.Presets.Lime
+    ),
+    PresetTheme(
+        id = "orange",
+        name = "Sunset Orange",
+        description = "Warm & energetic",
+        primary = BizapColors.Presets.Orange,
+        secondary = BizapColors.Presets.DeepOrange,
+        tertiary = BizapColors.Presets.Red
+    ),
+    PresetTheme(
+        id = "indigo",
+        name = "Royal Indigo",
+        description = "Elegant & bold",
+        primary = BizapColors.Presets.Indigo,
+        secondary = BizapColors.Presets.Purple,
+        tertiary = BizapColors.Presets.Pink
+    ),
+    PresetTheme(
+        id = "pink",
+        name = "Rose Pink",
+        description = "Modern & vibrant",
+        primary = BizapColors.Presets.Pink,
+        secondary = BizapColors.Presets.Red,
+        tertiary = BizapColors.Presets.DeepOrange
+    ),
+    PresetTheme(
+        id = "cyan",
+        name = "Sky Cyan",
+        description = "Fresh & airy",
+        primary = BizapColors.Presets.Cyan,
+        secondary = BizapColors.Presets.Blue,
+        tertiary = BizapColors.Presets.Teal
+    ),
+    PresetTheme(
+        id = "teal",
+        name = "Emerald Teal",
+        description = "Luxurious & rich",
+        primary = BizapColors.Presets.Teal,
+        secondary = BizapColors.Presets.Green,
+        tertiary = BizapColors.Presets.Lime
+    ),
+    PresetTheme(
+        id = "red",
+        name = "Vibrant Red",
+        description = "Bold & striking",
+        primary = BizapColors.Presets.Red,
+        secondary = BizapColors.Presets.Orange,
+        tertiary = BizapColors.Presets.Pink
+    ),
+    PresetTheme(
+        id = "deeporange",
+        name = "Deep Orange",
+        description = "Rich & warm",
+        primary = BizapColors.Presets.DeepOrange,
+        secondary = BizapColors.Presets.Orange,
+        tertiary = BizapColors.Presets.Red
+    ),
+    PresetTheme(
+        id = "lime",
+        name = "Lime Green",
+        description = "Fresh & vibrant",
+        primary = BizapColors.Presets.Lime,
+        secondary = BizapColors.Presets.Green,
+        tertiary = BizapColors.Presets.Teal
+    ),
+    PresetTheme(
+        id = "bluegrey",
+        name = "Blue Grey",
+        description = "Calm & professional",
+        primary = BizapColors.Presets.BlueGrey,
+        secondary = BizapColors.Presets.Blue,
+        tertiary = BizapColors.Presets.Cyan
+    )
+)
+
 /**
  * Enhanced preset card with visual preview of all 3 colors
  */
@@ -433,48 +503,56 @@ private fun PresetThemesSection(
 private fun PresetCard(
     preset: PresetTheme,
     onSelected: (PresetTheme) -> Unit,
+    isSelected: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .border(
+                width = if (isSelected) 3.dp else 1.dp,
+                color = if (isSelected)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.outline,
+                shape = RoundedCornerShape(12.dp)
+            )
             .clickable { onSelected(preset) },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(Spacing.md),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
             // Color preview row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    .height(Dimensions.colorPreviewHeight),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
             ) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .background(preset.primary, RoundedCornerShape(6.dp))
+                        .background(preset.primary, RoundedCornerShape(Dimensions.colorPreviewRadius))
                 )
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .background(preset.secondary, RoundedCornerShape(6.dp))
+                        .background(preset.secondary, RoundedCornerShape(Dimensions.colorPreviewRadius))
                 )
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .background(preset.tertiary, RoundedCornerShape(6.dp))
+                        .background(preset.tertiary, RoundedCornerShape(Dimensions.colorPreviewRadius))
                 )
             }
 
