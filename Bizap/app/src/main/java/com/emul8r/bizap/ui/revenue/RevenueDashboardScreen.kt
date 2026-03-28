@@ -102,10 +102,11 @@ import com.emul8r.bizap.utils.CentsFormatter
  * @see RevenueDashboardViewModel
  * @see RevenueMetricsV2
  */
+@Suppress("DEPRECATION")
 @Composable
 fun RevenueDashboardScreen(
-    viewModel: RevenueDashboardViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
+    viewModel: RevenueDashboardViewModel = hiltViewModel(),
     headerSlot: (@Composable ColumnScope.() -> Unit)? = null,
     footerSlot: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
@@ -124,10 +125,10 @@ fun RevenueDashboardScreen(
             }
             is RevenueDashboardUiState.Success -> {
                 RevenueDashboardContent(
+                    modifier = modifier,
                     metrics = s.metrics,
                     headerSlot = headerSlot,
                     footerSlot = footerSlot,
-                    modifier = modifier,
                 )
             }
             is RevenueDashboardUiState.Error -> {
@@ -145,10 +146,10 @@ fun RevenueDashboardScreen(
 
 @Composable
 private fun RevenueDashboardContent(
+    modifier: Modifier = Modifier,
     metrics: RevenueMetricsV2,
     headerSlot: (@Composable ColumnScope.() -> Unit)? = null,
     footerSlot: (@Composable ColumnScope.() -> Unit)? = null,
-    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
@@ -172,48 +173,48 @@ private fun RevenueDashboardContent(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             MetricCard(
+                modifier = Modifier.weight(1f),
                 title = "MTD Collected",
                 value = CentsFormatter.formatCents(metrics.mtdRevenue),
                 icon = Icons.Default.CheckCircle,
                 backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
                 borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
                 accentColor = BizapColors.StatusPaid,
-                modifier = Modifier.weight(1f)
             )
             MetricCard(
+                modifier = Modifier.weight(1f),
                 title = "YTD Collected",
                 value = CentsFormatter.formatCents(metrics.ytdRevenue),
                 icon = Icons.Default.AttachMoney,
                 backgroundColor = BizapColors.StatusSent.copy(alpha = 0.08f),
                 borderColor = BizapColors.StatusSent.copy(alpha = 0.3f),
                 accentColor = BizapColors.StatusSent,
-                modifier = Modifier.weight(1f)
             )
         }
 
         // Outstanding amount with orange accent
         if (metrics.outstandingAmount > 0L) {
             MetricCard(
+                modifier = Modifier.fillMaxWidth(),
                 title = "Outstanding (Expected)",
                 value = CentsFormatter.formatCents(metrics.outstandingAmount),
                 icon = Icons.Default.Schedule,
                 backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.08f),
                 borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.3f),
                 accentColor = BizapColors.StatusOutstanding,
-                modifier = Modifier.fillMaxWidth()
             )
         }
 
         // Overdue amount with warning color accent
         if (metrics.overdueAmount > 0L) {
             MetricCard(
+                modifier = Modifier.fillMaxWidth(),
                 title = "Overdue",
                 value = CentsFormatter.formatCents(metrics.overdueAmount),
                 icon = Icons.Default.Warning,
                 backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
                 borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
                 accentColor = BizapColors.StatusOverdue,
-                modifier = Modifier.fillMaxWidth()
             )
         }
 

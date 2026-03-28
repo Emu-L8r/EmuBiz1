@@ -125,7 +125,7 @@ class CreateCustomerViewModelV2Test : BaseUnitTest() {
         val customer = Customer(
             id = 0L,
             name = "Minimal",
-            email = null,
+            email = "minimal@example.com",
             phone = null,
             address = null
         )
@@ -146,6 +146,60 @@ class CreateCustomerViewModelV2Test : BaseUnitTest() {
         // Then
         assertTrue(successCalled)
         coVerify { customerRepository.insert(customer) }
+    }
+
+    @Test
+    fun `createCustomer - should reject customer with missing email`() = runTest {
+        // Given
+        val customer = Customer(
+            id = 0L,
+            name = "No Email",
+            email = null,
+            phone = null,
+            address = null
+        )
+
+        var errorMessage: String? = null
+
+        // When
+        viewModel.createCustomer(
+            customer = customer,
+            onSuccess = { },
+            onError = { error -> errorMessage = error }
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertEquals("Customer email is required", errorMessage)
+        coVerify(exactly = 0) { customerRepository.insert(any()) }
+    }
+
+    @Test
+    fun `createCustomer - should reject customer with blank email`() = runTest {
+        // Given
+        val customer = Customer(
+            id = 0L,
+            name = "Blank Email",
+            email = "   ",
+            phone = null,
+            address = null
+        )
+
+        var errorMessage: String? = null
+
+        // When
+        viewModel.createCustomer(
+            customer = customer,
+            onSuccess = { },
+            onError = { error -> errorMessage = error }
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertEquals("Customer email is required", errorMessage)
+        coVerify(exactly = 0) { customerRepository.insert(any()) }
     }
 }
 

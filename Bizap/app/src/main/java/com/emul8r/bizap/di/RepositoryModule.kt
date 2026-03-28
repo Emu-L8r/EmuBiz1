@@ -6,6 +6,7 @@ import com.emul8r.bizap.data.repository.CustomerRepositoryImpl
 import com.emul8r.bizap.data.repository.CurrencyRepositoryImpl
 import com.emul8r.bizap.data.repository.CustomerAnalyticsRepositoryImpl
 import com.emul8r.bizap.data.repository.DocumentRepositoryImpl
+import com.emul8r.bizap.data.repository.ExportRepositoryImpl
 import com.emul8r.bizap.data.repository.InvoiceRepositoryImpl
 import com.emul8r.bizap.data.repository.NoteRepositoryImpl
 import com.emul8r.bizap.data.repository.OfflineQueueRepositoryImpl
@@ -13,6 +14,7 @@ import com.emul8r.bizap.data.repository.PaymentAnalyticsRepositoryImpl
 import com.emul8r.bizap.data.repository.PDFRepositoryImpl
 import com.emul8r.bizap.data.repository.PrefilledItemRepositoryImpl
 import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
+import com.emul8r.bizap.data.repository.SearchRepositoryImpl
 import com.emul8r.bizap.data.repository.TaxRepositoryImpl
 import com.emul8r.bizap.data.repository.ThemeRepositoryImpl
 import com.emul8r.bizap.data.service.InvoicePdfService
@@ -21,11 +23,13 @@ import com.emul8r.bizap.domain.repository.CustomFieldRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.DocumentRepository
+import com.emul8r.bizap.domain.repository.ExportRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.repository.NoteRepository
 import com.emul8r.bizap.domain.repository.OfflineQueueRepository
 import com.emul8r.bizap.domain.repository.PDFRepository
 import com.emul8r.bizap.domain.repository.PrefilledItemRepository
+import com.emul8r.bizap.domain.repository.SearchRepository
 import com.emul8r.bizap.domain.repository.TaxRepository
 import com.emul8r.bizap.domain.repository.ThemeRepository
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
@@ -131,6 +135,18 @@ abstract class RepositoryModule {
     abstract fun bindNoteRepository(
         impl: NoteRepositoryImpl
     ): NoteRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSearchRepository(
+        impl: SearchRepositoryImpl
+    ): SearchRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindExportRepository(
+        impl: ExportRepositoryImpl
+    ): ExportRepository
 
     /**
      * Binds the data-layer InvoicePdfService to the domain-level PdfGenerationService interface.

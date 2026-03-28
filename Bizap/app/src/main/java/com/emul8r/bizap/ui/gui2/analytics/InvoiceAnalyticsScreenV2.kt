@@ -41,9 +41,15 @@ import com.emul8r.bizap.ui.gui2.common.SectionHeaderV2
 fun InvoiceAnalyticsScreenV2(
     businessId: Long,
     onBack: () -> Unit,
-    viewModel: InvoiceAnalyticsViewModelV2 = hiltViewModel()
+    invoiceViewModel: InvoiceAnalyticsViewModelV2 = hiltViewModel(),
+    paymentViewModel: PaymentAnalyticsViewModelV2 = hiltViewModel(),
+    customerViewModel: CustomerAnalyticsViewModelV2 = hiltViewModel(),
+    riskViewModel: RiskAnalyticsViewModelV2 = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val invoiceState by invoiceViewModel.uiState.collectAsStateWithLifecycle()
+    val paymentState by paymentViewModel.uiState.collectAsStateWithLifecycle()
+    val customerState by customerViewModel.uiState.collectAsStateWithLifecycle()
+    val riskState by riskViewModel.uiState.collectAsStateWithLifecycle()
     var selectedTabIndex by remember { mutableStateOf(0) }
 
     Scaffold(
@@ -90,92 +96,59 @@ fun InvoiceAnalyticsScreenV2(
             when (selectedTabIndex) {
                 0 -> {
                     when {
-                        state.isLoading -> LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
-                        state.error != null -> ErrorStateV2(
-                            message = state.error ?: "Unknown error",
+                        invoiceState.isLoading -> LoadingIndicatorV2(modifier = Modifier.padding(paddingValues))
+                        invoiceState.error != null -> ErrorStateV2(
+                            message = invoiceState.error ?: "Unknown error",
                             modifier = Modifier.padding(paddingValues)
                         )
                         else -> InvoiceAnalyticsContent(
-                            state = state,
-                            onSetGranularity = viewModel::setGranularity,
-                            onSetDateRange = viewModel::setDateRange,
+                            state = invoiceState,
+                            onSetGranularity = invoiceViewModel::setGranularity,
+                            onSetDateRange = invoiceViewModel::setDateRange,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
                 1 -> {
-                    // Payment analytics placeholder
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Payment,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Text("Payment Analytics", style = MaterialTheme.typography.titleMedium)
-                            Text("Collection rates, payment trends, and outstanding balances",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                    // Payment analytics tab
+                    when (paymentState) {
+                        PaymentAnalyticsUiStateV2.Loading -> LoadingIndicatorV2(modifier = Modifier.fillMaxSize())
+                        is PaymentAnalyticsUiStateV2.Error -> ErrorStateV2(
+                            message = (paymentState as PaymentAnalyticsUiStateV2.Error).message,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        is PaymentAnalyticsUiStateV2.Success -> PaymentAnalyticsContent(
+                            metrics = (paymentState as PaymentAnalyticsUiStateV2.Success).metrics,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
                 2 -> {
-                    // Customer analytics placeholder
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.People,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Text("Customer Analytics", style = MaterialTheme.typography.titleMedium)
-                            Text("Customer segments, lifetime value, and engagement metrics",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                    // Customer analytics tab
+                    when (customerState) {
+                        CustomerAnalyticsUiStateV2.Loading -> LoadingIndicatorV2(modifier = Modifier.fillMaxSize())
+                        is CustomerAnalyticsUiStateV2.Error -> ErrorStateV2(
+                            message = (customerState as CustomerAnalyticsUiStateV2.Error).message,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        is CustomerAnalyticsUiStateV2.Success -> CustomerAnalyticsContent(
+                            metrics = (customerState as CustomerAnalyticsUiStateV2.Success).metrics,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
                 3 -> {
-                    // Risk analytics placeholder
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Warning,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                            Text("Risk Analytics", style = MaterialTheme.typography.titleMedium)
-                            Text("At-risk customers, overdue invoices, and collection status",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                    // Risk analytics tab
+                    when (riskState) {
+                        RiskAnalyticsUiStateV2.Loading -> LoadingIndicatorV2(modifier = Modifier.fillMaxSize())
+                        is RiskAnalyticsUiStateV2.Error -> ErrorStateV2(
+                            message = (riskState as RiskAnalyticsUiStateV2.Error).message,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        is RiskAnalyticsUiStateV2.Success -> RiskAnalyticsContent(
+                            metrics = (riskState as RiskAnalyticsUiStateV2.Success).metrics,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
             }

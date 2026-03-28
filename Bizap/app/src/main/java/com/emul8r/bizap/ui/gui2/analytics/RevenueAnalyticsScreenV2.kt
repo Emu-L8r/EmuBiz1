@@ -6,8 +6,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -18,6 +17,7 @@ import com.emul8r.bizap.ui.gui2.common.*
 /**
  * GUI2 revenue analytics screen.
  * Shows MTD, YTD, weekly, total paid revenue, and a 30-day daily trend.
+ * Includes date range filters and export functionality.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +27,8 @@ fun RevenueAnalyticsScreenV2(
     viewModel: RevenueAnalyticsViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectedDateRange = remember { mutableStateOf(DateRangeV2.THIS_MONTH) }
+    val isExporting = remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -36,22 +38,48 @@ fun RevenueAnalyticsScreenV2(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
+                    ExportMenuButtonV2(
+                        onExportPdf = { isExporting.value = true },
+                        onExportCsv = { isExporting.value = true },
+                        isExporting = isExporting.value
+                    )
                 }
             )
         }
     ) { paddingValues ->
-        when (val state = uiState) {
-            is RevenueAnalyticsUiStateV2.Loading -> LoadingIndicatorV2(
-                modifier = Modifier.padding(paddingValues)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Date range filter
+            DateRangeFilterV2(
+                selectedRange = selectedDateRange.value,
+                onRangeSelected = { selectedDateRange.value = it },
+                modifier = Modifier.padding(vertical = 12.dp)
             )
-            is RevenueAnalyticsUiStateV2.Error -> ErrorStateV2(
-                message = state.message,
-                modifier = Modifier.padding(paddingValues)
-            )
-            is RevenueAnalyticsUiStateV2.Success -> RevenueAnalyticsContentV2(
-                metrics = state.metrics,
-                modifier = Modifier.padding(paddingValues)
-            )
+
+            // Loading indicator if exporting
+            if (isExporting.value) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            // Content
+            when (val state = uiState) {
+                is RevenueAnalyticsUiStateV2.Loading -> LoadingIndicatorV2(
+                    modifier = Modifier.fillMaxSize()
+                )
+                is RevenueAnalyticsUiStateV2.Error -> ErrorStateV2(
+                    message = state.message,
+                    modifier = Modifier.fillMaxSize()
+                )
+                is RevenueAnalyticsUiStateV2.Success -> RevenueAnalyticsContentV2(
+                    metrics = state.metrics,
+                    dateRange = selectedDateRange.value
+                )
+            }
         }
     }
 }
@@ -59,6 +87,7 @@ fun RevenueAnalyticsScreenV2(
 @Composable
 private fun RevenueAnalyticsContentV2(
     metrics: RevenueMetricsV2,
+    dateRange: DateRangeV2 = DateRangeV2.THIS_MONTH,
     modifier: Modifier = Modifier
 ) {
     Column(

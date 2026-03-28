@@ -32,7 +32,7 @@ class CustomerRepositoryImpl @Inject constructor(
     override suspend fun insert(customer: Customer): Result<Long> = runCatching {
         // ✅ NULL SAFETY: Validate customer before insert
         require(customer.name.isNotBlank()) { "Customer name cannot be blank" }
-        // Email is optional - no validation required
+        require(customer.email?.isNotBlank() == true) { "Customer email is required" }
 
         val id = customerDao.insert(customer.toEntity())
         require(id > 0) { "Failed to insert customer: DAO returned invalid ID $id" }
@@ -58,6 +58,17 @@ class CustomerRepositoryImpl @Inject constructor(
         }
 
         id
+    }.onFailure { error ->
+        // Detect and enhance UNIQUE constraint violations
+        val message = error.message ?: ""
+        if (message.contains("UNIQUE constraint failed") && message.contains("email")) {
+            Timber.e(error, "UNIQUE constraint violation on email: ${customer.email}")
+            throw Exception("Email address is already in use. Please use a different email.")
+        } else if (message.contains("email is required")) {
+            Timber.e("Email validation failed: email is blank")
+            throw Exception("Email is required. Please enter a valid email address.")
+        }
+        Timber.e(error, "Failed to insert customer: ${error.message}")
     }
 
     override fun getCustomerById(id: Long): Flow<Customer?> = 

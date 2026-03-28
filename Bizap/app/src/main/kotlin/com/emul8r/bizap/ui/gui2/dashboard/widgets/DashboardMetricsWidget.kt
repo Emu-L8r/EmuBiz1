@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.domain.repository.DashboardMetrics
 import com.emul8r.bizap.ui.designsystem.BizapColors
-import com.emul8r.bizap.utils.CentsFormatter
 
 // ...existing code...
 
@@ -35,13 +34,13 @@ import com.emul8r.bizap.utils.CentsFormatter
  * Dashboard metrics widget showing key business stats at a glance.
  *
  * Displays three critical metrics:
- * 1. Unpaid invoices: Count of unpaid invoices + total outstanding amount
- * 2. Overdue amount: Critical metric - amount past due date
- * 3. Paid this month: Positive metric - amount collected this period
+ * 1. Unpaid invoices: Count of unpaid invoices
+ * 2. Overdue invoices: Count of invoices past due date
+ * 3. Paid this month: Count of paid invoices this period
  *
  * **Purpose:**
- * Provides quick visual overview of business health and cash flow status.
- * Users can see financial health at a glance without opening reports.
+ * Provides quick visual overview of business health by showing invoice counts.
+ * Users can see payment status distribution at a glance.
  *
  * **Colors:**
  * - Unpaid: Orange (Warning - needs attention)
@@ -68,29 +67,29 @@ fun DashboardMetricsWidget(
             .padding(vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Row 1: Unpaid Count & Overdue Amount (Critical)
+        // Row 1: Unpaid Count & Overdue Count (Critical)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Unpaid Invoices (with badge showing count)
+            // Unpaid Invoices (Count only)
             MetricBox(
                 icon = Icons.Default.Receipt,
                 label = "Unpaid",
                 value = metrics.unpaidInvoiceCount.toString(),
-                subValue = CentsFormatter.formatCents(metrics.unpaidAmount),
+                subValue = "invoices",
                 color = BizapColors.AnalyticsWarning,
                 modifier = Modifier.weight(1f),
                 onClick = onUnpaidClick,
                 badgeValue = if (metrics.unpaidInvoiceCount > 0) metrics.unpaidInvoiceCount.toString() else null
             )
 
-            // Overdue (CRITICAL - with pulsing alert badge)
+            // Overdue (Count only - CRITICAL)
             MetricBox(
                 icon = Icons.Default.Error,
                 label = "Overdue",
-                value = CentsFormatter.formatCents(metrics.overdueAmount),
-                subValue = "Past due",
+                value = metrics.overdueAmount.toString(),
+                subValue = "invoices",
                 color = BizapColors.AnalyticsAtRisk,
                 modifier = Modifier.weight(1f),
                 onClick = onOverdueClick,
@@ -98,12 +97,12 @@ fun DashboardMetricsWidget(
             )
         }
 
-        // Row 2: Paid This Month (Full Width - with check badge)
+        // Row 2: Paid This Month (Count only - Full Width)
         MetricBox(
             icon = Icons.Default.CheckCircle,
             label = "Paid This Month",
-            value = CentsFormatter.formatCents(metrics.paidThisMonth),
-            subValue = "Collected",
+            value = metrics.paidThisMonth.toString(),
+            subValue = "invoices",
             color = BizapColors.AnalyticsExcellent,
             modifier = Modifier.fillMaxWidth(),
             onClick = onPaidClick,

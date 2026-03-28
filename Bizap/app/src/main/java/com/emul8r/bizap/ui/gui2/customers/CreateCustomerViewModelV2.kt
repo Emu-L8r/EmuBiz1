@@ -22,6 +22,12 @@ class CreateCustomerViewModelV2 @Inject constructor(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        // Validate email requirement
+        if (customer.email?.isBlank() != false) {
+            onError("Customer email is required")
+            return
+        }
+
         viewModelScope.launch {
             try {
                 Timber.d("CreateCustomerViewModelV2: Creating customer ${customer.name}")
