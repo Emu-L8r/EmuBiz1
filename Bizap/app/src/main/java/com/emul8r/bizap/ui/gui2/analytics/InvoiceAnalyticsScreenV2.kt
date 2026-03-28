@@ -92,7 +92,7 @@ fun InvoiceAnalyticsScreenV2(
                 )
             }
 
-            // Tab content
+            // Tab content - render with proper state handling
             when (selectedTabIndex) {
                 0 -> {
                     when {
@@ -279,6 +279,10 @@ private fun InvoiceStackedBarChart(
     sentColor: Color,
     modifier: Modifier = Modifier
 ) {
+    if (data.isEmpty()) {
+        return // Empty data, don't render chart
+    }
+
     val maxTotal = data.maxOfOrNull { it.totalCount } ?: 1
 
     Canvas(modifier = modifier) {
@@ -289,46 +293,43 @@ private fun InvoiceStackedBarChart(
 
         data.forEachIndexed { index, stat ->
             val x = index * (chartWidth / data.size) + gap
-            val totalBarHeight = (stat.totalCount.toFloat() / maxTotal) * chartHeight
-            val paidBarHeight = (stat.paidCount.toFloat() / maxTotal) * chartHeight
-            val sentBarHeight = totalBarHeight - paidBarHeight
+            val totalBarHeight = (stat.totalCount.coerceAtLeast(1).toFloat() / maxTotal) * chartHeight
+            val paidBarHeight = (stat.paidCount.coerceAtLeast(0).toFloat() / maxTotal) * chartHeight
+            val sentBarHeight = (totalBarHeight - paidBarHeight).coerceAtLeast(0f)
 
-            // Paid (bottom)
-            if (paidBarHeight > 0) {
-                drawRect(
-                    color = paidColor,
-                    topLeft = Offset(x, chartHeight - totalBarHeight),
-                    size = Size(barWidth, paidBarHeight)
-                )
-            }
-            // Sent/unpaid (top)
+            // Draw SENT/unpaid first (bottom)
             if (sentBarHeight > 0) {
                 drawRect(
                     color = sentColor,
                     topLeft = Offset(x, chartHeight - totalBarHeight),
                     size = Size(barWidth, sentBarHeight)
                 )
-                // Paid sits on top of sent in this stacked view
-                if (paidBarHeight > 0) {
-                    drawRect(
-                        color = paidColor,
-                        topLeft = Offset(x, chartHeight - paidBarHeight),
-                        size = Size(barWidth, paidBarHeight)
-                    )
-                }
+            }
+
+            // Draw PAID second (top) - stacked on top of sent
+            if (paidBarHeight > 0) {
+                drawRect(
+                    color = paidColor,
+                    topLeft = Offset(x, chartHeight - paidBarHeight),
+                    size = Size(barWidth, paidBarHeight)
+                )
             }
 
             // Period label (X axis)
-            drawContext.canvas.nativeCanvas.drawText(
-                stat.periodLabel.takeLast(5),  // e.g. "03-25" from "2026-03-25"
-                x + barWidth / 2,
-                size.height - 4f,
-                android.graphics.Paint().apply {
-                    textAlign = android.graphics.Paint.Align.CENTER
-                    textSize = 28f
-                    color = android.graphics.Color.GRAY
-                }
-            )
+            try {
+                drawContext.canvas.nativeCanvas.drawText(
+                    stat.periodLabel.takeLast(5),  // e.g. "03-25" from "2026-03-25"
+                    x + barWidth / 2,
+                    size.height - 4f,
+                    android.graphics.Paint().apply {
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        textSize = 28f
+                        color = android.graphics.Color.GRAY
+                    }
+                )
+            } catch (e: Exception) {
+                // Silently fail on canvas text rendering - not critical
+            }
         }
 
         // Baseline
