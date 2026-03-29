@@ -2,9 +2,11 @@ package com.emul8r.bizap.ui.gui2.customers
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -14,12 +16,8 @@ import com.emul8r.bizap.domain.model.Customer
 import timber.log.Timber
 
 /**
- * GUI2 Create Customer Screen
- * Form to create a new customer.
- *
- * @param businessId The business context
- * @param onCreate Called when customer is created
- * @param onBack Navigate back
+ * GUI2 Create Customer Screen - Enhanced Professional Design
+ * Features: Icon prefixes, rounded corners, professional styling
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +39,6 @@ fun CreateCustomerScreenV2(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Show error snackbar when error message changes
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(
@@ -54,12 +51,15 @@ fun CreateCustomerScreenV2(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Customer") },
+                title = { Text("Add Customer", style = MaterialTheme.typography.headlineSmall) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.95f)
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -70,7 +70,7 @@ fun CreateCustomerScreenV2(
                 .verticalScroll(rememberScrollState())
                 .padding(paddingValues)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Name (required)
             OutlinedTextField(
@@ -80,9 +80,11 @@ fun CreateCustomerScreenV2(
                     nameError = null
                 },
                 label = { Text("Name *") },
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
                 isError = nameError != null,
-                supportingText = nameError?.let { { Text(it) } }
+                supportingText = nameError?.let { { Text(it) } },
+                shape = RoundedCornerShape(12.dp)
             )
 
             // Business Name
@@ -90,7 +92,9 @@ fun CreateCustomerScreenV2(
                 value = businessName,
                 onValueChange = { businessName = it },
                 label = { Text("Business Name") },
-                modifier = Modifier.fillMaxWidth()
+                leadingIcon = { Icon(Icons.Default.Business, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
             )
 
             // Email (optional)
@@ -101,9 +105,11 @@ fun CreateCustomerScreenV2(
                     emailError = null
                 },
                 label = { Text("Email") },
+                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
                 isError = emailError != null,
-                supportingText = emailError?.let { { Text(it) } }
+                supportingText = emailError?.let { { Text(it) } },
+                shape = RoundedCornerShape(12.dp)
             )
 
             // Phone
@@ -111,7 +117,9 @@ fun CreateCustomerScreenV2(
                 value = phone,
                 onValueChange = { phone = it },
                 label = { Text("Phone") },
-                modifier = Modifier.fillMaxWidth()
+                leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
             )
 
             // Address
@@ -119,8 +127,10 @@ fun CreateCustomerScreenV2(
                 value = address,
                 onValueChange = { address = it },
                 label = { Text("Address") },
+                leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 2
+                minLines = 2,
+                shape = RoundedCornerShape(12.dp)
             )
 
             // Notes
@@ -128,25 +138,26 @@ fun CreateCustomerScreenV2(
                 value = notes,
                 onValueChange = { notes = it },
                 label = { Text("Notes") },
+                leadingIcon = { Icon(Icons.Default.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 2
+                minLines = 2,
+                shape = RoundedCornerShape(12.dp)
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Save Button
             Button(
                 onClick = {
-                    // Reset previous errors
                     nameError = null
                     emailError = null
                     errorMessage = null
 
-                    // Validate name only (email is optional)
                     if (name.isBlank()) {
                         nameError = "Name is required"
                         return@Button
                     }
 
-                    // If email is provided, validate format
                     if (email.isNotBlank() && (!email.contains("@") || !email.contains("."))) {
                         emailError = "Please enter a valid email address (e.g., user@example.com)"
                         return@Button
@@ -175,8 +186,11 @@ fun CreateCustomerScreenV2(
                         }
                     )
                 },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isSaving
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                enabled = !isSaving,
+                shape = RoundedCornerShape(12.dp)
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
@@ -184,7 +198,11 @@ fun CreateCustomerScreenV2(
                         color = MaterialTheme.colorScheme.onPrimary,
                         strokeWidth = 2.dp
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Creating...")
                 } else {
+                    Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text("Create Customer")
                 }
             }

@@ -271,7 +271,8 @@ fun CreateInvoiceScreenV2(
                     onPhotosChange = { updatedPhotos ->
                         updatedPhotos.filterNot { it in uiState.photoUris }.forEach { viewModel.addPhoto(it) }
                         uiState.photoUris.filterNot { it in updatedPhotos }.forEach { viewModel.removePhoto(it) }
-                    }
+                    },
+                    onAddPhotoClicked = { showPhotoDialog = true }
                 )
             }
         }

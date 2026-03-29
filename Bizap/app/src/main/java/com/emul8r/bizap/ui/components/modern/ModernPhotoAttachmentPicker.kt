@@ -20,6 +20,7 @@ import coil.compose.AsyncImage
 fun ModernPhotoAttachmentPicker(
     photos: List<String>,
     onPhotosChange: (List<String>) -> Unit,
+    onAddPhotoClicked: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -74,7 +75,7 @@ fun ModernPhotoAttachmentPicker(
         }
 
         Button(
-            onClick = { /* Open camera/gallery - to be implemented */ },
+            onClick = { onAddPhotoClicked?.invoke() },
             modifier = Modifier
                 .align(androidx.compose.ui.Alignment.CenterHorizontally)
                 .padding(top = 12.dp),
