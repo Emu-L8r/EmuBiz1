@@ -98,6 +98,25 @@ class PdfTableRenderer(
         return heightOccupied
     }
 
+    /**
+     * Draw vertical column separators for improved table readability
+     */
+    fun drawColumnSeparators(
+        canvas: Canvas,
+        rowHeight: Float,
+        startingY: Float,
+        columnSeparatorPaint: Paint
+    ) {
+        var xOffset = startX
+
+        // Draw vertical lines between columns
+        for (index in 0 until columnWeights.size - 1) {
+            val colWidth = columnWeights[index] * tableWidth
+            xOffset += colWidth
+            canvas.drawLine(xOffset, startingY, xOffset, startingY + rowHeight, columnSeparatorPaint)
+        }
+    }
+
     fun getPosition(): Float = currentY
 
     /**
