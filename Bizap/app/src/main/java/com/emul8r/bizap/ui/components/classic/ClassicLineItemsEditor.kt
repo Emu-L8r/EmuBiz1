@@ -72,13 +72,15 @@ fun ClassicLineItemsEditor(
 
                 // Unit Price field
                 OutlinedTextField(
-                    value = lineItem.unitPrice.toString(),
+                    value = if (lineItem.unitPrice == 0L) "" else (lineItem.unitPrice.toDouble() / 100.0).toString(),
                     onValueChange = { newPrice ->
                         val updated = items.toMutableList()
-                        updated[index] = updated[index].copy(unitPrice = newPrice.toLongOrNull() ?: 0L)
+                        // Convert dollars input to cents (e.g., 100 -> 10000 cents)
+                        val priceInCents = newPrice.toDoubleOrNull()?.let { (it * 100).toLong() } ?: 0L
+                        updated[index] = updated[index].copy(unitPrice = priceInCents)
                         onItemsChange(updated)
                     },
-                    label = { Text("Price") },
+                    label = { Text("Price ($)") },
                     modifier = Modifier
                         .weight(0.8f)
                         .height(56.dp),

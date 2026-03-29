@@ -108,59 +108,85 @@ class InvoicePdfService @Inject constructor(
         val headerPaint = Paint().apply { typeface = boldTypeface; textSize = 10f; color = Color.BLACK; isAntiAlias = true }
         val brandPaint = Paint().apply { typeface = boldTypeface; textSize = 18f; color = colors.primary; isAntiAlias = true }
         val bodyPaint = Paint().apply { typeface = regularTypeface; textSize = 10f; color = colors.textLight; isAntiAlias = true }
-        val labelPaint = Paint().apply { typeface = boldTypeface; textSize = 9f; color = Color.GRAY; isAntiAlias = true }
+        val labelPaint = Paint().apply { typeface = boldTypeface; textSize = 9f; color = colors.primary; isAntiAlias = true }
 
         // ===== BRANDING & HEADER SECTION (Page 1 Only) =====
-        // Draw logo if available
+        // Add light gray background to entire header section
+        val headerBackgroundPaint = Paint().apply {
+            color = Color.parseColor("#F5F5F5")
+            style = Paint.Style.FILL
+        }
+        canvas.drawRect(0f, 15f, 595f, 110f, headerBackgroundPaint)
+
+        // Draw logo if available (on the left side)
         val brandingRenderer = PdfBrandingRenderer(canvas, 595f)
         brandingRenderer.drawLogo(snapshot.logoBase64)
 
-        val centerX = 595f / 2f
-        brandPaint.textAlign = Paint.Align.CENTER
-        canvas.drawText(snapshot.businessName.uppercase(), centerX, 50f, brandPaint)
-
-        bodyPaint.textAlign = Paint.Align.CENTER
-        canvas.drawText("ABN: ${snapshot.businessAbn} | Phone: ${snapshot.businessPhone}", centerX, 65f, bodyPaint)
-        canvas.drawText("Email: ${snapshot.businessEmail}", centerX, 80f, bodyPaint)
-        canvas.drawText(snapshot.businessAddress, centerX, 95f, bodyPaint)
-
-        canvas.drawLine(40f, 110f, 555f, 110f, Paint().apply { color = colors.secondary; strokeWidth = 1f })
-
+        // Professional side-by-side layout: Logo on left, company info on right
         bodyPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText("BILL TO:", 40f, 130f, labelPaint)
-        canvas.drawText(snapshot.customerName, 40f, 145f, headerPaint)
-        canvas.drawText(snapshot.customerAddress, 40f, 162f, bodyPaint)
-        snapshot.customerEmail?.let { canvas.drawText(it, 40f, 178f, bodyPaint) }
+        val logoAreaWidth = 100f  // Space for logo on the left
+        val infoStartX = logoAreaWidth + 20f  // Offset from logo
 
-        canvas.drawText("${if (snapshot.invoiceNumber.contains("Quote", ignoreCase = true)) "QUOTE" else "INVOICE"}".uppercase(), 400f, 130f, labelPaint)
-        canvas.drawText(snapshot.displayName.ifBlank { snapshot.invoiceNumber }, 400f, 145f, headerPaint)
-        canvas.drawText("Date: ${formatDate(snapshot.date)}", 400f, 162f, bodyPaint)
-        canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 400f, 178f, bodyPaint)
+        // Company name (larger, bold, primary color)
+        val companyNamePaint = Paint().apply {
+            typeface = boldTypeface
+            textSize = 14f
+            color = colors.primary
+            isAntiAlias = true
+        }
+        canvas.drawText(snapshot.businessName.uppercase(), infoStartX, 35f, companyNamePaint)
+
+        // ABN
+        bodyPaint.textSize = 9f
+        canvas.drawText("ABN: ${snapshot.businessAbn}", infoStartX, 50f, bodyPaint)
+
+        // Phone
+        canvas.drawText("Phone: ${snapshot.businessPhone}", infoStartX, 62f, bodyPaint)
+
+        // Email
+        canvas.drawText("Email: ${snapshot.businessEmail}", infoStartX, 74f, bodyPaint)
+
+        // Address
+        canvas.drawText(snapshot.businessAddress, infoStartX, 86f, bodyPaint)
+
+        // Reset paint and draw enhanced divider line
+        bodyPaint.textSize = 10f
+        canvas.drawLine(40f, 110f, 555f, 110f, Paint().apply { color = colors.primary; strokeWidth = 2f })
+
+        // ===== HEADER SECTION: TWO-COLUMN LAYOUT (Bill To | Invoice Details) =====
+        // Visual section container styling
+        val sectionBoxPaint = Paint().apply { color = Color.parseColor("#F5F5F5"); style = Paint.Style.FILL }
+        val billToBoxBorderPaint = Paint().apply { color = colors.primary; strokeWidth = 1.5f; style = Paint.Style.STROKE }
+
+        // Left box: Bill To (40-280)
+        canvas.drawRect(40f, 120f, 280f, 195f, sectionBoxPaint)
+        canvas.drawRect(40f, 120f, 280f, 195f, billToBoxBorderPaint)
+
+        // Box labels with primary color
+        val boxLabelPaint = Paint().apply { typeface = boldTypeface; textSize = 9f; color = colors.primary; isAntiAlias = true }
+        bodyPaint.textAlign = Paint.Align.LEFT
+        canvas.drawText("BILL TO", 50f, 135f, boxLabelPaint)
+        canvas.drawText(snapshot.customerName, 50f, 155f, headerPaint)
+        canvas.drawText(snapshot.customerAddress, 50f, 170f, bodyPaint)
+        snapshot.customerEmail?.let { canvas.drawText(it, 50f, 185f, bodyPaint) }
+
+        // Right box: Invoice Details (315-555)
+        val invoiceBoxBorderPaint = Paint().apply { color = colors.primary; strokeWidth = 1.5f; style = Paint.Style.STROKE }
+        canvas.drawRect(315f, 120f, 555f, 195f, sectionBoxPaint)
+        canvas.drawRect(315f, 120f, 555f, 195f, invoiceBoxBorderPaint)
+
+        canvas.drawText("INVOICE", 325f, 135f, boxLabelPaint)
+        canvas.drawText(snapshot.displayName.ifBlank { snapshot.invoiceNumber }, 325f, 155f, headerPaint)
+        canvas.drawText("Date: ${formatDate(snapshot.date)}", 325f, 170f, bodyPaint)
+        canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 325f, 185f, bodyPaint)
 
         // ===== WATERMARK (appears on first page) =====
         val watermarkRenderer = PdfWatermarkRenderer(canvas, 595f, 842f)
         watermarkRenderer.drawWatermark(snapshot.invoiceStatus)
 
-        var currentY = 195f
+        var currentY = 210f
         pageManager.setY(currentY)
 
-        // ===== BILLING INFORMATION SECTION =====
-        canvas.drawLine(40f, currentY, 555f, currentY, Paint().apply { color = colors.secondary; strokeWidth = 0.5f })
-        currentY += 12f
-        canvas.drawText("BILLING INFORMATION", 40f, currentY, labelPaint)
-        currentY += 14f
-
-        bodyPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText("Bill To: ${snapshot.customerName}", 40f, currentY, bodyPaint)
-        currentY += 12f
-        canvas.drawText(snapshot.customerAddress, 40f, currentY, bodyPaint)
-        currentY += 12f
-        snapshot.customerEmail?.let {
-            canvas.drawText("Email: $it", 40f, currentY, bodyPaint)
-            currentY += 12f
-        }
-
-        currentY += 15f
 
         val separatorPaint = Paint().apply { color = colors.secondary; strokeWidth = 0.5f; style = Paint.Style.STROKE }
         val sectionHeaderPaint = Paint().apply { typeface = boldTypeface; textSize = 11f; color = colors.primary; isAntiAlias = true }
@@ -187,11 +213,23 @@ class InvoicePdfService @Inject constructor(
 
         if (!hideLineItems) {
             // ===== LINE ITEMS TABLE WITH PAGINATION =====
-            // Draw table header
-            val headerTextPaint = Paint(headerPaint).apply { color = Color.WHITE }
+            // Draw table header with professional styling
+            val headerTextPaint = Paint(headerPaint).apply {
+                color = Color.WHITE
+                textSize = 11f
+                typeface = boldTypeface
+            }
 
-            // Ensure space for header row (approximately 30 points)
+            // Ensure space for header row (approximately 40 points)
             canvas = pageManager.ensureSpace(40f)
+
+            // Draw table border top
+            val tableBorderPaint = Paint().apply {
+                color = colors.primary
+                strokeWidth = 2f
+                style = Paint.Style.STROKE
+            }
+            canvas.drawLine(40f, pageManager.currentY, 555f, pageManager.currentY, tableBorderPaint)
 
             val tableRenderer = PdfTableRenderer(
                 canvas = canvas,
@@ -205,6 +243,14 @@ class InvoicePdfService @Inject constructor(
 
             tableRenderer.drawRow(listOf("Description", "Qty", "Price", "Total"), headerTextPaint, isHeader = true, headerTextColor = Color.WHITE)
             pageManager.setY(tableRenderer.getPosition())
+
+            // Draw vertical column separators for clarity
+            val columnSeparatorPaint = Paint().apply {
+                color = colors.secondary
+                strokeWidth = 0.5f
+                style = Paint.Style.STROKE
+            }
+            tableRenderer.drawColumnSeparators(canvas, 20f, tableRenderer.getPosition() - 20f, columnSeparatorPaint)
 
             // Draw table rows with automatic pagination
             snapshot.items.forEach { item ->
@@ -226,83 +272,122 @@ class InvoicePdfService @Inject constructor(
                 pageManager.setY(tableRenderer.getPosition())
             }
 
-            currentY = pageManager.currentY + 30f
+            // Draw table border bottom
+            canvas.drawLine(40f, pageManager.currentY, 555f, pageManager.currentY, tableBorderPaint)
+
+            currentY = pageManager.currentY + 20f
             pageManager.setY(currentY)
         }
 
-        val rightX = 555f
+        val rightX = 545f
         bodyPaint.textAlign = Paint.Align.RIGHT
         headerPaint.textAlign = Paint.Align.RIGHT
 
-        // Ensure space for totals section (approximately 50 points)
-        canvas = pageManager.ensureSpace(50f)
+        // Ensure space for totals section (approximately 80 points)
+        canvas = pageManager.ensureSpace(80f)
 
+        // Draw totals box with colored header bar
+        val totalsHeaderPaint = Paint().apply { color = colors.primary; style = Paint.Style.FILL }
+        val totalsBodyPaint = Paint().apply { color = Color.parseColor("#F9F9F9"); style = Paint.Style.FILL }
+        val totalBoxBorderPaint = Paint().apply { color = colors.primary; strokeWidth = 2f; style = Paint.Style.STROKE }
+
+        // Draw header section (primary color)
+        canvas.drawRect(320f, pageManager.currentY - 5f, 555f, pageManager.currentY + 15f, totalsHeaderPaint)
+        // Draw body section (light gray)
+        canvas.drawRect(320f, pageManager.currentY + 15f, 555f, pageManager.currentY + 65f, totalsBodyPaint)
+        // Draw border
+        canvas.drawRect(320f, pageManager.currentY - 5f, 555f, pageManager.currentY + 65f, totalBoxBorderPaint)
+
+        // Header label
+        val totalsHeaderLabelPaint = Paint().apply {
+            typeface = boldTypeface
+            textSize = 10f
+            color = Color.WHITE
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+        canvas.drawText("TOTAL SUMMARY", 437f, pageManager.currentY + 10f, totalsHeaderLabelPaint)
+
+        // Adjust Y for content
+        pageManager.advanceY(20f)
+
+        // Subtotal
+        bodyPaint.textAlign = Paint.Align.RIGHT
         canvas.drawText("Subtotal:", 450f, pageManager.currentY, bodyPaint)
         canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal / 100.0), rightX, pageManager.currentY, bodyPaint)
 
-        pageManager.advanceY(15f)
+        pageManager.advanceY(16f)
         if (snapshot.taxAmount > 0) {
             canvas.drawText("Tax (${(snapshot.taxRate * 100).toInt()}%):", 450f, pageManager.currentY, bodyPaint)
             canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount / 100.0), rightX, pageManager.currentY, bodyPaint)
-            pageManager.advanceY(25f)
+            pageManager.advanceY(18f)
         }
 
-        val totalLabelPaint = Paint(headerPaint).apply {
+        // Total Amount Due - Highly emphasized
+        val totalDuePaint = Paint().apply {
+            typeface = boldTypeface
             textSize = 14f
             color = colors.primary
             textAlign = Paint.Align.RIGHT
+            isAntiAlias = true
         }
-        canvas.drawText("TOTAL AMOUNT DUE (${snapshot.currencyCode}):", 450f, pageManager.currentY, totalLabelPaint)
+        canvas.drawText("TOTAL DUE:", 450f, pageManager.currentY, totalDuePaint)
         val formattedAmount = String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount / 100.0)
-        canvas.drawText(formattedAmount, rightX, pageManager.currentY, totalLabelPaint)
+        canvas.drawText(formattedAmount, rightX, pageManager.currentY, totalDuePaint)
 
         // ===== PAYMENT DETAILS SECTION =====
-        // Ensure space for payment details header (approximately 80 points)
-        canvas = pageManager.ensureSpace(80f)
+        // Ensure space for payment details header (approximately 100 points)
+        canvas = pageManager.ensureSpace(100f)
 
-        pageManager.advanceY(30f)
-        canvas.drawLine(40f, pageManager.currentY, 555f, pageManager.currentY, separatorPaint)
-        pageManager.advanceY(12f)
-        canvas.drawText("PAYMENT DETAILS", 40f, pageManager.currentY, labelPaint)
-        pageManager.advanceY(14f)
+        pageManager.advanceY(20f)
+
+        // Payment section box
+        val paymentBoxPaint = Paint().apply { color = Color.parseColor("#FAFAFA"); style = Paint.Style.FILL }
+        val paymentBoxBorderPaint = Paint().apply { color = colors.secondary; strokeWidth = 1f; style = Paint.Style.STROKE }
+
+        val paymentBoxTop = pageManager.currentY
+        canvas.drawRect(40f, paymentBoxTop, 555f, paymentBoxTop + 85f, paymentBoxPaint)
+        canvas.drawRect(40f, paymentBoxTop, 555f, paymentBoxTop + 85f, paymentBoxBorderPaint)
+
+        canvas.drawText("PAYMENT DETAILS", 50f, pageManager.currentY + 12f, labelPaint)
+        pageManager.advanceY(18f)
 
         bodyPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText("Payment Terms: Due within 30 days of invoice date", 40f, pageManager.currentY, bodyPaint)
+        canvas.drawText("Payment Terms: Due within 30 days of invoice date", 50f, pageManager.currentY, bodyPaint)
         pageManager.advanceY(12f)
-        canvas.drawText("Reference: ${snapshot.invoiceNumber}", 40f, pageManager.currentY, bodyPaint)
+        canvas.drawText("Reference: ${snapshot.invoiceNumber}", 50f, pageManager.currentY, bodyPaint)
         pageManager.advanceY(12f)
 
         if (snapshot.businessPhone.isNotBlank()) {
-            canvas.drawText("Contact: ${snapshot.businessPhone}", 40f, pageManager.currentY, bodyPaint)
+            canvas.drawText("Contact: ${snapshot.businessPhone}", 50f, pageManager.currentY, bodyPaint)
             pageManager.advanceY(12f)
         }
 
         if (snapshot.businessEmail.isNotBlank()) {
-            canvas.drawText(snapshot.businessEmail, 40f, pageManager.currentY, bodyPaint)
+            canvas.drawText(snapshot.businessEmail, 50f, pageManager.currentY, bodyPaint)
             pageManager.advanceY(12f)
         }
 
         // Bank / EFT payment details — only shown when the business profile has them set
         val hasBankDetails = snapshot.bankAccountNumber.isNotBlank() || snapshot.bankBsb.isNotBlank()
         if (hasBankDetails) {
-            currentY += 8f
             pageManager.advanceY(8f)
-            canvas.drawText("EFT / Bank Transfer:", 40f, pageManager.currentY, labelPaint)
+            canvas.drawText("EFT / Bank Transfer:", 50f, pageManager.currentY, labelPaint)
             pageManager.advanceY(14f)
             if (snapshot.bankName.isNotBlank()) {
-                canvas.drawText("Bank: ${snapshot.bankName}", 40f, pageManager.currentY, bodyPaint)
+                canvas.drawText("Bank: ${snapshot.bankName}", 50f, pageManager.currentY, bodyPaint)
                 pageManager.advanceY(12f)
             }
             if (snapshot.bankAccountName.isNotBlank()) {
-                canvas.drawText("Account Name: ${snapshot.bankAccountName}", 40f, pageManager.currentY, bodyPaint)
+                canvas.drawText("Account Name: ${snapshot.bankAccountName}", 50f, pageManager.currentY, bodyPaint)
                 pageManager.advanceY(12f)
             }
             if (snapshot.bankBsb.isNotBlank()) {
-                canvas.drawText("BSB: ${snapshot.bankBsb}", 40f, pageManager.currentY, bodyPaint)
+                canvas.drawText("BSB: ${snapshot.bankBsb}", 50f, pageManager.currentY, bodyPaint)
                 pageManager.advanceY(12f)
             }
             if (snapshot.bankAccountNumber.isNotBlank()) {
-                canvas.drawText("Account No: ${snapshot.bankAccountNumber}", 40f, pageManager.currentY, bodyPaint)
+                canvas.drawText("Account No: ${snapshot.bankAccountNumber}", 50f, pageManager.currentY, bodyPaint)
                 pageManager.advanceY(12f)
             }
         }
@@ -310,21 +395,79 @@ class InvoicePdfService @Inject constructor(
         // Render notes and footer below totals
         bodyPaint.textAlign = Paint.Align.LEFT
         if (snapshot.notes.isNotBlank()) {
-            canvas = pageManager.ensureSpace(60f)
-            pageManager.advanceY(30f)
-            canvas.drawLine(40f, pageManager.currentY, 555f, pageManager.currentY, separatorPaint)
-            pageManager.advanceY(12f)
-            canvas.drawText("NOTES", 40f, pageManager.currentY, labelPaint)
-            pageManager.advanceY(14f)
-            pageManager.setY(drawWrappedText(canvas, snapshot.notes, 40f, pageManager.currentY, 515f, bodyPaint))
-        }
-        if (snapshot.footerText.isNotBlank()) {
-            canvas = pageManager.ensureSpace(60f)
+            canvas = pageManager.ensureSpace(70f)
             pageManager.advanceY(20f)
-            canvas.drawLine(40f, pageManager.currentY, 555f, pageManager.currentY, separatorPaint)
-            pageManager.advanceY(12f)
-            pageManager.setY(drawWrappedText(canvas, snapshot.footerText, 40f, pageManager.currentY, 515f, footerBodyPaint))
+
+            val notesBoxPaint = Paint().apply { color = Color.parseColor("#FAFAFA"); style = Paint.Style.FILL }
+            val notesBoxBorderPaint = Paint().apply { color = colors.secondary; strokeWidth = 1f; style = Paint.Style.STROKE }
+
+            val notesBoxTop = pageManager.currentY
+            canvas.drawRect(40f, notesBoxTop, 555f, notesBoxTop + 55f, notesBoxPaint)
+            canvas.drawRect(40f, notesBoxTop, 555f, notesBoxTop + 55f, notesBoxBorderPaint)
+
+            canvas.drawText("NOTES", 50f, pageManager.currentY + 12f, labelPaint)
+            pageManager.advanceY(18f)
+            pageManager.setY(drawWrappedText(canvas, snapshot.notes, 50f, pageManager.currentY, 490f, bodyPaint))
         }
+
+        if (snapshot.footerText.isNotBlank()) {
+            canvas = pageManager.ensureSpace(70f)
+            pageManager.advanceY(20f)
+
+            val footerBoxPaint = Paint().apply { color = Color.parseColor("#F5F5F5"); style = Paint.Style.FILL }
+            val footerBoxBorderPaint = Paint().apply { color = colors.secondary; strokeWidth = 1f; style = Paint.Style.STROKE }
+
+            val footerBoxTop = pageManager.currentY
+            canvas.drawRect(40f, footerBoxTop, 555f, footerBoxTop + 55f, footerBoxPaint)
+            canvas.drawRect(40f, footerBoxTop, 555f, footerBoxTop + 55f, footerBoxBorderPaint)
+
+            canvas.drawText("FOOTER", 50f, pageManager.currentY + 12f, labelPaint)
+            pageManager.advanceY(18f)
+            pageManager.setY(drawWrappedText(canvas, snapshot.footerText, 50f, pageManager.currentY, 490f, footerBodyPaint))
+        }
+
+        // ===== BRANDED FOOTER SECTION (Professional) =====
+        canvas = pageManager.ensureSpace(50f)
+        pageManager.advanceY(30f)
+
+        // Footer background bar (primary color)
+        val footerBackgroundPaint = Paint().apply {
+            color = colors.primary
+            style = Paint.Style.FILL
+        }
+        val footerBarHeight = 45f
+        canvas.drawRect(0f, pageManager.currentY, 595f, pageManager.currentY + footerBarHeight, footerBackgroundPaint)
+
+        // Footer text styling
+        val footerTextPaint = Paint().apply {
+            typeface = boldTypeface
+            textSize = 10f
+            color = Color.WHITE
+            isAntiAlias = true
+        }
+
+        val footerSmallPaint = Paint().apply {
+            typeface = regularTypeface
+            textSize = 8f
+            color = Color.WHITE
+            isAntiAlias = true
+        }
+
+        // Line 1: Company name | Website
+        bodyPaint.textAlign = Paint.Align.LEFT
+        canvas.drawText(snapshot.businessName, 50f, pageManager.currentY + 15f, footerTextPaint)
+
+        // Extract website from email domain
+        val footerWebsite = snapshot.businessEmail.substringAfter("@").lowercase()
+        canvas.drawText("| ${footerWebsite}", 250f, pageManager.currentY + 15f, footerSmallPaint)
+
+        // Line 2: ABN | Contact email
+        canvas.drawText("ABN: ${snapshot.businessAbn}  |  ${snapshot.businessEmail}", 50f, pageManager.currentY + 28f, footerSmallPaint)
+
+        // Line 3: Address
+        canvas.drawText(snapshot.businessAddress, 50f, pageManager.currentY + 38f, footerSmallPaint)
+
+        pageManager.advanceY(footerBarHeight + 5f)
 
         // Finalize all pages and close document
         pageManager.finalize()
