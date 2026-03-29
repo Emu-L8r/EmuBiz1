@@ -21,6 +21,7 @@ import coil.compose.AsyncImage
 fun ClassicPhotoAttachmentPicker(
     photos: List<String>,
     onPhotosChange: (List<String>) -> Unit,
+    onAddPhotoClicked: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -72,7 +73,7 @@ fun ClassicPhotoAttachmentPicker(
         }
 
         Button(
-            onClick = { /* Open camera/gallery - to be implemented */ },
+            onClick = { onAddPhotoClicked?.invoke() },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Add Photo")

@@ -15,6 +15,7 @@ import dagger.hilt.android.EntryPointAccessors
 fun PhotoAttachmentPicker(
     photos: List<String>,
     onPhotosChange: (List<String>) -> Unit,
+    onAddPhotoClicked: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -26,8 +27,8 @@ fun PhotoAttachmentPicker(
     val theme = themeManager.theme.collectAsStateWithLifecycle().value
 
     when (theme) {
-        AppTheme.CLASSIC -> ClassicPhotoAttachmentPicker(photos, onPhotosChange, modifier)
-        AppTheme.MODERN -> ModernPhotoAttachmentPicker(photos, onPhotosChange, modifier)
+        AppTheme.CLASSIC -> ClassicPhotoAttachmentPicker(photos, onPhotosChange, onAddPhotoClicked, modifier)
+        AppTheme.MODERN -> ModernPhotoAttachmentPicker(photos, onPhotosChange, onAddPhotoClicked, modifier)
     }
 }
 

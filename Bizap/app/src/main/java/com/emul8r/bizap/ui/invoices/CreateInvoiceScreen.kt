@@ -278,7 +278,8 @@ fun CreateInvoiceScreen(
                         updatedPhotos.filterNot { it in uiState.photoUris }.forEach { viewModel.addPhoto(it) }
                         // Remove deleted photos
                         uiState.photoUris.filterNot { it in updatedPhotos }.forEach { viewModel.removePhoto(it) }
-                    }
+                    },
+                    onAddPhotoClicked = { showAddPhotoDialog = true }
                 )
             }
         }
