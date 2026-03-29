@@ -22,7 +22,9 @@ data class InvoiceSettingsUiState(
     val settings: InvoiceSettings? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val saveSuccess: Boolean = false
+    val saveSuccess: Boolean = false,
+    val validationErrors: Map<String, String> = emptyMap(),
+    val isSaving: Boolean = false
 )
 
 /**
@@ -66,11 +68,19 @@ class InvoiceSettingsViewModel @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load settings")
                 _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "Unknown error",
+                    error = "Failed to load settings: ${e.message ?: "Unknown error"}",
                     isLoading = false
                 )
             }
         }
+    }
+
+    /**
+     * Retry loading settings after a failure.
+     */
+    fun retryLoadSettings() {
+        Timber.d("Retrying settings load...")
+        loadSettings()
     }
 
     /**
@@ -197,10 +207,12 @@ class InvoiceSettingsViewModel @Inject constructor(
                         return@launch
                     }
 
+                    _uiState.value = _uiState.value.copy(isSaving = true)
                     repository.saveSettings(settings)
                     _uiState.value = _uiState.value.copy(
                         saveSuccess = true,
-                        error = null
+                        error = null,
+                        isSaving = false
                     )
                     Timber.d("Settings saved successfully")
 
@@ -211,7 +223,8 @@ class InvoiceSettingsViewModel @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Failed to save settings")
                 _uiState.value = _uiState.value.copy(
-                    error = "Failed to save settings: ${e.message}"
+                    error = "Failed to save settings: ${e.message}",
+                    isSaving = false
                 )
             }
         }
@@ -235,4 +248,3 @@ class InvoiceSettingsViewModel @Inject constructor(
         }
     }
 }
-
