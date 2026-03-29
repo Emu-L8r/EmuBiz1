@@ -12,6 +12,7 @@ import com.emul8r.bizap.data.backup.DatabaseRestoreService
 import com.emul8r.bizap.data.local.*
 import com.emul8r.bizap.data.local.dao.*
 import com.emul8r.bizap.data.local.migrations.*
+import com.emul8r.bizap.data.local.migration.MIGRATION_AddInvoiceSettings
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -61,7 +62,8 @@ object DatabaseModule {
             MIGRATION_33_34,
             MIGRATION_34_35,
             MIGRATION_35_36,
-            MIGRATION_36_37  // Remove UNIQUE constraint on email field
+            MIGRATION_36_37,  // Remove UNIQUE constraint on email field
+            MIGRATION_AddInvoiceSettings  // Add invoice_settings table for Phase 4
         )
 
         // ✅ PRODUCTION SAFE: Only allow destructive fallback in DEBUG builds
@@ -101,6 +103,7 @@ object DatabaseModule {
     @Provides fun provideNoteDao(db: AppDatabase): NoteDao = db.noteDao()
 
     @Provides fun provideAnalyticsEventDao(db: AppDatabase): com.emul8r.bizap.data.local.dao.AnalyticsEventDao = db.analyticsEventDao()
+    @Provides fun provideInvoiceSettingsDao(db: AppDatabase): InvoiceSettingsDao = db.invoiceSettingsDao()
 
     @Provides
     @Singleton

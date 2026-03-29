@@ -44,6 +44,7 @@ fun SettingsHubScreenV2(
     onBusinessProfileClick: () -> Unit,
     onAppAppearanceClick: () -> Unit,
     onInvoiceCustomizationClick: () -> Unit = {},
+    onInvoiceSettingsClick: () -> Unit = {},
     onHelpClick: () -> Unit = {},
     onRiskDashboardClick: () -> Unit = {},
     onPaymentAnalyticsClick: () -> Unit = {},
@@ -84,6 +85,7 @@ fun SettingsHubScreenV2(
                     onBusinessProfileClick = onBusinessProfileClick,
                     onAppAppearanceClick = onAppAppearanceClick,
                     onInvoiceCustomizationClick = onInvoiceCustomizationClick,
+                    onInvoiceSettingsClick = onInvoiceSettingsClick,
                     onHelpClick = onHelpClick,
                     onRiskDashboardClick = onRiskDashboardClick,
                     onPaymentAnalyticsClick = onPaymentAnalyticsClick,
@@ -104,6 +106,7 @@ private fun SettingsContent(
     onBusinessProfileClick: () -> Unit,
     onAppAppearanceClick: () -> Unit,
     onInvoiceCustomizationClick: () -> Unit = {},
+    onInvoiceSettingsClick: () -> Unit = {},
     onHelpClick: () -> Unit = {},
     onRiskDashboardClick: () -> Unit = {},
     onPaymentAnalyticsClick: () -> Unit = {},
@@ -154,9 +157,16 @@ private fun SettingsContent(
 
         SettingsCardV2(
             icon = Icons.Default.Description,
-            title = "Invoice Settings",
+            title = "Invoice Customization",
             description = "Customize invoice numbering and layout",
             onClick = onInvoiceCustomizationClick
+        )
+
+        SettingsCardV2(
+            icon = Icons.Default.Tune,
+            title = "Invoice Settings",
+            description = "Configure branding, payment, and tax settings",
+            onClick = onInvoiceSettingsClick
         )
 
         SettingsCardV2(
