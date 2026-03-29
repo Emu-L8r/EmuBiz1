@@ -99,23 +99,15 @@ class PaymentHistoryViewModelTest {
     fun testEmptyUiState() {
         val emptySnapshots = emptyList<InvoicePaymentSnapshot>()
 
-        val uiState = if (emptySnapshots.isEmpty()) {
-            PaymentHistoryUiState(
-                invoiceId = 123L,
-                invoiceName = "",
-                totalAmount = 0,
-                paidAmount = 0,
-                outstandingAmount = 0,
-                paymentHistory = emptyList(),
-                isLoading = false
-            )
+        // PaymentHistoryUiState is a sealed interface, use proper types
+        val uiState: PaymentHistoryUiState = if (emptySnapshots.isEmpty()) {
+            PaymentHistoryUiState.NotFound
         } else {
-            PaymentHistoryUiState(invoiceId = 123L, invoiceName = "", totalAmount = 0, paidAmount = 0, outstandingAmount = 0)
+            PaymentHistoryUiState.Loading
         }
 
         assertNotNull(uiState)
-        assertEquals(0, uiState.paymentHistory.size)
-        assertEquals("", uiState.invoiceName)
+        assertTrue(uiState is PaymentHistoryUiState.NotFound || uiState is PaymentHistoryUiState.Loading)
     }
 
     // ============ HELPER FUNCTIONS ============
