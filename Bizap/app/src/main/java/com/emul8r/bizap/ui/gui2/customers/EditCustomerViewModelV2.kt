@@ -26,6 +26,10 @@ class EditCustomerViewModelV2 @Inject constructor(
     val businessId: Long = route.businessId
     private val customerId: Long = route.customerId
 
+    // Track loading state for UI
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     val uiState: StateFlow<EditCustomerUiStateV2> = customerRepository
         .getCustomerById(customerId)
         .map { customer ->
@@ -48,18 +52,24 @@ class EditCustomerViewModelV2 @Inject constructor(
 
     fun updateCustomer(
         customer: Customer,
-        onSuccess: () -> Unit
+        onSuccess: () -> Unit,
+        onError: (String?) -> Unit = {}
     ) {
         viewModelScope.launch {
             try {
+                _isLoading.value = true
                 Timber.d("EditCustomerViewModelV2: Updating customer $customerId")
                 customerRepository.updateCustomer(customer)
-                Timber.d("EditCustomerViewModelV2: Customer updated successfully")
+                Timber.d("✅ EditCustomerViewModelV2: Customer updated successfully")
                 onSuccess()
             } catch (e: Exception) {
-                Timber.e(e, "EditCustomerViewModelV2: Failed to update customer")
+                Timber.e(e, "❌ EditCustomerViewModelV2: Failed to update customer")
+                onError(e.message ?: "Unknown error")
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 }
+
 
