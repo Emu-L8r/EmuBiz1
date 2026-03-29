@@ -88,11 +88,14 @@ fun InvoiceDetailScreenV2(
                 modifier = Modifier.padding(paddingValues)
             )
             is InvoiceDetailUiStateV2.Success -> {
-                InvoiceDetailContentV2(
-                    invoice = state.invoice,
-                    businessId = businessId,
-                    modifier = Modifier.padding(paddingValues)
-                )
+                // Use key to prevent flickering - keyed by invoice ID
+                key(state.invoice.invoice.id) {
+                    InvoiceDetailContentV2(
+                        invoice = state.invoice,
+                        businessId = businessId,
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
 
                 // Memoize status parsing to avoid duplicate conversions
                 val currentStatus = remember(state.invoice.invoice.status) {

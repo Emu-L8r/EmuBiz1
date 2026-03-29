@@ -60,7 +60,8 @@ object DatabaseModule {
             MIGRATION_32_33,
             MIGRATION_33_34,
             MIGRATION_34_35,
-            MIGRATION_35_36
+            MIGRATION_35_36,
+            MIGRATION_36_37  // Remove UNIQUE constraint on email field
         )
 
         // ✅ PRODUCTION SAFE: Only allow destructive fallback in DEBUG builds

@@ -93,14 +93,14 @@ fun CreateCustomerScreenV2(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Email (required)
+            // Email (optional)
             OutlinedTextField(
                 value = email,
                 onValueChange = {
                     email = it
                     emailError = null
                 },
-                label = { Text("Email *") },
+                label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth(),
                 isError = emailError != null,
                 supportingText = emailError?.let { { Text(it) } }
@@ -132,8 +132,6 @@ fun CreateCustomerScreenV2(
                 minLines = 2
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Save Button
             Button(
                 onClick = {
@@ -142,20 +140,14 @@ fun CreateCustomerScreenV2(
                     emailError = null
                     errorMessage = null
 
-                    // Validate name
+                    // Validate name only (email is optional)
                     if (name.isBlank()) {
                         nameError = "Name is required"
                         return@Button
                     }
 
-                    // Validate email (now required)
-                    if (email.isBlank()) {
-                        emailError = "Email is required"
-                        return@Button
-                    }
-
-                    // Validate email format
-                    if (!email.contains("@") || !email.contains(".")) {
+                    // If email is provided, validate format
+                    if (email.isNotBlank() && (!email.contains("@") || !email.contains("."))) {
                         emailError = "Please enter a valid email address (e.g., user@example.com)"
                         return@Button
                     }

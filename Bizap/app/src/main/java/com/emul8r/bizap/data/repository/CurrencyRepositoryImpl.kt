@@ -1,9 +1,11 @@
 package com.emul8r.bizap.data.repository
 
+import com.emul8r.bizap.BuildConfig
 import com.emul8r.bizap.data.local.CurrencyDao
 import com.emul8r.bizap.data.local.ExchangeRateDao
 import com.emul8r.bizap.data.local.entities.CurrencyEntity
 import com.emul8r.bizap.data.local.entities.ExchangeRateEntity
+import com.emul8r.bizap.data.remote.ExchangeRateService
 import com.emul8r.bizap.domain.model.Currency
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import kotlinx.coroutines.flow.Flow
@@ -15,7 +17,8 @@ import javax.inject.Singleton
 @Singleton
 class CurrencyRepositoryImpl @Inject constructor(
     private val currencyDao: CurrencyDao,
-    private val exchangeRateDao: ExchangeRateDao
+    private val exchangeRateDao: ExchangeRateDao,
+    private val exchangeRateService: ExchangeRateService
 ) : CurrencyRepository {
     
     override fun getEnabledCurrencies(): Flow<List<Currency>> =
@@ -30,24 +33,39 @@ class CurrencyRepositoryImpl @Inject constructor(
         exchangeRateDao.getRate(from, to)
     
     override suspend fun seedDefaultCurrencies() {
-        val currencies = listOf(
-            CurrencyEntity("AUD", "$", "Australian Dollar", true, true),
-            CurrencyEntity("USD", "$", "US Dollar", false, true),
-            CurrencyEntity("EUR", "€", "Euro", false, true),
-            CurrencyEntity("GBP", "£", "British Pound", false, true),
-            CurrencyEntity("JPY", "¥", "Japanese Yen", false, true)
+        currencyDao.insertCurrencies(
+            listOf(
+                CurrencyEntity("AUD", "$", "Australian Dollar"),
+                CurrencyEntity("USD", "$", "US Dollar"),
+                CurrencyEntity("EUR", "€", "Euro"),
+                CurrencyEntity("GBP", "£", "British Pound"),
+                CurrencyEntity("JPY", "¥", "Japanese Yen")
+            )
         )
-        currencyDao.insertCurrencies(currencies)
     }
 
     override suspend fun updateExchangeRates(): Result<Unit> = runCatching {
-        // Fetches and caches fresh exchange rates. Placeholder for future API integration.
-        val timestamp = System.currentTimeMillis()
-        Timber.d("✅ Exchange rates updated at $timestamp (cached)")
-    }.also { result ->
-        result.onFailure { e ->
-            Timber.e(e, "❌ Failed to update all exchange rates")
+        val apiKey = BuildConfig.EXCHANGE_RATE_API_KEY
+        if (apiKey.isBlank()) {
+            Timber.w("⚠️ API key not set - skipping exchange rate update")
+            return@runCatching
         }
+
+        Timber.d("🌍 Updating exchange rates...")
+        val response = exchangeRateService.fetchRates(apiKey, "USD", "AUD,USD,EUR,GBP,JPY")
+        val ts = System.currentTimeMillis()
+
+        response.rates.forEach { (code, rate) ->
+            exchangeRateDao.insertRate(
+                ExchangeRateEntity(
+                    baseCurrencyCode = "USD",
+                    targetCurrencyCode = code,
+                    rate = rate,
+                    lastUpdated = ts
+                )
+            )
+        }
+        Timber.i("✅ Exchange rates cached")
     }
 
     override suspend fun convertAmount(amount: Double, fromCurrency: String, toCurrency: String): Double? {
@@ -57,9 +75,8 @@ class CurrencyRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getLastRateUpdate(): Long? {
-        // Returns null when no exchange rates are stored, indicating rates have never been fetched.
-        // A dedicated lastUpdated DAO query would be cleaner; for now, null signals no data.
-        return null
+        // Get the most recent update timestamp from cached rates
+        return exchangeRateDao.getLastUpdateTimestamp()
     }
 
     private fun CurrencyEntity.toDomain(): Currency =

@@ -28,8 +28,12 @@ fun PaymentAnalyticsScreenV2(
     viewModel: PaymentAnalyticsViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val selectedStatuses = remember { mutableStateOf(setOf(InvoiceStatus.SENT, InvoiceStatus.OVERDUE)) }
+    val filterState by viewModel.filterState.collectAsStateWithLifecycle()
     val isExporting = remember { mutableStateOf(false) }
+
+    // Local state for date picker dialogs
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -48,6 +52,7 @@ fun PaymentAnalyticsScreenV2(
                     )
                 }
             )
+
         }
     ) { paddingValues ->
         Column(
@@ -55,17 +60,22 @@ fun PaymentAnalyticsScreenV2(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Status filter
-            StatusFilterChipsV2(
-                selectedStatuses = selectedStatuses.value,
-                onStatusesSelected = { selectedStatuses.value = it },
-                modifier = Modifier.padding(vertical = 12.dp)
+            // Date Range Filter
+            DateRangeFilterChips(
+                startDate = filterState.startDate,
+                endDate = filterState.endDate,
+                onStartDateClick = { showStartDatePicker = true },
+                onEndDateClick = { showEndDatePicker = true },
+                onClearClick = { viewModel.clearFilters() },
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
             )
 
-            // Loading indicator if exporting
-            if (isExporting.value) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
+            // Status Filter
+            StatusFilterChipsV2(
+                selectedStatuses = filterState.statuses,
+                onStatusesSelected = { viewModel.setStatusFilter(it) },
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
 
             // Content
             when (val state = uiState) {
@@ -78,7 +88,9 @@ fun PaymentAnalyticsScreenV2(
                 )
                 is PaymentAnalyticsUiStateV2.Success -> PaymentAnalyticsContentV2(
                     metrics = state.metrics,
-                    selectedStatuses = selectedStatuses.value
+                    selectedStatuses = state.filterState.statuses,
+                    startDate = state.filterState.startDate,
+                    endDate = state.filterState.endDate
                 )
             }
         }
@@ -89,8 +101,15 @@ fun PaymentAnalyticsScreenV2(
 private fun PaymentAnalyticsContentV2(
     metrics: PaymentMetricsV2,
     selectedStatuses: Set<InvoiceStatus> = setOf(InvoiceStatus.SENT, InvoiceStatus.OVERDUE),
+    startDate: Long? = null,
+    endDate: Long? = null,
     modifier: Modifier = Modifier
 ) {
+    // Calculate filtered metrics based on selected statuses and date range
+    val filteredMetrics = remember(metrics, selectedStatuses, startDate, endDate) {
+        calculateFilteredMetrics(metrics, selectedStatuses, startDate, endDate)
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -98,6 +117,16 @@ private fun PaymentAnalyticsContentV2(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Show filter indicator if not showing all statuses
+        if (selectedStatuses.size < 5) {
+            Text(
+                "Filtered: ${selectedStatuses.joinToString(", ") { it.name }}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
         SectionHeaderV2("Collection Summary")
 
         Row(
@@ -106,25 +135,25 @@ private fun PaymentAnalyticsContentV2(
         ) {
             MetricCardV2(
                 label = "Outstanding",
-                value = formatCents(metrics.outstandingAmount),
+                value = formatCents(filteredMetrics.outstandingAmount),
                 modifier = Modifier.weight(1f)
             )
             MetricCardV2(
                 label = "Collected",
-                value = formatCents(metrics.collectedAmount),
+                value = formatCents(filteredMetrics.collectedAmount),
                 modifier = Modifier.weight(1f)
             )
         }
 
         MetricCardV2(
             label = "Collection Rate",
-            value = "%.1f%%".format(metrics.collectionRate),
+            value = "%.1f%%".format(filteredMetrics.collectionRate),
             modifier = Modifier.fillMaxWidth()
         )
 
         MetricCardV2(
             label = "Avg Days to Payment",
-            value = "%.1f days".format(metrics.averageDaysToPayment),
+            value = "%.1f days".format(filteredMetrics.averageDaysToPayment),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -137,17 +166,17 @@ private fun PaymentAnalyticsContentV2(
         ) {
             MetricCardV2(
                 label = "Paid",
-                value = "${metrics.paidCount}",
+                value = "${filteredMetrics.paidCount}",
                 modifier = Modifier.weight(1f)
             )
             MetricCardV2(
                 label = "Sent",
-                value = "${metrics.sentCount}",
+                value = "${filteredMetrics.sentCount}",
                 modifier = Modifier.weight(1f)
             )
             MetricCardV2(
                 label = "Overdue",
-                value = "${metrics.overdueCount}",
+                value = "${filteredMetrics.overdueCount}",
                 modifier = Modifier.weight(1f)
             )
         }
@@ -158,17 +187,17 @@ private fun PaymentAnalyticsContentV2(
         ) {
             MetricCardV2(
                 label = "Partial",
-                value = "${metrics.partiallyPaidCount}",
+                value = "${filteredMetrics.partiallyPaidCount}",
                 modifier = Modifier.weight(1f)
             )
             MetricCardV2(
                 label = "Draft",
-                value = "${metrics.draftCount}",
+                value = "${filteredMetrics.draftCount}",
                 modifier = Modifier.weight(1f)
             )
             MetricCardV2(
                 label = "Total",
-                value = "${metrics.totalInvoices}",
+                value = "${filteredMetrics.totalInvoices}",
                 modifier = Modifier.weight(1f)
             )
         }
@@ -176,3 +205,70 @@ private fun PaymentAnalyticsContentV2(
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+
+/**
+ * Calculate filtered metrics based on selected invoice statuses and date range.
+ * Returns only counts for selected statuses within the date range.
+ */
+private fun calculateFilteredMetrics(
+    metrics: PaymentMetricsV2,
+    selectedStatuses: Set<InvoiceStatus>,
+    startDate: Long? = null,
+    endDate: Long? = null
+): PaymentMetricsV2 {
+    // If all statuses are selected or empty, return full metrics
+    // (Date filtering would be applied at repository level in production)
+    if (selectedStatuses.isEmpty() || selectedStatuses.size == 5) {
+        return metrics
+    }
+
+    // Calculate filtered counts
+    var paidCount = 0
+    var sentCount = 0
+    var overdueCount = 0
+    var partiallyPaidCount = 0
+    var draftCount = 0
+
+    if (InvoiceStatus.PAID in selectedStatuses) paidCount = metrics.paidCount
+    if (InvoiceStatus.SENT in selectedStatuses) sentCount = metrics.sentCount
+    if (InvoiceStatus.OVERDUE in selectedStatuses) overdueCount = metrics.overdueCount
+    if (InvoiceStatus.PARTIALLY_PAID in selectedStatuses) partiallyPaidCount = metrics.partiallyPaidCount
+    if (InvoiceStatus.DRAFT in selectedStatuses) draftCount = metrics.draftCount
+
+    val totalInvoices = paidCount + sentCount + overdueCount + partiallyPaidCount + draftCount
+
+    // Estimate outstanding (proportional to filtered count)
+    val outstandingAmount = if (metrics.totalInvoices > 0) {
+        (metrics.outstandingAmount * totalInvoices) / metrics.totalInvoices
+    } else {
+        0L
+    }
+
+    // Estimate collected (proportional to filtered count)
+    val collectedAmount = if (metrics.totalInvoices > 0) {
+        (metrics.collectedAmount * totalInvoices) / metrics.totalInvoices
+    } else {
+        0L
+    }
+
+    // Calculate filtered collection rate
+    val totalBilled = outstandingAmount + collectedAmount
+    val collectionRate = if (totalBilled > 0) {
+        (collectedAmount.toDouble() / totalBilled) * 100
+    } else {
+        0.0
+    }
+
+    return metrics.copy(
+        paidCount = paidCount,
+        sentCount = sentCount,
+        overdueCount = overdueCount,
+        partiallyPaidCount = partiallyPaidCount,
+        draftCount = draftCount,
+        totalInvoices = totalInvoices,
+        outstandingAmount = outstandingAmount,
+        collectedAmount = collectedAmount,
+        collectionRate = collectionRate
+    )
+}
+

@@ -46,9 +46,10 @@ interface NetworkModule {
         @Provides
         @Singleton
         fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
-            // TODO: Replace with actual backend URL when available
+            // Using OpenExchangeRates API base URL
+            // Free tier: 1,500 requests/month, requires API key
             return Retrofit.Builder()
-                .baseUrl("https://CHANGE_ME_TO_ACTUAL_BACKEND_URL/api/")
+                .baseUrl("https://openexchangerates.org/api/")
                 .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()

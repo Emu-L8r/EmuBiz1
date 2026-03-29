@@ -145,7 +145,14 @@ fun RecordPaymentDialogV2(
                                     set(Calendar.MILLISECOND, 999)
                                 }.timeInMillis
                                 dialog.datePicker.maxDate = endOfToday
-                                if (invoiceDate > 0) dialog.datePicker.minDate = invoiceDate
+                                // Allow same-day payments by setting minDate to one day before invoice date
+                                if (invoiceDate > 0) {
+                                    val minDateCalendar = Calendar.getInstance().apply {
+                                        timeInMillis = invoiceDate
+                                        add(Calendar.DAY_OF_MONTH, -1)
+                                    }
+                                    dialog.datePicker.minDate = minDateCalendar.timeInMillis
+                                }
                                 dialog.show()
                             }
                         },

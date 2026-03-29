@@ -27,10 +27,13 @@ import com.emul8r.bizap.ui.gui2.invoices.EditInvoiceScreenV2
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListScreenV2
 import com.emul8r.bizap.ui.gui2.settings.SettingsHubScreenV2
 import com.emul8r.bizap.ui.gui2.settings.AppAppearanceScreenV2
+import com.emul8r.bizap.ui.gui2.settings.InvoiceCustomizationSettingsScreenV2
 import com.emul8r.bizap.ui.settings.backup.BackupRestoreScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileScreen
 import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
+import com.emul8r.bizap.ui.navigation.Screen
+import timber.log.Timber
 
 @Composable
 fun GuiV2NavGraph(
@@ -61,6 +64,11 @@ fun GuiV2NavGraph(
                     onCreateInvoice = { navController.navigate(ScreenV2.CreateInvoice(route.businessId)) },
                     onNavigateToVault = { navController.navigate(ScreenV2.Vault(route.businessId)) },
                     onNavigateToInvoiceAnalytics = { navController.navigate(ScreenV2.InvoiceAnalytics(route.businessId)) },
+                    onNavigateToNotes = {
+                        // TODO: Implement Notes screen for GUI2
+                        // For now, navigate to GUI1 notes as temporary workaround
+                        Timber.w("Notes navigation not yet implemented for GUI2")
+                    },
                     onSwitchToGui1 = onSwitchToGui1
                 )
             }
@@ -189,6 +197,9 @@ fun GuiV2NavGraph(
                 onAppAppearanceClick = {
                     navController.navigate(ScreenV2.AppAppearance(route.businessId))
                 },
+                onInvoiceCustomizationClick = {
+                    navController.navigate(ScreenV2.InvoiceCustomization(route.businessId))
+                },
                 onHelpClick = {
                     navController.navigateToHelpV2(route.businessId)
                 },
@@ -206,6 +217,9 @@ fun GuiV2NavGraph(
                 },
                 onPrefilledItemsClick = {
                     navController.navigateToPrefilledItemsV2(route.businessId)
+                },
+                onBackupRestoreClick = {
+                    navController.navigate(ScreenV2.BackupRestore(route.businessId))
                 },
                 onBack = { navController.popBackStack() }
             )
@@ -226,6 +240,13 @@ fun GuiV2NavGraph(
         composable<ScreenV2.ThemeSettings> { backStackEntry ->
             val route: ScreenV2.ThemeSettings = backStackEntry.toRoute()
             com.emul8r.bizap.ui.theme.UnifiedThemeSettingsScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.InvoiceCustomization> { backStackEntry ->
+            val route: ScreenV2.InvoiceCustomization = backStackEntry.toRoute()
+            InvoiceCustomizationSettingsScreenV2(
                 onBack = { navController.popBackStack() }
             )
         }
@@ -277,6 +298,13 @@ fun GuiV2NavGraph(
         composable<ScreenV2.PrefilledItems> { backStackEntry ->
             val route: ScreenV2.PrefilledItems = backStackEntry.toRoute()
             PrefilledItemsScreen()
+        }
+
+        composable<ScreenV2.BackupRestore> { backStackEntry ->
+            val route: ScreenV2.BackupRestore = backStackEntry.toRoute()
+            BackupRestoreScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable<ScreenV2.BackupRestore> { backStackEntry ->

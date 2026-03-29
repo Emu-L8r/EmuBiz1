@@ -20,11 +20,11 @@ class CreateCustomerViewModelV2 @Inject constructor(
     fun createCustomer(
         customer: Customer,
         onSuccess: () -> Unit,
-        onError: (String) -> Unit
+        onError: (String?) -> Unit
     ) {
-        // Validate email requirement
-        if (customer.email?.isBlank() != false) {
-            onError("Customer email is required")
+        // Email is now optional - validate name only
+        if (customer.name.isBlank()) {
+            onError("Customer name is required")
             return
         }
 

@@ -26,4 +26,10 @@ interface ExchangeRateDao {
     
     @Query("DELETE FROM exchange_rates WHERE lastUpdated < :timestamp")
     suspend fun deleteOldRates(timestamp: Long)
+
+    @Query("DELETE FROM exchange_rates")
+    suspend fun deleteAllRates()
+
+    @Query("SELECT MAX(lastUpdated) FROM exchange_rates")
+    suspend fun getLastUpdateTimestamp(): Long?
 }

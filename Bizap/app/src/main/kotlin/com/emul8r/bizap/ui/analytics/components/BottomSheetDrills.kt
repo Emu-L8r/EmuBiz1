@@ -75,7 +75,7 @@ fun MetricBreakdownBottomSheet(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    Divider(modifier = Modifier.fillMaxWidth())
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth())
                 }
             }
         } else {

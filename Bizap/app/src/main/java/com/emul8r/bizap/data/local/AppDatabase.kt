@@ -38,7 +38,7 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
         NoteEntity::class,
         AnalyticsEventEntity::class  // NEW: Event tracking
     ],
-    version = 36,
+    version = 37,  // v36→37: Remove UNIQUE constraint on email (optional field)
     exportSchema = true
 )
 @TypeConverters(

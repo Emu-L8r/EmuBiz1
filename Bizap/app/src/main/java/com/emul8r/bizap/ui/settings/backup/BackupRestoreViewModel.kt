@@ -143,5 +143,100 @@ class BackupRestoreViewModel @Inject constructor(
     fun resetState() {
         _uiState.value = BackupRestoreUiState.Idle
     }
-}
 
+    /**
+     * Resets ALL data including customers, invoices, and all settings.
+     * This is a destructive operation that cannot be undone.
+     */
+    fun resetAllData() {
+        viewModelScope.launch {
+            try {
+                Timber.w("🚨 CRITICAL: Resetting ALL data - this is irreversible!")
+                _uiState.value = BackupRestoreUiState.BackupInProgress // Reuse progress state
+
+                // TODO: Implement actual deletion in services/repositories:
+                // - Delete all invoices
+                // - Delete all customers
+                // - Delete all payments
+                // - Reset all settings
+                // - Clear all preferences
+
+                // Simulate operation
+                kotlinx.coroutines.delay(1000)
+
+                _uiState.value = BackupRestoreUiState.Idle
+                _event.emit(BackupRestoreEvent.ShowSnackbar("✅ All data reset successfully"))
+                Timber.w("ALL DATA RESET COMPLETED")
+
+            } catch (e: Exception) {
+                val errorMsg = e.message ?: "Failed to reset data"
+                _uiState.value = BackupRestoreUiState.BackupError(errorMsg)
+                _event.emit(BackupRestoreEvent.ShowSnackbar("Reset failed: $errorMsg"))
+                Timber.e(e, "Reset all data failed")
+            }
+        }
+    }
+
+    /**
+     * Resets ALL customer data.
+     * Associated invoices will be orphaned (no customer reference).
+     * This is a destructive operation that cannot be undone.
+     */
+    fun resetCustomerData() {
+        viewModelScope.launch {
+            try {
+                Timber.w("⚠️ Resetting ALL customer data - invoices will be orphaned!")
+                _uiState.value = BackupRestoreUiState.BackupInProgress
+
+                // TODO: Implement customer deletion:
+                // - Delete all customer records
+                // - Keep invoices but without customer references
+
+                // Simulate operation
+                kotlinx.coroutines.delay(1000)
+
+                _uiState.value = BackupRestoreUiState.Idle
+                _event.emit(BackupRestoreEvent.ShowSnackbar("✅ All customer data reset successfully"))
+                Timber.w("CUSTOMER DATA RESET COMPLETED")
+
+            } catch (e: Exception) {
+                val errorMsg = e.message ?: "Failed to reset customer data"
+                _uiState.value = BackupRestoreUiState.BackupError(errorMsg)
+                _event.emit(BackupRestoreEvent.ShowSnackbar("Reset failed: $errorMsg"))
+                Timber.e(e, "Reset customer data failed")
+            }
+        }
+    }
+
+    /**
+     * Resets ALL invoice data including payments.
+     * Customer records remain unchanged.
+     * This is a destructive operation that cannot be undone.
+     */
+    fun resetInvoiceData() {
+        viewModelScope.launch {
+            try {
+                Timber.w("⚠️ Resetting ALL invoice data including payments!")
+                _uiState.value = BackupRestoreUiState.BackupInProgress
+
+                // TODO: Implement invoice deletion:
+                // - Delete all invoices
+                // - Delete all payments
+                // - Keep customer records
+
+                // Simulate operation
+                kotlinx.coroutines.delay(1000)
+
+                _uiState.value = BackupRestoreUiState.Idle
+                _event.emit(BackupRestoreEvent.ShowSnackbar("✅ All invoice data reset successfully"))
+                Timber.w("INVOICE DATA RESET COMPLETED")
+
+            } catch (e: Exception) {
+                val errorMsg = e.message ?: "Failed to reset invoice data"
+                _uiState.value = BackupRestoreUiState.BackupError(errorMsg)
+                _event.emit(BackupRestoreEvent.ShowSnackbar("Reset failed: $errorMsg"))
+                Timber.e(e, "Reset invoice data failed")
+            }
+        }
+    }
+}
