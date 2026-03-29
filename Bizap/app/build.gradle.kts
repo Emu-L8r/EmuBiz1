@@ -274,6 +274,9 @@ dependencies {
     // Serialization
     implementation(libs.kotlinx.serialization.json)
 
+    // Template Engine (Freemarker) - HTML to PDF theme
+    implementation("org.freemarker:freemarker:2.3.32")
+
     // Other
     implementation(libs.coil.compose)
     implementation("androidx.exifinterface:exifinterface:1.3.7")
