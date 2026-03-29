@@ -234,7 +234,7 @@ private fun PaymentHistoryContent(
         PaymentHistoryHeader(state)
 
         Spacer(modifier = Modifier.height(16.dp))
-        Divider()
+        HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
 
         // Timeline

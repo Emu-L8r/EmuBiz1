@@ -5,6 +5,7 @@ package com.emul8r.bizap.ui.settings.backup
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +37,13 @@ fun BackupRestoreScreen(
     val context = LocalContext.current
     var showRestoreConfirmDialog by remember { mutableStateOf(false) }
     var selectedRestoreFile by remember { mutableStateOf<File?>(null) }
+
+    // Reset features state
+    var showResetDialog by remember { mutableStateOf(false) }
+    var resetType by remember { mutableStateOf<ResetType?>(null) }
+    var deleteConfirmationText by remember { mutableStateOf("") }
+    var deleteConfirmationError by remember { mutableStateOf<String?>(null) }
+    val DELETE_CONFIRMATION_WORD = "delete" // Word to type for confirmation
 
     // File picker for backup directory
     val backupDirectoryPicker = rememberLauncherForActivityResult(
@@ -114,6 +123,95 @@ fun BackupRestoreScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showRestoreConfirmDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Reset Confirmation Dialog with Password
+    if (showResetDialog && resetType != null) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text("⚠️ Confirm Reset") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        when (resetType) {
+                            ResetType.ALL_DATA -> "This will permanently delete ALL data including customers, invoices, and all settings. This action CANNOT be undone!"
+                            ResetType.CUSTOMER_DATA -> "This will permanently delete ALL customer records. Associated invoices will be orphaned. This action CANNOT be undone!"
+                            ResetType.INVOICE_DATA -> "This will permanently delete ALL invoices and payments. This action CANNOT be undone!"
+                            null -> ""
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+
+                    Text(
+                        "Type 'delete' to confirm this action:",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+
+                    OutlinedTextField(
+                        value = deleteConfirmationText,
+                        onValueChange = { deleteConfirmationText = it; deleteConfirmationError = null },
+                        label = { Text("Type 'delete'") },
+                        placeholder = { Text("Type the word: delete") },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = deleteConfirmationError != null,
+                        supportingText = {
+                            if (deleteConfirmationError != null) {
+                                Text(
+                                    deleteConfirmationError!!,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (deleteConfirmationText.lowercase() == DELETE_CONFIRMATION_WORD) {
+                            Timber.w("User confirmed reset by typing DELETE: ${resetType?.name}")
+                            // Execute the actual reset based on type
+                            when (resetType) {
+                                ResetType.ALL_DATA -> {
+                                    Timber.w("🚨 Executing: Reset All Data")
+                                    viewModel.resetAllData()
+                                }
+                                ResetType.CUSTOMER_DATA -> {
+                                    Timber.w("🚨 Executing: Reset Customer Data")
+                                    viewModel.resetCustomerData()
+                                }
+                                ResetType.INVOICE_DATA -> {
+                                    Timber.w("🚨 Executing: Reset Invoice Data")
+                                    viewModel.resetInvoiceData()
+                                }
+                                null -> {}
+                            }
+                            showResetDialog = false
+                            deleteConfirmationText = ""
+                            deleteConfirmationError = null
+                        } else {
+                            deleteConfirmationError = "Please type 'delete' exactly to confirm"
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ),
+                    enabled = deleteConfirmationText.isNotEmpty()
+                ) {
+                    Text("Yes, Delete Everything")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showResetDialog = false
+                    deleteConfirmationText = ""
+                    deleteConfirmationError = null
+                }) {
                     Text("Cancel")
                 }
             }
@@ -358,6 +456,89 @@ fun BackupRestoreScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Restore from Backup")
                 }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+                // Reset Data Section
+                Text(
+                    "Danger Zone - Reset Data",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                // Reset All Data Button
+                OutlinedButton(
+                    onClick = {
+                        resetType = ResetType.ALL_DATA
+                        showResetDialog = true
+                        deleteConfirmationText = ""
+                        deleteConfirmationError = null
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = "Reset All Data",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Reset All Data")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Reset Customer Data Button
+                OutlinedButton(
+                    onClick = {
+                        resetType = ResetType.CUSTOMER_DATA
+                        showResetDialog = true
+                        deleteConfirmationText = ""
+                        deleteConfirmationError = null
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = "Reset Customer Data",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Reset All Customer Data")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Reset Invoice Data Button
+                OutlinedButton(
+                    onClick = {
+                        resetType = ResetType.INVOICE_DATA
+                        showResetDialog = true
+                        deleteConfirmationText = ""
+                        deleteConfirmationError = null
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = "Reset Invoice Data",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Reset All Invoice Data")
+                }
             }
         }
     }
@@ -372,5 +553,14 @@ private fun formatBytes(bytes: Long): String {
         bytes >= 1024 -> String.format(Locale.getDefault(), "%.2f KB", bytes / 1024.0)
         else -> "$bytes B"
     }
+}
+
+/**
+ * Enum for reset data options
+ */
+enum class ResetType {
+    ALL_DATA,           // Reset everything including settings
+    CUSTOMER_DATA,      // Reset only customer records
+    INVOICE_DATA        // Reset only invoices and payments
 }
 

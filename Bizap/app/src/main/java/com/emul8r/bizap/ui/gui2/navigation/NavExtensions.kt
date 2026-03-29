@@ -41,3 +41,10 @@ fun NavController.navigateToPrefilledItemsV2(businessId: Long) {
     this.navigate(ScreenV2.PrefilledItems(businessId))
 }
 
+fun NavController.navigateToAdvancedReporting(businessId: Long) {
+    this.navigate(ScreenV2.AdvancedReporting(businessId))
+}
+
+fun NavController.navigateToBusinessInsights(businessId: Long) {
+    this.navigate(ScreenV2.BusinessInsights(businessId))
+}

@@ -16,6 +16,8 @@ class ThemeRepositoryImpl @Inject constructor(
 ) : ThemeRepository {
     private object Keys {
         val SEED_COLOR = stringPreferencesKey("seed_color")
+        val SECONDARY_COLOR = stringPreferencesKey("secondary_color")
+        val TERTIARY_COLOR = stringPreferencesKey("tertiary_color")
         val DARK_MODE = booleanPreferencesKey("dark_mode")
     }
 
@@ -28,6 +30,14 @@ class ThemeRepositoryImpl @Inject constructor(
 
     override suspend fun updateSeedColor(hex: String) {
         dataStore.edit { it[Keys.SEED_COLOR] = hex }
+    }
+
+    suspend fun updateSecondaryColor(hex: String) {
+        dataStore.edit { it[Keys.SECONDARY_COLOR] = hex }
+    }
+
+    suspend fun updateTertiaryColor(hex: String) {
+        dataStore.edit { it[Keys.TERTIARY_COLOR] = hex }
     }
 
     override suspend fun updateDarkMode(isDark: Boolean) {

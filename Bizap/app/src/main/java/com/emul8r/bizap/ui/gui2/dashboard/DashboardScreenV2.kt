@@ -18,14 +18,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import com.emul8r.bizap.domain.analytics.SearchQuery
 import com.emul8r.bizap.domain.analytics.SearchResult
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
@@ -38,7 +35,6 @@ import com.emul8r.bizap.ui.gui2.common.*
 import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.AnalyticsSearchBar
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.DashboardMetricsWidget
-import com.emul8r.bizap.ui.navigation.Screen
 import timber.log.Timber
 
 /**
@@ -54,12 +50,13 @@ fun DashboardScreenV2(
     onNavigateToRevenue: () -> Unit,
     onNavigateToPayment: () -> Unit,
     onNavigateToRisk: () -> Unit,
-    onNavigateToInvoice: (Long) -> Unit,
     onNavigateToCustomers: () -> Unit,
     onNavigateToInvoices: () -> Unit,
+    onNavigateToInvoice: (Long) -> Unit,
     onNavigateToInvoiceAnalytics: () -> Unit = {},
     onNavigateToDunningNotices: () -> Unit = {},
     onNavigateToVault: () -> Unit = {},
+    onNavigateToNotes: () -> Unit = {},
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
@@ -98,15 +95,16 @@ fun DashboardScreenV2(
                 statusCounts = statusCounts,
                 currentNotesCount = currentNotesCount,
                 navController = navController,
-                viewModel = viewModel,
                 onNavigateToRevenue = onNavigateToRevenue,
                 onNavigateToPayment = onNavigateToPayment,
                 onNavigateToRisk = onNavigateToRisk,
                 onNavigateToCustomers = onNavigateToCustomers,
                 onNavigateToInvoices = onNavigateToInvoices,
+                onNavigateToInvoice = onNavigateToInvoice,
                 onNavigateToInvoiceAnalytics = onNavigateToInvoiceAnalytics,
                 onNavigateToDunningNotices = onNavigateToDunningNotices,
                 onNavigateToVault = onNavigateToVault,
+                onNavigateToNotes = onNavigateToNotes,
                 onCreateCustomer = onCreateCustomer,
                 onCreateInvoice = onCreateInvoice,
                 modifier = Modifier.padding(paddingValues)
@@ -115,24 +113,26 @@ fun DashboardScreenV2(
     }
 }
 
+@Suppress("DEPRECATION")
 @Composable
 private fun DashboardContentV2(
     state: DashboardStateV2,
     statusCounts: Map<String, Int>,
     currentNotesCount: Int,
     navController: NavController,
-    viewModel: DashboardViewModelV2,
     onNavigateToRevenue: () -> Unit,
     onNavigateToPayment: () -> Unit,
     onNavigateToRisk: () -> Unit,
     onNavigateToCustomers: () -> Unit,
     onNavigateToInvoices: () -> Unit,
+    onNavigateToInvoice: (Long) -> Unit,
+    onCreateCustomer: () -> Unit,
+    onCreateInvoice: () -> Unit,
+    modifier: Modifier = Modifier,
     onNavigateToInvoiceAnalytics: () -> Unit = {},
     onNavigateToDunningNotices: () -> Unit = {},
     onNavigateToVault: () -> Unit = {},
-    onCreateCustomer: () -> Unit,
-    onCreateInvoice: () -> Unit,
-    modifier: Modifier = Modifier
+    onNavigateToNotes: () -> Unit = {}
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Background watermark
@@ -159,20 +159,15 @@ private fun DashboardContentV2(
 
             AnalyticsSearchBar(
                 onSearch = { query ->
-                    // Wire to real search repository via ViewModel
-                    viewModel.performSearch(query.keyword) { results ->
-                        searchResults.value = results
-                    }
+                    // TODO: Wire to actual search repository in Week 2
+                    // For now, using mock data to demonstrate search
+                    searchResults.value = getMockSearchResults(query.keyword)
                 },
                 onResultClick = { result ->
                     // Navigate based on result type
                     when (result.type) {
                         com.emul8r.bizap.domain.analytics.SearchType.INVOICE -> {
-                            try {
-                                navController.navigate("invoice/${result.id}")
-                            } catch (e: Exception) {
-                                Timber.e(e, "Failed to navigate to invoice")
-                            }
+                            onNavigateToInvoice(result.id)
                         }
                         com.emul8r.bizap.domain.analytics.SearchType.CUSTOMER -> {
                             onNavigateToCustomers()
@@ -196,32 +191,19 @@ private fun DashboardContentV2(
             HorizontalDivider()
 
             // ── Dashboard Metrics Widget ──────────────────────────────────
-            // Uses real data from paymentMetrics in state
-            // Calculate overdue amount based on outstanding (OVERDUE invoices are part of outstanding)
-            val overdueInvoices = statusCounts["OVERDUE"] ?: 0
-            val estimatedOverdueAmount = if (overdueInvoices > 0) {
-                // Rough estimate: divide outstanding by number of non-overdue outstanding invoices
-                val totalOutstanding = statusCounts["SENT"]?.let { it + (statusCounts["PARTIALLY_PAID"] ?: 0) + overdueInvoices } ?: overdueInvoices
-                if (totalOutstanding > 0) {
-                    (state.paymentMetrics.outstandingAmount * overdueInvoices) / totalOutstanding
-                } else {
-                    state.paymentMetrics.outstandingAmount
-                }
-            } else {
-                0L
-            }
-
-            val dashboardMetrics = com.emul8r.bizap.domain.repository.DashboardMetrics(
+            // TODO: Wire metrics from ViewModel once repository is wired
+            // For now, using mock data to demonstrate UI
+            val mockMetrics = com.emul8r.bizap.domain.repository.DashboardMetrics(
                 unpaidInvoiceCount = statusCounts["SENT"]?.let { it + (statusCounts["PARTIALLY_PAID"] ?: 0) } ?: 0,
                 unpaidAmount = state.paymentMetrics.outstandingAmount,
-                overdueAmount = estimatedOverdueAmount,
-                paidThisMonth = state.paymentMetrics.collectedAmount,
+                overdueAmount = state.paymentMetrics.overdueCount.toLong(), // Show COUNT of overdue invoices, not amount
+                paidThisMonth = state.paymentMetrics.sentCount.toLong(), // Show COUNT of sent invoices, not amount
                 totalCustomersOwed = state.paymentMetrics.outstandingAmount,
                 lastUpdatedMs = System.currentTimeMillis()
             )
 
             DashboardMetricsWidget(
-                metrics = dashboardMetrics,
+                metrics = mockMetrics,
                 onUnpaidClick = { onNavigateToPayment() },
                 onOverdueClick = { onNavigateToPayment() },
                 onPaidClick = { onNavigateToRevenue() }
@@ -258,54 +240,46 @@ private fun DashboardContentV2(
             // ── Notes Card ────────────────────────────────────────────────
             NotesCard(
                 currentNotesCount = currentNotesCount,
-                onClick = {
-                    // Safe navigation with error logging
-                    try {
-                        navController.navigate(Screen.Notes)
-                    } catch (e: IllegalArgumentException) {
-                        Timber.e(e, "Navigation to Notes screen failed")
-                    }
-                }
+                onClick = onNavigateToNotes
             )
 
             HorizontalDivider()
 
-            // ── Navigation links: MANAGE ──
+            // ── Management Section ────────────────────────────────────────
             SectionHeaderV2(title = "Manage")
-            OutlinedButton(
-                onClick = onNavigateToCustomers,
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(Icons.Default.People, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("View All Customers")
-                Spacer(Modifier.weight(1f))
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-            }
-            OutlinedButton(
-                onClick = onNavigateToInvoices,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Receipt, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("View All Invoices")
-                Spacer(Modifier.weight(1f))
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-            }
-            OutlinedButton(
-                onClick = onNavigateToVault,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Inventory, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("Document Vault")
-                Spacer(Modifier.weight(1f))
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                OutlinedButton(
+                    onClick = onNavigateToCustomers,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Customers", fontSize = 12.sp)
+                }
+                OutlinedButton(
+                    onClick = onNavigateToInvoices,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Invoices", fontSize = 12.sp)
+                }
+                OutlinedButton(
+                    onClick = onNavigateToVault,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Storage, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Vault", fontSize = 12.sp)
+                }
             }
 
             HorizontalDivider()
 
-            // ── Invoice Metrics section: INVOICES SENT ──
+            // ── Invoice Metrics section ──
             SectionHeaderV2(title = "Invoices Sent")
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -338,22 +312,7 @@ private fun DashboardContentV2(
 
             HorizontalDivider()
 
-            // ── Dunning Notices quick link ──
-            SectionHeaderV2(title = "Dunning Notices")
-            OutlinedButton(
-                onClick = onNavigateToDunningNotices,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("Manage Overdue Reminders")
-                Spacer(Modifier.weight(1f))
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-            }
-
-            HorizontalDivider()
-
-            // ── Risk section with color coding: RISK OVERVIEW ──
+            // ── Risk overview section ──
             SectionHeaderV2(title = "Risk Overview")
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -398,7 +357,7 @@ private fun DashboardContentV2(
 
             HorizontalDivider()
 
-            // ── Payments section with color coding ──
+            // ── Payments section ──
             SectionHeaderV2(title = "Payments")
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -434,19 +393,18 @@ private fun DashboardContentV2(
 
             HorizontalDivider()
 
-            // ── Revenue section ──
             SectionHeaderV2(title = "Revenue")
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Expected Revenue = outstanding + collected
                 val expectedRevenue = state.paymentMetrics.outstandingAmount + state.paymentMetrics.collectedAmount
                 val actualRevenue = state.paymentMetrics.collectedAmount
+
                 MetricCard(
                     title = "Expected Revenue",
                     value = com.emul8r.bizap.utils.CentsFormatter.formatCents(expectedRevenue),
-                    icon = Icons.Default.TrendingUp,
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
                     backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
                     borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
                     accentColor = BizapColors.StatusPaid,
@@ -463,7 +421,6 @@ private fun DashboardContentV2(
                 )
             }
 
-            // Outstanding amount card
             if (state.paymentMetrics.outstandingAmount > 0L) {
                 MetricCard(
                     title = "Outstanding",
@@ -484,46 +441,27 @@ private fun DashboardContentV2(
                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-        }  // Close Column
-    }  // Close Box
-}
+            HorizontalDivider()
 
-/**
- * Provides haptic feedback (vibration) for button clicks.
- * Compatible with Android 5.0+ devices.
- * Gracefully handles permission denial or unavailable vibrator.
- */
-private fun performHapticFeedback(context: android.content.Context) {
-    try {
-        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            context.getSystemService(Vibrator::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator
-        }
-
-        vibrator?.let {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
-                it.vibrate(effect)
-            } else {
-                @Suppress("DEPRECATION")
-                it.vibrate(20L)  // 20ms vibration for older devices
+            // ── Dunning Notices quick link ──
+            SectionHeaderV2(title = "Dunning Notices")
+            OutlinedButton(
+                onClick = onNavigateToDunningNotices,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Manage Overdue Reminders")
+                Spacer(Modifier.weight(1f))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
             }
         }
-    } catch (e: SecurityException) {
-        // Permission denied - silently fail, haptic feedback is optional
-        timber.log.Timber.d("Haptic feedback permission denied: ${e.message}")
-    } catch (e: Exception) {
-        // Other errors (vibrator unavailable, etc.) - silently fail
-        timber.log.Timber.d("Haptic feedback error: ${e.message}")
     }
 }
 
 /**
- * Quick Action Buttons Row - provides fast access to common tasks.
- * Features:
+ * Quick action buttons row at the top of the dashboard.
+ * Provides fast access to common actions:
  * - Create New Customer
  * - Create New Invoice
  * - Open Document Vault
@@ -537,8 +475,6 @@ private fun QuickActionButtonsRow(
     onNavigateToAnalytics: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -548,71 +484,81 @@ private fun QuickActionButtonsRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // New Customer Button
-            Button(
-                onClick = {
-                    performHapticFeedback(context)
-                    onCreateCustomer()
-                },
+            // New Customer Button - Outlined style with subtle color
+            Surface(
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BizapColors.AnalyticsExcellent.copy(alpha = 0.9f)
-                ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                color = BizapColors.AnalyticsExcellent.copy(alpha = 0.06f),
+                border = BorderStroke(1.5.dp, BizapColors.AnalyticsExcellent.copy(alpha = 0.3f))
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxSize()
+                Button(
+                    onClick = onCreateCustomer,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
-                    Icon(
-                        Icons.Default.Person,
-                        contentDescription = "Create a new customer",
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.White
-                    )
-                    Text(
-                        "New Customer",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
-                        fontSize = 10.sp
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            Icons.Default.PersonAdd,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = BizapColors.AnalyticsExcellent
+                        )
+                        Text(
+                            "New Customer",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = BizapColors.AnalyticsExcellent,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 
-            // New Invoice Button
-            Button(
-                onClick = {
-                    performHapticFeedback(context)
-                    onCreateInvoice()
-                },
+            // New Invoice Button - Outlined style
+            Surface(
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BizapColors.AnalyticsGood.copy(alpha = 0.9f)
-                ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                color = BizapColors.AnalyticsGood.copy(alpha = 0.06f),
+                border = BorderStroke(1.5.dp, BizapColors.AnalyticsGood.copy(alpha = 0.3f))
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxSize()
+                Button(
+                    onClick = onCreateInvoice,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
-                    Icon(
-                        Icons.Default.Receipt,
-                        contentDescription = "Create a new invoice",
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.White
-                    )
-                    Text(
-                        "New Invoice",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
-                        fontSize = 10.sp
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            Icons.Default.Receipt,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = BizapColors.AnalyticsGood
+                        )
+                        Text(
+                            "New Invoice",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = BizapColors.AnalyticsGood,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
@@ -622,71 +568,81 @@ private fun QuickActionButtonsRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Vault Button
-            Button(
-                onClick = {
-                    performHapticFeedback(context)
-                    onNavigateToVault()
-                },
+            // Vault Button - Outlined style
+            Surface(
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BizapColors.AnalyticsWarning.copy(alpha = 0.9f)
-                ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                color = BizapColors.AnalyticsWarning.copy(alpha = 0.06f),
+                border = BorderStroke(1.5.dp, BizapColors.AnalyticsWarning.copy(alpha = 0.3f))
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxSize()
+                Button(
+                    onClick = onNavigateToVault,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
-                    Icon(
-                        Icons.Default.Inventory,
-                        contentDescription = "Open document vault",
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.White
-                    )
-                    Text(
-                        "Vault",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
-                        fontSize = 10.sp
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            Icons.Default.Inventory,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = BizapColors.AnalyticsWarning
+                        )
+                        Text(
+                            "Vault",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = BizapColors.AnalyticsWarning,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 
-            // Visual Data / Analytics Button
-            Button(
-                onClick = {
-                    performHapticFeedback(context)
-                    onNavigateToAnalytics()
-                },
+            // Visual Data / Analytics Button - Outlined style
+            Surface(
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BizapColors.AnalyticsAtRisk.copy(alpha = 0.9f)
-                ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                color = BizapColors.AnalyticsAtRisk.copy(alpha = 0.06f),
+                border = BorderStroke(1.5.dp, BizapColors.AnalyticsAtRisk.copy(alpha = 0.3f))
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxSize()
+                Button(
+                    onClick = onNavigateToAnalytics,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
-                    Icon(
-                        Icons.Default.BarChart,
-                        contentDescription = "View analytics dashboard",
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.White
-                    )
-                    Text(
-                        "Analytics",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
-                        fontSize = 10.sp
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            Icons.Default.BarChart,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = BizapColors.AnalyticsAtRisk
+                        )
+                        Text(
+                            "Analytics",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = BizapColors.AnalyticsAtRisk,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
@@ -703,24 +659,23 @@ private fun getMockSearchResults(keyword: String): List<SearchResult> {
 
     val keywordLower = keyword.lowercase()
 
-    // Mock invoices
     val mockInvoices = listOf(
         SearchResult(
             id = 1001L,
             title = "Invoice #2024-001",
-            subtitle = "\$2,500.00",
+            subtitle = "$2,500.00",
             type = com.emul8r.bizap.domain.analytics.SearchType.INVOICE
         ),
         SearchResult(
             id = 1002L,
             title = "Invoice #2024-002",
-            subtitle = "\$1,850.00",
+            subtitle = "$1,850.00",
             type = com.emul8r.bizap.domain.analytics.SearchType.INVOICE
         ),
         SearchResult(
             id = 1003L,
             title = "Invoice #2024-003",
-            subtitle = "\$3,200.00",
+            subtitle = "$3,200.00",
             type = com.emul8r.bizap.domain.analytics.SearchType.INVOICE
         ),
     )

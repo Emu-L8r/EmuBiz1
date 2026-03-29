@@ -365,7 +365,7 @@ object BizapDesignSystem {
                     StatusBadge(status = status)
                 }
 
-                Divider(modifier = Modifier.fillMaxWidth())
+                HorizontalDivider(modifier = Modifier.fillMaxWidth())
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

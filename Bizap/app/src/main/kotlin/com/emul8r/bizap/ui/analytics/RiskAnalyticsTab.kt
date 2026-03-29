@@ -374,7 +374,7 @@ private fun RiskSummaryCard(
                 )
             }
 
-            Divider(modifier = Modifier.fillMaxWidth())
+            HorizontalDivider(modifier = Modifier.fillMaxWidth())
 
             // Summary rows
             RiskSummaryRow(

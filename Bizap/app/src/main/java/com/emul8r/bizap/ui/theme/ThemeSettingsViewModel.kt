@@ -109,14 +109,17 @@ class ThemeSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Apply a preset theme - ONLY saves the primary color.
-     * Secondary and tertiary colors are auto-generated from primary by the theme system.
-     * This ensures presets persist properly across app restarts.
+     * Apply a preset theme - sets primary, secondary, and tertiary colors.
+     * This ensures the complete color scheme is applied and visually updated.
      */
     fun applyPreset(preset: PresetTheme) {
         Timber.d("🎨 Applying preset: ${preset.name}")
-        // Only set primary - theme auto-generates secondary/tertiary from it
-        _themeState.value = _themeState.value.copy(primary = preset.primary)
+        // Set all three colors from the preset
+        _themeState.value = _themeState.value.copy(
+            primary = preset.primary,
+            secondary = preset.secondary,
+            tertiary = preset.tertiary
+        )
         // Save immediately to database so preset persists
         saveTheme()
     }
@@ -141,16 +144,16 @@ class ThemeSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isSaving.value = true
-                Timber.d("Saving theme: primary=${colorToHex(_themeState.value.primary)}, dark=${_isDarkMode.value}")
+                Timber.d("Saving theme: primary=${colorToHex(_themeState.value.primary)}, secondary=${colorToHex(_themeState.value.secondary)}, tertiary=${colorToHex(_themeState.value.tertiary)}, dark=${_isDarkMode.value}")
 
-                // Save primary color as seed color
+                // Save all three colors to ensure presets persist completely
                 themeRepository.updateSeedColor(colorToHex(_themeState.value.primary))
+                (themeRepository as? com.emul8r.bizap.data.repository.ThemeRepositoryImpl)?.updateSecondaryColor(colorToHex(_themeState.value.secondary))
+                (themeRepository as? com.emul8r.bizap.data.repository.ThemeRepositoryImpl)?.updateTertiaryColor(colorToHex(_themeState.value.tertiary))
                 themeRepository.updateDarkMode(_isDarkMode.value)
 
-                // TODO: Extend repository to save all 4 colors (secondary, tertiary, background)
-
                 _saveSuccess.value = true
-                Timber.d("✅ Theme saved successfully")
+                Timber.d("✅ Theme saved successfully with all 3 colors")
 
                 // Reset success message after 2 seconds
                 kotlinx.coroutines.delay(2000)

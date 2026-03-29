@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.Calendar
 import javax.inject.Inject
 
 /**
@@ -93,11 +94,32 @@ class RecordPaymentViewModel @Inject constructor(
         this.invoiceStatus = invoiceStatus
 
         val outstanding = (invoiceTotal - amountPaid).coerceAtLeast(0L)
+
+        // Set default payment date to TODAY at midnight (not current time)
+        val defaultPaymentDate = todayMidnightMs()
+
         _formState.value = PaymentFormState(
             outstanding = outstanding,
-            paymentDate = todayMidnightMs()
+            paymentDate = defaultPaymentDate
         )
-        Timber.d("RecordPaymentViewModel: initFor invoice=$invoiceId outstanding=$outstanding")
+
+        // Log detailed dates for debugging
+        val invoiceDateMidnight = Calendar.getInstance().apply {
+            timeInMillis = invoiceDate
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        Timber.d("RecordPaymentViewModel INIT:")
+        Timber.d("  Invoice ID: $invoiceId")
+        Timber.d("  Invoice Date (raw): $invoiceDate")
+        Timber.d("  Invoice Date (midnight): $invoiceDateMidnight")
+        Timber.d("  Default Payment Date: $defaultPaymentDate")
+        Timber.d("  Outstanding: $outstanding cents")
+        Timber.d("  Dates equal? ${defaultPaymentDate == invoiceDateMidnight}")
+        Timber.d("  Payment >= Invoice? ${defaultPaymentDate >= invoiceDateMidnight}")
     }
 
     // ── Field change handlers ──────────────────────────────────────────────────
@@ -206,45 +228,57 @@ class RecordPaymentViewModel @Inject constructor(
         if (invoiceId == -1L) {
             // ViewModel not yet initialised; should not happen in normal usage
             Timber.w("RecordPaymentViewModel.submit() called before initFor()")
+            val errMsg = "Payment form not initialized. Please go back and try again."
+            _formState.update { it.copy(submissionError = errMsg) }
             return
         }
-        if (!state.isFormValid || state.amountCents == null) return
+        if (!state.isFormValid || state.amountCents == null) {
+            Timber.w("RecordPaymentViewModel.submit() called with invalid form. Valid=${state.isFormValid}, Amount=${state.amountCents}")
+            return
+        }
 
+        Timber.d("RecordPaymentViewModel: Submitting payment invoiceId=$invoiceId businessId=$businessId amount=${state.amountCents}")
         _formState.update { it.copy(isLoading = true, submissionError = null) }
 
         viewModelScope.launch {
-            val result = recordPaymentUseCase(
-                invoiceId = invoiceId,
-                businessId = businessId,
-                amount = state.amountCents,
-                trueOutstanding = state.outstanding,
-                paymentDate = state.paymentDate,
-                invoiceDate = invoiceDate,
-                invoiceStatus = invoiceStatus,
-                notes = state.notes.ifBlank { null }
-            )
+            try {
+                val result = recordPaymentUseCase(
+                    invoiceId = invoiceId,
+                    businessId = businessId,
+                    amount = state.amountCents,
+                    trueOutstanding = state.outstanding,
+                    paymentDate = state.paymentDate,
+                    invoiceDate = invoiceDate,
+                    invoiceStatus = invoiceStatus,
+                    notes = state.notes.ifBlank { null }
+                )
 
-            _formState.update { it.copy(isLoading = false) }
+                _formState.update { it.copy(isLoading = false) }
 
-            result.fold(
-                onSuccess = {
-                    Timber.d("RecordPaymentViewModel: payment submitted successfully")
-                    // 📊 Track payment recording event
-                    eventTracker.trackPaymentRecorded(
-                        invoiceId = invoiceId,
-                        paymentAmount = state.amountCents ?: 0L,
-                        paymentDate = state.paymentDate,
-                        invoiceTotal = invoiceTotal
-                    )
-                    _events.emit(PaymentEvent.Success)
-                },
-                onFailure = { error ->
-                    val msg = error.message ?: "Payment failed"
-                    Timber.e(error, "RecordPaymentViewModel: payment failed")
-                    _formState.update { it.copy(submissionError = msg) }
-                    _events.emit(PaymentEvent.Error(msg))
-                }
-            )
+                result.fold(
+                    onSuccess = {
+                        Timber.d("RecordPaymentViewModel: payment submitted successfully")
+                        // 📊 Track payment recording event
+                        eventTracker.trackPaymentRecorded(
+                            invoiceId = invoiceId,
+                            paymentAmount = state.amountCents ?: 0L,
+                            paymentDate = state.paymentDate,
+                            invoiceTotal = invoiceTotal
+                        )
+                        _events.emit(PaymentEvent.Success)
+                    },
+                    onFailure = { error ->
+                        val msg = error.message ?: "Payment failed"
+                        Timber.e(error, "RecordPaymentViewModel: payment failed - $msg")
+                        _formState.update { it.copy(submissionError = msg) }
+                        _events.emit(PaymentEvent.Error(msg))
+                    }
+                )
+            } catch (e: Exception) {
+                Timber.e(e, "RecordPaymentViewModel: Unexpected error during payment submission")
+                _formState.update { it.copy(isLoading = false, submissionError = e.message ?: "Unexpected error") }
+                _events.emit(PaymentEvent.Error(e.message ?: "Unexpected error"))
+            }
         }
     }
 
@@ -258,13 +292,26 @@ class RecordPaymentViewModel @Inject constructor(
     }
 
     private fun dateErrorMessage(dateMs: Long): String? {
-        // Normalize both sides to midnight so today is always valid (date-level comparison only)
-        val todayMidnight = todayMidnightMs()
-        return when {
-            dateMs > todayMidnight -> "Payment date cannot be in the future"
-            invoiceDate > 0 && dateMs < invoiceDate -> "Payment date cannot be before the invoice date"
-            else -> null
+        // Only validation rule for GUI2: Payment cannot be recorded for a future date
+        // Invoice date validation is skipped because:
+        // - Invoices are created with System.currentTimeMillis() (includes time)
+        // - Payment dates default to midnight
+        // - This causes false "before invoice date" errors on same-day payments
+        // - The use case layer will validate invoice date if needed
+
+        val todayStart = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        // Check: Payment cannot be in the future
+        if (dateMs > todayStart) {
+            return "Payment date cannot be in the future"
         }
+
+        return null
     }
 
     private fun todayMidnightMs(): Long {

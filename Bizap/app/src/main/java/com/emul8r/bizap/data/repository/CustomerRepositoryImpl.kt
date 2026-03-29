@@ -32,7 +32,7 @@ class CustomerRepositoryImpl @Inject constructor(
     override suspend fun insert(customer: Customer): Result<Long> = runCatching {
         // ✅ NULL SAFETY: Validate customer before insert
         require(customer.name.isNotBlank()) { "Customer name cannot be blank" }
-        require(customer.email?.isNotBlank() == true) { "Customer email is required" }
+        // ✅ EMAIL IS OPTIONAL - No validation required
 
         val id = customerDao.insert(customer.toEntity())
         require(id > 0) { "Failed to insert customer: DAO returned invalid ID $id" }

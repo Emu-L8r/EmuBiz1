@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -106,25 +107,36 @@ fun CreateInvoiceScreenV2(
 
     Scaffold(
         topBar = {
+            val metrics = viewModel.getInvoiceMetrics()
             TopAppBar(
                 title = { Text("Create Invoice") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
+                    // Save button moved to top bar for better tablet accessibility
+                    Button(
+                        onClick = { viewModel.onSaveClicked() },
+                        enabled = !uiState.isSaving,
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        if (uiState.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp).padding(end = 4.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Text("Saving...")
+                        } else {
+                            Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp).padding(end = 4.dp))
+                            Text("Save")
+                        }
+                    }
                 }
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        bottomBar = {
-            val metrics = viewModel.getInvoiceMetrics()
-            InvoiceBottomSummary(
-                total = metrics.totalAmount,
-                currencyCode = uiState.selectedCurrencyCode,
-                isSaving = uiState.isSaving,
-                onSave = { viewModel.onSaveClicked() }
-            )
-        }
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -221,9 +233,10 @@ fun CreateInvoiceScreenV2(
                 )
             }
 
-            // TODO: Move header, footer, and customization to Settings → Invoice Customization
-            // For now, these remain on the create invoice page for backwards compatibility
-            // User preference: Move invoice customization to settings
+            // ✅ COMPLETED: Invoice customization moved to separate settings screen
+            // See: InvoiceCustomizationSettingsScreenV2
+            // For backwards compatibility, fields remain on create invoice page
+            // User can configure defaults in Settings → Invoice Customization
 
             item {
                 OutlinedTextField(

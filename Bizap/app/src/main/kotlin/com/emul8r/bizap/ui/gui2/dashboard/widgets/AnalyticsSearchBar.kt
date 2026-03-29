@@ -317,5 +317,5 @@ private fun SearchResultItem(
         }
     }
 
-    Divider(modifier = Modifier.padding(horizontal = 12.dp))
+    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
 }
