@@ -23,6 +23,10 @@ class EditInvoiceViewModelV2 @Inject constructor(
     val businessId: Long = route.businessId
     private val invoiceId: Long = route.invoiceId
 
+    // Track loading state for UI
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     val uiState: StateFlow<EditInvoiceUiStateV2> = invoiceRepository
         .getInvoiceWithItemsById(invoiceId)
         .map { invoice ->
@@ -45,18 +49,24 @@ class EditInvoiceViewModelV2 @Inject constructor(
 
     fun updateInvoice(
         invoice: Invoice,
-        onSuccess: () -> Unit
+        onSuccess: () -> Unit,
+        onError: (String?) -> Unit = {}
     ) {
         viewModelScope.launch {
             try {
+                _isLoading.value = true
                 Timber.d("EditInvoiceViewModelV2: Updating invoice $invoiceId")
                 invoiceRepository.saveInvoice(invoice)
-                Timber.d("EditInvoiceViewModelV2: Invoice updated successfully")
+                Timber.d("✅ EditInvoiceViewModelV2: Invoice updated successfully")
                 onSuccess()
             } catch (e: Exception) {
-                Timber.e(e, "EditInvoiceViewModelV2: Failed to update invoice")
+                Timber.e(e, "❌ EditInvoiceViewModelV2: Failed to update invoice")
+                onError(e.message ?: "Unknown error")
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 }
+
 

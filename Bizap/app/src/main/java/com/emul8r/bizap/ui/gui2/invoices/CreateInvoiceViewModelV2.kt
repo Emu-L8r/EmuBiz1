@@ -21,6 +21,10 @@ class CreateInvoiceViewModelV2 @Inject constructor(
     private val customerRepository: CustomerRepository
 ) : ViewModel() {
 
+    // Track loading state for UI
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     // Customer data management
     private val _customers = MutableStateFlow<List<Customer>>(emptyList())
     val customers: StateFlow<List<Customer>> = _customers.asStateFlow()
@@ -68,6 +72,7 @@ class CreateInvoiceViewModelV2 @Inject constructor(
     ) {
         viewModelScope.launch {
             try {
+                _isLoading.value = true
                 Timber.d("CreateInvoiceViewModelV2: Creating invoice for ${invoice.customerName}")
                 val result = invoiceRepository.saveInvoice(invoice)
 
@@ -83,6 +88,8 @@ class CreateInvoiceViewModelV2 @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "❌ CreateInvoiceViewModelV2: Unexpected error during invoice creation")
                 onError(e.message ?: "Unexpected error")
+            } finally {
+                _isLoading.value = false
             }
         }
     }
