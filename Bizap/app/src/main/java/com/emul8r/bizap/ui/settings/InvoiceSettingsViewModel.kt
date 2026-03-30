@@ -195,6 +195,7 @@ class InvoiceSettingsViewModel @Inject constructor(
 
     /**
      * Save current settings to repository.
+     * OPTIMIZATION: Removed 2-second delay, success flag auto-resets via UI
      */
     fun saveSettings() {
         viewModelScope.launch {
@@ -215,9 +216,6 @@ class InvoiceSettingsViewModel @Inject constructor(
                         isSaving = false
                     )
                     Timber.d("Settings saved successfully")
-
-                    // Reset success flag after 2 seconds
-                    delay(2000)
                     _uiState.value = _uiState.value.copy(saveSuccess = false)
                 }
             } catch (e: Exception) {
