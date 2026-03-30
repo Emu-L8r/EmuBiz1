@@ -27,23 +27,32 @@ class BusinessProfileRepositoryImpl @Inject constructor(
      * REACTIVE IDENTITY ENGINE: 
      * Watches DataStore for active ID -> Watches Room for profile changes.
      * This ensures UI updates when business profile is edited.
-     * FIXED: Now properly handles missing profiles by fetching first available
+     * FIXED: Properly handles all errors with comprehensive exception handling
      */
     override val activeProfile: Flow<BusinessProfile> = dataStore.data
         .map { it[Keys.ACTIVE_BUSINESS_ID] ?: 1L } // Default to ID 1
         .distinctUntilChanged()
         .flatMapLatest { id ->
-            businessProfileDao.getAllProfiles()
-                .map { profiles ->
-                    // Try to find the requested ID, fallback to first profile, then default
-                    profiles.firstOrNull { it.id == id }?.toDomain()
-                        ?: profiles.firstOrNull()?.toDomain()
-                        ?: BusinessProfile(id = 0, businessName = "Default Business")
-                }
-                .catch { e ->
-                    Timber.e(e, "Error loading business profile $id")
-                    emit(BusinessProfile(id = 0, businessName = "Error Loading Profile"))
-                }
+            try {
+                businessProfileDao.getAllProfiles()
+                    .map { profiles ->
+                        // Try to find the requested ID, fallback to first profile, then default
+                        profiles.firstOrNull { it.id == id }?.toDomain()
+                            ?: profiles.firstOrNull()?.toDomain()
+                            ?: BusinessProfile(id = 0, businessName = "Default Business")
+                    }
+                    .catch { e ->
+                        Timber.e(e, "Error loading business profiles")
+                        emit(BusinessProfile(id = 0, businessName = "Error Loading Profile"))
+                    }
+            } catch (e: Exception) {
+                Timber.e(e, "Error setting up business profile flow for ID $id")
+                flowOf(BusinessProfile(id = 0, businessName = "Default Business"))
+            }
+        }
+        .catch { e ->
+            Timber.e(e, "Error in activeProfile flow")
+            emit(BusinessProfile(id = 0, businessName = "Error Loading Profile"))
         }
 
     override val allProfiles: Flow<List<BusinessProfile>> = businessProfileDao.getAllProfiles()
