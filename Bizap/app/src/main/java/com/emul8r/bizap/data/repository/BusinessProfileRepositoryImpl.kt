@@ -27,19 +27,22 @@ class BusinessProfileRepositoryImpl @Inject constructor(
      * REACTIVE IDENTITY ENGINE: 
      * Watches DataStore for active ID -> Watches Room for profile changes.
      * This ensures UI updates when business profile is edited.
+     * FIXED: Now properly handles missing profiles by fetching first available
      */
     override val activeProfile: Flow<BusinessProfile> = dataStore.data
-        .map { it[Keys.ACTIVE_BUSINESS_ID] ?: 1L } // Default to seeded ID 1
+        .map { it[Keys.ACTIVE_BUSINESS_ID] ?: 1L } // Default to ID 1
         .distinctUntilChanged()
         .flatMapLatest { id ->
             businessProfileDao.getAllProfiles()
                 .map { profiles ->
+                    // Try to find the requested ID, fallback to first profile, then default
                     profiles.firstOrNull { it.id == id }?.toDomain()
-                        ?: BusinessProfile(id = 1, businessName = "Default Business")
+                        ?: profiles.firstOrNull()?.toDomain()
+                        ?: BusinessProfile(id = 0, businessName = "Default Business")
                 }
                 .catch { e ->
                     Timber.e(e, "Error loading business profile $id")
-                    emit(BusinessProfile(id = 1, businessName = "Error Loading Profile"))
+                    emit(BusinessProfile(id = 0, businessName = "Error Loading Profile"))
                 }
         }
 
