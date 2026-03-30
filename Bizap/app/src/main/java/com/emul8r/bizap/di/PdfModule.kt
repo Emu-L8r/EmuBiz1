@@ -25,28 +25,10 @@ import javax.inject.Singleton
 object PdfModule {
 
     /**
-     * Provide Canvas theme implementation.
-     */
-    @Provides
-    @Singleton
-    fun provideCanvasTheme(
-        theme: CanvasInvoiceTheme
-    ): CanvasInvoiceTheme = theme
-
-    /**
-     * Provide HTML-to-PDF theme implementation.
-     */
-    @Provides
-    @Singleton
-    fun provideHtmlPdfTheme(
-        theme: HtmlPdfInvoiceTheme
-    ): HtmlPdfInvoiceTheme = theme
-
-    /**
-     * Provide theme manager factory.
+     * Provide theme manager.
      *
-     * The theme manager handles theme selection and provides
-     * appropriate theme renderers based on user settings.
+     * CanvasInvoiceTheme and HtmlPdfInvoiceTheme are automatically injected
+     * via constructor injection - no need for @Provides methods.
      */
     @Provides
     @Singleton
@@ -55,5 +37,14 @@ object PdfModule {
         htmlPdfTheme: HtmlPdfInvoiceTheme
     ): InvoiceThemeManager =
         InvoiceThemeManagerImpl(canvasTheme, htmlPdfTheme)
+
+    /**
+     * Provide the current user ID for dependency injection.
+     * This is used by ViewModels that need user context.
+     */
+    @Provides
+    @Singleton
+    @javax.inject.Named("current_user_id")
+    fun provideCurrentUserId(): String = "default_user"
 }
 

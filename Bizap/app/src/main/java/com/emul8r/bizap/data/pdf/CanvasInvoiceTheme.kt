@@ -5,7 +5,6 @@ import com.emul8r.bizap.domain.model.InvoiceSettings
 import com.emul8r.bizap.domain.pdf.CustomizationOption
 import com.emul8r.bizap.domain.pdf.InvoiceThemeRenderer
 import com.emul8r.bizap.domain.pdf.ValidationResult
-import com.emul8r.bizap.domain.service.PdfGenerationService
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,11 +19,12 @@ import javax.inject.Singleton
  * - Premium floating cards with drop shadows
  * - Professional color customization
  * - Boutique/creative agency quality output
+ *
+ * Note: The actual PDF generation is handled by InvoicePdfService.generateInvoice()
+ * which is called from the service layer, not directly from this theme class.
  */
 @Singleton
-class CanvasInvoiceTheme @Inject constructor(
-    private val pdfService: PdfGenerationService
-) : InvoiceThemeRenderer {
+class CanvasInvoiceTheme @Inject constructor() : InvoiceThemeRenderer {
 
     /**
      * Generate PDF using Canvas-based approach.

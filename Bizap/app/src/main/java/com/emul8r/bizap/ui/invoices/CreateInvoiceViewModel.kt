@@ -91,7 +91,9 @@ class CreateInvoiceViewModel @Inject constructor(
     private val currencyRepository: CurrencyRepository,
     private val generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase,
     private val calculateMetricsUseCase: CalculateInvoiceMetricsUseCase,
-    private val eventTracker: FirebaseEventTracker
+    private val eventTracker: FirebaseEventTracker,
+    private val invoiceSettingsRepository: com.emul8r.bizap.data.repository.InvoiceSettingsRepository,
+    @javax.inject.Named("current_user_id") private val currentUserId: String
 ) : ViewModel() {
 
     private val TAG = "CreateInvoiceViewModel"

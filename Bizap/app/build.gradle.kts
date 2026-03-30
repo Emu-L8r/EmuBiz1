@@ -277,6 +277,10 @@ dependencies {
     // Template Engine (Freemarker) - HTML to PDF theme
     implementation("org.freemarker:freemarker:2.3.32")
 
+    // PDF Generation (iText 7) - HTML to PDF conversion
+    implementation("com.itextpdf:itext-core:8.0.3")
+    implementation("com.itextpdf:html2pdf:5.0.3")
+
     // Other
     implementation(libs.coil.compose)
     implementation("androidx.exifinterface:exifinterface:1.3.7")
@@ -301,6 +305,9 @@ dependencies {
     testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("androidx.test.ext:junit:1.1.5")
     testImplementation("io.mockk:mockk-android:1.13.5")
+    testImplementation("com.google.truth:truth:1.1.4")
+    testImplementation("androidx.room:room-testing:2.6.1")
+    testImplementation("androidx.test.ext:junit-ktx:1.1.5")
 
     // Android Test Dependencies
     androidTestImplementation(libs.androidx.junit)

@@ -17,6 +17,7 @@ import com.emul8r.bizap.domain.pdf.PdfWatermarkRenderer
 import com.emul8r.bizap.domain.service.PdfGenerationService
 import com.emul8r.bizap.ui.templates.TemplateSnapshotManager
 import com.emul8r.bizap.utils.DocumentNamingUtils
+import timber.log.Timber
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.text.SimpleDateFormat
@@ -52,11 +53,15 @@ class InvoicePdfService @Inject constructor(
     /**
      * Domain-level API: Generate a PDF from an invoice snapshot.
      * Delegates to the internal generateInvoice method.
+     *
+     * @param theme Optional theme selection. Currently only CANVAS is implemented.
+     *              This parameter is reserved for future theme support.
      */
     override suspend fun generatePdf(
         snapshot: InvoiceSnapshot,
         isQuote: Boolean,
-        overwriteExisting: Boolean
+        overwriteExisting: Boolean,
+        theme: com.emul8r.bizap.domain.model.InvoiceTheme?
     ): File = generateInvoice(snapshot, isQuote, overwriteExisting)
 
     suspend fun checkIfPdfExists(invoiceId: Long, fileType: String): Pair<Boolean, String?> {
