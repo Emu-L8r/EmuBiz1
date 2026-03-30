@@ -73,14 +73,21 @@ class HtmlPdfInvoiceService(
         isQuote: Boolean
     ): String {
         val documentType = if (isQuote) "QUOTE" else "INVOICE"
+
+        // Convert cents to dollars
+        val subtotalDollars = snapshot.subtotal / 100.0
+        val taxDollars = snapshot.taxAmount / 100.0
+        val totalDollars = snapshot.totalAmount / 100.0
+
         val itemsHtml = snapshot.items.joinToString("\n") { item ->
-            val amount = item.quantity * item.unitPrice
+            val amountDollars = item.total / 100.0
+            val unitPriceDollars = item.unitPrice / 100.0
             """
                 <tr>
                     <td>${item.description}</td>
                     <td class="align-right">${String.format("%.2f", item.quantity)}</td>
-                    <td class="align-right">${String.format("${'$'}%.2f", item.unitPrice)}</td>
-                    <td class="align-right amount">${String.format("${'$'}%.2f", amount)}</td>
+                    <td class="align-right">${String.format("${'$'}%.2f", unitPriceDollars)}</td>
+                    <td class="align-right amount">${String.format("${'$'}%.2f", amountDollars)}</td>
                 </tr>
             """.trimIndent()
         }
@@ -333,9 +340,9 @@ class HtmlPdfInvoiceService(
                         <div class="info-box">
                             <h3>Summary</h3>
                             <p>
-                                Subtotal: <strong>${String.format("${'$'}%.2f", snapshot.subtotal)}</strong><br>
-                                Tax: <strong>${String.format("${'$'}%.2f", snapshot.tax)}</strong><br>
-                                <strong style="font-size: 16px; color: #667eea;">Total Due: ${String.format("${'$'}%.2f", snapshot.total)}</strong>
+                                Subtotal: <strong>${String.format("${'$'}%.2f", subtotalDollars)}</strong><br>
+                                Tax: <strong>${String.format("${'$'}%.2f", taxDollars)}</strong><br>
+                                <strong style="font-size: 16px; color: #667eea;">Total Due: ${String.format("${'$'}%.2f", totalDollars)}</strong>
                             </p>
                         </div>
                     </div>
@@ -360,15 +367,15 @@ class HtmlPdfInvoiceService(
                         <div class="totals-box">
                             <div class="total-row">
                                 <div class="total-label">Subtotal</div>
-                                <div class="total-value">${String.format("${'$'}%.2f", snapshot.subtotal)}</div>
+                                <div class="total-value">${String.format("${'$'}%.2f", subtotalDollars)}</div>
                             </div>
                             <div class="total-row">
                                 <div class="total-label">Tax</div>
-                                <div class="total-value">${String.format("${'$'}%.2f", snapshot.tax)}</div>
+                                <div class="total-value">${String.format("${'$'}%.2f", taxDollars)}</div>
                             </div>
                             <div class="total-row final">
                                 <div class="total-label">Total Due</div>
-                                <div class="total-value">${String.format("${'$'}%.2f", snapshot.total)}</div>
+                                <div class="total-value">${String.format("${'$'}%.2f", totalDollars)}</div>
                             </div>
                         </div>
                     </div>
@@ -406,4 +413,5 @@ class HtmlPdfInvoiceService(
         return file
     }
 }
+
 
