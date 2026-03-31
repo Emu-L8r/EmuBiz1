@@ -332,6 +332,7 @@ class CreateInvoiceViewModel @Inject constructor(
                 val dueDate = createdAt + (30L * 24 * 60 * 60 * 1000)
 
                 val invoice = Invoice(
+                    businessProfileId = businessProfile.id,  // 🔥 FIX: Associate with active business
                     customerId = customer.id,
                     customerName = customer.name,
                     customerAddress = customer.address ?: "",
