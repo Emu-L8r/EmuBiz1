@@ -1,41 +1,23 @@
 package com.emul8r.bizap.ui.gui2.invoices
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import com.emul8r.bizap.domain.model.InvoiceCustomization
-import com.emul8r.bizap.ui.components.InvoiceBottomSummary
 import com.emul8r.bizap.ui.components.LineItemsEditor
-import com.emul8r.bizap.ui.components.InvoiceCustomizationEditor
 import com.emul8r.bizap.ui.components.CurrencySelector
-import com.emul8r.bizap.ui.components.PhotoAttachmentPicker
-import com.emul8r.bizap.ui.gui2.invoice.AddPhotoDialogV2
 import com.emul8r.bizap.ui.invoices.CreateInvoiceViewModel
 import com.emul8r.bizap.ui.invoices.CustomerDropdown
-import com.emul8r.bizap.ui.invoices.LineItemEditor
-import java.io.File
 
 /**
  * GUI2 Create Invoice Screen - uses the shared CreateInvoiceViewModel for feature parity with GUI1.
@@ -50,26 +32,6 @@ fun CreateInvoiceScreenV2(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
-
-    var showPhotoDialog by remember { mutableStateOf(false) }
-    var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
-
-    // Camera launcher
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            cameraImageUri?.toString()?.let { viewModel.addPhoto(it) }
-        }
-    }
-
-    // Gallery launcher
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.toString()?.let { viewModel.addPhoto(it) }
-    }
 
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess) {
@@ -84,26 +46,6 @@ fun CreateInvoiceScreenV2(
         }
     }
 
-    if (showPhotoDialog) {
-        AddPhotoDialogV2(
-            onDismiss = { showPhotoDialog = false },
-            onTakePhoto = {
-                showPhotoDialog = false
-                val imageFile = File.createTempFile("photo_", ".jpg", context.cacheDir)
-                val uri = FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    imageFile
-                )
-                cameraImageUri = uri
-                cameraLauncher.launch(uri)
-            },
-            onChooseFromGallery = {
-                showPhotoDialog = false
-                galleryLauncher.launch("image/*")
-            }
-        )
-    }
 
     Scaffold(
         topBar = {
@@ -216,12 +158,8 @@ fun CreateInvoiceScreenV2(
                 )
             }
 
-            item {
-                TextButton(onClick = { viewModel.addLineItem() }) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Text("Add Line Item")
-                }
-            }
+            // ✅ REMOVED DUPLICATE: Only one add button in LineItemsEditor component
+            // Duplicate TextButton removed - caused UX confusion
 
             item {
                 OutlinedTextField(
@@ -233,48 +171,9 @@ fun CreateInvoiceScreenV2(
                 )
             }
 
-            // ✅ COMPLETED: Invoice customization moved to separate settings screen
-            // See: InvoiceCustomizationSettingsScreenV2
-            // For backwards compatibility, fields remain on create invoice page
-            // User can configure defaults in Settings → Invoice Customization
-
-            item {
-                OutlinedTextField(
-                    value = uiState.footer,
-                    onValueChange = viewModel::onFooterChange,
-                    label = { Text("Footer") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // Phase 2: Customization Component
-            item {
-                val customization = InvoiceCustomization(
-                    companyName = uiState.companyName,
-                    headerText = uiState.header,
-                    footerText = uiState.footer,
-                    templateType = uiState.templateType
-                )
-                InvoiceCustomizationEditor(
-                    customization = customization,
-                    onCustomizationChange = { updated ->
-                        viewModel.updateCompanyName(updated.companyName)
-                        viewModel.updateTemplateType(updated.templateType)
-                    }
-                )
-            }
-
-            // Phase 2: Photo Attachments Component
-            item {
-                PhotoAttachmentPicker(
-                    photos = uiState.photoUris,
-                    onPhotosChange = { updatedPhotos ->
-                        updatedPhotos.filterNot { it in uiState.photoUris }.forEach { viewModel.addPhoto(it) }
-                        uiState.photoUris.filterNot { it in updatedPhotos }.forEach { viewModel.removePhoto(it) }
-                    },
-                    onAddPhotoClicked = { showPhotoDialog = true }
-                )
-            }
+            // ✅ Footer & Company Name: Auto-loaded from Invoice Settings
+            // Configure these in Settings > Invoice Settings
+            // They're pre-populated when creating invoice from saved defaults
         }
     }
 }

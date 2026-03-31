@@ -125,6 +125,18 @@ class CreateInvoiceViewModel @Inject constructor(
                     )
                 }
             }.launchIn(this)
+
+            // Load invoice settings to auto-populate defaults
+            invoiceSettingsRepository.getSettingsFlow(currentUserId).onEach { settings ->
+                settings?.let { s ->
+                    _uiState.update { state ->
+                        state.copy(
+                            footer = s.footerMessage,
+                            companyName = s.businessName
+                        )
+                    }
+                }
+            }.launchIn(this)
         }
     }
 
@@ -308,11 +320,12 @@ class CreateInvoiceViewModel @Inject constructor(
                 Timber.d("🔵 INVOICE SAVE STARTED")
                 val state = _uiState.value
                 val customer = state.selectedCustomer ?: throw Exception("Please select a customer")
-                Timber.d("✅ Customer selected: ${customer.name}")
+                Timber.d("✅ Customer selected: ${customer.name} (ID=${customer.id})")
 
                 val businessProfile = businessProfileRepository.activeProfile.first()
                 val lineItems = state.items.map { it.toDomain() }
                 Timber.d("✅ Line items mapped: ${lineItems.size} items")
+                Timber.d("🔍 Active Business: ID=${businessProfile.id}, Name=${businessProfile.businessName}")
 
                 // Use CalculateInvoiceMetricsUseCase as single source of truth for all calculations
                 val taxRate: Double = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
@@ -368,7 +381,15 @@ class CreateInvoiceViewModel @Inject constructor(
                 Timber.d("✅ Invoice passed all validation rules")
 
                 val invoiceId = invoiceRepository.saveInvoice(invoice).getOrThrow()
-                Timber.d("✅ Invoice saved to database: ID=$invoiceId")
+                Timber.d("✅ Invoice SAVED to database:")
+                Timber.d("   - Invoice ID: $invoiceId")
+                Timber.d("   - Business Profile ID: ${invoice.businessProfileId}")
+                Timber.d("   - Customer: ${invoice.customerName} (ID=${invoice.customerId})")
+                Timber.d("   - Amount: ${invoice.totalAmount} cents")
+                Timber.d("   - Items: ${invoice.items.size}")
+                Timber.d("🔍 DIAGNOSTIC: Invoice saved with businessProfileId=${invoice.businessProfileId}")
+                Timber.d("   When loading invoice list, use businessProfileId=${invoice.businessProfileId}")
+                Timber.d("   If list filters by a different businessProfileId, invoice won't appear!")
                 val invoiceWithId = invoice.copy(id = invoiceId)
 
                 // 📊 Track invoice creation event
