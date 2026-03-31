@@ -457,6 +457,9 @@ class CreateInvoiceViewModel @Inject constructor(
 
             } catch (e: Exception) {
                 Timber.e(e, "❌ INVOICE SAVE FAILED: ${e.message}")
+                Timber.e("   Stack trace: ${e.stackTraceToString()}")
+                Timber.e("   This error prevented the invoice from being saved")
+                Timber.e("   No navigation will occur - saveSuccess will remain false")
                 _uiState.update { it.copy(error = e.message, isSaving = false) }
             }
         }
