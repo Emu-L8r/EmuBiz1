@@ -123,35 +123,6 @@ object TestConfig {
     }
 
     // ============================================================================
-    // ERROR SCENARIO DEFINITIONS
-    // ============================================================================
-
-    object ErrorScenarios {
-        const val INVALID_EMAIL = "not-an-email"
-        const val INVALID_PHONE = "123"
-        const val EMPTY_STRING = ""
-        const val VERY_LONG_STRING = "A".repeat(5000)
-        const val SPECIAL_CHARACTERS = "!@#$%^&*()[]{}|\\<>?,./'\""
-        const val UNICODE_STRING = "Hello 你好 مرحبا Здравствуй γεια σας"
-
-        val INVALID_INPUTS = listOf(
-            "Missing business name",
-            "Missing email",
-            "Missing phone",
-            "Missing address",
-            "Invalid email format",
-            "Invalid phone format",
-            "Very long business name (5000+ chars)",
-            "Special characters in name",
-            "Unicode characters in fields",
-            "Negative tax rate",
-            "Tax rate > 100%",
-            "Negative payment terms",
-            "Empty strings"
-        )
-    }
-
-    // ============================================================================
     // LOGGING CONFIGURATION
     // ============================================================================
 

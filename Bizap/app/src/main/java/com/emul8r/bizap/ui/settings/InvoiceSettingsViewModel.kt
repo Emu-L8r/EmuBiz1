@@ -229,6 +229,18 @@ class InvoiceSettingsViewModel @Inject constructor(
     }
 
     /**
+     * Update footer message in current settings.
+     * Phase 2: Auto-populated in invoice creation from this setting
+     */
+    fun updateFooterMessage(message: String) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(footerMessage = message)
+            )
+        }
+    }
+
+    /**
      * Reset settings to default values.
      */
     fun resetToDefaults() {
