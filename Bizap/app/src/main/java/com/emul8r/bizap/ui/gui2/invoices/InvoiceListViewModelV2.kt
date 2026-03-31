@@ -24,8 +24,10 @@ class InvoiceListViewModelV2 @Inject constructor(
     val uiState: StateFlow<InvoiceListUiStateV2> = invoiceRepository
         .getAllInvoicesWithItems()
         .map { invoices ->
-            Timber.d("InvoiceListViewModelV2: Loaded ${invoices.size} invoices")
-            InvoiceListUiStateV2.Success(invoices) as InvoiceListUiStateV2
+            // Filter invoices by current business ID
+            val filteredInvoices = invoices.filter { it.businessProfileId == businessId }
+            Timber.d("InvoiceListViewModelV2: Loaded ${filteredInvoices.size} invoices for business $businessId (from ${invoices.size} total)")
+            InvoiceListUiStateV2.Success(filteredInvoices) as InvoiceListUiStateV2
         }
         .catch { exception ->
             Timber.e(exception, "InvoiceListViewModelV2: Failed to load invoices")
