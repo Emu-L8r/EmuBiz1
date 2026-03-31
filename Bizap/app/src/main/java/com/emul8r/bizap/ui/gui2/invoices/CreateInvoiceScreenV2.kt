@@ -18,6 +18,7 @@ import com.emul8r.bizap.ui.components.LineItemsEditor
 import com.emul8r.bizap.ui.components.CurrencySelector
 import com.emul8r.bizap.ui.invoices.CreateInvoiceViewModel
 import com.emul8r.bizap.ui.invoices.CustomerDropdown
+import timber.log.Timber
 
 /**
  * GUI2 Create Invoice Screen - uses the shared CreateInvoiceViewModel for feature parity with GUI1.
@@ -34,8 +35,13 @@ fun CreateInvoiceScreenV2(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.saveSuccess) {
+        Timber.d("🔍 CreateInvoiceScreenV2: LaunchedEffect triggered - saveSuccess=${uiState.saveSuccess}")
         if (uiState.saveSuccess) {
+            Timber.d("✅ CreateInvoiceScreenV2: saveSuccess is TRUE - calling onCreate() navigation callback")
             onCreate()
+            Timber.d("✅ CreateInvoiceScreenV2: onCreate() called - should navigate back to list")
+        } else {
+            Timber.d("⏳ CreateInvoiceScreenV2: saveSuccess is FALSE - waiting for save to complete")
         }
     }
 
@@ -60,7 +66,12 @@ fun CreateInvoiceScreenV2(
                 actions = {
                     // Save button moved to top bar for better tablet accessibility
                     Button(
-                        onClick = { viewModel.onSaveClicked() },
+                        onClick = {
+                            Timber.d("🎬 CreateInvoiceScreenV2: SAVE BUTTON CLICKED")
+                            Timber.d("   Calling viewModel.onSaveClicked()...")
+                            viewModel.onSaveClicked()
+                            Timber.d("   onSaveClicked() call completed - waiting for saveSuccess state change")
+                        },
                         enabled = !uiState.isSaving,
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
