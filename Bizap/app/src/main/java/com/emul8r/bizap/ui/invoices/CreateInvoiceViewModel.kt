@@ -92,13 +92,16 @@ class CreateInvoiceViewModel @Inject constructor(
     private val generateAndSaveInvoiceUseCase: GenerateAndSaveInvoiceUseCase,
     private val calculateMetricsUseCase: CalculateInvoiceMetricsUseCase,
     private val eventTracker: FirebaseEventTracker,
-    private val invoiceSettingsRepository: com.emul8r.bizap.data.repository.InvoiceSettingsRepository,
-    @javax.inject.Named("current_user_id") private val currentUserId: String
+    private val invoiceSettingsRepository: com.emul8r.bizap.data.repository.InvoiceSettingsRepository
 ) : ViewModel() {
 
     private val TAG = "CreateInvoiceViewModel"
     private val _uiState = MutableStateFlow(CreateInvoiceUiState())
     val uiState = _uiState.asStateFlow()
+
+    // 🔥 CRITICAL FIX: Use same hardcoded userId as InvoiceSettingsViewModel
+    // This ensures settings saved in InvoiceSettingsViewModel can be loaded here
+    private val currentUserId = "current_user"
 
     // 🔥 CRITICAL: Store the business ID from navigation route
     // This is used instead of activeProfile.id to ensure invoices are saved to the correct business
@@ -212,9 +215,8 @@ class CreateInvoiceViewModel @Inject constructor(
     }
 
     /**
-     * ✅ FIX FOR ISSUE #2: Batch update line items with simple index-based mapping.
-     * The editor returns items in the same order they were passed, so we can safely use indices.
-     * This is much more reliable than UUID hashing.
+     * ✅ FIX FOR ISSUE #2: Batch update line items with proper handling for additions, deletions, and modifications.
+     * The editor returns items in the same order they were passed in, plus any new items added.
      *
      * @param updatedItems List of updated LineItem objects from the editor (in same order)
      * @param currentItems Current list of LineItemForm objects in ViewModel state
@@ -229,11 +231,17 @@ class CreateInvoiceViewModel @Inject constructor(
         Timber.d("   - State items count: ${_uiState.value.items.size}")
 
         _uiState.update { state ->
-            // Simple: editor returns items in same order, use indices to map
-            val newItems = state.items.mapIndexed { index, currentItem ->
-                if (index < updatedItems.size) {
-                    val updatedItem = updatedItems[index]
-                    Timber.d("   Item[$index]: '${currentItem.description}' → '${updatedItem.description}' | qty: ${currentItem.quantity} → ${updatedItem.quantity}")
+            // Handle additions, deletions, and modifications
+            val newItems = mutableListOf<LineItemForm>()
+
+            // Process each updated item (including new additions)
+            for (index in updatedItems.indices) {
+                val updatedItem = updatedItems[index]
+
+                val itemForm = if (index < currentItems.size) {
+                    // Update existing item
+                    val currentItem = currentItems[index]
+                    Timber.d("   Item[$index] UPDATED: '${currentItem.description}' → '${updatedItem.description}' | qty: ${currentItem.quantity} → ${updatedItem.quantity}")
 
                     currentItem.copy(
                         description = updatedItem.description,
@@ -241,10 +249,23 @@ class CreateInvoiceViewModel @Inject constructor(
                         unitPrice = updatedItem.unitPrice
                     )
                 } else {
-                    // Item was removed in editor
-                    Timber.d("   Item[$index]: REMOVED (index >= updatedItems.size)")
-                    currentItem
+                    // NEW ITEM ADDED - create new LineItemForm
+                    Timber.d("   Item[$index] ADDED: '${updatedItem.description}' | qty: ${updatedItem.quantity} | price: ${updatedItem.unitPrice}")
+
+                    LineItemForm(
+                        transientId = java.util.UUID.randomUUID(),
+                        description = updatedItem.description,
+                        quantity = updatedItem.quantity,
+                        unitPrice = updatedItem.unitPrice
+                    )
                 }
+
+                newItems.add(itemForm)
+            }
+
+            // Log deletions
+            if (updatedItems.size < currentItems.size) {
+                Timber.d("   ${currentItems.size - updatedItems.size} items REMOVED")
             }
 
             state.copy(items = newItems)
@@ -439,7 +460,25 @@ class CreateInvoiceViewModel @Inject constructor(
                 )
 
                 Timber.d("✅ STEP 9: Firebase event tracked")
-                Timber.d("🔵 STEP 10: Starting PDF generation...")
+                Timber.d("🔵 STEP 10: Loading invoice settings to get selected theme...")
+
+                // Load invoice settings to get the selected theme (FIX: Cause #2)
+                val invoiceSettings = try {
+                    invoiceSettingsRepository.getSettings(currentUserId)
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to load invoice settings, using default theme")
+                    null
+                }
+                val selectedTheme = invoiceSettings?.selectedTheme
+                Timber.d("✅ STEP 10a: Selected theme: ${selectedTheme?.name ?: "DEFAULT (CANVAS)"}")
+                Timber.d("   invoiceSettings is null: ${invoiceSettings == null}")
+                Timber.d("   selectedTheme is null: ${selectedTheme == null}")
+                if (invoiceSettings != null) {
+                    Timber.d("   Full settings: $invoiceSettings")
+                }
+
+                Timber.d("🔵 STEP 10b: Starting PDF generation with theme...")
+                Timber.d("   About to call generateAndSaveInvoiceUseCase with theme=${selectedTheme?.name ?: "NULL"}")
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceWithId,
                     snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
@@ -480,7 +519,8 @@ class CreateInvoiceViewModel @Inject constructor(
                         bankName = businessProfile.bankName ?: ""
                     ),
                     isQuote = false,
-                    overwriteExisting = true
+                    overwriteExisting = true,
+                    theme = selectedTheme  // FIX: Cause #1 - Pass theme parameter!
                 )
 
                 if (result.isSuccess) {

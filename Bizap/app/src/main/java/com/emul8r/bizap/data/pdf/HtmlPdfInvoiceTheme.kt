@@ -51,7 +51,8 @@ class HtmlPdfInvoiceTheme @Inject constructor(
      * 1. Validates all required settings
      * 2. Maps invoice data to template variables
      * 3. Processes Freemarker template with dynamic data
-     * 4. Converts resulting HTML to PDF using iText7
+     * 4. Injects brand colors from InvoiceSettings into CSS variables
+     * 5. Converts resulting HTML to PDF using iText7
      *
      * @param invoice The invoice to generate PDF for
      * @param settings Invoice settings for customization (colors, branding, etc.)
@@ -75,7 +76,14 @@ class HtmlPdfInvoiceTheme @Inject constructor(
                 )
             }
 
-            // Step 2: Map invoice data to template format
+            // Step 2: Validate color formats
+            val colorErrors = CssVariableInjector.validateColors(settings)
+            if (colorErrors.isNotEmpty()) {
+                Timber.w("Color validation warnings: ${colorErrors.joinToString(", ")}")
+                // Don't fail - we have fallback colors, just log warnings
+            }
+
+            // Step 3: Map invoice data to template format
             val templateData = dataMapper.mapToTemplateData(invoice, settings)
             if (templateData.isEmpty()) {
                 Timber.e("Failed to map invoice data to template format")
@@ -83,7 +91,7 @@ class HtmlPdfInvoiceTheme @Inject constructor(
             }
             Timber.d("Invoice data mapped successfully with ${templateData.size} variables")
 
-            // Step 3: Process Freemarker template with invoice data
+            // Step 4: Process Freemarker template with invoice data
             val htmlContent = try {
                 templateProcessor.processTemplate("invoice-template.html", templateData)
             } catch (e: Exception) {
@@ -97,9 +105,22 @@ class HtmlPdfInvoiceTheme @Inject constructor(
             }
             Timber.d("Template processed successfully, generated ${htmlContent.length} characters of HTML")
 
-            // Step 4: Convert HTML to PDF using iText7
+            // Step 5: Embed CSS from assets into HTML (CRITICAL FIX)
+            // iText7 doesn't load external CSS files, so we embed CSS as inline <style> tag
+            val htmlWithEmbeddedCss = try {
+                pdfConverter.embedCssFromAssets(context, htmlContent)
+            } catch (e: Exception) {
+                Timber.w(e, "CSS embedding failed, continuing with HTML-only")
+                htmlContent  // Fallback to original HTML without styling
+            }
+
+            // Step 6: Inject brand colors from InvoiceSettings into CSS variables
+            val htmlWithColors = CssVariableInjector.injectColorVariables(htmlWithEmbeddedCss, settings)
+            Timber.d("CSS color variables injected for branding")
+
+            // Step 7: Convert HTML to PDF using iText7
             val conversionSuccess = try {
-                pdfConverter.convertHtmlToPdf(htmlContent, outputPath)
+                pdfConverter.convertHtmlToPdf(htmlWithColors, outputPath)
             } catch (e: Exception) {
                 Timber.e(e, "HTML to PDF conversion failed")
                 return Result.failure(Exception("PDF conversion failed: ${e.message}"))

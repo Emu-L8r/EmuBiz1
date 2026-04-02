@@ -108,6 +108,46 @@ class HtmlToPdfConverter(
     }
 
     /**
+     * Load CSS from assets and embed into HTML as inline style tag.
+     *
+     * iText7 doesn't support external CSS file references, so we need to
+     * embed CSS directly into the HTML as a <style> tag for proper rendering.
+     *
+     * @param context Android context to access assets
+     * @param htmlContent HTML content with external CSS link reference
+     * @return HTML with CSS embedded as <style> tag, or original HTML if CSS loading fails
+     */
+    fun embedCssFromAssets(context: Context, htmlContent: String): String {
+        return try {
+            val assetPath = "invoices/html-theme/invoice-styles.css"
+            val cssContent = context.assets.open(assetPath)
+                .bufferedReader(Charsets.UTF_8)
+                .use { it.readText() }
+
+            if (cssContent.isBlank()) {
+                Timber.w("CSS file is empty, returning HTML without styling")
+                return htmlContent
+            }
+
+            // Create inline style tag with CSS content
+            val styleTag = "<style>\n$cssContent\n</style>"
+
+            // Replace external CSS link with embedded CSS
+            val result = htmlContent.replace(
+                Regex("""<link\s+rel="stylesheet"\s+href="[^"]*"\s*>""", RegexOption.IGNORE_CASE),
+                styleTag
+            )
+
+            Timber.d("CSS embedded successfully (${cssContent.length} bytes)")
+            result
+
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to embed CSS from assets: ${e.message}")
+            htmlContent  // Return original HTML as fallback
+        }
+    }
+
+    /**
      * Validate HTML content
      */
     private fun validateHtml(htmlContent: String): Boolean {

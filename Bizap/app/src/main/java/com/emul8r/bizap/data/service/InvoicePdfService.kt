@@ -10,6 +10,7 @@ import android.text.TextPaint
 import androidx.annotation.RequiresApi
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.repository.DocumentRepository
+import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
 import com.emul8r.bizap.domain.pdf.PdfTableRenderer
 import com.emul8r.bizap.domain.pdf.PdfBrandingRenderer
 import com.emul8r.bizap.domain.pdf.PdfPageManager
@@ -37,11 +38,13 @@ import javax.inject.Singleton
  * - Generates PDF files from invoice snapshots using Android's PdfDocument API
  * - Manages internal storage of generated PDFs
  * - Handles file naming, versioning, and overwrite logic
+ * - Routes HTML PDF generation with proper style selection
  */
 @Singleton
 class InvoicePdfService @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val documentRepository: DocumentRepository
+    private val documentRepository: DocumentRepository,
+    private val invoiceSettingsRepository: InvoiceSettingsRepository
 ) : PdfGenerationService {
     companion object {
         private const val TAG = "InvoicePdfService"
@@ -52,17 +55,58 @@ class InvoicePdfService @Inject constructor(
 
     /**
      * Domain-level API: Generate a PDF from an invoice snapshot.
-     * Delegates to the internal generateInvoice method.
+     * Routes to the appropriate theme implementation based on the theme parameter.
      *
-     * @param theme Optional theme selection. Currently only CANVAS is implemented.
-     *              This parameter is reserved for future theme support.
+     * @param theme Optional theme selection (CANVAS or HTML_PDF). If null, defaults to CANVAS.
      */
     override suspend fun generatePdf(
         snapshot: InvoiceSnapshot,
         isQuote: Boolean,
         overwriteExisting: Boolean,
         theme: com.emul8r.bizap.domain.model.InvoiceTheme?
-    ): File = generateInvoice(snapshot, isQuote, overwriteExisting)
+    ): File {
+        Timber.d("═══════════════════════════════════════════════════════════════════════════")
+        Timber.d("📄 InvoicePdfService.generatePdf() called with theme: ${theme?.name ?: "NULL"}")
+
+        // FIX: Cause #3 - Use theme parameter to route to correct service
+        return when (theme) {
+            com.emul8r.bizap.domain.model.InvoiceTheme.HTML_PDF -> {
+                Timber.d("✅ THEME MATCHED: HTML_PDF")
+                Timber.d("🎨 Routing to HtmlPdfInvoiceService for PDF generation")
+                try {
+                    // Load current user's invoice settings to get the selected HTML style
+                    // For now, we'll use the default user ID - in production this should come from auth context
+                    val currentUserId = "current_user"  // TODO: Get from authentication context
+                    val settings = try {
+                        invoiceSettingsRepository.getSettings(currentUserId)
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to load invoice settings, using default")
+                        null
+                    }
+
+                    // Use HTML-to-PDF service for modern design, passing settings for style selection
+                    Timber.d("🔄 Creating HtmlPdfInvoiceService instance with settings...")
+                    val htmlPdfService = HtmlPdfInvoiceService(context, settings)
+                    Timber.d("🔄 Calling htmlPdfService.generatePdf()...")
+                    val result = htmlPdfService.generatePdf(snapshot, isQuote, overwriteExisting, theme)
+                    Timber.d("✅ HtmlPdfInvoiceService.generatePdf() completed successfully")
+                    Timber.d("✅ PDF file: ${result.name} (${result.length()} bytes)")
+                    result
+                } catch (e: Exception) {
+                    Timber.e(e, "❌ HTML-to-PDF generation FAILED, falling back to Canvas")
+                    // Fallback to Canvas if HTML service fails
+                    Timber.d("⚠️ Falling back to generateInvoice() (Canvas)...")
+                    generateInvoice(snapshot, isQuote, overwriteExisting)
+                }
+            }
+            else -> {
+                Timber.d("✅ THEME: ${theme?.name ?: "NULL/DEFAULT"}")
+                Timber.d("🎨 Using Canvas theme for PDF generation (default)")
+                // Default: use Canvas theme
+                generateInvoice(snapshot, isQuote, overwriteExisting)
+            }
+        }
+    }
 
     suspend fun checkIfPdfExists(invoiceId: Long, fileType: String): Pair<Boolean, String?> {
         val existingDoc = documentRepository.getDocumentByInvoiceAndType(invoiceId, fileType)

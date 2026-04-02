@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 38,
-    "identityHash": "c78dd8766e40ca5013c13c0444a8a523",
+    "identityHash": "06f07d80e09c94a88ee880fb97f3a490",
     "entities": [
       {
         "tableName": "customers",
@@ -2806,7 +2806,7 @@
       },
       {
         "tableName": "invoice_settings",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `selected_theme` TEXT NOT NULL, `primary_color` TEXT NOT NULL, `secondary_color` TEXT, `accent_color` TEXT, `font_family` TEXT, `payment_terms_days` INTEGER NOT NULL, `default_payment_notes` TEXT NOT NULL, `footer_message` TEXT NOT NULL, `invoice_number_prefix` TEXT NOT NULL, `tax_rate` REAL NOT NULL, `tax_name` TEXT NOT NULL, `tax_handling` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`user_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `selected_theme` TEXT NOT NULL, `selected_html_style` TEXT NOT NULL, `primary_color` TEXT NOT NULL, `secondary_color` TEXT NOT NULL, `accent_color` TEXT NOT NULL, `font_family` TEXT, `payment_terms_days` INTEGER NOT NULL, `default_payment_notes` TEXT NOT NULL, `footer_message` TEXT NOT NULL, `invoice_number_prefix` TEXT NOT NULL, `tax_rate` REAL NOT NULL, `tax_name` TEXT NOT NULL, `tax_handling` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`user_id`))",
         "fields": [
           {
             "fieldPath": "userId",
@@ -2821,6 +2821,12 @@
             "notNull": true
           },
           {
+            "fieldPath": "selectedHtmlStyle",
+            "columnName": "selected_html_style",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
             "fieldPath": "primaryColor",
             "columnName": "primary_color",
             "affinity": "TEXT",
@@ -2830,13 +2836,13 @@
             "fieldPath": "secondaryColor",
             "columnName": "secondary_color",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "accentColor",
             "columnName": "accent_color",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "fontFamily",
@@ -2912,7 +2918,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c78dd8766e40ca5013c13c0444a8a523')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '06f07d80e09c94a88ee880fb97f3a490')"
     ]
   }
 }

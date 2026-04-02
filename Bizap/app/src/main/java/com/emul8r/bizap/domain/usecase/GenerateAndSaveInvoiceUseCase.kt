@@ -2,6 +2,7 @@ package com.emul8r.bizap.domain.usecase
 
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
+import com.emul8r.bizap.domain.model.InvoiceTheme
 import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.service.PdfGenerationService
 import timber.log.Timber
@@ -26,6 +27,7 @@ import javax.inject.Singleton
  * **@param snapshot** Invoice snapshot for PDF rendering
  * **@param isQuote** If true, generates a Quote; if false, generates Invoice
  * **@param overwriteExisting** If true, overwrites existing PDF; if false, versions it
+ * **@param theme** Invoice theme (Canvas or HTML-to-PDF). If null, uses service default.
  * **@return** Result<File> with the generated PDF File on success, or failure details
  */
 @Singleton
@@ -40,16 +42,18 @@ class GenerateAndSaveInvoiceUseCase @Inject constructor(
         invoice: Invoice,
         snapshot: InvoiceSnapshot,
         isQuote: Boolean,
-        overwriteExisting: Boolean = true
+        overwriteExisting: Boolean = true,
+        theme: InvoiceTheme? = null
     ): Result<File> {
         var generatedFile: File? = null
         return try {
             // Step 1: Generate PDF via PdfGenerationService (domain interface)
-            Timber.d("📄 Generating ${if (isQuote) "Quote" else "Invoice"} PDF for invoice #${invoice.id}")
+            Timber.d("📄 Generating ${if (isQuote) "Quote" else "Invoice"} PDF for invoice #${invoice.id} with theme: ${theme?.name ?: "DEFAULT"}")
             generatedFile = pdfService.generatePdf(
                 snapshot = snapshot,
                 isQuote = isQuote,
-                overwriteExisting = overwriteExisting
+                overwriteExisting = overwriteExisting,
+                theme = theme  // FIX: Pass theme parameter!
             )
 
             // Step 2: Validate file was created and is not empty

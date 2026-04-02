@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.InvoiceSettings
 import com.emul8r.bizap.domain.model.InvoiceTheme
+import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
 import timber.log.Timber
 
 /**
@@ -169,6 +170,18 @@ fun InvoiceSettingsScreen(
                         )
                     }
 
+                    // HTML Style Selection (only for HTML_PDF theme)
+                    item {
+                        uiState.settings?.let { settings ->
+                            if (settings.selectedTheme == InvoiceTheme.HTML_PDF) {
+                                HtmlStyleSelectionSection(
+                                    currentStyle = settings.selectedHtmlStyle,
+                                    onStyleSelected = { viewModel.updateSelectedHtmlStyle(it) }
+                                )
+                            }
+                        }
+                    }
+
                     // Theme Preview Section
                     item {
                         uiState.settings?.let { settings ->
@@ -283,19 +296,152 @@ fun ThemeSelectionSection(
                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
             )
 
-            currentTheme?.let { theme ->
-                // Canvas Style Option
+            val theme = currentTheme ?: InvoiceTheme.CANVAS
+            // Canvas Style Option
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (theme == InvoiceTheme.CANVAS)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant
+                ),
+                border = if (theme == InvoiceTheme.CANVAS)
+                    androidx.compose.foundation.BorderStroke(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary
+                    )
+                else
+                    null
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    RadioButton(
+                        selected = theme == InvoiceTheme.CANVAS,
+                        onClick = { onThemeSelected(InvoiceTheme.CANVAS) }
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Canvas Style",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                        )
+                        Text(
+                            "Clean, traditional invoice design",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (theme == InvoiceTheme.CANVAS) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = "Selected",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            // HTML-to-PDF Option
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (theme == InvoiceTheme.HTML_PDF)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant
+                ),
+                border = if (theme == InvoiceTheme.HTML_PDF)
+                    androidx.compose.foundation.BorderStroke(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary
+                    )
+                else
+                    null
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    RadioButton(
+                        selected = theme == InvoiceTheme.HTML_PDF,
+                        onClick = { onThemeSelected(InvoiceTheme.HTML_PDF) }
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Modern HTML Style",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                        )
+                        Text(
+                            "Professional, modern design (Phase 6)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (theme == InvoiceTheme.HTML_PDF) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = "Selected",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HtmlStyleSelectionSection(
+    currentStyle: HtmlInvoiceStyle?,
+    onStyleSelected: (HtmlInvoiceStyle) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "HTML Invoice Style",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                "Choose your preferred HTML invoice design",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+            )
+
+            val style = currentStyle ?: HtmlInvoiceStyle.MODERN
+
+            // List all available HTML styles
+            HtmlInvoiceStyle.values().forEach { htmlStyle ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 12.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (theme == InvoiceTheme.CANVAS)
+                        containerColor = if (style == htmlStyle)
                             MaterialTheme.colorScheme.primaryContainer
                         else
                             MaterialTheme.colorScheme.surfaceVariant
                     ),
-                    border = if (theme == InvoiceTheme.CANVAS)
+                    border = if (style == htmlStyle)
                         androidx.compose.foundation.BorderStroke(
                             2.dp,
                             MaterialTheme.colorScheme.primary
@@ -311,72 +457,22 @@ fun ThemeSelectionSection(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         RadioButton(
-                            selected = theme == InvoiceTheme.CANVAS,
-                            onClick = { onThemeSelected(InvoiceTheme.CANVAS) }
+                            selected = style == htmlStyle,
+                            onClick = { onStyleSelected(htmlStyle) }
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Canvas Style",
+                                htmlStyle.displayName,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
                             )
                             Text(
-                                "Clean, traditional invoice design",
+                                htmlStyle.description,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        if (theme == InvoiceTheme.CANVAS) {
-                            Icon(
-                                Icons.Default.Check,
-                                contentDescription = "Selected",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-
-                // HTML-to-PDF Option
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (theme == InvoiceTheme.HTML_PDF)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                    border = if (theme == InvoiceTheme.HTML_PDF)
-                        androidx.compose.foundation.BorderStroke(
-                            2.dp,
-                            MaterialTheme.colorScheme.primary
-                        )
-                    else
-                        null
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        RadioButton(
-                            selected = theme == InvoiceTheme.HTML_PDF,
-                            onClick = { onThemeSelected(InvoiceTheme.HTML_PDF) }
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                "Modern HTML Style",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
-                            )
-                            Text(
-                                "Professional, modern design (Phase 6)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        if (theme == InvoiceTheme.HTML_PDF) {
+                        if (style == htmlStyle) {
                             Icon(
                                 Icons.Default.Check,
                                 contentDescription = "Selected",
