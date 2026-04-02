@@ -22,23 +22,21 @@ class InvoiceSettingsSimpleTest {
     @Test
     fun testSettingsCopy() {
         val original = InvoiceSettings.default("user1")
-        val updated = original.copy(businessName = "New Name")
-        assertThat(original.businessName).isEmpty()  // Default is empty
-        assertThat(updated.businessName).isEqualTo("New Name")
+        val updated = original.copy(primaryColor = "#FF5722")
+        assertThat(original.primaryColor).isEqualTo("#6B4C9A")  // Default purple
+        assertThat(updated.primaryColor).isEqualTo("#FF5722")
     }
 
     @Test
     fun testValidation() {
-        // Default settings have empty required fields, so they're invalid
+        // Default settings are valid (no required fields in InvoiceSettings)
         val defaultSettings = InvoiceSettings.default("user1")
-        assertThat(defaultSettings.isValid()).isFalse()
+        assertThat(defaultSettings.isValid()).isTrue()
 
-        // Valid settings must have all required fields
+        // Valid settings with theme selection
         val validSettings = defaultSettings.copy(
-            businessName = "Company",
-            businessEmail = "test@company.com",
-            businessPhone = "555-1234",
-            businessAddress = "123 Main St"
+            selectedTheme = InvoiceTheme.HTML_PDF,
+            primaryColor = "#FF5722"
         )
         assertThat(validSettings.isValid()).isTrue()
     }
@@ -50,19 +48,6 @@ class InvoiceSettingsSimpleTest {
 
         assertThat(canvas.selectedTheme).isEqualTo(InvoiceTheme.CANVAS)
         assertThat(html.selectedTheme).isEqualTo(InvoiceTheme.HTML_PDF)
-    }
-
-    @Test
-    fun testBankDetailsStorage() {
-        val settings = InvoiceSettings.default("user1").copy(
-            bankName = "Test Bank",
-            accountNumber = "123456",
-            accountHolder = "John Doe"
-        )
-
-        assertThat(settings.bankName).isEqualTo("Test Bank")
-        assertThat(settings.accountNumber).isEqualTo("123456")
-        assertThat(settings.accountHolder).isEqualTo("John Doe")
     }
 
     @Test
@@ -97,34 +82,6 @@ class InvoiceSettingsSimpleTest {
     }
 
     @Test
-    fun testBusinessInfo() {
-        val settings = InvoiceSettings.default("user1").copy(
-            businessName = "Test Company",
-            businessEmail = "test@company.com",
-            businessPhone = "555-1234",
-            businessAddress = "123 Main St"
-        )
-
-        assertThat(settings.businessName).isEqualTo("Test Company")
-        assertThat(settings.businessEmail).isEqualTo("test@company.com")
-        assertThat(settings.businessPhone).isEqualTo("555-1234")
-        assertThat(settings.businessAddress).isEqualTo("123 Main St")
-    }
-
-    @Test
-    fun testNullOptionalFields() {
-        val settings = InvoiceSettings.default("user1").copy(
-            businessWebsite = null,
-            secondaryColor = null,
-            bankName = null
-        )
-
-        assertThat(settings.businessWebsite).isNull()
-        assertThat(settings.secondaryColor).isNull()
-        assertThat(settings.bankName).isNull()
-    }
-
-    @Test
     fun testInvoiceNumberPrefix() {
         val settings = InvoiceSettings.default("user1").copy(
             invoiceNumberPrefix = "INV-"
@@ -133,5 +90,3 @@ class InvoiceSettingsSimpleTest {
         assertThat(settings.invoiceNumberPrefix).isEqualTo("INV-")
     }
 }
-
-

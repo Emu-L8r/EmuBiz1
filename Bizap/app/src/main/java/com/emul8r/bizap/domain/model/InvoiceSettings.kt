@@ -26,13 +26,17 @@ data class InvoiceSettings(
     @ColumnInfo(name = "selected_theme")
     val selectedTheme: InvoiceTheme = InvoiceTheme.CANVAS,
 
+    // PDF HTML STYLE SELECTION (for HTML-to-PDF theme)
+    @ColumnInfo(name = "selected_html_style")
+    val selectedHtmlStyle: HtmlInvoiceStyle = HtmlInvoiceStyle.MODERN,
+
     // PDF STYLING (kept for invoice appearance)
     @ColumnInfo(name = "primary_color")
     val primaryColor: String = "#6B4C9A",      // Default purple
     @ColumnInfo(name = "secondary_color")
-    val secondaryColor: String? = null,
+    val secondaryColor: String = "#f5f5f5",    // Light gray background
     @ColumnInfo(name = "accent_color")
-    val accentColor: String? = null,
+    val accentColor: String = "#2c3e50",       // Dark blue-gray for text
     @ColumnInfo(name = "font_family")
     val fontFamily: String? = null,
 
@@ -123,4 +127,58 @@ enum class TaxHandling {
     EXCLUSIVE    // Tax added to amount
 }
 
+/**
+ * User-friendly preset colors for invoice branding.
+ * Users select by name (e.g., "Professional Purple"), not hex codes.
+ *
+ * This eliminates the need for users to understand hex color codes,
+ * making color selection intuitive and accessible.
+ */
+enum class PresetColor(val hexCode: String, val displayName: String) {
+    PURPLE("#6B4C9A", "Professional Purple"),
+    BLUE("#2E5090", "Corporate Blue"),
+    GREEN("#27AE60", "Success Green"),
+    ORANGE("#E67E22", "Warm Orange"),
+    RED("#C0392B", "Professional Red"),
+    DARK_GRAY("#2C3E50", "Dark Gray"),
+    TEAL("#16A085", "Modern Teal"),
+    INDIGO("#3F51B5", "Indigo"),
+    NAVY("#1A5276", "Navy Blue"),
+    FOREST("#1E5631", "Forest Green"),
+    MAROON("#922B3E", "Maroon"),
+    SLATE("#34495E", "Slate Blue");
+
+    companion object {
+        /**
+         * Find preset color by hex code.
+         * Useful for converting saved hex back to preset.
+         *
+         * @param hex Hex color code to match
+         * @return Matching PresetColor or null if no match
+         */
+        fun fromHexCode(hex: String): PresetColor? {
+            return values().find { it.hexCode.equals(hex, ignoreCase = true) }
+        }
+    }
+}
+
+/**
+ * Enum for HTML-to-PDF invoice styles.
+ *
+ * Provides multiple professional design options for HTML-generated invoices:
+ * - MODERN: Premium modern design with purple gradient (default)
+ * - MINIMAL: Clean, minimalist design with black/white and simple lines
+ * - CORPORATE: Formal business design with serif fonts and blue gradient
+ * - CREATIVE: Vibrant, modern design with orange/teal colors (startup style)
+ */
+enum class HtmlInvoiceStyle(val displayName: String, val description: String, val styleFile: String) {
+    MODERN("Modern (Premium)", "Professional modern design with purple gradient", "invoice-styles.css"),
+    MINIMAL("Minimalist (Clean)", "Clean, elegant design with minimal styling", "invoice-styles-minimal.css"),
+    CORPORATE("Corporate (Formal)", "Formal business design with serif typography", "invoice-styles-corporate.css"),
+    CREATIVE("Creative (Startup)", "Vibrant, modern design perfect for startups", "invoice-styles-creative.css");
+
+    companion object {
+        fun getDefault() = MODERN
+    }
+}
 

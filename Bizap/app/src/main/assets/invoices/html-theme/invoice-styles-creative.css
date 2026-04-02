@@ -1,22 +1,22 @@
 /* ============================================================================
-   PROFESSIONAL INVOICE STYLESHEET - HTML-to-PDF THEME (PREMIUM MODERN DESIGN)
+   CREATIVE STARTUP INVOICE STYLESHEET - MODERN & VIBRANT DESIGN
    ============================================================================ */
 
 /* CSS Variables for Brand Customization */
 :root {
-    --primary-color: #6B4C9A;
-    --secondary-color: #f5f5f5;
-    --accent-color: #2c3e50;
-    --text-color: #333333;
-    --border-color: #e0e0e0;
+    --primary-color: #FF6B35;
+    --secondary-color: #fff8f3;
+    --accent-color: #004E89;
+    --text-color: #2c3e50;
+    --border-color: #ffe5d5;
     --success-color: #27ae60;
     --error-color: #e74c3c;
-    --light-gray: #f8f9fa;
-    --light-accent: #ece7f6;
+    --light-gray: #faf4ef;
+    --light-accent: #ffe5d5;
 
-    --font-primary: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-primary: 'Segoe UI', 'Trebuchet MS', sans-serif;
 
-    /* TYPOGRAPHY SCALE - PROFESSIONAL HIERARCHY */
+    /* TYPOGRAPHY SCALE - CREATIVE HIERARCHY */
     --font-size-base: 11pt;
     --font-size-small: 9pt;
     --font-size-large: 14pt;
@@ -63,57 +63,7 @@ html, body {
 }
 
 /* ============================================================================
-   SEMANTIC TYPOGRAPHY CLASSES
-   ============================================================================ */
-
-.heading-primary {
-    font-size: var(--font-size-heading);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-tight);
-    letter-spacing: -0.5px;
-}
-
-.heading-secondary {
-    font-size: var(--font-size-xlarge);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-tight);
-    letter-spacing: 0.5px;
-}
-
-.heading-tertiary {
-    font-size: var(--font-size-large);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-normal);
-}
-
-.body-text {
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-relaxed);
-}
-
-.body-text-emphasis {
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-medium);
-    line-height: var(--line-height-relaxed);
-}
-
-.caption-text {
-    font-size: var(--font-size-small);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--line-height-normal);
-    color: var(--accent-color);
-}
-
-.caption-text-bold {
-    font-size: var(--font-size-small);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-normal);
-    letter-spacing: 0.2px;
-}
-
-/* ============================================================================
-   INVOICE CONTAINER - CSS GRID LAYOUT
+   INVOICE CONTAINER
    ============================================================================ */
 
 .invoice-container {
@@ -129,7 +79,7 @@ html, body {
 }
 
 /* ============================================================================
-   HEADER SECTION
+   HEADER SECTION - CREATIVE STYLE
    ============================================================================ */
 
 .invoice-header {
@@ -138,9 +88,9 @@ html, body {
     align-items: flex-start;
     margin-bottom: var(--spacing-xl);
     padding: var(--spacing-xl);
-    background: linear-gradient(135deg, var(--primary-color), #5a3b88);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(107, 76, 154, 0.15);
+    background: linear-gradient(135deg, var(--primary-color), #ff8a50);
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(255, 107, 53, 0.2);
     color: white;
 }
 
@@ -160,14 +110,14 @@ html, body {
     font-weight: var(--font-weight-bold);
     color: white;
     margin-bottom: var(--spacing-sm);
-    letter-spacing: -0.5px;
+    letter-spacing: 0px;
     line-height: var(--line-height-tight);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .company-detail {
     font-size: var(--font-size-small);
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
     margin: 3px 0;
     font-weight: var(--font-weight-regular);
     line-height: var(--line-height-normal);
@@ -184,9 +134,9 @@ html, body {
     font-size: var(--font-size-xlarge);
     font-weight: var(--font-weight-bold);
     color: white;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     line-height: var(--line-height-tight);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     margin: 0;
     padding: 0;
 }
@@ -198,10 +148,10 @@ html, body {
 .invoice-metadata {
     margin-bottom: var(--spacing-xl);
     padding: var(--spacing-lg);
-    background-color: var(--light-gray);
+    background-color: var(--secondary-color);
     border-radius: 8px;
-    border: 1px solid #e8e8e8;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.1);
 }
 
 .metadata-grid {
@@ -215,8 +165,8 @@ html, body {
     flex-direction: column;
     padding: var(--spacing-md);
     background: white;
-    border-radius: 4px;
-    border-left: 3px solid var(--primary-color);
+    border-radius: 6px;
+    border-left: 4px solid var(--primary-color);
 }
 
 .metadata-label {
@@ -252,9 +202,9 @@ html, body {
 .bill-to-block {
     flex: 1;
     padding: var(--spacing-md);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: #fafafa;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--secondary-color);
 }
 
 .bill-to-block h3 {
@@ -284,7 +234,7 @@ html, body {
 }
 
 /* ============================================================================
-   ITEMS TABLE SECTION - ENHANCED PROFESSIONAL STYLING
+   ITEMS TABLE SECTION
    ============================================================================ */
 
 .items-section {
@@ -296,14 +246,14 @@ html, body {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: var(--spacing-lg);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    border-radius: 4px;
+    box-shadow: 0 3px 8px rgba(255, 107, 53, 0.12);
+    border-radius: 8px;
     overflow: hidden;
 }
 
-/* TABLE HEADER - PROFESSIONAL STYLING */
+/* TABLE HEADER */
 .items-table thead {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-color));
+    background: linear-gradient(135deg, var(--primary-color), #ff8a50);
     color: white;
 }
 
@@ -323,18 +273,18 @@ html, body {
     line-height: 1.4;
 }
 
-/* TABLE ROWS - ALTERNATING BACKGROUNDS FOR READABILITY */
+/* TABLE ROWS */
 .table-row {
     border-bottom: 1px solid var(--border-color);
     transition: background-color 0.2s ease;
 }
 
 .table-row.even {
-    background-color: rgba(245, 245, 245, 0.6);
+    background-color: var(--secondary-color);
 }
 
 .table-row.even:hover {
-    background-color: rgba(245, 245, 245, 0.9);
+    background-color: var(--light-accent);
 }
 
 .table-row.odd {
@@ -342,10 +292,10 @@ html, body {
 }
 
 .table-row.odd:hover {
-    background-color: rgba(250, 250, 250, 1);
+    background-color: var(--secondary-color);
 }
 
-/* TABLE CELLS - CONSISTENT SPACING AND ALIGNMENT */
+/* TABLE CELLS */
 .table-row td {
     padding: var(--spacing-lg) var(--spacing-lg);
     font-size: var(--font-size-base);
@@ -357,10 +307,10 @@ html, body {
 }
 
 .table-row:last-child td {
-    border-bottom: 1px solid var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
 }
 
-/* COLUMN ALIGNMENT - PROFESSIONAL LAYOUT */
+/* COLUMN ALIGNMENT */
 .col-description {
     width: 50%;
     font-weight: 500;
@@ -403,8 +353,8 @@ html, body {
 
 .totals-summary {
     border: 2px solid var(--primary-color);
-    border-radius: 4px;
-    background-color: #fafafa;
+    border-radius: 8px;
+    background-color: var(--secondary-color);
     overflow: hidden;
 }
 
@@ -435,10 +385,10 @@ html, body {
 }
 
 .summary-row.total-due {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-color));
+    background: linear-gradient(135deg, var(--primary-color), #ff8a50);
     color: white;
     padding: var(--spacing-lg);
-    border-radius: 0 0 2px 2px;
+    border-radius: 0 0 6px 6px;
 }
 
 .summary-row.total-due .total-label,
@@ -459,7 +409,7 @@ html, body {
     padding: var(--spacing-md);
     background-color: var(--secondary-color);
     border-left: 4px solid var(--primary-color);
-    border-radius: 4px;
+    border-radius: 6px;
 }
 
 .payment-section h3 {
@@ -505,7 +455,7 @@ html, body {
     padding: var(--spacing-md);
     background-color: var(--secondary-color);
     border-left: 4px solid var(--accent-color);
-    border-radius: 4px;
+    border-radius: 6px;
 }
 
 .notes-section h3 {
@@ -532,7 +482,7 @@ html, body {
 .invoice-footer {
     margin-top: var(--spacing-xl);
     padding-top: var(--spacing-lg);
-    border-top: 1px solid var(--border-color);
+    border-top: 2px solid var(--border-color);
     text-align: center;
 }
 

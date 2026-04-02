@@ -19,12 +19,6 @@ object TestDataFixtures {
      */
     val sampleCompany1 = InvoiceSettings(
         userId = "test_user_1",
-        businessName = "Acme Technology Solutions",
-        businessEmail = "billing@acme-tech.com",
-        businessPhone = "+1-555-0100",
-        businessAddress = "123 Innovation Drive, San Francisco, CA 94105, USA",
-        businessWebsite = "www.acme-tech.com",
-        taxId = "ABN12345678901",
         taxRate = 0.10,
         taxName = "GST",
         paymentTermsDays = 30,
@@ -33,11 +27,7 @@ object TestDataFixtures {
         invoiceNumberPrefix = "ACM-",
         selectedTheme = InvoiceTheme.CANVAS,
         primaryColor = "#0066CC",
-        secondaryColor = "#E6F2FF",
-        bankName = "First National Bank",
-        accountNumber = "123456789012",
-        routingCode = "021000021",
-        accountHolder = "Acme Technology Solutions"
+        secondaryColor = "#E6F2FF"
     )
 
     /**
@@ -45,12 +35,6 @@ object TestDataFixtures {
      */
     val sampleCompany2 = InvoiceSettings(
         userId = "test_user_2",
-        businessName = "Creative Studios Plus",
-        businessEmail = "admin@creative-studios.com",
-        businessPhone = "+1-555-0200",
-        businessAddress = "456 Art Avenue, New York, NY 10001, USA",
-        businessWebsite = "www.creative-studios.com",
-        taxId = "ABN87654321098",
         taxRate = 0.15,
         taxName = "VAT",
         paymentTermsDays = 45,
@@ -59,11 +43,7 @@ object TestDataFixtures {
         invoiceNumberPrefix = "CS-",
         selectedTheme = InvoiceTheme.HTML_PDF,
         primaryColor = "#FF6600",
-        secondaryColor = "#FFE6CC",
-        bankName = "Creative Bank",
-        accountNumber = "987654321098",
-        routingCode = "021000021",
-        accountHolder = "Creative Studios Plus"
+        secondaryColor = "#FFE6CC"
     )
 
     /**
@@ -71,12 +51,6 @@ object TestDataFixtures {
      */
     val sampleCompany3 = InvoiceSettings(
         userId = "test_user_3",
-        businessName = "Enterprise Solutions Inc",
-        businessEmail = "finance@enterprise-solutions.com",
-        businessPhone = "+1-555-0300",
-        businessAddress = "789 Business Boulevard, Chicago, IL 60601, USA",
-        businessWebsite = "www.enterprise-solutions.com",
-        taxId = "ABN11223344556",
         taxRate = 0.08,
         taxName = "Sales Tax",
         paymentTermsDays = 60,
@@ -85,11 +59,7 @@ object TestDataFixtures {
         invoiceNumberPrefix = "ESI-",
         selectedTheme = InvoiceTheme.CANVAS,
         primaryColor = "#006633",
-        secondaryColor = "#E6F5E0",
-        bankName = "Business Bank Corp",
-        accountNumber = "555444333222",
-        routingCode = "021000021",
-        accountHolder = "Enterprise Solutions Inc"
+        secondaryColor = "#E6F5E0"
     )
 
     // ============================================================================

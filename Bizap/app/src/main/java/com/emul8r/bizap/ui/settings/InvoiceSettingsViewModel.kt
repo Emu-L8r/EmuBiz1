@@ -3,6 +3,7 @@ package com.emul8r.bizap.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
+import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
 import com.emul8r.bizap.domain.model.InvoiceSettings
 import com.emul8r.bizap.domain.model.InvoiceTheme
 import com.emul8r.bizap.domain.model.TaxHandling
@@ -107,6 +108,18 @@ class InvoiceSettingsViewModel @Inject constructor(
     }
 
     /**
+     * Update selected HTML invoice style (for HTML-to-PDF theme).
+     * Only used when selectedTheme == InvoiceTheme.HTML_PDF
+     */
+    fun updateSelectedHtmlStyle(style: HtmlInvoiceStyle) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(selectedHtmlStyle = style)
+            )
+        }
+    }
+
+    /**
      * Update payment terms (days) in current settings.
      */
     fun updatePaymentTermsDays(days: Int) {
@@ -142,31 +155,59 @@ class InvoiceSettingsViewModel @Inject constructor(
 
     /**
      * Save current settings to repository.
-     * OPTIMIZATION: Removed 2-second delay, success flag auto-resets via UI
      */
     fun saveSettings() {
         viewModelScope.launch {
             try {
-                _uiState.value.settings?.let { settings ->
-                    if (!settings.isValid()) {
-                        _uiState.value = _uiState.value.copy(
-                            error = "Invalid settings: Missing required fields"
-                        )
-                        return@launch
-                    }
+                Timber.d("SAVE_SETTINGS_CALLED")
 
-                    _uiState.value = _uiState.value.copy(isSaving = true)
-                    repository.saveSettings(settings)
+                val currentSettings = _uiState.value.settings
+                Timber.d("Current settings loaded: ${currentSettings != null}")
+                Timber.d("Settings theme: ${currentSettings?.selectedTheme?.name}")
+
+                if (currentSettings == null) {
+                    Timber.e("ERROR: Settings is NULL - cannot save")
                     _uiState.value = _uiState.value.copy(
-                        saveSuccess = true,
-                        error = null,
+                        error = "ERROR: Settings not loaded",
                         isSaving = false
                     )
-                    Timber.d("Settings saved successfully")
-                    _uiState.value = _uiState.value.copy(saveSuccess = false)
+                    return@launch
                 }
+
+                // Validate settings - selectedTheme should never be null due to default value
+                if (!currentSettings.isValid()) {
+                    Timber.e("ERROR: Settings validation failed - theme is null")
+                    _uiState.value = _uiState.value.copy(
+                        error = "Invalid settings: Theme not selected"
+                    )
+                    return@launch
+                }
+
+                _uiState.value = _uiState.value.copy(isSaving = true)
+                Timber.d("Calling repository.saveSettings() with theme: ${currentSettings.selectedTheme}")
+
+                // Call the suspend function - we're already in viewModelScope.launch context
+                try {
+                    repository.saveSettings(currentSettings)
+                    Timber.d("repository.saveSettings() completed successfully")
+                } catch (dbException: Exception) {
+                    Timber.e(dbException, "Database error while saving settings: ${dbException.message}")
+                    throw dbException
+                }
+
+                _uiState.value = _uiState.value.copy(
+                    saveSuccess = true,
+                    error = null,
+                    isSaving = false
+                )
+                Timber.d("Settings saved successfully - saveSuccess flag set to true")
+
+                // Auto-hide success message after 500ms
+                delay(500)
+                _uiState.value = _uiState.value.copy(saveSuccess = false)
+
             } catch (e: Exception) {
-                Timber.e(e, "Failed to save settings")
+                Timber.e(e, "Exception during saveSettings: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     error = "Failed to save settings: ${e.message}",
                     isSaving = false

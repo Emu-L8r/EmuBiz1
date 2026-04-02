@@ -39,7 +39,7 @@ class InvoiceThemeManager @Inject constructor(
      * Generate PDF using the appropriate theme/strategy.
      *
      * @param snapshot Invoice data to convert to PDF
-     * @param settings User's invoice settings (includes theme preference)
+     * @param settings User's invoice settings (includes theme preference and HTML style)
      * @param isQuote Whether this is a quote or invoice
      * @param overwriteExisting Whether to overwrite existing PDF
      * @return Generated PDF file
@@ -52,9 +52,11 @@ class InvoiceThemeManager @Inject constructor(
     ): File {
         return when (settings.selectedTheme) {
             InvoiceTheme.HTML_PDF -> {
-                Timber.d("Generating PDF using HTML-to-PDF theme")
+                Timber.d("Generating PDF using HTML-to-PDF theme with style: ${settings.selectedHtmlStyle.displayName}")
                 try {
-                    htmlPdfService.generatePdf(
+                    // Create service instance with settings so it can access selectedHtmlStyle
+                    val htmlService = HtmlPdfInvoiceService(context, settings)
+                    htmlService.generatePdf(
                         snapshot = snapshot,
                         isQuote = isQuote,
                         overwriteExisting = overwriteExisting,
