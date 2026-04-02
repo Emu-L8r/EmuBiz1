@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice ${invoiceNumber}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            background: #f5f5f5;
+        }
+
+        .invoice-container {
+            max-width: 210mm;
+            height: 297mm;
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ========== HEADER SECTION ========== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid ${primaryColor};
+            position: relative;
+        }
+
+        .company-info {
+            flex: 1;
+        }
+
+        .company-logo {
+            width: 80px;
+            height: auto;
+            margin-bottom: 12px;
+            border-radius: 8px;
+        }
+
+        .company-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: ${primaryColor};
+            margin-bottom: 8px;
+        }
+
+        .company-details {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .company-details p {
+            margin: 4px 0;
+        }
+
+        .invoice-badge {
+            text-align: right;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .invoice-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .invoice-number {
+            font-size: 14px;
+            opacity: 0.9;
+            margin: 4px 0;
+        }
+
+        /* ========== METADATA SECTION ========== */
+        .metadata {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+            background: #f9f9f9;
+            padding: 24px;
+            border-radius: 8px;
+            border-left: 4px solid ${primaryColor};
+        }
+
+        .metadata-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metadata-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #999;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .metadata-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* ========== PARTIES SECTION ========== */
+        .parties {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .party-card {
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .party-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: ${primaryColor};
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .party-details {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.9;
+        }
+
+        .party-details p {
+            margin: 4px 0;
+        }
+
+        .party-details strong {
+            color: #333;
+            font-weight: 600;
+        }
+
+        /* ========== ITEMS TABLE ========== */
+        .items-section {
+            margin-bottom: 30px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+        }
+
+        .items-table thead {
+            background: ${primaryColor};
+            color: white;
+        }
+
+        .items-table th {
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+        }
+
+        .items-table th:last-child {
+            text-align: right;
+        }
+
+        .items-table th:nth-child(2),
+        .items-table th:nth-child(3),
+        .items-table th:nth-child(4) {
+            text-align: center;
+        }
+
+        .items-table tbody tr {
+            border-bottom: 1px solid #e8e8e8;
+            transition: background-color 0.2s ease;
+        }
+
+        .items-table tbody tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+
+        .items-table tbody tr:hover {
+            background: #f0f0f0;
+        }
+
+        .items-table td {
+            padding: 16px 12px;
+            font-size: 13px;
+            color: #444;
+        }
+
+        .items-table td:last-child {
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .items-table td:nth-child(2),
+        .items-table td:nth-child(3),
+        .items-table td:nth-child(4) {
+            text-align: center;
+        }
+
+        .item-description {
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* ========== SUMMARY SECTION ========== */
+        .summary {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 40px;
+        }
+
+        .summary-box {
+            width: 320px;
+            background: linear-gradient(135deg, ${primaryColor}05, ${primaryColor}10);
+            border: 2px solid ${primaryColor};
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .summary-row.total {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 2px solid ${primaryColor};
+            font-weight: 700;
+            font-size: 16px;
+            color: ${primaryColor};
+        }
+
+        .summary-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .summary-value {
+            color: #333;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .summary-row.total .summary-value {
+            color: ${primaryColor};
+            font-size: 18px;
+        }
+
+        /* ========== PAYMENT & NOTES SECTION ========== */
+        .footer-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-card {
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .footer-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: ${primaryColor};
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .footer-card-content {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .footer-card-content p {
+            margin: 6px 0;
+        }
+
+        .payment-method {
+            font-weight: 600;
+            color: #333;
+            margin-top: 8px;
+        }
+
+        /* ========== BOTTOM FOOTER ========== */
+        .bottom-footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e8e8e8;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .thank-you {
+            font-size: 14px;
+            color: ${primaryColor};
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .footer-contact {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        /* ========== PRINT STYLES ========== */
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+
+            .invoice-container {
+                box-shadow: none;
+                margin: 0;
+                padding: 40px;
+                max-width: 100%;
+                height: auto;
+            }
+
+            .items-table {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .invoice-container {
+                padding: 20px;
+            }
+
+            .header {
+                flex-direction: column;
+                margin-bottom: 30px;
+            }
+
+            .invoice-badge {
+                text-align: left;
+                margin-top: 20px;
+            }
+
+            .metadata {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .parties {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .summary {
+                justify-content: center;
+            }
+
+            .footer-section {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .items-table {
+                font-size: 12px;
+            }
+
+            .items-table th,
+            .items-table td {
+                padding: 10px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="company-info">
+                <#if companyLogo??>
+                    <img src="${companyLogo}" alt="Company Logo" class="company-logo">
+                </#if>
+                <div class="company-name">${companyName}</div>
+                <div class="company-details">
+                    <#if businessEmail??>
+                        <p>${businessEmail}</p>
+                    </#if>
+                    <#if businessPhone??>
+                        <p>${businessPhone}</p>
+                    </#if>
+                    <#if businessAddress??>
+                        <p>${businessAddress}</p>
+                    </#if>
+                    <#if businessWebsite??>
+                        <p>${businessWebsite}</p>
+                    </#if>
+                </div>
+            </div>
+
+            <div class="invoice-badge">
+                <div class="invoice-title">INVOICE</div>
+                <div class="invoice-number">Invoice #${invoiceNumber}</div>
+                <div class="invoice-number">Dated: ${formattedInvoiceDate}</div>
+            </div>
+        </div>
+
+        <!-- METADATA -->
+        <div class="metadata">
+            <div class="metadata-block">
+                <div class="metadata-label">Invoice Date</div>
+                <div class="metadata-value">${formattedInvoiceDate}</div>
+            </div>
+            <div class="metadata-block">
+                <div class="metadata-label">Due Date</div>
+                <div class="metadata-value">${formattedDueDate}</div>
+            </div>
+        </div>
+
+        <!-- PARTIES -->
+        <div class="parties">
+            <div class="party-card">
+                <div class="party-title">Bill To</div>
+                <div class="party-details">
+                    <p><strong>${clientName}</strong></p>
+                    <#if clientEmail??><p>${clientEmail}</p></#if>
+                    <#if clientPhone??><p>${clientPhone}</p></#if>
+                    <#if clientAddress??><p>${clientAddress}</p></#if>
+                </div>
+            </div>
+
+            <div class="party-card">
+                <div class="party-title">From</div>
+                <div class="party-details">
+                    <p><strong>${companyName}</strong></p>
+                    <#if businessEmail??><p>${businessEmail}</p></#if>
+                    <#if taxId??><p>Tax ID: ${taxId}</p></#if>
+                </div>
+            </div>
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <div class="items-section">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <#list items as item>
+                    <tr>
+                        <td class="item-description">${item.description}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.unitPrice}</td>
+                        <td>${item.totalAmount}</td>
+                    </tr>
+                    </#list>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="summary">
+            <div class="summary-box">
+                <div class="summary-row">
+                    <span class="summary-label">Subtotal</span>
+                    <span class="summary-value">${subtotal}</span>
+                </div>
+                <#if taxAmount??>
+                <div class="summary-row">
+                    <span class="summary-label">${taxName} (${taxRate}%)</span>
+                    <span class="summary-value">${taxAmount}</span>
+                </div>
+                </#if>
+                <#if discount??>
+                <div class="summary-row">
+                    <span class="summary-label">Discount</span>
+                    <span class="summary-value">-${discount}</span>
+                </div>
+                </#if>
+                <div class="summary-row total">
+                    <span class="summary-label">Total Due</span>
+                    <span class="summary-value">${totalAmount}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER SECTION -->
+        <div class="footer-section">
+            <div class="footer-card">
+                <div class="footer-card-title">Payment Details</div>
+                <div class="footer-card-content">
+                    <#if paymentTerms??><p><strong>Terms:</strong> ${paymentTerms}</p></#if>
+                    <#if bankName??><p><strong>Bank:</strong> ${bankName}</p></#if>
+                    <#if accountNumber??><p><strong>Account:</strong> ${accountNumber}</p></#if>
+                </div>
+            </div>
+
+            <div class="footer-card">
+                <div class="footer-card-title">Notes</div>
+                <div class="footer-card-content">
+                    <#if notes??>${notes}</#if>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM FOOTER -->
+        <div class="bottom-footer">
+            <div class="thank-you">Thank you for your business!</div>
+            <div class="footer-contact">
+                <#if businessWebsite??>${businessWebsite} | </#if>
+                <#if businessEmail??>${businessEmail}</#if>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

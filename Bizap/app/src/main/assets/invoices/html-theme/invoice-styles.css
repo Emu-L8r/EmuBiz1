@@ -1,0 +1,447 @@
+/* ============================================================================
+   PROFESSIONAL INVOICE STYLESHEET - HTML-to-PDF THEME
+   ============================================================================ */
+
+/* CSS Variables for Brand Customization */
+:root {
+    --primary-color: #6B4C9A;
+    --secondary-color: #f5f5f5;
+    --accent-color: #2c3e50;
+    --text-color: #333333;
+    --border-color: #e0e0e0;
+    --success-color: #27ae60;
+    --error-color: #e74c3c;
+
+    --font-primary: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-size-base: 11pt;
+    --font-size-small: 9pt;
+    --font-size-large: 14pt;
+    --font-size-xlarge: 18pt;
+
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+}
+
+/* ============================================================================
+   GLOBAL STYLES
+   ============================================================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    color: var(--text-color);
+    line-height: 1.6;
+    background: white;
+}
+
+/* ============================================================================
+   INVOICE CONTAINER
+   ============================================================================ */
+
+.invoice-container {
+    max-width: 210mm;
+    height: 297mm;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+    background: white;
+    font-size: var(--font-size-base);
+}
+
+/* ============================================================================
+   HEADER SECTION
+   ============================================================================ */
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 3px solid var(--primary-color);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: var(--spacing-xl);
+}
+
+.company-info {
+    flex: 1;
+}
+
+.company-name {
+    font-size: var(--font-size-xlarge);
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+}
+
+.company-detail {
+    font-size: var(--font-size-small);
+    color: var(--accent-color);
+    margin: 2px 0;
+}
+
+.invoice-title {
+    text-align: right;
+}
+
+.invoice-title h2 {
+    font-size: var(--font-size-xlarge);
+    font-weight: 700;
+    color: var(--primary-color);
+    letter-spacing: 2px;
+}
+
+/* ============================================================================
+   METADATA SECTION
+   ============================================================================ */
+
+.invoice-metadata {
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-md);
+    background-color: var(--secondary-color);
+    border-radius: 4px;
+}
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.metadata-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.metadata-label {
+    font-weight: 600;
+    font-size: var(--font-size-small);
+    color: var(--accent-color);
+    margin-bottom: 2px;
+}
+
+.metadata-value {
+    font-size: var(--font-size-base);
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+/* ============================================================================
+   BILL TO SECTION
+   ============================================================================ */
+
+.bill-to-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.bill-to-container {
+    display: flex;
+    gap: var(--spacing-lg);
+}
+
+.bill-to-block {
+    flex: 1;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #fafafa;
+}
+
+.bill-to-block h3 {
+    font-size: var(--font-size-large);
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+}
+
+.customer-name {
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    margin-bottom: 4px;
+}
+
+.customer-detail {
+    font-size: var(--font-size-small);
+    color: var(--accent-color);
+    margin: 2px 0;
+}
+
+/* ============================================================================
+   ITEMS TABLE SECTION
+   ============================================================================ */
+
+.items-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--spacing-lg);
+}
+
+.items-table thead {
+    background-color: var(--primary-color);
+}
+
+.table-header {
+    color: white;
+}
+
+.table-header th {
+    padding: var(--spacing-md);
+    text-align: left;
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    border: 1px solid var(--border-color);
+}
+
+.table-row {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table-row.even {
+    background-color: var(--secondary-color);
+}
+
+.table-row.odd {
+    background-color: white;
+}
+
+.table-row td {
+    padding: var(--spacing-md);
+    font-size: var(--font-size-base);
+    border: 1px solid var(--border-color);
+}
+
+.col-description {
+    width: 50%;
+}
+
+.col-quantity {
+    width: 15%;
+    text-align: center;
+}
+
+.col-unit-price {
+    width: 18%;
+    text-align: right;
+}
+
+.col-amount {
+    width: 17%;
+    text-align: right;
+    font-weight: 600;
+}
+
+/* ============================================================================
+   TOTALS SECTION
+   ============================================================================ */
+
+.totals-section {
+    margin-bottom: var(--spacing-xl);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.totals-container {
+    width: 50%;
+}
+
+.totals-summary {
+    border: 2px solid var(--primary-color);
+    border-radius: 4px;
+    background-color: #fafafa;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-label {
+    font-weight: 600;
+    color: var(--accent-color);
+    font-size: var(--font-size-base);
+}
+
+.summary-value {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: var(--font-size-base);
+    text-align: right;
+}
+
+.summary-row.total-due {
+    background-color: var(--primary-color);
+    color: white;
+    padding: var(--spacing-lg);
+    border-radius: 0 0 2px 2px;
+}
+
+.summary-row.total-due .total-label,
+.summary-row.total-due .total-value {
+    color: white;
+    font-size: var(--font-size-large);
+    font-weight: 700;
+}
+
+/* ============================================================================
+   PAYMENT SECTION
+   ============================================================================ */
+
+.payment-section {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--secondary-color);
+    border-left: 4px solid var(--primary-color);
+    border-radius: 4px;
+}
+
+.payment-section h3 {
+    font-size: var(--font-size-large);
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+}
+
+.payment-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.payment-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-base);
+}
+
+.payment-label {
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+.payment-value {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+/* ============================================================================
+   NOTES SECTION
+   ============================================================================ */
+
+.notes-section {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--secondary-color);
+    border-left: 4px solid var(--accent-color);
+    border-radius: 4px;
+}
+
+.notes-section h3 {
+    font-size: var(--font-size-large);
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: var(--spacing-sm);
+}
+
+.notes-content {
+    font-size: var(--font-size-base);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* ============================================================================
+   FOOTER SECTION
+   ============================================================================ */
+
+.invoice-footer {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.footer-message {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+}
+
+.footer-website {
+    font-size: var(--font-size-small);
+    color: var(--accent-color);
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .invoice-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+    }
+
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+}
+
+/* ============================================================================
+   RESPONSIVE STYLES
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .invoice-container {
+        padding: var(--spacing-sm);
+    }
+
+    .metadata-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-sm);
+    }
+
+    .table-header th,
+    .table-row td {
+        padding: var(--spacing-sm);
+        font-size: 9pt;
+    }
+
+    .totals-container {
+        width: 100%;
+    }
+}
+

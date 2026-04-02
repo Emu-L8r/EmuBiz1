@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import com.emul8r.bizap.domain.model.LineItem
+import timber.log.Timber
 
 @Composable
 fun ModernLineItemsEditor(
@@ -46,6 +47,7 @@ fun ModernLineItemsEditor(
                     OutlinedTextField(
                         value = lineItem.description,
                         onValueChange = { newDesc ->
+                            Timber.d("📝 LineItemsEditor[$index]: Description changed to '$newDesc'")
                             val updated = items.toMutableList()
                             updated[index] = updated[index].copy(description = newDesc)
                             onItemsChange(updated)
@@ -69,6 +71,7 @@ fun ModernLineItemsEditor(
                     OutlinedTextField(
                         value = lineItem.quantity.toString(),
                         onValueChange = { newQty ->
+                            Timber.d("📊 LineItemsEditor[$index]: Quantity changed to '$newQty'")
                             val updated = items.toMutableList()
                             updated[index] = updated[index].copy(quantity = newQty.toDoubleOrNull() ?: 1.0)
                             onItemsChange(updated)
@@ -86,6 +89,7 @@ fun ModernLineItemsEditor(
                     OutlinedTextField(
                         value = if (lineItem.unitPrice == 0L) "" else (lineItem.unitPrice.toDouble() / 100.0).toString(),
                         onValueChange = { newPrice ->
+                            Timber.d("💰 LineItemsEditor[$index]: Price changed to '$newPrice'")
                             val updated = items.toMutableList()
                             // Convert dollars input to cents (e.g., 100 -> 10000 cents)
                             val priceInCents = newPrice.toDoubleOrNull()?.let { (it * 100).toLong() } ?: 0L
@@ -140,12 +144,18 @@ fun ModernLineItemsEditor(
         // Add Item button
         Button(
             onClick = {
-                onItemsChange(items + LineItem(
+                Timber.d("🎬 ADD ITEM BUTTON CLICKED!")
+                Timber.d("   Current items: ${items.size}")
+                Timber.d("   Creating new item with ID=${(items.maxOfOrNull { it.id } ?: 0) + 1}")
+                val newItem = LineItem(
                     id = (items.maxOfOrNull { it.id } ?: 0) + 1,
                     description = "",
                     quantity = 1.0,
                     unitPrice = 0L
-                ))
+                )
+                Timber.d("   Calling onItemsChange with ${items.size + 1} items")
+                onItemsChange(items + newItem)
+                Timber.d("   ✅ onItemsChange callback executed")
             },
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)

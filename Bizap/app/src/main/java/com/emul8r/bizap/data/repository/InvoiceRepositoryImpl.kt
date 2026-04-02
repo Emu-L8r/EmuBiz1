@@ -52,15 +52,13 @@ class InvoiceRepositoryImpl @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getAllInvoicesWithItems(): Flow<List<Invoice>> {
-        // Scoped to active business
-        return businessProfileRepository.activeProfile.flatMapLatest { business ->
-            invoiceDao.getInvoicesByBusinessId(business.id)
-                .map { list -> list.map { it.toDomain() } }
-                .catch { e ->
-                    Timber.e(e, "Error fetching invoices for business ${business.id}")
-                    emit(emptyList())
-                }
-        }
+        // Return ALL invoices - ViewModel will filter by business from navigation
+        return invoiceDao.getAllInvoices()
+            .map { list -> list.map { it.toDomain() } }
+            .catch { e ->
+                Timber.e(e, "Error fetching all invoices")
+                emit(emptyList())
+            }
     }
 
     override fun getInvoiceWithItemsById(id: Long): Flow<Invoice?> {

@@ -1,6 +1,7 @@
 package com.emul8r.bizap.domain.service
 
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
+import com.emul8r.bizap.domain.model.InvoiceTheme
 import java.io.File
 
 /**
@@ -13,6 +14,7 @@ import java.io.File
  * **Responsibility:**
  * Generate PDF files from invoice snapshots and return the File path.
  * Handles internal storage management and file validation.
+ * Supports multiple themes (Canvas, HTML-to-PDF, etc.).
  *
  * **Implementation:**
  * Implemented by `InvoicePdfService` in the data layer,
@@ -26,6 +28,7 @@ interface PdfGenerationService {
      * @param snapshot         Invoice snapshot containing all data needed for PDF rendering
      * @param isQuote          If true, generates a Quote PDF; if false, generates an Invoice PDF
      * @param overwriteExisting If true, overwrites existing PDF for this invoice; if false, versions it
+     * @param theme            Optional theme selection (CANVAS or HTML_PDF). Defaults to CANVAS if null.
      *
      * @return A [File] object pointing to the generated PDF file in internal storage
      *
@@ -35,7 +38,8 @@ interface PdfGenerationService {
     suspend fun generatePdf(
         snapshot: InvoiceSnapshot,
         isQuote: Boolean,
-        overwriteExisting: Boolean = true
+        overwriteExisting: Boolean = true,
+        theme: InvoiceTheme? = null
     ): File
 }
 

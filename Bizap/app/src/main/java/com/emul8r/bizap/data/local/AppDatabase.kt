@@ -3,9 +3,12 @@ package com.emul8r.bizap.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.emul8r.bizap.data.local.entities.*
 import com.emul8r.bizap.data.local.entity.NoteEntity
 import com.emul8r.bizap.data.local.dao.*
+import com.emul8r.bizap.data.local.migration.MIGRATION_AddInvoiceSettings
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTimeTypeConverter
@@ -36,9 +39,10 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
         InvoiceItemEntity::class,
         PaymentEntity::class,
         NoteEntity::class,
-        AnalyticsEventEntity::class  // NEW: Event tracking
+        AnalyticsEventEntity::class,  // Event tracking
+        com.emul8r.bizap.domain.model.InvoiceSettings::class  // Invoice settings
     ],
-    version = 37,  // v36→37: Remove UNIQUE constraint on email (optional field)
+    version = 38,  // v37→38: Add invoice_settings table for centralized configuration
     exportSchema = true
 )
 @TypeConverters(
@@ -66,5 +70,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun customerDaoV2(): CustomerDaoV2
     abstract fun paymentDaoV2(): PaymentDaoV2
     abstract fun noteDao(): NoteDao
-    abstract fun analyticsEventDao(): AnalyticsEventDao  // NEW: Event tracking
+    abstract fun analyticsEventDao(): AnalyticsEventDao  // Event tracking
+    abstract fun invoiceSettingsDao(): InvoiceSettingsDao  // Invoice settings
 }

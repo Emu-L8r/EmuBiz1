@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice ${invoiceNumber}</title>
+    <link rel="stylesheet" href="invoice-styles.css">
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- HEADER SECTION -->
+        <header class="invoice-header">
+            <div class="header-content">
+                <div class="company-info">
+                    <h1 class="company-name">${companyName}</h1>
+                    <p class="company-detail">${businessEmail}</p>
+                    <p class="company-detail">${businessPhone}</p>
+                    <p class="company-detail">${businessAddress}</p>
+                </div>
+                <div class="invoice-title">
+                    <h2>INVOICE</h2>
+                </div>
+            </div>
+        </header>
+
+        <!-- INVOICE METADATA SECTION -->
+        <section class="invoice-metadata">
+            <div class="metadata-grid">
+                <div class="metadata-item">
+                    <span class="metadata-label">Invoice Number:</span>
+                    <span class="metadata-value">${invoiceNumber}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">Invoice Date:</span>
+                    <span class="metadata-value">${invoiceDate}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">Due Date:</span>
+                    <span class="metadata-value">${dueDate}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="metadata-label">Status:</span>
+                    <span class="metadata-value">${status}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- BILL TO SECTION -->
+        <section class="bill-to-section">
+            <div class="bill-to-container">
+                <div class="bill-to-block">
+                    <h3>Bill To</h3>
+                    <p class="customer-name">${customerName}</p>
+                    <p class="customer-detail">${customerEmail}</p>
+                    <p class="customer-detail">${customerPhone}</p>
+                    <p class="customer-detail">${customerAddress}</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ITEMS TABLE SECTION -->
+        <section class="items-section">
+            <table class="items-table">
+                <thead>
+                    <tr class="table-header">
+                        <th class="col-description">Description</th>
+                        <th class="col-quantity">Quantity</th>
+                        <th class="col-unit-price">Unit Price</th>
+                        <th class="col-amount">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <#list items as item>
+                    <tr class="table-row <#if item?index % 2 == 0>even<#else>odd</#if>">
+                        <td class="col-description">${item.description}</td>
+                        <td class="col-quantity">${item.quantity}</td>
+                        <td class="col-unit-price">${item.unitPrice?string("0.00")}</td>
+                        <td class="col-amount">${item.amount?string("0.00")}</td>
+                    </tr>
+                    </#list>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- TOTALS SECTION -->
+        <section class="totals-section">
+            <div class="totals-container">
+                <div class="totals-summary">
+                    <div class="summary-row">
+                        <span class="summary-label">Subtotal:</span>
+                        <span class="summary-value">${subtotal?string("0.00")}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">${taxName} (${taxRate?string("0.00")}%):</span>
+                        <span class="summary-value">${taxAmount?string("0.00")}</span>
+                    </div>
+                    <div class="summary-row total-due">
+                        <span class="total-label">TOTAL DUE:</span>
+                        <span class="total-value">${totalAmount?string("0.00")}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAYMENT DETAILS SECTION -->
+        <#if showPaymentDetails>
+        <section class="payment-section">
+            <div class="payment-container">
+                <h3>Payment Details</h3>
+                <div class="payment-content">
+                    <div class="payment-item">
+                        <span class="payment-label">Payment Terms:</span>
+                        <span class="payment-value">${paymentTermsDays} days</span>
+                    </div>
+                    <#if bankName??>
+                    <div class="payment-item">
+                        <span class="payment-label">Bank Name:</span>
+                        <span class="payment-value">${bankName}</span>
+                    </div>
+                    </#if>
+                    <#if accountNumber??>
+                    <div class="payment-item">
+                        <span class="payment-label">Account Number:</span>
+                        <span class="payment-value">${accountNumber}</span>
+                    </div>
+                    </#if>
+                </div>
+            </div>
+        </section>
+        </#if>
+
+        <!-- NOTES SECTION -->
+        <#if notes??>
+        <section class="notes-section">
+            <h3>Notes</h3>
+            <p class="notes-content">${notes}</p>
+        </section>
+        </#if>
+
+        <!-- FOOTER SECTION -->
+        <footer class="invoice-footer">
+            <p class="footer-message">Thank you for your business!</p>
+            <#if websiteUrl??>
+            <p class="footer-website">${websiteUrl}</p>
+            </#if>
+        </footer>
+    </div>
+</body>
+</html>
+
