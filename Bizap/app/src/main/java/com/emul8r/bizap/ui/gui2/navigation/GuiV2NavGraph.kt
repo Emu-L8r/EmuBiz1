@@ -30,6 +30,7 @@ import com.emul8r.bizap.ui.gui2.settings.AppAppearanceScreenV2
 import com.emul8r.bizap.ui.gui2.settings.InvoiceCustomizationSettingsScreenV2
 import com.emul8r.bizap.ui.settings.backup.BackupRestoreScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileScreen
+import com.emul8r.bizap.ui.settings.InvoiceSettingsScreen
 import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.ui.navigation.Screen
@@ -197,8 +198,8 @@ fun GuiV2NavGraph(
                 onAppAppearanceClick = {
                     navController.navigate(ScreenV2.AppAppearance(route.businessId))
                 },
-                onInvoiceCustomizationClick = {
-                    navController.navigate(ScreenV2.InvoiceCustomization(route.businessId))
+                onInvoiceSettingsClick = {
+                    navController.navigateToInvoiceSettingsV2(route.businessId)
                 },
                 onHelpClick = {
                     navController.navigateToHelpV2(route.businessId)
@@ -251,6 +252,13 @@ fun GuiV2NavGraph(
             )
         }
 
+        composable<ScreenV2.InvoiceSettings> { backStackEntry ->
+            val route: ScreenV2.InvoiceSettings = backStackEntry.toRoute()
+            InvoiceSettingsScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable<ScreenV2.BusinessProfile> {
             BusinessProfileScreen(
                 guiMode = GuiMode.GUI2,
@@ -298,13 +306,6 @@ fun GuiV2NavGraph(
         composable<ScreenV2.PrefilledItems> { backStackEntry ->
             val route: ScreenV2.PrefilledItems = backStackEntry.toRoute()
             PrefilledItemsScreen()
-        }
-
-        composable<ScreenV2.BackupRestore> { backStackEntry ->
-            val route: ScreenV2.BackupRestore = backStackEntry.toRoute()
-            BackupRestoreScreen(
-                onBack = { navController.popBackStack() }
-            )
         }
 
         composable<ScreenV2.BackupRestore> { backStackEntry ->

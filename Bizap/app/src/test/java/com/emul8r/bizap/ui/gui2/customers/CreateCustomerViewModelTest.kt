@@ -118,7 +118,7 @@ class CreateCustomerViewModelTest : BaseUnitTest() {
         val customer = Customer(name = "Jane Doe")
         coEvery { customerRepository.insert(customer) } throws RuntimeException("DB error")
 
-        var errorMessage = ""
+        var errorMessage: String? = null
         viewModel.createCustomer(customer, onSuccess = {}, onError = { errorMessage = it })
 
         advanceUntilIdle()

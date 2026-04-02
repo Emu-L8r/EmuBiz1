@@ -24,11 +24,35 @@ class InvoiceListViewModelV2 @Inject constructor(
     val uiState: StateFlow<InvoiceListUiStateV2> = invoiceRepository
         .getAllInvoicesWithItems()
         .map { invoices ->
-            Timber.d("InvoiceListViewModelV2: Loaded ${invoices.size} invoices")
-            InvoiceListUiStateV2.Success(invoices) as InvoiceListUiStateV2
+            // Filter invoices by current business ID
+            Timber.d("🔍 InvoiceListViewModelV2: Received ${invoices.size} total invoices from repository")
+            Timber.d("   Filter criteria: businessProfileId == $businessId")
+
+            if (invoices.isNotEmpty()) {
+                Timber.d("   Available invoices:")
+                invoices.take(5).forEach { invoice ->  // Log first 5 for diagnostic purposes
+                    Timber.d("      - ID=${invoice.id}, businessId=${invoice.businessProfileId}, customer=${invoice.customerName}")
+                }
+                if (invoices.size > 5) {
+                    Timber.d("      ... and ${invoices.size - 5} more invoices")
+                }
+            }
+
+            val filteredInvoices = invoices.filter { it.businessProfileId == businessId }
+
+            Timber.d("✅ InvoiceListViewModelV2: Filtered to ${filteredInvoices.size} invoices for business $businessId")
+            if (filteredInvoices.isEmpty() && invoices.isNotEmpty()) {
+                Timber.w("⚠️ WARNING: No invoices matched the filter!")
+                Timber.w("   Total invoices in repo: ${invoices.size}")
+                Timber.w("   Expected businessId: $businessId")
+                Timber.w("   Available businessIds: ${invoices.map { it.businessProfileId }.distinct()}")
+                Timber.w("   This indicates a businessProfileId mismatch between save and load!")
+            }
+
+            InvoiceListUiStateV2.Success(filteredInvoices) as InvoiceListUiStateV2
         }
         .catch { exception ->
-            Timber.e(exception, "InvoiceListViewModelV2: Failed to load invoices")
+            Timber.e(exception, "❌ InvoiceListViewModelV2: Failed to load invoices")
             emit(InvoiceListUiStateV2.Error(exception.message ?: "Unknown error"))
         }
         .stateIn(

@@ -34,6 +34,10 @@ interface InvoiceDao {
     fun getInvoicesByBusinessId(businessId: Long): Flow<List<InvoiceWithItems>>
 
     @Transaction
+    @Query("SELECT * FROM invoices ORDER BY date DESC")
+    fun getAllInvoices(): Flow<List<InvoiceWithItems>>
+
+    @Transaction
     @Query("SELECT * FROM invoices WHERE customerId = :customerId AND businessProfileId = :businessId")
     fun getInvoicesForCustomer(customerId: Long, businessId: Long): Flow<List<InvoiceWithItems>>
 

@@ -532,14 +532,61 @@ fun BizapStatusBadge(
 
 /**
  * Shorter alias for BizapDesignSystem.MetricCard
+ * Supports custom colors for different metric types
  */
 @Composable
 fun BizapMetricCard(
     title: String,
     value: String,
     icon: ImageVector,
+    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    borderColor: Color = MaterialTheme.colorScheme.primary,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
     modifier: Modifier = Modifier
-) = BizapDesignSystem.MetricCard(title, value, icon, modifier)
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = backgroundColor.copy(alpha = 0.5f)
+        ),
+        border = BorderStroke(2.dp, borderColor.copy(alpha = 0.3f)),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = accentColor,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
 
 /**
  * Shorter alias for BizapDesignSystem.PaymentCard

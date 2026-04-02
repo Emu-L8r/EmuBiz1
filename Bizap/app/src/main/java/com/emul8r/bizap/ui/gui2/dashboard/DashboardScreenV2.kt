@@ -1,7 +1,9 @@
 package com.emul8r.bizap.ui.gui2.dashboard
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -15,22 +17,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.emul8r.bizap.domain.analytics.SearchResult
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
-import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
-import com.emul8r.bizap.ui.common.MetricCard
+import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.dashboard.components.InvoiceStatusPieChart
 import com.emul8r.bizap.ui.dashboard.components.NotesCard
 import com.emul8r.bizap.ui.designsystem.BizapColors
+import com.emul8r.bizap.ui.designsystem.BizapMetricCard
 import com.emul8r.bizap.ui.gui2.common.*
 import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.AnalyticsSearchBar
@@ -43,6 +43,7 @@ import timber.log.Timber
  * with quick-action shortcuts to Customers and Invoices screens.
  */
 @OptIn(ExperimentalMaterial3Api::class)
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun DashboardScreenV2(
     businessId: Long,
@@ -94,7 +95,6 @@ fun DashboardScreenV2(
                 state = state.state,
                 statusCounts = statusCounts,
                 currentNotesCount = currentNotesCount,
-                navController = navController,
                 onNavigateToRevenue = onNavigateToRevenue,
                 onNavigateToPayment = onNavigateToPayment,
                 onNavigateToRisk = onNavigateToRisk,
@@ -119,7 +119,6 @@ private fun DashboardContentV2(
     state: DashboardStateV2,
     statusCounts: Map<String, Int>,
     currentNotesCount: Int,
-    navController: NavController,
     onNavigateToRevenue: () -> Unit,
     onNavigateToPayment: () -> Unit,
     onNavigateToRisk: () -> Unit,
@@ -318,7 +317,7 @@ private fun DashboardContentV2(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                MetricCard(
+                BizapMetricCard(
                     title = "High Risk",
                     value = "${state.riskMetrics.highRiskCount}",
                     icon = Icons.Default.Error,
@@ -327,7 +326,7 @@ private fun DashboardContentV2(
                     accentColor = BizapColors.StatusOverdue,
                     modifier = Modifier.weight(1f)
                 )
-                MetricCard(
+                BizapMetricCard(
                     title = "At Risk",
                     value = "${state.riskMetrics.atRiskCount}",
                     icon = Icons.Default.Warning,
@@ -336,7 +335,7 @@ private fun DashboardContentV2(
                     accentColor = BizapColors.StatusOutstanding,
                     modifier = Modifier.weight(1f)
                 )
-                MetricCard(
+                BizapMetricCard(
                     title = "Healthy",
                     value = "${state.riskMetrics.healthyCount}",
                     icon = Icons.Default.CheckCircle,
@@ -363,7 +362,7 @@ private fun DashboardContentV2(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                MetricCard(
+                BizapMetricCard(
                     title = "Paid",
                     value = "${state.paymentMetrics.paidCount}",
                     icon = Icons.Default.CheckCircle,
@@ -372,7 +371,7 @@ private fun DashboardContentV2(
                     accentColor = BizapColors.StatusPaid,
                     modifier = Modifier.weight(1f)
                 )
-                MetricCard(
+                BizapMetricCard(
                     title = "Overdue",
                     value = "${state.paymentMetrics.overdueCount}",
                     icon = Icons.Default.Error,
@@ -401,7 +400,7 @@ private fun DashboardContentV2(
                 val expectedRevenue = state.paymentMetrics.outstandingAmount + state.paymentMetrics.collectedAmount
                 val actualRevenue = state.paymentMetrics.collectedAmount
 
-                MetricCard(
+                BizapMetricCard(
                     title = "Expected Revenue",
                     value = com.emul8r.bizap.utils.CentsFormatter.formatCents(expectedRevenue),
                     icon = Icons.AutoMirrored.Filled.TrendingUp,
@@ -410,7 +409,7 @@ private fun DashboardContentV2(
                     accentColor = BizapColors.StatusPaid,
                     modifier = Modifier.weight(1f)
                 )
-                MetricCard(
+                BizapMetricCard(
                     title = "Actual Revenue",
                     value = com.emul8r.bizap.utils.CentsFormatter.formatCents(actualRevenue),
                     icon = Icons.Default.CheckCircle,
@@ -422,7 +421,7 @@ private fun DashboardContentV2(
             }
 
             if (state.paymentMetrics.outstandingAmount > 0L) {
-                MetricCard(
+                BizapMetricCard(
                     title = "Outstanding",
                     value = com.emul8r.bizap.utils.CentsFormatter.formatCents(state.paymentMetrics.outstandingAmount),
                     icon = Icons.Default.Schedule,
