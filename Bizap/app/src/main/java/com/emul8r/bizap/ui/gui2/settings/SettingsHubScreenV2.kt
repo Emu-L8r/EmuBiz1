@@ -43,7 +43,6 @@ import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 fun SettingsHubScreenV2(
     onBusinessProfileClick: () -> Unit,
     onAppAppearanceClick: () -> Unit,
-    onInvoiceCustomizationClick: () -> Unit = {},
     onInvoiceSettingsClick: () -> Unit = {},
     onHelpClick: () -> Unit = {},
     onRiskDashboardClick: () -> Unit = {},
@@ -84,7 +83,6 @@ fun SettingsHubScreenV2(
                     businessProfile = state.businessProfile,
                     onBusinessProfileClick = onBusinessProfileClick,
                     onAppAppearanceClick = onAppAppearanceClick,
-                    onInvoiceCustomizationClick = onInvoiceCustomizationClick,
                     onInvoiceSettingsClick = onInvoiceSettingsClick,
                     onHelpClick = onHelpClick,
                     onRiskDashboardClick = onRiskDashboardClick,
@@ -105,7 +103,6 @@ private fun SettingsContent(
     businessProfile: BusinessProfile,
     onBusinessProfileClick: () -> Unit,
     onAppAppearanceClick: () -> Unit,
-    onInvoiceCustomizationClick: () -> Unit = {},
     onInvoiceSettingsClick: () -> Unit = {},
     onHelpClick: () -> Unit = {},
     onRiskDashboardClick: () -> Unit = {},
@@ -157,15 +154,8 @@ private fun SettingsContent(
 
         SettingsCardV2(
             icon = Icons.Default.Description,
-            title = "Invoice Customization",
-            description = "Customize invoice numbering and layout",
-            onClick = onInvoiceCustomizationClick
-        )
-
-        SettingsCardV2(
-            icon = Icons.Default.Tune,
-            title = "Invoice Settings",
-            description = "Configure branding, payment, and tax settings",
+            title = "PDF Settings",
+            description = "PDF template, styling, payment terms, and tax configuration",
             onClick = onInvoiceSettingsClick
         )
 

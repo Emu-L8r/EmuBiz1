@@ -34,12 +34,25 @@ fun CreateInvoiceScreenV2(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    Timber.d("🔷 CreateInvoiceScreenV2: Composing - businessId=$businessId, saveSuccess=${uiState.saveSuccess}")
+
+    // 🔥 CRITICAL FIX: Set the businessId from navigation route so invoices save to correct business
+    LaunchedEffect(businessId) {
+        Timber.d("🎯 CreateInvoiceScreenV2: LaunchedEffect(businessId) - calling viewModel.setBusinessId($businessId)")
+        viewModel.setBusinessId(businessId)
+    }
+
     LaunchedEffect(uiState.saveSuccess) {
         Timber.d("🔍 CreateInvoiceScreenV2: LaunchedEffect triggered - saveSuccess=${uiState.saveSuccess}")
         if (uiState.saveSuccess) {
             Timber.d("✅ CreateInvoiceScreenV2: saveSuccess is TRUE - calling onCreate() navigation callback")
-            onCreate()
-            Timber.d("✅ CreateInvoiceScreenV2: onCreate() called - should navigate back to list")
+            Timber.d("   onCreate = $onCreate")
+            try {
+                onCreate()
+                Timber.d("✅ CreateInvoiceScreenV2: onCreate() called successfully - should navigate back to list")
+            } catch (e: Exception) {
+                Timber.e(e, "❌ CreateInvoiceScreenV2: onCreate() threw exception!")
+            }
         } else {
             Timber.d("⏳ CreateInvoiceScreenV2: saveSuccess is FALSE - waiting for save to complete")
         }

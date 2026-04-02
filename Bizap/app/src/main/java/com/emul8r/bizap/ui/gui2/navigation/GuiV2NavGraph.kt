@@ -198,9 +198,6 @@ fun GuiV2NavGraph(
                 onAppAppearanceClick = {
                     navController.navigate(ScreenV2.AppAppearance(route.businessId))
                 },
-                onInvoiceCustomizationClick = {
-                    navController.navigate(ScreenV2.InvoiceCustomization(route.businessId))
-                },
                 onInvoiceSettingsClick = {
                     navController.navigateToInvoiceSettingsV2(route.businessId)
                 },

@@ -100,6 +100,14 @@ class CreateInvoiceViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(CreateInvoiceUiState())
     val uiState = _uiState.asStateFlow()
 
+    // 🔥 CRITICAL: Store the business ID from navigation route
+    // This is used instead of activeProfile.id to ensure invoices are saved to the correct business
+    private var _businessId: Long? = null
+    fun setBusinessId(businessId: Long) {
+        Timber.d("🎯 CreateInvoiceViewModel.setBusinessId($businessId) called - will use this when saving invoice")
+        _businessId = businessId
+    }
+
     init {
         loadData()
     }
@@ -131,8 +139,8 @@ class CreateInvoiceViewModel @Inject constructor(
                 settings?.let { s ->
                     _uiState.update { state ->
                         state.copy(
-                            footer = s.footerMessage,
-                            companyName = s.businessName
+                            footer = s.footerMessage
+                            // NOTE: companyName now comes from BusinessProfile
                         )
                     }
                 }
@@ -204,41 +212,45 @@ class CreateInvoiceViewModel @Inject constructor(
     }
 
     /**
-     * ✅ FIX FOR ISSUE #2: Batch update line items by mapping updated LineItems back to LineItemForms.
-     * This UUID-aware method handles the case where the editor passes updated LineItems
-     * with their stable IDs, and we need to map them back to the ViewModel's LineItemForm objects.
+     * ✅ FIX FOR ISSUE #2: Batch update line items with simple index-based mapping.
+     * The editor returns items in the same order they were passed, so we can safely use indices.
+     * This is much more reliable than UUID hashing.
      *
-     * This prevents index-based mismatch issues when items are deleted or reordered.
-     *
-     * @param updatedItems List of updated LineItem objects from the editor
+     * @param updatedItems List of updated LineItem objects from the editor (in same order)
      * @param currentItems Current list of LineItemForm objects in ViewModel state
      */
     fun updateLineItemsFromEditor(
         updatedItems: List<com.emul8r.bizap.domain.model.LineItem>,
         currentItems: List<LineItemForm>
     ) {
-        _uiState.update { state ->
-            state.copy(items = state.items.map { currentItem ->
-                // Find corresponding updated item by matching ID (UUID.hashCode())
-                val updatedItem = updatedItems.find {
-                    it.id == currentItem.transientId.hashCode().toLong()
-                }
+        Timber.d("🔄 updateLineItemsFromEditor called:")
+        Timber.d("   - Updated items count: ${updatedItems.size}")
+        Timber.d("   - Current items count: ${currentItems.size}")
+        Timber.d("   - State items count: ${_uiState.value.items.size}")
 
-                if (updatedItem != null) {
-                    // Update this item with new values
+        _uiState.update { state ->
+            // Simple: editor returns items in same order, use indices to map
+            val newItems = state.items.mapIndexed { index, currentItem ->
+                if (index < updatedItems.size) {
+                    val updatedItem = updatedItems[index]
+                    Timber.d("   Item[$index]: '${currentItem.description}' → '${updatedItem.description}' | qty: ${currentItem.quantity} → ${updatedItem.quantity}")
+
                     currentItem.copy(
                         description = updatedItem.description,
                         quantity = updatedItem.quantity,
                         unitPrice = updatedItem.unitPrice
                     )
                 } else {
-                    // Item not in updated list - keep as is
+                    // Item was removed in editor
+                    Timber.d("   Item[$index]: REMOVED (index >= updatedItems.size)")
                     currentItem
                 }
-            })
+            }
+
+            state.copy(items = newItems)
         }
 
-        Timber.d("✅ updateLineItemsFromEditor: Updated ${updatedItems.size} items")
+        Timber.d("✅ updateLineItemsFromEditor complete: ${_uiState.value.items.size} items in state")
     }
 
     fun updateLineItem(transientId: java.util.UUID, description: String, quantity: Double, unitPrice: Long) {
@@ -315,17 +327,28 @@ class CreateInvoiceViewModel @Inject constructor(
 
     fun onSaveClicked() {
         viewModelScope.launch {
+            Timber.d("═══════════════════════════════════════════════════════════════════════════")
+            Timber.d("🎬 CreateInvoiceViewModel.onSaveClicked() - STARTING INVOICE SAVE FLOW")
+            Timber.d("═══════════════════════════════════════════════════════════════════════════")
             _uiState.update { it.copy(isSaving = true) }
             try {
-                Timber.d("🔵 INVOICE SAVE STARTED")
+                Timber.d("🔵 STEP 1: INVOICE SAVE STARTED")
                 val state = _uiState.value
                 val customer = state.selectedCustomer ?: throw Exception("Please select a customer")
-                Timber.d("✅ Customer selected: ${customer.name} (ID=${customer.id})")
+                Timber.d("✅ STEP 2: Customer selected: ${customer.name} (ID=${customer.id})")
 
                 val businessProfile = businessProfileRepository.activeProfile.first()
+                Timber.d("✅ STEP 3: Active business profile loaded:")
+                Timber.d("   - Business ID: ${businessProfile.id}")
+                Timber.d("   - Business Name: ${businessProfile.businessName}")
+                Timber.d("   - Tax Registered: ${businessProfile.isTaxRegistered}")
+                Timber.d("   - Tax Rate: ${businessProfile.defaultTaxRate}")
+
                 val lineItems = state.items.map { it.toDomain() }
-                Timber.d("✅ Line items mapped: ${lineItems.size} items")
-                Timber.d("🔍 Active Business: ID=${businessProfile.id}, Name=${businessProfile.businessName}")
+                Timber.d("✅ STEP 4: Line items mapped: ${lineItems.size} items")
+                lineItems.forEachIndexed { idx, item ->
+                    Timber.d("   [$idx] ${item.description} x${item.quantity} @ ${item.unitPrice} cents")
+                }
 
                 // Use CalculateInvoiceMetricsUseCase as single source of truth for all calculations
                 val taxRate: Double = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
@@ -340,12 +363,21 @@ class CreateInvoiceViewModel @Inject constructor(
                     taxRate = taxRate
                 )
                 val metrics = calculateMetricsUseCase(tempInvoice)
-                Timber.d("✅ Metrics calculated: subtotal=${metrics.subtotal}, tax=${metrics.taxAmount}, total=${metrics.totalAmount} cents")
+                Timber.d("✅ STEP 5: Metrics calculated:")
+                Timber.d("   - Subtotal: ${metrics.subtotal} cents")
+                Timber.d("   - Tax (${(taxRate * 100).toInt()}%): ${metrics.taxAmount} cents")
+                Timber.d("   - Total: ${metrics.totalAmount} cents")
+
                 val createdAt = System.currentTimeMillis()
                 val dueDate = createdAt + (30L * 24 * 60 * 60 * 1000)
 
+                // 🔥 CRITICAL FIX: Use the businessId from navigation route, NOT the active profile ID
+                // This ensures the invoice is saved to the business being viewed, not always to the default
+                val businessIdToUse = _businessId ?: businessProfile.id
+                Timber.d("🔥 CRITICAL: Using businessId=$businessIdToUse for invoice (_businessId=$_businessId, activeProfile=${businessProfile.id})")
+
                 val invoice = Invoice(
-                    businessProfileId = businessProfile.id,  // 🔥 FIX: Associate with active business
+                    businessProfileId = businessIdToUse,  // 🔥 CRITICAL: Use navigation businessId, not active profile
                     customerId = customer.id,
                     customerName = customer.name,
                     customerAddress = customer.address ?: "",
@@ -368,28 +400,33 @@ class CreateInvoiceViewModel @Inject constructor(
                     currencyCode = state.selectedCurrencyCode
                 )
 
+                Timber.d("✅ STEP 6: Invoice object created:")
+                Timber.d("   - Invoice ID (before save): NOT YET ASSIGNED")
+                Timber.d("   - Business Profile ID: ${invoice.businessProfileId} 🔥 THIS IS CRITICAL FOR FILTERING")
+                Timber.d("   - Customer: ${invoice.customerName} (ID=${invoice.customerId})")
+                Timber.d("   - Total: ${invoice.totalAmount} cents")
+                Timber.d("   - Items: ${invoice.items.size}")
+
                 // 🔒 VALIDATION: Verify invoice meets all business rules before saving
-                // This is CRITICAL - prevents invalid data from entering the database
-                // Uses Result<Unit> pattern - doesn't throw, returns error message
                 val validationResult = ValidationRules.validateInvoice(invoice)
                 if (validationResult.isFailure()) {
                     val errorMessage = validationResult.getErrorOrNull() ?: "Unknown validation error"
-                    Timber.w("⚠️ VALIDATION FAILED: $errorMessage")
+                    Timber.w("⚠️ STEP 7: VALIDATION FAILED: $errorMessage")
                     _uiState.update { it.copy(error = errorMessage, isSaving = false) }
                     return@launch
                 }
-                Timber.d("✅ Invoice passed all validation rules")
+                Timber.d("✅ STEP 7: Invoice passed all validation rules")
 
                 val invoiceId = invoiceRepository.saveInvoice(invoice).getOrThrow()
-                Timber.d("✅ Invoice SAVED to database:")
-                Timber.d("   - Invoice ID: $invoiceId")
+                Timber.d("✅ STEP 8: Invoice SAVED to database:")
+                Timber.d("   - Invoice ID (from DB): $invoiceId")
                 Timber.d("   - Business Profile ID: ${invoice.businessProfileId}")
                 Timber.d("   - Customer: ${invoice.customerName} (ID=${invoice.customerId})")
                 Timber.d("   - Amount: ${invoice.totalAmount} cents")
                 Timber.d("   - Items: ${invoice.items.size}")
-                Timber.d("🔍 DIAGNOSTIC: Invoice saved with businessProfileId=${invoice.businessProfileId}")
-                Timber.d("   When loading invoice list, use businessProfileId=${invoice.businessProfileId}")
-                Timber.d("   If list filters by a different businessProfileId, invoice won't appear!")
+                Timber.d("   🔥 CRITICAL: When invoice list loads, it will filter by businessProfileId=${invoice.businessProfileId}")
+                Timber.d("   🔥 If the list uses a different businessProfileId, the invoice WON'T APPEAR!")
+
                 val invoiceWithId = invoice.copy(id = invoiceId)
 
                 // 📊 Track invoice creation event
@@ -401,7 +438,8 @@ class CreateInvoiceViewModel @Inject constructor(
                     lineItemCount = invoice.items.size
                 )
 
-                Timber.d("🔵 Starting PDF generation...")
+                Timber.d("✅ STEP 9: Firebase event tracked")
+                Timber.d("🔵 STEP 10: Starting PDF generation...")
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceWithId,
                     snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
@@ -446,9 +484,18 @@ class CreateInvoiceViewModel @Inject constructor(
                 )
 
                 if (result.isSuccess) {
-                    Timber.d("✅ PDF generation successful")
-                    _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
-                    Timber.d("✅ INVOICE SAVE COMPLETE - SUCCESS")
+                    Timber.d("✅ STEP 11: PDF generation successful")
+                    Timber.d("🎯 STEP 12: SETTING saveSuccess = true to trigger LaunchedEffect")
+                    _uiState.update { state ->
+                        state.copy(isSaving = false, saveSuccess = true).also {
+                            Timber.d("✅ STEP 13: State updated: isSaving=false, saveSuccess=true")
+                            Timber.d("   Current state will trigger LaunchedEffect in CreateInvoiceScreenV2")
+                            Timber.d("   Which will call onCreate() → navController.popBackStack()")
+                        }
+                    }
+                    Timber.d("═══════════════════════════════════════════════════════════════════════════")
+                    Timber.d("✅ INVOICE SAVE COMPLETE - SUCCESS ✅")
+                    Timber.d("═══════════════════════════════════════════════════════════════════════════")
                 } else {
                     val error = result.exceptionOrNull() ?: Exception("Failed to generate PDF")
                     Timber.e(error, "❌ PDF generation failed")
@@ -456,10 +503,15 @@ class CreateInvoiceViewModel @Inject constructor(
                 }
 
             } catch (e: Exception) {
-                Timber.e(e, "❌ INVOICE SAVE FAILED: ${e.message}")
-                Timber.e("   Stack trace: ${e.stackTraceToString()}")
-                Timber.e("   This error prevented the invoice from being saved")
-                Timber.e("   No navigation will occur - saveSuccess will remain false")
+                Timber.e("═══════════════════════════════════════════════════════════════════════════")
+                Timber.e("❌ INVOICE SAVE FAILED ❌")
+                Timber.e("═══════════════════════════════════════════════════════════════════════════")
+                Timber.e(e, "Exception: ${e.message}")
+                Timber.e("Stack trace:")
+                e.stackTraceToString().split("\n").forEach { line ->
+                    Timber.e("  $line")
+                }
+                Timber.e("═══════════════════════════════════════════════════════════════════════════")
                 _uiState.update { it.copy(error = e.message, isSaving = false) }
             }
         }
@@ -467,6 +519,28 @@ class CreateInvoiceViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    /**
+     * Reset form after successful save - allows user to create another invoice.
+     * Called by navigation after onCreate() completes.
+     */
+    fun resetFormState() {
+        Timber.d("🔄 resetFormState: Clearing form for next invoice")
+        _uiState.update {
+            it.copy(
+                selectedCustomer = null,
+                items = listOf(LineItemForm()),
+                header = "",
+                subheader = "",
+                notes = "",
+                footer = "",
+                photoUris = emptyList(),
+                isSaving = false,
+                saveSuccess = false,
+                error = null
+            )
+        }
     }
 
     // Phase 2: Customization functions

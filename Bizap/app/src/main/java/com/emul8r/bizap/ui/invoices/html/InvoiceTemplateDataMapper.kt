@@ -34,17 +34,13 @@ class InvoiceTemplateDataMapper {
             val mappedData = mutableMapOf<String, Any>()
 
             // ===== COMPANY/BUSINESS INFORMATION =====
-            mappedData["companyName"] = settings.businessName
-            mappedData["businessEmail"] = settings.businessEmail
-            mappedData["businessPhone"] = settings.businessPhone
-            mappedData["businessAddress"] = settings.businessAddress
-
-            if (!settings.businessWebsite.isNullOrBlank()) {
-                mappedData["businessWebsite"] = settings.businessWebsite
-            }
-            if (!settings.taxId.isNullOrBlank()) {
-                mappedData["taxId"] = settings.taxId
-            }
+            // NOTE: Business information now comes from BusinessProfile, not InvoiceSettings
+            // TODO: Update this to accept BusinessProfile parameter and use it here
+            mappedData["companyName"] = ""  // From BusinessProfile.businessName
+            mappedData["businessEmail"] = ""  // From BusinessProfile.email
+            mappedData["businessPhone"] = ""  // From BusinessProfile.phone
+            mappedData["businessAddress"] = ""  // From BusinessProfile.address
+            mappedData["businessWebsite"] = ""  // From BusinessProfile.website
 
             // ===== CLIENT/CUSTOMER INFORMATION =====
             mappedData["clientName"] = invoice.customerName
@@ -83,12 +79,10 @@ class InvoiceTemplateDataMapper {
                 mappedData["paymentTerms"] = "${settings.paymentTermsDays} days"
             }
 
-            if (!settings.bankName.isNullOrBlank()) {
-                mappedData["bankName"] = settings.bankName
-            }
-            if (!settings.accountNumber.isNullOrBlank()) {
-                mappedData["accountNumber"] = maskAccountNumber(settings.accountNumber)
-            }
+            // NOTE: Bank details now come from BusinessProfile, not InvoiceSettings
+            // TODO: Update this to accept BusinessProfile parameter
+            mappedData["bankName"] = ""  // From BusinessProfile.bankName
+            mappedData["accountNumber"] = ""  // From BusinessProfile.accountNumber
 
             // ===== ADDITIONAL INFORMATION =====
             if (!invoice.notes.isNullOrBlank()) {

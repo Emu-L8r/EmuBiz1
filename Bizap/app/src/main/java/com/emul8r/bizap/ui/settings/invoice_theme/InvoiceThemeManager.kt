@@ -92,10 +92,9 @@ class InvoiceThemeManager @Inject constructor(
         return when (themeType) {
             InvoiceTheme.CANVAS -> ValidationResult(isValid = true)
             InvoiceTheme.HTML_PDF -> {
-                // Phase 6 Step 2: Validate HTML-to-PDF theme settings
-                // For now, just basic validation
+                // Validate HTML-to-PDF theme settings
                 val errors = mutableListOf<String>()
-                if (settings.businessName.isBlank()) errors.add("Business name required")
+                // NOTE: Business name is now in BusinessProfile
                 if (settings.primaryColor.isBlank()) errors.add("Primary color required")
                 ValidationResult(isValid = errors.isEmpty(), errors = errors)
             }

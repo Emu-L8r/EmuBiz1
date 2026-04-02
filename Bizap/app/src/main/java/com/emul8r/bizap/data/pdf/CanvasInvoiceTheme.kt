@@ -58,18 +58,13 @@ class CanvasInvoiceTheme @Inject constructor() : InvoiceThemeRenderer {
     /**
      * Validate that settings are compatible with Canvas theme.
      *
-     * Canvas theme has minimal requirements - just needs business info.
+     * Canvas theme validates PDF-specific settings only.
+     * Business info is managed in BusinessProfile.
      */
     override fun validateSettings(settings: InvoiceSettings): ValidationResult {
         val errors = mutableListOf<String>()
         val warnings = mutableListOf<String>()
 
-        if (settings.businessName.isBlank()) {
-            errors.add("Business name is required")
-        }
-        if (settings.businessEmail.isBlank()) {
-            errors.add("Business email is required")
-        }
         if (settings.primaryColor.isBlank()) {
             warnings.add("Primary color not set, using default purple (#6B4C9A)")
         }

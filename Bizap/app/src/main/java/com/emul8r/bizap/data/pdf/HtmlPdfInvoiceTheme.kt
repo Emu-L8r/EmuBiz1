@@ -137,8 +137,10 @@ class HtmlPdfInvoiceTheme @Inject constructor(
      *
      * Recommended fields (warnings if missing):
      * - Business email
-     * - Business phone
-     * - Business address
+     * Validate HTML PDF theme settings.
+     *
+     * HTML PDF theme validates PDF-specific settings only.
+     * Business info is managed in BusinessProfile.
      *
      * @param settings The settings to validate
      * @return ValidationResult with error list if validation fails
@@ -147,33 +149,11 @@ class HtmlPdfInvoiceTheme @Inject constructor(
         val errors = mutableListOf<String>()
         val warnings = mutableListOf<String>()
 
-        // REQUIRED: Business name
-        if (settings.businessName.isBlank()) {
-            errors.add("Business name is required")
-        }
-
         // REQUIRED: Primary color for branding
         if (settings.primaryColor.isBlank()) {
             errors.add("Primary color is required for styling")
         }
 
-        // RECOMMENDED: Business email
-        if (settings.businessEmail.isBlank()) {
-            warnings.add("Business email not set - recommended for invoice visibility")
-            Timber.w("Business email not set")
-        }
-
-        // RECOMMENDED: Phone
-        if (settings.businessPhone.isBlank()) {
-            warnings.add("Business phone not set - recommended for invoice visibility")
-            Timber.w("Business phone not set")
-        }
-
-        // RECOMMENDED: Address
-        if (settings.businessAddress.isBlank()) {
-            warnings.add("Business address not set - recommended for invoice visibility")
-            Timber.w("Business address not set")
-        }
 
         val isValid = errors.isEmpty()
         Timber.d("Settings validation: ${if (isValid) "PASSED" else "FAILED"} - ${errors.size} errors, ${warnings.size} warnings")
