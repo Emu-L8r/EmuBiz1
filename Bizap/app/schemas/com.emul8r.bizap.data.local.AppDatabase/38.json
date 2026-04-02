@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 38,
-    "identityHash": "7ab5c5548b4e4268bff1c583480cc08f",
+    "identityHash": "c78dd8766e40ca5013c13c0444a8a523",
     "entities": [
       {
         "tableName": "customers",
@@ -2806,7 +2806,7 @@
       },
       {
         "tableName": "invoice_settings",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `selected_theme` TEXT NOT NULL, `business_name` TEXT NOT NULL, `business_logo` BLOB, `business_email` TEXT NOT NULL, `business_phone` TEXT NOT NULL, `business_address` TEXT NOT NULL, `business_website` TEXT, `business_abn` TEXT, `primary_color` TEXT NOT NULL, `secondary_color` TEXT, `accent_color` TEXT, `font_family` TEXT, `tax_id` TEXT, `tax_rate` REAL NOT NULL, `tax_name` TEXT NOT NULL, `tax_handling` TEXT NOT NULL, `payment_terms_days` INTEGER NOT NULL, `default_payment_notes` TEXT NOT NULL, `footer_message` TEXT NOT NULL, `invoice_number_prefix` TEXT NOT NULL, `bank_name` TEXT, `account_number` TEXT, `routing_code` TEXT, `account_holder` TEXT, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`user_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `selected_theme` TEXT NOT NULL, `primary_color` TEXT NOT NULL, `secondary_color` TEXT, `accent_color` TEXT, `font_family` TEXT, `payment_terms_days` INTEGER NOT NULL, `default_payment_notes` TEXT NOT NULL, `footer_message` TEXT NOT NULL, `invoice_number_prefix` TEXT NOT NULL, `tax_rate` REAL NOT NULL, `tax_name` TEXT NOT NULL, `tax_handling` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`user_id`))",
         "fields": [
           {
             "fieldPath": "userId",
@@ -2819,48 +2819,6 @@
             "columnName": "selected_theme",
             "affinity": "TEXT",
             "notNull": true
-          },
-          {
-            "fieldPath": "businessName",
-            "columnName": "business_name",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "businessLogo",
-            "columnName": "business_logo",
-            "affinity": "BLOB",
-            "notNull": false
-          },
-          {
-            "fieldPath": "businessEmail",
-            "columnName": "business_email",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "businessPhone",
-            "columnName": "business_phone",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "businessAddress",
-            "columnName": "business_address",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "businessWebsite",
-            "columnName": "business_website",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "businessAbn",
-            "columnName": "business_abn",
-            "affinity": "TEXT",
-            "notNull": false
           },
           {
             "fieldPath": "primaryColor",
@@ -2887,30 +2845,6 @@
             "notNull": false
           },
           {
-            "fieldPath": "taxId",
-            "columnName": "tax_id",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "taxRate",
-            "columnName": "tax_rate",
-            "affinity": "REAL",
-            "notNull": true
-          },
-          {
-            "fieldPath": "taxName",
-            "columnName": "tax_name",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "taxHandling",
-            "columnName": "tax_handling",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
             "fieldPath": "paymentTermsDays",
             "columnName": "payment_terms_days",
             "affinity": "INTEGER",
@@ -2935,28 +2869,22 @@
             "notNull": true
           },
           {
-            "fieldPath": "bankName",
-            "columnName": "bank_name",
-            "affinity": "TEXT",
-            "notNull": false
+            "fieldPath": "taxRate",
+            "columnName": "tax_rate",
+            "affinity": "REAL",
+            "notNull": true
           },
           {
-            "fieldPath": "accountNumber",
-            "columnName": "account_number",
+            "fieldPath": "taxName",
+            "columnName": "tax_name",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
-            "fieldPath": "routingCode",
-            "columnName": "routing_code",
+            "fieldPath": "taxHandling",
+            "columnName": "tax_handling",
             "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "accountHolder",
-            "columnName": "account_holder",
-            "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "createdAt",
@@ -2984,7 +2912,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7ab5c5548b4e4268bff1c583480cc08f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c78dd8766e40ca5013c13c0444a8a523')"
     ]
   }
 }

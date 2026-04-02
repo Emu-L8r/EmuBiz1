@@ -83,49 +83,6 @@ class InvoiceSettingsViewModel @Inject constructor(
         loadSettings()
     }
 
-    /**
-     * Update business name in current settings.
-     */
-    fun updateBusinessName(name: String) {
-        _uiState.value.settings?.let { current ->
-            _uiState.value = _uiState.value.copy(
-                settings = current.copy(businessName = name)
-            )
-        }
-    }
-
-    /**
-     * Update business email in current settings.
-     */
-    fun updateBusinessEmail(email: String) {
-        _uiState.value.settings?.let { current ->
-            _uiState.value = _uiState.value.copy(
-                settings = current.copy(businessEmail = email)
-            )
-        }
-    }
-
-    /**
-     * Update business phone in current settings.
-     */
-    fun updateBusinessPhone(phone: String) {
-        _uiState.value.settings?.let { current ->
-            _uiState.value = _uiState.value.copy(
-                settings = current.copy(businessPhone = phone)
-            )
-        }
-    }
-
-    /**
-     * Update business address in current settings.
-     */
-    fun updateBusinessAddress(address: String) {
-        _uiState.value.settings?.let { current ->
-            _uiState.value = _uiState.value.copy(
-                settings = current.copy(businessAddress = address)
-            )
-        }
-    }
 
     /**
      * Update primary color in current settings.
@@ -182,16 +139,6 @@ class InvoiceSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Update bank name in current settings.
-     */
-    fun updateBankName(name: String) {
-        _uiState.value.settings?.let { current ->
-            _uiState.value = _uiState.value.copy(
-                settings = current.copy(bankName = name)
-            )
-        }
-    }
 
     /**
      * Save current settings to repository.

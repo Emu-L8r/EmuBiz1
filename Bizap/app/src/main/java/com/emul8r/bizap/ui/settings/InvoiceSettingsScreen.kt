@@ -65,7 +65,7 @@ fun InvoiceSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Invoice Settings") },
+                title = { Text("PDF Settings") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
@@ -174,7 +174,7 @@ fun InvoiceSettingsScreen(
                         uiState.settings?.let { settings ->
                             InvoiceThemePreview(
                                 selectedTheme = settings.selectedTheme,
-                                companyName = settings.businessName,
+                                companyName = "Your Company",
                                 primaryColor = settings.primaryColor
                             )
                         }
@@ -185,18 +185,6 @@ fun InvoiceSettingsScreen(
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     }
 
-                    // Company Branding Section
-                    item {
-                        uiState.settings?.let { settings ->
-                            CompanyBrandingSection(
-                                settings = settings,
-                                onBusinessNameChanged = { viewModel.updateBusinessName(it) },
-                                onBusinessEmailChanged = { viewModel.updateBusinessEmail(it) },
-                                onBusinessPhoneChanged = { viewModel.updateBusinessPhone(it) },
-                                onBusinessAddressChanged = { viewModel.updateBusinessAddress(it) }
-                            )
-                        }
-                    }
 
                     // Colors Section
                     item {
@@ -218,9 +206,7 @@ fun InvoiceSettingsScreen(
                         uiState.settings?.let { settings ->
                             PaymentSection(
                                 paymentTermsDays = settings.paymentTermsDays,
-                                bankName = settings.bankName ?: "",
-                                onPaymentTermsChanged = { viewModel.updatePaymentTermsDays(it) },
-                                onBankNameChanged = { viewModel.updateBankName(it) }
+                                onPaymentTermsChanged = { viewModel.updatePaymentTermsDays(it) }
                             )
                         }
                     }
@@ -259,13 +245,13 @@ fun InvoiceSettingsScreen(
 private fun InfoSection() {
     Column {
         Text(
-            text = "Configure Invoice Settings",
+            text = "PDF Invoice Settings",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Customize how your invoices look and include your business information",
+            text = "Select your PDF template style and customize invoice appearance",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -404,85 +390,6 @@ fun ThemeSelectionSection(
     }
 }
 
-@Composable
-fun CompanyBrandingSection(
-    settings: InvoiceSettings,
-    onBusinessNameChanged: (String) -> Unit,
-    onBusinessEmailChanged: (String) -> Unit,
-    onBusinessPhoneChanged: (String) -> Unit,
-    onBusinessAddressChanged: (String) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                "Company Branding",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                "Your business information displayed on invoices",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
-            )
-
-            OutlinedTextField(
-                value = settings.businessName,
-                onValueChange = onBusinessNameChanged,
-                label = { Text("Company Name") },
-                placeholder = { Text("e.g., Acme Corporation") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                singleLine = true,
-                isError = false
-            )
-
-            OutlinedTextField(
-                value = settings.businessEmail,
-                onValueChange = onBusinessEmailChanged,
-                label = { Text("Email Address") },
-                placeholder = { Text("e.g., contact@company.com") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                singleLine = true,
-                isError = false
-            )
-
-            OutlinedTextField(
-                value = settings.businessPhone,
-                onValueChange = onBusinessPhoneChanged,
-                label = { Text("Phone Number") },
-                placeholder = { Text("e.g., +1 (555) 123-4567") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                singleLine = true,
-                isError = false
-            )
-
-            OutlinedTextField(
-                value = settings.businessAddress,
-                onValueChange = onBusinessAddressChanged,
-                label = { Text("Business Address") },
-                placeholder = { Text("e.g., 123 Main St, City, State 12345") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 2,
-                maxLines = 3,
-                isError = false
-            )
-        }
-    }
-}
 
 @Composable
 fun ColorsSection(
@@ -551,9 +458,7 @@ fun ColorsSection(
 @Composable
 fun PaymentSection(
     paymentTermsDays: Int,
-    bankName: String,
-    onPaymentTermsChanged: (Int) -> Unit,
-    onBankNameChanged: (String) -> Unit
+    onPaymentTermsChanged: (Int) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -569,7 +474,7 @@ fun PaymentSection(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                "Default payment terms and bank information",
+                "Default payment terms for invoices",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
@@ -584,19 +489,9 @@ fun PaymentSection(
                 placeholder = { Text("30") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
+                    .fillMaxWidth(),
                 singleLine = true,
                 supportingText = { Text("Days from invoice date") }
-            )
-
-            OutlinedTextField(
-                value = bankName,
-                onValueChange = onBankNameChanged,
-                label = { Text("Bank Name (Optional)") },
-                placeholder = { Text("e.g., First National Bank") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
             )
         }
     }

@@ -22,27 +22,11 @@ data class InvoiceSettings(
     @ColumnInfo(name = "user_id")
     val userId: String,
 
-    // THEME SELECTION
+    // PDF TEMPLATE SELECTION
     @ColumnInfo(name = "selected_theme")
     val selectedTheme: InvoiceTheme = InvoiceTheme.CANVAS,
 
-    // COMPANY BRANDING
-    @ColumnInfo(name = "business_name")
-    val businessName: String = "",
-    @ColumnInfo(name = "business_logo")
-    val businessLogo: ByteArray? = null,
-    @ColumnInfo(name = "business_email")
-    val businessEmail: String = "",
-    @ColumnInfo(name = "business_phone")
-    val businessPhone: String = "",
-    @ColumnInfo(name = "business_address")
-    val businessAddress: String = "",
-    @ColumnInfo(name = "business_website")
-    val businessWebsite: String? = null,
-    @ColumnInfo(name = "business_abn")
-    val businessAbn: String? = null,
-
-    // THEME COLORS
+    // PDF STYLING (kept for invoice appearance)
     @ColumnInfo(name = "primary_color")
     val primaryColor: String = "#6B4C9A",      // Default purple
     @ColumnInfo(name = "secondary_color")
@@ -52,17 +36,7 @@ data class InvoiceSettings(
     @ColumnInfo(name = "font_family")
     val fontFamily: String? = null,
 
-    // TAX CONFIGURATION
-    @ColumnInfo(name = "tax_id")
-    val taxId: String? = null,
-    @ColumnInfo(name = "tax_rate")
-    val taxRate: Double = 0.10,
-    @ColumnInfo(name = "tax_name")
-    val taxName: String = "GST",
-    @ColumnInfo(name = "tax_handling")
-    val taxHandling: TaxHandling = TaxHandling.EXCLUSIVE,
-
-    // PAYMENT DETAILS
+    // PDF INVOICE CONFIGURATION
     @ColumnInfo(name = "payment_terms_days")
     val paymentTermsDays: Int = 30,
     @ColumnInfo(name = "default_payment_notes")
@@ -72,15 +46,13 @@ data class InvoiceSettings(
     @ColumnInfo(name = "invoice_number_prefix")
     val invoiceNumberPrefix: String = "INV-",
 
-    // BANK DETAILS
-    @ColumnInfo(name = "bank_name")
-    val bankName: String? = null,
-    @ColumnInfo(name = "account_number")
-    val accountNumber: String? = null,
-    @ColumnInfo(name = "routing_code")
-    val routingCode: String? = null,
-    @ColumnInfo(name = "account_holder")
-    val accountHolder: String? = null,
+    // TAX CONFIGURATION (for PDF display)
+    @ColumnInfo(name = "tax_rate")
+    val taxRate: Double = 0.10,
+    @ColumnInfo(name = "tax_name")
+    val taxName: String = "GST",
+    @ColumnInfo(name = "tax_handling")
+    val taxHandling: TaxHandling = TaxHandling.EXCLUSIVE,
 
     // METADATA
     @ColumnInfo(name = "created_at")
@@ -90,13 +62,11 @@ data class InvoiceSettings(
 ) : Serializable {
 
     /**
-     * Validate settings for required fields.
+     * Validate settings for PDF-specific fields only.
+     * Business information validation happens in BusinessProfile, not here.
      */
     fun isValid(): Boolean {
-        return businessName.isNotBlank() &&
-               businessEmail.isNotBlank() &&
-               businessPhone.isNotBlank() &&
-               businessAddress.isNotBlank()
+        return selectedTheme != null
     }
 
     /**
@@ -114,8 +84,6 @@ data class InvoiceSettings(
 
         if (userId != other.userId) return false
         if (selectedTheme != other.selectedTheme) return false
-        if (businessName != other.businessName) return false
-        if (!businessLogo.contentEquals(other.businessLogo)) return false
         if (primaryColor != other.primaryColor) return false
         if (taxRate != other.taxRate) return false
         if (paymentTermsDays != other.paymentTermsDays) return false
@@ -126,8 +94,6 @@ data class InvoiceSettings(
     override fun hashCode(): Int {
         var result = userId.hashCode()
         result = 31 * result + selectedTheme.hashCode()
-        result = 31 * result + businessName.hashCode()
-        result = 31 * result + (businessLogo?.contentHashCode() ?: 0)
         result = 31 * result + primaryColor.hashCode()
         result = 31 * result + taxRate.hashCode()
         result = 31 * result + paymentTermsDays

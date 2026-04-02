@@ -28,26 +28,12 @@ object InvoiceSettingsValidation {
 
     /**
      * Validate all invoice settings.
+     * NOTE: Business information validation happens in BusinessProfile, not here.
+     * This only validates PDF-specific settings.
      */
     fun validateSettings(settings: InvoiceSettings): ValidationResult {
         val errors = mutableMapOf<String, String>()
 
-        // Validate business name
-        validateBusinessName(settings.businessName)?.let {
-            errors["businessName"] = it
-        }
-
-        // Validate email
-        validateEmail(settings.businessEmail)?.let {
-            errors["businessEmail"] = it
-        }
-
-        // Validate phone (optional, but if provided, must be valid)
-        if (settings.businessPhone.isNotEmpty()) {
-            validatePhone(settings.businessPhone)?.let {
-                errors["businessPhone"] = it
-            }
-        }
 
         // Validate color
         validateColor(settings.primaryColor)?.let {
