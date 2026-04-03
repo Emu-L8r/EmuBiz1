@@ -148,7 +148,7 @@ class InvoicePdfService @Inject constructor(
                 Timber.d("🎨 Canvas template: ${template.displayName}")
                 val overrideColors = PdfColors(
                     primary = android.graphics.Color.parseColor(template.primaryHex),
-                    secondary = android.graphics.Color.parseColor("#F5F5F5"),
+                    secondary = android.graphics.Color.parseColor(template.accentHex),
                     text = android.graphics.Color.BLACK,
                     textLight = android.graphics.Color.DKGRAY
                 )

@@ -346,7 +346,7 @@ private fun CanvasTemplateCard(
                 }
             }
             Text(
-                template.name,
+                template.displayName,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold
             )
