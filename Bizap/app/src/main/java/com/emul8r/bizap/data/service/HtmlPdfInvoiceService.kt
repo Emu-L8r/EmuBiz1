@@ -28,7 +28,9 @@ class HtmlPdfInvoiceService(
     private val settings: InvoiceSettings? = null
 ) : PdfGenerationService {
 
-    private val dateFormatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    private val dateFormatter = ThreadLocal.withInitial {
+        SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    }
 
     override suspend fun generatePdf(
         snapshot: InvoiceSnapshot,
@@ -81,7 +83,7 @@ class HtmlPdfInvoiceService(
     // -------------------------------------------------------------------------
 
     private fun formatDate(millis: Long): String =
-        if (millis > 0) dateFormatter.format(Date(millis)) else ""
+        if (millis > 0) dateFormatter.get()!!.format(Date(millis)) else ""
 
     private fun formatMoney(cents: Long, currencyCode: String): String {
         val symbol = when (currencyCode.uppercase()) {
@@ -121,9 +123,14 @@ class HtmlPdfInvoiceService(
         }.joinToString("\n")
 
     private fun buildTotalsRows(snapshot: InvoiceSnapshot, labelColor: String, totalBg: String, totalFg: String): String {
-        val taxLabel = if (snapshot.taxRate > 0)
-            "Tax (${String.format("%.0f", snapshot.taxRate * 100)}%)"
-        else "Tax"
+        val taxPct = snapshot.taxRate * 100
+        val taxLabel = if (snapshot.taxRate > 0) {
+            val formatted = if (taxPct == taxPct.toLong().toDouble())
+                "${taxPct.toLong()}%"
+            else
+                "${String.format("%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
+            "Tax ($formatted)"
+        } else "Tax"
         return """
             <tr>
                 <td colspan="3" style="padding:7px 10px;text-align:right;color:$labelColor;">Subtotal</td>
