@@ -242,11 +242,11 @@ class HtmlPdfInvoiceService(
         if (!hasBank) return ""
         return """
             <table width="100%" style="border-collapse:collapse;margin-top:20px;">
-                <tr><td colspan="2" style="padding:10px 14px;background-color:#f5f5f5;font-weight:bold;font-size:11pt;color:$headingColor;border-left:4px solid $borderColor;">PAYMENT DETAILS</td></tr>
-                ${if (snapshot.bankName.isNotBlank()) """<tr><td style="padding:9px 14px;font-weight:bold;width:40%;line-height:1.8;">Bank</td><td style="padding:9px 14px;line-height:1.8;">${escapeHtml(snapshot.bankName)}</td></tr>""" else ""}
-                ${if (snapshot.bankAccountName.isNotBlank()) """<tr><td style="padding:9px 14px;font-weight:bold;line-height:1.8;">Account Name</td><td style="padding:9px 14px;line-height:1.8;">${escapeHtml(snapshot.bankAccountName)}</td></tr>""" else ""}
-                ${if (snapshot.bankAccountNumber.isNotBlank()) """<tr><td style="padding:9px 14px;font-weight:bold;line-height:1.8;">Account Number</td><td style="padding:9px 14px;line-height:1.8;">${escapeHtml(snapshot.bankAccountNumber)}</td></tr>""" else ""}
-                ${if (snapshot.bankBsb.isNotBlank()) """<tr><td style="padding:9px 14px;font-weight:bold;line-height:1.8;">BSB</td><td style="padding:9px 14px;line-height:1.8;">${escapeHtml(snapshot.bankBsb)}</td></tr>""" else ""}
+                <tr><td colspan="2" style="padding:14px 16px;background-color:#f5f5f5;font-weight:bold;font-size:11pt;color:$headingColor;border-left:4px solid $borderColor;letter-spacing:0.5px;text-transform:uppercase;">PAYMENT DETAILS</td></tr>
+                ${if (snapshot.bankName.isNotBlank()) """<tr style="height:16px;"><td style="padding:14px 16px;font-weight:bold;width:40%;line-height:1.8;color:#333333;">Bank</td><td style="padding:14px 16px;line-height:1.8;color:#555555;">${escapeHtml(snapshot.bankName)}</td></tr>""" else ""}
+                ${if (snapshot.bankAccountName.isNotBlank()) """<tr style="height:16px;"><td style="padding:14px 16px;font-weight:bold;line-height:1.8;color:#333333;">Account Name</td><td style="padding:14px 16px;line-height:1.8;color:#555555;">${escapeHtml(snapshot.bankAccountName)}</td></tr>""" else ""}
+                ${if (snapshot.bankAccountNumber.isNotBlank()) """<tr style="height:16px;"><td style="padding:14px 16px;font-weight:bold;line-height:1.8;color:#333333;">Account Number</td><td style="padding:14px 16px;line-height:1.8;color:#555555;">${escapeHtml(snapshot.bankAccountNumber)}</td></tr>""" else ""}
+                ${if (snapshot.bankBsb.isNotBlank()) """<tr style="height:16px;"><td style="padding:14px 16px;font-weight:bold;line-height:1.8;color:#333333;">BSB</td><td style="padding:14px 16px;line-height:1.8;color:#555555;">${escapeHtml(snapshot.bankBsb)}</td></tr>""" else ""}
             </table>
         """.trimIndent()
     }
@@ -306,6 +306,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:24px 24px;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:20pt;font-weight:bold;color:#ffffff;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
+    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#d4c5e8;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
     <div style="margin-top:10px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#e0d8f0;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#e0d8f0;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -399,6 +400,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:0 0 14px 0;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:19pt;font-weight:bold;color:#1a1a1a;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
+    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#666666;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
     <div style="margin-top:8px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#555555;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#555555;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -491,6 +493,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:22px 24px;vertical-align:middle;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:19pt;font-weight:bold;color:#ffffff;margin-top:4px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
+    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#c5d9ed;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
   </td>
   <td style="padding:22px 24px;text-align:right;vertical-align:middle;">
     <div style="font-size:20pt;font-weight:bold;letter-spacing:4px;color:#ffffff;">$docType</div>
@@ -589,6 +592,7 @@ td, th { word-wrap: break-word; }
   <td width="55%" style="background-color:$deepBlue;padding:24px 24px;vertical-align:middle;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:19pt;font-weight:bold;color:#ffffff;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
+    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#a8c9e8;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
     <div style="margin-top:8px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#b0c8e0;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#b0c8e0;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
