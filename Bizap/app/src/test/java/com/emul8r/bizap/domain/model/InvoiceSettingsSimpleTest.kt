@@ -1,6 +1,7 @@
 package com.emul8r.bizap.data.model
 
 import com.google.common.truth.Truth.assertThat
+import com.emul8r.bizap.domain.model.CanvasInvoiceTemplate
 import com.emul8r.bizap.domain.model.InvoiceSettings
 import com.emul8r.bizap.domain.model.InvoiceTheme
 import org.junit.Test
@@ -89,4 +90,50 @@ class InvoiceSettingsSimpleTest {
 
         assertThat(settings.invoiceNumberPrefix).isEqualTo("INV-")
     }
+
+    @Test
+    fun testDefaultCanvasTemplateIsModern() {
+        val settings = InvoiceSettings.default("user1")
+        assertThat(settings.selectedCanvasTemplate).isEqualTo(CanvasInvoiceTemplate.MODERN)
+    }
+
+    @Test
+    fun testCanvasTemplateSelection() {
+        val settings = InvoiceSettings.default("user1")
+
+        val modern = settings.copy(selectedCanvasTemplate = CanvasInvoiceTemplate.MODERN)
+        val professional = settings.copy(selectedCanvasTemplate = CanvasInvoiceTemplate.PROFESSIONAL)
+        val creative = settings.copy(selectedCanvasTemplate = CanvasInvoiceTemplate.CREATIVE)
+        val minimal = settings.copy(selectedCanvasTemplate = CanvasInvoiceTemplate.MINIMAL)
+
+        assertThat(modern.selectedCanvasTemplate).isEqualTo(CanvasInvoiceTemplate.MODERN)
+        assertThat(professional.selectedCanvasTemplate).isEqualTo(CanvasInvoiceTemplate.PROFESSIONAL)
+        assertThat(creative.selectedCanvasTemplate).isEqualTo(CanvasInvoiceTemplate.CREATIVE)
+        assertThat(minimal.selectedCanvasTemplate).isEqualTo(CanvasInvoiceTemplate.MINIMAL)
+    }
+
+    @Test
+    fun testCanvasTemplateHasValidColorHex() {
+        for (template in CanvasInvoiceTemplate.values()) {
+            assertThat(template.primaryHex).startsWith("#")
+            assertThat(template.accentHex).startsWith("#")
+            assertThat(template.primaryHex).hasLength(7)
+            assertThat(template.accentHex).hasLength(7)
+        }
+    }
+
+    @Test
+    fun testCanvasTemplateHasDisplayName() {
+        for (template in CanvasInvoiceTemplate.values()) {
+            assertThat(template.displayName).isNotEmpty()
+            assertThat(template.description).isNotEmpty()
+            assertThat(template.colorScheme).isNotEmpty()
+        }
+    }
+
+    @Test
+    fun testFourCanvasTemplatesExist() {
+        assertThat(CanvasInvoiceTemplate.values()).hasLength(4)
+    }
 }
+
