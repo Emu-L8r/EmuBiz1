@@ -54,7 +54,17 @@ class HtmlPdfInvoiceService(
         Timber.d("📝 HtmlPdfInvoiceService.generatePdf() START")
         Timber.d("   isQuote: $isQuote")
         Timber.d("   theme: ${theme?.name ?: "NULL"}")
-        Timber.d("   selectedHtmlStyle: ${settings?.selectedHtmlStyle?.displayName ?: "NULL (will use MODERN)"}")
+        Timber.d("   ================================")
+        Timber.d("   📋 SERVICE SETTINGS CHECK:")
+        Timber.d("   Settings object present: ${settings != null}")
+        if (settings != null) {
+            Timber.d("   - selectedTheme: ${settings.selectedTheme.name}")
+            Timber.d("   - selectedHtmlStyle: ${settings.selectedHtmlStyle.displayName} (${settings.selectedHtmlStyle.name})")
+            Timber.d("   - selectedHtmlStyle file: ${settings.selectedHtmlStyle.styleFile}")
+        } else {
+            Timber.w("   ⚠️ WARNING: settings object is NULL - will use MODERN default")
+        }
+        Timber.d("   ================================")
 
         return try {
             val fileType = if (isQuote) "Quote" else "Invoice"
@@ -100,33 +110,57 @@ class HtmlPdfInvoiceService(
     /**
      * Load the CSS file for the selected HTML invoice style.
      *
+     * CRITICAL: This method determines which CSS file gets applied to the PDF.
+     * If this fails, ALL PDFs will look the same (using fallback style).
+     *
      * @return CSS content as String
      */
     private fun loadSelectedStyleCss(): String {
         val selectedStyle = settings?.selectedHtmlStyle ?: HtmlInvoiceStyle.MODERN
         val cssFileName = selectedStyle.styleFile
 
-        Timber.d("Loading CSS for style: ${selectedStyle.displayName} (file: $cssFileName)")
+        Timber.d("🎨 ══════════════════════════════════════════════════════════════════")
+        Timber.d("🎨 CRITICAL: LOADING CSS FOR INVOICE STYLE")
+        Timber.d("🎨 ══════════════════════════════════════════════════════════════════")
+        Timber.d("🎨 Selected Style: ${selectedStyle.displayName} (ENUM: ${selectedStyle.name})")
+        Timber.d("🎨 Expected CSS File: $cssFileName")
+        Timber.d("🎨 Full Asset Path: invoices/html-theme/$cssFileName")
+        Timber.d("🎨 Settings Object: ${if (settings != null) "✅ Present" else "❌ NULL (using default)"}")
+        if (settings != null) {
+            Timber.d("🎨 Settings.selectedHtmlStyle actual: ${settings.selectedHtmlStyle.displayName}")
+        }
+        Timber.d("🎨 ══════════════════════════════════════════════════════════════════")
 
         return try {
             val inputStream = context.assets.open("invoices/html-theme/$cssFileName")
-            inputStream.use { stream ->
+            val cssContent = inputStream.use { stream ->
                 InputStreamReader(stream).use { reader ->
                     reader.readText()
                 }
             }
+            Timber.d("✅ CSS LOADED SUCCESSFULLY for ${selectedStyle.displayName}")
+            Timber.d("✅ CSS file size: ${cssContent.length} characters")
+            Timber.d("✅ This CSS will be embedded into the HTML and applied to the PDF")
+            cssContent
         } catch (e: Exception) {
-            Timber.e(e, "Failed to load CSS file: $cssFileName, falling back to MODERN style")
+            Timber.e(e, "❌ FAILED TO LOAD CSS FILE: $cssFileName")
+            Timber.e("❌ Error: ${e.message}")
+            Timber.e("❌ The selected style will NOT appear in the PDF!")
             // Fallback to modern style if selected style file doesn't exist
             try {
+                Timber.d("🔄 FALLBACK: Attempting to load MODERN style (invoice-styles.css)...")
                 val inputStream = context.assets.open("invoices/html-theme/invoice-styles.css")
-                inputStream.use { stream ->
+                val fallbackCss = inputStream.use { stream ->
                     InputStreamReader(stream).use { reader ->
                         reader.readText()
                     }
                 }
+                Timber.d("✅ FALLBACK SUCCESSFUL: Modern CSS loaded (${fallbackCss.length} characters)")
+                Timber.d("⚠️ Note: PDF will show MODERN style instead of selected style")
+                fallbackCss
             } catch (fallbackError: Exception) {
-                Timber.e(fallbackError, "Failed to load fallback CSS file")
+                Timber.e(fallbackError, "❌ FALLBACK FAILED: Even Modern CSS could not be loaded!")
+                Timber.e("❌ PDF will render with NO STYLING - plain HTML only")
                 ""  // Return empty CSS if all fails
             }
         }
@@ -136,22 +170,34 @@ class HtmlPdfInvoiceService(
      * Embed CSS content into HTML as <style> tag.
      *
      * Replaces the placeholder style tag with the actual CSS content.
+     * This is CRITICAL - without this, the selected CSS style won't be applied to the PDF.
      *
      * @param htmlContent HTML document
      * @param cssContent CSS to embed
      * @return HTML with embedded CSS
      */
     private fun embedCssIntoHtml(htmlContent: String, cssContent: String): String {
+        Timber.d("🎨 EMBEDDING CSS INTO HTML...")
+        Timber.d("   HTML size: ${htmlContent.length} characters")
+        Timber.d("   CSS size: ${cssContent.length} characters")
+
         // Find and replace the style tag placeholder
         val styleTagStart = htmlContent.indexOf("<style>")
-        val styleTagEnd = htmlContent.indexOf("</style>", styleTagStart) + "</style>".length
+        val styleTagEnd = htmlContent.indexOf("</style>", styleTagStart)
 
         return if (styleTagStart >= 0 && styleTagEnd > styleTagStart) {
-            htmlContent.substring(0, styleTagStart) +
-            "<style>\n$cssContent\n</style>" +
-            htmlContent.substring(styleTagEnd)
+            Timber.d("   ✅ Found style tags at positions $styleTagStart - ${styleTagEnd + 8}")
+            val beforeStyle = htmlContent.substring(0, styleTagStart)
+            val afterStyle = htmlContent.substring(styleTagEnd + "</style>".length)
+            val result = beforeStyle + "<style>\n" + cssContent + "\n</style>" + afterStyle
+            Timber.d("   ✅ CSS embedded successfully. Result size: ${result.length} characters")
+            result
         } else {
-            htmlContent  // Return unchanged if style tag not found
+            Timber.e("❌ CRITICAL: Style tags not found in HTML!")
+            Timber.e("   styleTagStart: $styleTagStart")
+            Timber.e("   styleTagEnd: $styleTagEnd")
+            Timber.e("   This means CSS styling will NOT be applied to the PDF!")
+            htmlContent  // Return unchanged if style tag not found (CSS won't work)
         }
     }
 
@@ -194,7 +240,10 @@ class HtmlPdfInvoiceService(
                 <title>$documentType ${snapshot.invoiceId}</title>
                 <!-- CSS will be injected here by embedCssIntoHtml() -->
                 <style>
-                    /* PLACEHOLDER - Will be replaced with actual CSS from invoice-styles*.css files */
+/* PLACEHOLDER_CSS_CONTENT_START - Do not modify this line */
+/* The selected CSS stylesheet will be embedded here during PDF generation */
+/* This ensures the correct visual style is applied to the invoice */
+/* PLACEHOLDER_CSS_CONTENT_END */
                 </style>
             </head>
             <body>
@@ -341,44 +390,66 @@ class HtmlPdfInvoiceService(
         file.parentFile?.mkdirs()
 
         try {
-            Timber.d("🎨 Starting HTML-to-PDF conversion (iText7): ${file.name}")
+            Timber.d("🎨 ════════════════════════════════════════════════════════════════════")
+            Timber.d("🎨 STEP 4.1: Starting HTML-to-PDF conversion (iText7)")
+            Timber.d("🎨 Output file: ${file.absolutePath}")
+            Timber.d("🎨 HTML input size: ${htmlContent.length} characters")
+            Timber.d("🎨 ════════════════════════════════════════════════════════════════════")
 
+            Timber.d("🎨 4.1a: Creating PdfWriter and PdfDocument...")
             // Use iText7 to convert HTML to real PDF binary
             val pdfWriter = com.itextpdf.kernel.pdf.PdfWriter(file)
             val pdfDocument = com.itextpdf.kernel.pdf.PdfDocument(pdfWriter)
+            Timber.d("🎨 ✅ PdfDocument created")
 
+            Timber.d("🎨 4.1b: Configuring page size (A4)...")
             // Configure page (A4)
             val pageSize = com.itextpdf.kernel.geom.PageSize.A4
             pdfDocument.defaultPageSize = pageSize
+            Timber.d("🎨 ✅ Page size configured: A4 (${pageSize.width}x${pageSize.height} points)")
 
+            Timber.d("🎨 4.1c: Setting PDF metadata...")
             // Set PDF metadata
             val pdfMetaInfo = pdfDocument.documentInfo
             pdfMetaInfo.title = "Invoice"
             pdfMetaInfo.author = "Bizap"
             pdfMetaInfo.creator = "Bizap HTML-to-PDF"
+            Timber.d("🎨 ✅ PDF metadata set")
 
+            Timber.d("🎨 4.1d: Configuring HTML converter properties...")
             // Configure HTML converter properties
             val converterProperties = com.itextpdf.html2pdf.ConverterProperties()
             converterProperties.setBaseUri("file://")
+            Timber.d("🎨 ✅ Converter properties configured")
 
+            Timber.d("🎨 4.1e: Converting HTML to PDF (this may take a few seconds)...")
             // Convert HTML string to PDF
             val htmlBytes = htmlContent.toByteArray(Charsets.UTF_8)
             val htmlInputStream = java.io.ByteArrayInputStream(htmlBytes)
 
-            Timber.d("🔄 Converting ${htmlBytes.size} bytes of HTML to PDF...")
+            Timber.d("🎨 Converting ${htmlBytes.size} bytes of HTML to PDF...")
             com.itextpdf.html2pdf.HtmlConverter.convertToDocument(
                 htmlInputStream,
                 pdfDocument,
                 converterProperties
             )
+            Timber.d("🎨 ✅ HTML conversion complete")
 
+            Timber.d("🎨 4.1f: Closing PDF document...")
             pdfDocument.close()
+            Timber.d("🎨 ✅ PDF document closed and flushed to disk")
 
-            Timber.d("✅ HTML-to-PDF conversion SUCCESSFUL: ${file.name}")
-            Timber.d("✅ Real PDF file created with embedded HTML styling")
+            Timber.d("✅ ════════════════════════════════════════════════════════════════════")
+            Timber.d("✅ HTML-to-PDF conversion SUCCESSFUL")
+            Timber.d("✅ Output PDF: ${file.name}")
+            Timber.d("✅ File size: ${file.length()} bytes")
+            Timber.d("✅ This PDF should display the selected invoice style")
+            Timber.d("✅ ════════════════════════════════════════════════════════════════════")
 
         } catch (e: Exception) {
             Timber.e(e, "❌ HTML-to-PDF conversion FAILED")
+            Timber.e("❌ Error: ${e.message}")
+            Timber.e("❌ This may be why all PDFs look the same or PDF doesn't load")
             // Clean up incomplete file
             if (file.exists()) {
                 file.delete()

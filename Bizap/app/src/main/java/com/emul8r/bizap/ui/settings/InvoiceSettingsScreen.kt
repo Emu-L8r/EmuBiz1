@@ -170,15 +170,14 @@ fun InvoiceSettingsScreen(
                         )
                     }
 
-                    // HTML Style Selection (only for HTML_PDF theme)
+                    // HTML Style Selection (always visible for preview/selection)
                     item {
                         uiState.settings?.let { settings ->
-                            if (settings.selectedTheme == InvoiceTheme.HTML_PDF) {
-                                HtmlStyleSelectionSection(
-                                    currentStyle = settings.selectedHtmlStyle,
-                                    onStyleSelected = { viewModel.updateSelectedHtmlStyle(it) }
-                                )
-                            }
+                            HtmlStyleSelectionSection(
+                                currentStyle = settings.selectedHtmlStyle,
+                                onStyleSelected = { viewModel.updateSelectedHtmlStyle(it) },
+                                isActive = settings.selectedTheme == InvoiceTheme.HTML_PDF
+                            )
                         }
                     }
 
@@ -405,23 +404,58 @@ fun ThemeSelectionSection(
 @Composable
 fun HtmlStyleSelectionSection(
     currentStyle: HtmlInvoiceStyle?,
-    onStyleSelected: (HtmlInvoiceStyle) -> Unit
+    onStyleSelected: (HtmlInvoiceStyle) -> Unit,
+    isActive: Boolean = false
 ) {
+    var previewStyle by remember { mutableStateOf<HtmlInvoiceStyle?>(null) }
+
+    // Log available styles
+    LaunchedEffect(Unit) {
+        Timber.d("📋 HTML INVOICE STYLES AVAILABLE:")
+        HtmlInvoiceStyle.values().forEach { style ->
+            Timber.d("  ✓ ${style.displayName} (${style.styleFile})")
+        }
+        Timber.d("📝 CURRENT SELECTED STYLE: ${currentStyle?.displayName ?: "NONE (using default MODERN)"}")
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = if (isActive)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            else
+                MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isActive) 2.dp else 1.dp),
+        border = if (isActive)
+            androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+        else
+            null
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "HTML Invoice Styles (4 Available)",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (isActive) {
+                    androidx.compose.material3.Badge(
+                        modifier = Modifier.align(Alignment.Top),
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        Text("Active", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
             Text(
-                "HTML Invoice Style",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                "Choose your preferred HTML invoice design",
+                "Choose your preferred professional invoice design style",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
@@ -429,8 +463,9 @@ fun HtmlStyleSelectionSection(
 
             val style = currentStyle ?: HtmlInvoiceStyle.MODERN
 
-            // List all available HTML styles
+            // List all available HTML styles with color previews
             HtmlInvoiceStyle.values().forEach { htmlStyle ->
+                val styleColorScheme = getStyleColorScheme(htmlStyle)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -454,11 +489,23 @@ fun HtmlStyleSelectionSection(
                             .fillMaxWidth()
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         RadioButton(
                             selected = style == htmlStyle,
-                            onClick = { onStyleSelected(htmlStyle) }
+                            onClick = {
+                                Timber.d("🎨 USER SELECTED STYLE: ${htmlStyle.displayName}")
+                                onStyleSelected(htmlStyle)
+                            }
+                        )
+                        // Color preview box
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(
+                                    color = styleColorScheme,
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                                )
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -472,6 +519,17 @@ fun HtmlStyleSelectionSection(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                        // Preview button
+                        OutlinedButton(
+                            onClick = {
+                                Timber.d("👁️ USER PREVIEWING STYLE: ${htmlStyle.displayName}")
+                                previewStyle = htmlStyle
+                            },
+                            modifier = Modifier.height(32.dp),
+                            contentPadding = PaddingValues(4.dp)
+                        ) {
+                            Text("Preview", style = MaterialTheme.typography.labelSmall)
+                        }
                         if (style == htmlStyle) {
                             Icon(
                                 Icons.Default.Check,
@@ -483,6 +541,29 @@ fun HtmlStyleSelectionSection(
                 }
             }
         }
+    }
+
+    // Show preview dialog when selected
+    previewStyle?.let {
+        InvoiceStylePreview(
+            style = it,
+            onDismiss = {
+                previewStyle = null
+            }
+        )
+    }
+}
+
+/**
+ * Helper function to get the primary color for each HTML invoice style.
+ * Used for visual preview in the style selection UI.
+ */
+fun getStyleColorScheme(style: HtmlInvoiceStyle): Color {
+    return when (style) {
+        HtmlInvoiceStyle.MODERN -> Color(0xFF6B4C9A)      // Purple gradient
+        HtmlInvoiceStyle.MINIMAL -> Color(0xFF1a1a1a)     // Black & white
+        HtmlInvoiceStyle.CORPORATE -> Color(0xFF003366)   // Navy blue
+        HtmlInvoiceStyle.CREATIVE -> Color(0xFFFF6B35)    // Orange/teal vibrant
     }
 }
 

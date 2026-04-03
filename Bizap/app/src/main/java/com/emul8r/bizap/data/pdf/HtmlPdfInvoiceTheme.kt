@@ -107,8 +107,13 @@ class HtmlPdfInvoiceTheme @Inject constructor(
 
             // Step 5: Embed CSS from assets into HTML (CRITICAL FIX)
             // iText7 doesn't load external CSS files, so we embed CSS as inline <style> tag
+            // Use the selected HTML style to determine which CSS file to load
+            val selectedStyleFile = settings.selectedHtmlStyle.styleFile
+            Timber.d("🎨 Selected HTML Style: ${settings.selectedHtmlStyle.displayName}")
+            Timber.d("🎨 CSS File: $selectedStyleFile")
+
             val htmlWithEmbeddedCss = try {
-                pdfConverter.embedCssFromAssets(context, htmlContent)
+                pdfConverter.embedCssFromAssets(context, htmlContent, selectedStyleFile)
             } catch (e: Exception) {
                 Timber.w(e, "CSS embedding failed, continuing with HTML-only")
                 htmlContent  // Fallback to original HTML without styling

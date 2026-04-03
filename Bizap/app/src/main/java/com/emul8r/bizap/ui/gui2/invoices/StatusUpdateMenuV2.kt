@@ -14,6 +14,7 @@ import com.emul8r.bizap.domain.model.InvoiceStatus
 @Composable
 fun StatusUpdateMenuV2(
     currentStatus: InvoiceStatus,
+    error: String? = null,
     onStatusSelected: (InvoiceStatus) -> Unit,
     onDismiss: () -> Unit
 ) {
