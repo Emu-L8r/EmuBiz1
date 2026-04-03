@@ -79,30 +79,6 @@ data class InvoiceSettings(
     companion object {
         fun default(userId: String) = InvoiceSettings(userId = userId)
     }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as InvoiceSettings
-
-        if (userId != other.userId) return false
-        if (selectedTheme != other.selectedTheme) return false
-        if (primaryColor != other.primaryColor) return false
-        if (taxRate != other.taxRate) return false
-        if (paymentTermsDays != other.paymentTermsDays) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = userId.hashCode()
-        result = 31 * result + selectedTheme.hashCode()
-        result = 31 * result + primaryColor.hashCode()
-        result = 31 * result + taxRate.hashCode()
-        result = 31 * result + paymentTermsDays
-        return result
-    }
 }
 
 /**
@@ -181,4 +157,3 @@ enum class HtmlInvoiceStyle(val displayName: String, val description: String, va
         fun getDefault() = MODERN
     }
 }
-
