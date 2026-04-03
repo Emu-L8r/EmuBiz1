@@ -12,6 +12,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.designsystem.BizapStatusBadge
+import com.emul8r.bizap.ui.gui2.common.PaymentProgressBar
+import com.emul8r.bizap.ui.gui2.common.StatusBadge
 import com.emul8r.bizap.utils.CentsFormatter
 
 /**
@@ -54,6 +56,7 @@ fun InvoiceListContent(
  * Extracted as a standalone composable so it can be previewed and
  * reused independently of [InvoiceListContent].
  */
+@Suppress("DEPRECATION")  // Using new StatusBadge with colors intentionally
 @Composable
 fun InvoiceListRow(
     invoice: Invoice,
@@ -67,31 +70,48 @@ fun InvoiceListRow(
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = invoice.invoiceNumber,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = invoice.customerName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-                Text(
-                    text = CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode),
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium
-                )
+            // Top row: Invoice Number + Status Badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = invoice.invoiceNumber,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = invoice.customerName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+                // WIN #14: Color-coded status badge with emoji
+                StatusBadge(status = invoice.status)
             }
-            BizapStatusBadge(status = invoice.status)
+
+            // Amount row
+            Text(
+                text = CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode),
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium
+            )
+
+            // WIN #14: Payment progress bar (visual feedback)
+            val paymentPercent = if (invoice.totalAmount > 0) {
+                (invoice.amountPaid.toFloat() / invoice.totalAmount) * 100f
+            } else {
+                0f
+            }
+            PaymentProgressBar(percent = paymentPercent, animateToPercent = true)
         }
     }
 }
