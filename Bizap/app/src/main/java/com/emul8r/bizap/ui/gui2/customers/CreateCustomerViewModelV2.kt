@@ -34,7 +34,11 @@ class CreateCustomerViewModelV2 @Inject constructor(
         onSuccess: () -> Unit,
         onError: (String?) -> Unit
     ) {
-        // Email is now optional - validate name only
+        // Validate required fields before calling the repository
+        if (customer.email.isNullOrBlank()) {
+            onError("Customer email is required")
+            return
+        }
         if (customer.name.isBlank()) {
             onError("Customer name is required")
             return
