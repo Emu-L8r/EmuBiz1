@@ -65,4 +65,13 @@ data class InvoiceEntity(
     // v1.0.1 display name fields
     val dailyCounter: Int = 0,                  // Daily reset counter (1, 2, 3…)
     val displayName: String = ""                // Computed display name: customername-ddMMyyyy-01
-)
+) {
+    init {
+        // Validate that dueDate is not before invoice date (WIN #8: Validate dates)
+        if (dueDate > 0 && date > 0 && dueDate < date) {
+            throw IllegalArgumentException(
+                "Invoice due date ($dueDate) cannot be before invoice date ($date)"
+            )
+        }
+    }
+}
