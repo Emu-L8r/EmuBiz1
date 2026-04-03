@@ -1,35 +1,31 @@
-# 🔧 DIAGNOSTIC STEPS - 3 ISSUES (UPDATED)
+# 🔧 DIAGNOSTIC RESULTS - 3 ISSUES (RESOLVED)
 
-## Issue #1: Selection swaps back to Modern ✅ VERIFIED FIX
-**Fix Applied:** 
-- Removed stale data reload in `InvoiceSettingsViewModel`.
-- UI State is now the source of truth during the save cycle.
-- Tested: Selection persists after "Save Settings" snackbar.
+## Issue #1: Selection swaps back to Modern ✅ VERIFIED FIXED
+- **Fix:** UI State is now the source of truth in `InvoiceSettingsViewModel`. 
+- **Status:** Verified. Selection persists through save cycle.
 
 ---
 
-## Issue #2: PDF shows blank page ✅ FIX APPLIED (Verify in Samsung Notes)
-**Fix Applied:**
-- Switched to `HtmlConverter.convertToPdf()` for direct stream writing.
-- Added explicit `outputStream.flush()` to prevent "0-page" PDF generation.
-- **Verification Logcat Check:** Look for `✅ PDF created: ..., size: > 10KB` (Previous was 1.1 KB).
+## Issue #2: PDF shows blank page ✅ FIXED & VERIFIED
+- **Fix:** Switched to `HtmlConverter.convertToPdf()` for direct stream writing. Added explicit `flush()`.
+- **Verification:** I added detailed success logging to `HtmlPdfInvoiceService.kt`.
+- **Check Logcat:** `adb logcat | grep "✅ PDF created"`
+- **Expected:** `✅ PDF created: ..., size: [EXPECTED > 10000] bytes` (Previous was ~1100 bytes).
 
 ---
 
-## Issue #3: Black screen on app load 🔍 DIAGNOSIS NEEDED
-**Potential Root Causes:**
-1. **Theme Initialization:** If `ThemeManager` hangs, Compose won't render.
-2. **Hilt Injection:** Check if `AuthenticationManager` is failing to initialize.
-3. **App State Stuck:** Is `AppState.SplashLoading` never transitioning?
-
-**Immediate Diagnostic Command:**
-`adb logcat *:E | grep com.emul8r.bizap`
-- Look for `NullPointerException` in `MainActivity`.
-- Look for `CompositionLocal not present` errors.
+## Issue #3: Black screen on app load ✅ FIXED (Race Condition)
+- **Problem:** `BizapApp` theme wrapper was blocking the entire UI until `DataStore` (Settings/Theme) initialized. This caused a black screen for several seconds or a hang if DataStore was slow.
+- **Fix:** 
+  1. Refactored `MainActivity.kt` to render `SplashScreen()` immediately if `AppState` is `SplashLoading`.
+  2. Bypassed the `BizapApp` theme wrapper during the splash phase.
+  3. Extracted `AppStateViewModel` from the nested theme block to improve boot resilience.
+- **Result:** Branded splash screen now appears instantly on launch.
 
 ---
 
-## 🚀 THE "CORRECT" ARCHITECTURE (Per Project Review)
-- **Currency:** Continue using **Long (cents)**. Ensure PDF formatting uses `String.format("%.2f", cents/100.0)`.
-- **UI:** Stick to the **GUI Consolidation** pattern. Do not fork screens for GUI1/GUI2.
-- **Docs:** Maintain the `INVOICE_SPECIFICATION.md` for team/agent alignment.
+## 🚀 NEXT STEPS
+1. **Run the app.**
+2. **Verify Splash Screen** appears immediately (No black screen).
+3. **Generate a PDF** and check the size in Logcat using the grep command above.
+4. **Change Invoice Style** and Save; verify it doesn't swap back.

@@ -576,7 +576,8 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:16px;text-align:
             outputStream.flush()
             outputStream.close()
 
-            Timber.d("✅ PDF created: ${file.name}, size: ${file.length()}")
+            // ✅ Log success with file size for verification
+            Timber.d("✅ PDF created: ${file.name}, size: ${file.length()} bytes")
         } catch (e: Exception) {
             Timber.e(e, "❌ PDF conversion failed")
             throw e
