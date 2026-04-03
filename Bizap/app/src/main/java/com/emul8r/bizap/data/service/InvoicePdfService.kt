@@ -312,6 +312,13 @@ class InvoicePdfService @Inject constructor(
         // Draw border
         canvas.drawRoundRect(billToLeft, billToTop, billToRight, billToBottom, 8f, 8f, cardBorderPaint)
 
+        // Add accent color left-side bar (modern design element)
+        val accentBarPaint = Paint().apply {
+            color = colors.secondary
+            style = Paint.Style.FILL
+        }
+        canvas.drawRect(billToLeft, billToTop, billToLeft + 4f, billToBottom, accentBarPaint)
+
         val cardLabelPaint = Paint().apply {
             typeface = boldTypeface
             textSize = 8.5f
@@ -352,6 +359,9 @@ class InvoicePdfService @Inject constructor(
         canvas.drawRoundRect(invoiceLeft, invoiceTop, invoiceRight, invoiceBottom, 8f, 8f, cardBackgroundPaint)
         // Draw border
         canvas.drawRoundRect(invoiceLeft, invoiceTop, invoiceRight, invoiceBottom, 8f, 8f, cardBorderPaint)
+
+        // Add accent color left-side bar (modern design element)
+        canvas.drawRect(invoiceLeft, invoiceTop, invoiceLeft + 4f, invoiceBottom, accentBarPaint)
 
         canvas.drawText("INVOICE", 325f, 142f, cardLabelPaint)
 
@@ -480,42 +490,50 @@ class InvoicePdfService @Inject constructor(
         // Ensure space for totals section
         canvas = pageManager.ensureSpace(100f)
 
-        // ===== PHASE 9D: PREMIUM CAPSULE/BADGE TOTALS DESIGN =====
+        // ===== PHASE 9D: PREMIUM COLOR-BLOCKED TOTALS DESIGN =====
         val totalsCapsuleLeft = 320f
         val totalsCapsuleTop = pageManager.currentY - 10f
         val totalsCapsuleRight = 560f
         val totalsCapsuleHeight = 90f
 
-        // Capsule background (accent color with soft appearance)
+        // Primary color background for top section (subtotals)
+        val capsuleHeaderBackgroundPaint = Paint().apply {
+            color = colors.primary
+            style = Paint.Style.FILL
+        }
+        // Draw rounded header background
+        canvas.drawRoundRect(totalsCapsuleLeft, totalsCapsuleTop, totalsCapsuleRight, totalsCapsuleTop + 48f, 10f, 10f, capsuleHeaderBackgroundPaint)
+
+        // Light background for total amount section
         val capsuleBackgroundPaint = Paint().apply {
             color = Color.parseColor("#F5F5F5")
             style = Paint.Style.FILL
         }
-        // Draw rounded capsule container
-        canvas.drawRoundRect(totalsCapsuleLeft, totalsCapsuleTop, totalsCapsuleRight, totalsCapsuleTop + totalsCapsuleHeight, 10f, 10f, capsuleBackgroundPaint)
+        // Draw rounded bottom section
+        canvas.drawRoundRect(totalsCapsuleLeft, totalsCapsuleTop + 45f, totalsCapsuleRight, totalsCapsuleTop + totalsCapsuleHeight, 10f, 10f, capsuleBackgroundPaint)
 
         // Accent border on capsule
         val capsuleBorderPaint = Paint().apply {
-            color = colors.primary
+            color = colors.secondary
             strokeWidth = 2f
             style = Paint.Style.STROKE
         }
         canvas.drawRoundRect(totalsCapsuleLeft, totalsCapsuleTop, totalsCapsuleRight, totalsCapsuleTop + totalsCapsuleHeight, 10f, 10f, capsuleBorderPaint)
 
-        // Totals header label
+        // Totals header label - WHITE TEXT on primary color
         val totalsHeaderPaint = Paint().apply {
             typeface = boldTypeface
-            textSize = 9f
-            color = colors.primary
+            textSize = 11f
+            color = Color.WHITE
             isAntiAlias = true
         }
         canvas.drawText("TOTALS", 335f, totalsCapsuleTop + 16f, totalsHeaderPaint)
 
-        // Subtotal with luxury spacing
+        // Subtotal with luxury spacing - WHITE TEXT on primary color
         val subtotalLabelPaint = Paint().apply {
             typeface = regularTypeface
             textSize = 9.5f
-            color = Color.parseColor("#666666")
+            color = Color.WHITE
             textAlign = Paint.Align.RIGHT
             isAntiAlias = true
         }
@@ -528,110 +546,174 @@ class InvoicePdfService @Inject constructor(
             canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount / 100.0), 545f, totalsCapsuleTop + 50f, subtotalLabelPaint)
         }
 
-        // Total Amount Due - LARGE, BOLD, PROMINENT
-        val totalDuePaint = Paint().apply {
+        // Total Amount Due - ACCENT COLOR for visual prominence
+        val totalDueLabelPaint = Paint().apply {
             typeface = boldTypeface
-            textSize = 18f  // Increased from 16pt for prominence
-            color = colors.primary
+            textSize = 10f
+            color = Color.parseColor("#666666")
             textAlign = Paint.Align.RIGHT
             isAntiAlias = true
         }
-        val totalLabel = "TOTAL DUE"
-        canvas.drawText(totalLabel, 480f, totalsCapsuleTop + 70f, totalDuePaint)
+        canvas.drawText("TOTAL DUE:", 480f, totalsCapsuleTop + 70f, totalDueLabelPaint)
+
+        val totalDuePaint = Paint().apply {
+            typeface = boldTypeface
+            textSize = 20f
+            color = colors.secondary
+            textAlign = Paint.Align.RIGHT
+            isAntiAlias = true
+        }
         val formattedAmount = String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount / 100.0)
         canvas.drawText(formattedAmount, 545f, totalsCapsuleTop + 70f, totalDuePaint)
 
         pageManager.advanceY(totalsCapsuleHeight + 15f)
 
-        // ===== PHASE 9E: CARD-BASED PAYMENT SECTIONS WITH ROUNDED CORNERS =====
-        canvas = pageManager.ensureSpace(130f)
+        // ===== SPACING CONSTANTS FOR PROPER LAYOUT =====
+        val SECTION_MARGIN_TOP = 24f      // Gap before section
+        val SECTION_HEADER_HEIGHT = 28f   // Height of colored header bar
+        val SECTION_PADDING_TOP = 16f     // Padding inside section (top)
+        val SECTION_PADDING_HORIZ = 16f   // Horizontal padding inside section
+        val SECTION_PADDING_BOTTOM = 16f  // Padding inside section (bottom)
+        val LINE_HEIGHT = 18f             // Height for each text line
+        val LABEL_VALUE_GAP = 6f          // Gap between label and value
+        val ROW_SPACING = 12f             // Gap between rows
+        val CONTENT_BG_COLOR = Color.parseColor("#F8F9FA")  // Light gray
 
-        pageManager.advanceY(15f)
-
-        // Payment section as rounded card
-        val paymentBoxPaint = Paint().apply { color = Color.parseColor("#FAFAFA"); style = Paint.Style.FILL }
-        val paymentBoxBorderPaint = Paint().apply { color = Color.parseColor("#D8D8D8"); strokeWidth = 1f; style = Paint.Style.STROKE }
-
-        val paymentBoxTop = pageManager.currentY
-        val paymentBoxHeight = 110f
-        // Draw rounded card background
-        canvas.drawRoundRect(40f, paymentBoxTop, 555f, paymentBoxTop + paymentBoxHeight, 8f, 8f, paymentBoxPaint)
-        // Draw rounded card border
-        canvas.drawRoundRect(40f, paymentBoxTop, 555f, paymentBoxTop + paymentBoxHeight, 8f, 8f, paymentBoxBorderPaint)
-
-        // Payment section header (bold, primary color)
-        val paymentSectionHeaderPaint = Paint().apply {
+        // Paints for sections
+        val layoutFixSectionHeaderPaint = Paint().apply {
             typeface = boldTypeface
-            textSize = 11f
-            color = colors.primary
+            textSize = 13f
+            color = Color.WHITE
             isAntiAlias = true
         }
-        canvas.drawText("PAYMENT DETAILS", 50f, pageManager.currentY + 14f, paymentSectionHeaderPaint)
-        pageManager.advanceY(20f)
-
-        // Payment Terms subsection
-        bodyPaint.textAlign = Paint.Align.LEFT
-        val paymentTermsLabelPaint = Paint().apply {
+        val sectionHeaderBgPaint = Paint().apply {
+            color = colors.primary
+            style = Paint.Style.FILL
+        }
+        val leftAccentBarPaint = Paint().apply {
+            color = colors.secondary
+            style = Paint.Style.FILL
+        }
+        val contentBgPaint = Paint().apply {
+            color = CONTENT_BG_COLOR
+            style = Paint.Style.FILL
+        }
+        val fieldLabelPaint = Paint().apply {
             typeface = boldTypeface
-            textSize = 9f
+            textSize = 11f
             color = Color.parseColor("#333333")
             isAntiAlias = true
         }
-        canvas.drawText("Payment Terms:", 50f, pageManager.currentY, paymentTermsLabelPaint)
-        pageManager.advanceY(11f)
-        canvas.drawText("Due within 30 days of invoice date", 65f, pageManager.currentY, bodyPaint)
-        pageManager.advanceY(18f)
-
-        // Reference subsection
-        canvas.drawText("Reference:", 50f, pageManager.currentY, paymentTermsLabelPaint)
-        pageManager.advanceY(11f)
-        canvas.drawText(snapshot.invoiceNumber, 65f, pageManager.currentY, bodyPaint)
-
-        pageManager.advanceY(paymentBoxHeight)
-
-        // ===== EFT / BANK TRANSFER DETAILS (Separate card-based section) =====
-        val hasBankDetails = snapshot.bankAccountNumber.isNotBlank() || snapshot.bankBsb.isNotBlank()
-        if (hasBankDetails) {
-            pageManager.advanceY(15f)  // Space between sections
-
-            canvas = pageManager.ensureSpace(100f)
-
-            // EFT section as rounded card
-            val eftBoxPaint = Paint().apply { color = Color.parseColor("#FAFAFA"); style = Paint.Style.FILL }
-            val eftBoxBorderPaint = Paint().apply { color = Color.parseColor("#D8D8D8"); strokeWidth = 1f; style = Paint.Style.STROKE }
-
-            val eftBoxTop = pageManager.currentY
-            val eftBoxHeight = 85f
-            // Draw rounded card
-            canvas.drawRoundRect(40f, eftBoxTop, 555f, eftBoxTop + eftBoxHeight, 8f, 8f, eftBoxPaint)
-            // Draw rounded border
-            canvas.drawRoundRect(40f, eftBoxTop, 555f, eftBoxTop + eftBoxHeight, 8f, 8f, eftBoxBorderPaint)
-
-            canvas.drawText("EFT / BANK TRANSFER", 50f, pageManager.currentY + 14f, paymentSectionHeaderPaint)
-            pageManager.advanceY(22f)
-
-            if (snapshot.bankName.isNotBlank()) {
-                canvas.drawText("Bank:", 50f, pageManager.currentY, paymentTermsLabelPaint)
-                canvas.drawText(snapshot.bankName, 65f, pageManager.currentY, bodyPaint)
-                pageManager.advanceY(11f)
-            }
-            if (snapshot.bankAccountName.isNotBlank()) {
-                canvas.drawText("Account Name:", 50f, pageManager.currentY, paymentTermsLabelPaint)
-                canvas.drawText(snapshot.bankAccountName, 65f, pageManager.currentY, bodyPaint)
-                pageManager.advanceY(11f)
-            }
-            if (snapshot.bankBsb.isNotBlank()) {
-                canvas.drawText("BSB:", 50f, pageManager.currentY, paymentTermsLabelPaint)
-                canvas.drawText(snapshot.bankBsb, 65f, pageManager.currentY, bodyPaint)
-                pageManager.advanceY(11f)
-            }
-            if (snapshot.bankAccountNumber.isNotBlank()) {
-                canvas.drawText("Account Number:", 50f, pageManager.currentY, paymentTermsLabelPaint)
-                canvas.drawText(snapshot.bankAccountNumber, 65f, pageManager.currentY, bodyPaint)
-            }
-
-            pageManager.advanceY(eftBoxHeight)
+        val fieldValuePaint = Paint().apply {
+            typeface = regularTypeface
+            textSize = 11f
+            color = Color.parseColor("#555555")
+            isAntiAlias = true
         }
+
+        // ===== PAYMENT DETAILS SECTION - PROPER LAYOUT =====
+        canvas = pageManager.ensureSpace(200f)
+        var currentSectionY = pageManager.currentY + SECTION_MARGIN_TOP
+
+        // Calculate section height based on content
+        val paymentContentLines = 4  // "Payment Terms:" (label) + "Due..." (value) + spacing + "Reference:" + spacing
+        val paymentSectionHeight = SECTION_HEADER_HEIGHT + SECTION_PADDING_TOP + (paymentContentLines * LINE_HEIGHT) + (2 * ROW_SPACING) + SECTION_PADDING_BOTTOM
+
+        // Draw background
+        canvas.drawRect(40f, currentSectionY, 555f, currentSectionY + paymentSectionHeight, contentBgPaint)
+
+        // Draw header bar
+        canvas.drawRect(40f, currentSectionY, 555f, currentSectionY + SECTION_HEADER_HEIGHT, sectionHeaderBgPaint)
+
+        // Draw left accent bar
+        canvas.drawRect(40f, currentSectionY, 45f, currentSectionY + paymentSectionHeight, leftAccentBarPaint)
+
+        // Draw header text
+        canvas.drawText("PAYMENT DETAILS", 55f, currentSectionY + SECTION_HEADER_HEIGHT - 8f, layoutFixSectionHeaderPaint)
+
+        // Start content below header
+        var contentY = currentSectionY + SECTION_HEADER_HEIGHT + SECTION_PADDING_TOP
+
+        // Payment Terms label
+        canvas.drawText("Payment Terms:", 55f, contentY, fieldLabelPaint)
+        contentY += LINE_HEIGHT + LABEL_VALUE_GAP
+
+        // Payment Terms value
+        canvas.drawText("Due within 30 days of invoice date", 71f, contentY, fieldValuePaint)
+        contentY += LINE_HEIGHT + ROW_SPACING
+
+        // Reference label
+        canvas.drawText("Reference:", 55f, contentY, fieldLabelPaint)
+        contentY += LINE_HEIGHT + LABEL_VALUE_GAP
+
+        // Reference value
+        val refValue = if (snapshot.invoiceNumber.isNotBlank()) snapshot.invoiceNumber else "Not provided"
+        canvas.drawText(refValue, 71f, contentY, fieldValuePaint)
+
+        pageManager.setY(currentSectionY + paymentSectionHeight + SECTION_MARGIN_TOP)
+
+        // ===== EFT / BANK TRANSFER SECTION - PROPER LAYOUT =====
+        val hasBankDetails = snapshot.bankAccountNumber.isNotBlank() || snapshot.bankBsb.isNotBlank()
+            || snapshot.bankName.isNotBlank() || snapshot.bankAccountName.isNotBlank()
+
+        if (hasBankDetails) {
+            canvas = pageManager.ensureSpace(250f)
+            currentSectionY = pageManager.currentY + SECTION_MARGIN_TOP
+
+            // Calculate section height - 4 fields × (label height + value height + spacing)
+            val bankContentLines = 8  // 4 fields × 2 lines each
+            val bankSectionHeight = SECTION_HEADER_HEIGHT + SECTION_PADDING_TOP + (bankContentLines * LINE_HEIGHT) + (3 * ROW_SPACING) + SECTION_PADDING_BOTTOM
+
+            // Draw background
+            canvas.drawRect(40f, currentSectionY, 555f, currentSectionY + bankSectionHeight, contentBgPaint)
+
+            // Draw header bar
+            canvas.drawRect(40f, currentSectionY, 555f, currentSectionY + SECTION_HEADER_HEIGHT, sectionHeaderBgPaint)
+
+            // Draw left accent bar
+            canvas.drawRect(40f, currentSectionY, 45f, currentSectionY + bankSectionHeight, leftAccentBarPaint)
+
+            // Draw header text
+            canvas.drawText("EFT / BANK TRANSFER", 55f, currentSectionY + SECTION_HEADER_HEIGHT - 8f, layoutFixSectionHeaderPaint)
+
+            // Start content below header
+            contentY = currentSectionY + SECTION_HEADER_HEIGHT + SECTION_PADDING_TOP
+
+            // Bank Name
+            if (snapshot.bankName.isNotBlank()) {
+                canvas.drawText("Bank Name:", 55f, contentY, fieldLabelPaint)
+                contentY += LINE_HEIGHT + LABEL_VALUE_GAP
+                canvas.drawText(snapshot.bankName, 71f, contentY, fieldValuePaint)
+                contentY += LINE_HEIGHT + ROW_SPACING
+            }
+
+            // Account Name
+            if (snapshot.bankAccountName.isNotBlank()) {
+                canvas.drawText("Account Name:", 55f, contentY, fieldLabelPaint)
+                contentY += LINE_HEIGHT + LABEL_VALUE_GAP
+                canvas.drawText(snapshot.bankAccountName, 71f, contentY, fieldValuePaint)
+                contentY += LINE_HEIGHT + ROW_SPACING
+            }
+
+            // BSB
+            if (snapshot.bankBsb.isNotBlank()) {
+                canvas.drawText("BSB:", 55f, contentY, fieldLabelPaint)
+                contentY += LINE_HEIGHT + LABEL_VALUE_GAP
+                canvas.drawText(snapshot.bankBsb, 71f, contentY, fieldValuePaint)
+                contentY += LINE_HEIGHT + ROW_SPACING
+            }
+
+            // Account Number
+            if (snapshot.bankAccountNumber.isNotBlank()) {
+                canvas.drawText("Account Number:", 55f, contentY, fieldLabelPaint)
+                contentY += LINE_HEIGHT + LABEL_VALUE_GAP
+                canvas.drawText(snapshot.bankAccountNumber, 71f, contentY, fieldValuePaint)
+            }
+
+            pageManager.setY(currentSectionY + bankSectionHeight + SECTION_MARGIN_TOP)
+        }
+
+        pageManager.advanceY(8f)  // Small spacing after sections
 
         // Render notes and footer below totals
         bodyPaint.textAlign = Paint.Align.LEFT
@@ -785,7 +867,7 @@ class InvoicePdfService @Inject constructor(
         }
     }
 
-    private fun formatDate(timestamp: Long): String = 
+    private fun formatDate(timestamp: Long): String =
         SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(timestamp))
 
     private fun generateVersionedFileName(baseFileName: String): String {
