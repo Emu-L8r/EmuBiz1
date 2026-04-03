@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
 import com.emul8r.bizap.di.UserIdProvider
+import com.emul8r.bizap.domain.model.CanvasInvoiceTemplate
 import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
 import com.emul8r.bizap.domain.model.InvoiceSettings
 import com.emul8r.bizap.domain.model.InvoiceTheme
@@ -74,6 +75,14 @@ class InvoiceSettingsViewModel @Inject constructor(
         _uiState.value.settings?.let { current ->
             _uiState.value = _uiState.value.copy(
                 settings = current.copy(selectedTheme = theme)
+            )
+        }
+    }
+
+    fun updateSelectedCanvasTemplate(template: CanvasInvoiceTemplate) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(selectedCanvasTemplate = template)
             )
         }
     }

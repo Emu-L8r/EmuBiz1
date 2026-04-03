@@ -13,6 +13,7 @@ import com.emul8r.bizap.data.local.*
 import com.emul8r.bizap.data.local.dao.*
 import com.emul8r.bizap.data.local.migrations.*
 import com.emul8r.bizap.data.local.migration.MIGRATION_AddInvoiceSettings
+import com.emul8r.bizap.data.local.migrations.MIGRATION_38_39
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -63,7 +64,8 @@ object DatabaseModule {
             MIGRATION_34_35,
             MIGRATION_35_36,
             MIGRATION_36_37,  // Remove UNIQUE constraint on email field
-            MIGRATION_AddInvoiceSettings  // Add invoice_settings table for Phase 4
+            MIGRATION_AddInvoiceSettings,  // Add invoice_settings table for Phase 4
+            MIGRATION_38_39   // Add selected_html_style and selected_canvas_template columns
         )
 
         // ✅ PRODUCTION SAFE: Only allow destructive fallback in DEBUG builds
