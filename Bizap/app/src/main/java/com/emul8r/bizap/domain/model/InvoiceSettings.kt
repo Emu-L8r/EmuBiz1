@@ -30,6 +30,10 @@ data class InvoiceSettings(
     @ColumnInfo(name = "selected_html_style")
     val selectedHtmlStyle: HtmlInvoiceStyle = HtmlInvoiceStyle.MODERN,
 
+    // CANVAS TEMPLATE SELECTION (for Canvas theme)
+    @ColumnInfo(name = "selected_canvas_template")
+    val selectedCanvasTemplate: CanvasInvoiceTemplate = CanvasInvoiceTemplate.MODERN,
+
     // PDF STYLING (kept for invoice appearance)
     @ColumnInfo(name = "primary_color")
     val primaryColor: String = "#6B4C9A",      // Default purple
@@ -90,6 +94,52 @@ data class InvoiceSettings(
 enum class InvoiceTheme {
     CANVAS,      // Existing Canvas-based PDF
     HTML_PDF     // New HTML-to-PDF modern style
+}
+
+/**
+ * Enum for Canvas-based invoice template styles.
+ *
+ * Provides 4 distinct professional Canvas designs:
+ * - MODERN: Purple + Orange vibrant artistic design
+ * - PROFESSIONAL: Navy + Gold formal corporate design
+ * - CREATIVE: Teal + Orange energetic modern design
+ * - MINIMAL: Dark Gray + Teal clean and simple design
+ */
+enum class CanvasInvoiceTemplate(
+    val displayName: String,
+    val description: String,
+    val colorScheme: String,
+    val primaryHex: String,
+    val accentHex: String
+) {
+    MODERN(
+        displayName = "Modern (Artistic)",
+        description = "Purple + Orange vibrant design with artistic styling",
+        colorScheme = "Purple & Orange",
+        primaryHex = "#6B4C9A",
+        accentHex = "#FF9F43"
+    ),
+    PROFESSIONAL(
+        displayName = "Professional (Formal)",
+        description = "Navy + Gold classical design for business",
+        colorScheme = "Navy & Gold",
+        primaryHex = "#003366",
+        accentHex = "#FFC107"
+    ),
+    CREATIVE(
+        displayName = "Creative (Vibrant)",
+        description = "Teal + Orange energetic modern design",
+        colorScheme = "Teal & Orange",
+        primaryHex = "#00A8A8",
+        accentHex = "#FF6B35"
+    ),
+    MINIMAL(
+        displayName = "Minimal (Clean)",
+        description = "Dark Gray + Teal clean and simple",
+        colorScheme = "Gray & Teal",
+        primaryHex = "#2C3E50",
+        accentHex = "#17A2B8"
+    )
 }
 
 /**
