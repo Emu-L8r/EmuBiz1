@@ -10,8 +10,6 @@ import android.text.TextPaint
 import androidx.annotation.RequiresApi
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.repository.DocumentRepository
-import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
-import com.emul8r.bizap.di.UserIdProvider
 import com.emul8r.bizap.domain.pdf.PdfTableRenderer
 import com.emul8r.bizap.domain.pdf.PdfBrandingRenderer
 import com.emul8r.bizap.domain.pdf.PdfPageManager
@@ -19,6 +17,8 @@ import com.emul8r.bizap.domain.pdf.PdfWatermarkRenderer
 import com.emul8r.bizap.domain.service.PdfGenerationService
 import com.emul8r.bizap.ui.templates.TemplateSnapshotManager
 import com.emul8r.bizap.utils.DocumentNamingUtils
+import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
+import com.emul8r.bizap.di.UserIdProvider
 import timber.log.Timber
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -39,7 +39,6 @@ import javax.inject.Singleton
  * - Generates PDF files from invoice snapshots using Android's PdfDocument API
  * - Manages internal storage of generated PDFs
  * - Handles file naming, versioning, and overwrite logic
- * - Routes HTML PDF generation with proper style selection
  */
 @Singleton
 class InvoicePdfService @Inject constructor(
@@ -67,61 +66,75 @@ class InvoicePdfService @Inject constructor(
         overwriteExisting: Boolean,
         theme: com.emul8r.bizap.domain.model.InvoiceTheme?
     ): File {
-        Timber.d("═══════════════════════════════════════════════════════════════════════════")
-        Timber.d("📄 InvoicePdfService.generatePdf() called with theme: ${theme?.name ?: "NULL"}")
-
-                // FIX: Cause #3 - Use theme parameter to route to correct service
+        // FIX: Cause #3 - Use theme parameter to route to correct service
         return when (theme) {
             com.emul8r.bizap.domain.model.InvoiceTheme.HTML_PDF -> {
+                Timber.d("═══════════════════════════════════════════════════════════════════════════")
                 Timber.d("✅ THEME MATCHED: HTML_PDF")
                 Timber.d("🎨 Routing to HtmlPdfInvoiceService for PDF generation")
+                Timber.d("═══════════════════════════════════════════════════════════════════════════")
                 try {
-                    // Load current user's invoice settings to get the selected HTML style
+                    // FIX #1: Load current user's invoice settings - MANDATORY (not optional)
                     val currentUserId = userIdProvider.getCurrentUserId()
-                    Timber.d("📱 Using userId: $currentUserId")
-
+                    Timber.d("🔍 Step 1: Get current user ID")
+                    Timber.d("   User ID: $currentUserId")
+                    
                     val settings = try {
+                        Timber.d("🔍 Step 2: Load settings from repository")
                         val loadedSettings = invoiceSettingsRepository.getSettings(currentUserId)
-                        Timber.d("🔍 ═══════════════════════════════════════════════════════════════")
-                        Timber.d("🔍 CRITICAL: SETTINGS LOADED FROM REPOSITORY FOR PDF GENERATION")
-                        Timber.d("🔍 ═══════════════════════════════════════════════════════════════")
-                        if (loadedSettings != null) {
-                            Timber.d("✅ Settings found for user: $currentUserId")
-                            Timber.d("   📋 selectedTheme: ${loadedSettings.selectedTheme.name}")
-                            Timber.d("   🎨 selectedHtmlStyle: ${loadedSettings.selectedHtmlStyle.displayName}")
-                            Timber.d("   🎨 selectedHtmlStyle enum: ${loadedSettings.selectedHtmlStyle.name}")
-                            Timber.d("   📄 CSS file to use: ${loadedSettings.selectedHtmlStyle.styleFile}")
-                            Timber.d("🔍 ═══════════════════════════════════════════════════════════════")
-                        } else {
-                            Timber.w("⚠️  Settings returned as NULL - will use default (MODERN style)")
-                            Timber.w("    This suggests settings were never saved for this user")
-                            Timber.w("    Going to repository with fallback to default")
+                        
+                        // FIX #1: Validate settings are not NULL
+                        if (loadedSettings == null) {
+                            throw IllegalStateException(
+                                "Invoice settings not found for user $currentUserId. " +
+                                "Settings must be initialized before generating PDF with HTML theme."
+                            )
                         }
+                        
+                        Timber.d("   ✅ Settings loaded successfully")
+                        Timber.d("   Selected Theme: ${loadedSettings.selectedTheme.name}")
+                        Timber.d("   Selected HTML Style: ${loadedSettings.selectedHtmlStyle.displayName}")
+                        Timber.d("   Style enum: ${loadedSettings.selectedHtmlStyle.name}")
                         loadedSettings
                     } catch (e: Exception) {
-                        Timber.w(e, "⚠️ Failed to load invoice settings from repository: ${e.message}")
-                        Timber.w("    Using NULL - HtmlPdfInvoiceService will apply MODERN default")
-                        null
+                        Timber.e(e, "❌ Step 2 FAILED: Could not load settings")
+                        Timber.e("   Exception type: ${e.javaClass.simpleName}")
+                        Timber.e("   Message: ${e.message}")
+                        Timber.e("   This means the selected HTML style CANNOT be applied")
+                        throw e  // FIX #1: Don't silently fail - propagate error
                     }
-
-                    // Use HTML-to-PDF service for modern design, passing settings for style selection
-                    Timber.d("🔄 Creating HtmlPdfInvoiceService instance with settings...")
-                    Timber.d("   Settings object passed: ${if (settings != null) "✅ YES" else "❌ NULL"}")
+                    
+                    // FIX #1: Additional validation
+                    Timber.d("🔍 Step 3: Validate settings object")
+                    if (settings.selectedHtmlStyle == null) {
+                        Timber.e("❌ VALIDATION FAILED: selectedHtmlStyle is NULL")
+                        throw IllegalStateException(
+                            "Settings loaded but selectedHtmlStyle is NULL. " +
+                            "This indicates a data model error."
+                        )
+                    }
+                    Timber.d("   ✅ Validation passed - selectedHtmlStyle is NOT NULL")
+                    
+                    // Create service with validated settings
+                    Timber.d("🔄 Step 4: Create HtmlPdfInvoiceService instance")
+                    Timber.d("   Passing settings with HTML style: ${settings.selectedHtmlStyle.displayName}")
                     val htmlPdfService = HtmlPdfInvoiceService(context, settings)
-                    Timber.d("🔄 Calling htmlPdfService.generatePdf()...")
+                    
+                    Timber.d("🔄 Step 5: Call htmlPdfService.generatePdf()")
                     val result = htmlPdfService.generatePdf(snapshot, isQuote, overwriteExisting, theme)
-                    Timber.d("✅ HtmlPdfInvoiceService.generatePdf() completed successfully")
-                    Timber.d("✅ PDF file: ${result.name} (${result.length()} bytes)")
+                    
+                    Timber.d("✅ PDF generation complete")
+                    Timber.d("   File: ${result.name}")
+                    Timber.d("   Size: ${result.length()} bytes")
+                    Timber.d("   HTML Style Applied: ${settings.selectedHtmlStyle.displayName}")
+                    Timber.d("═══════════════════════════════════════════════════════════════════════════")
                     result
                 } catch (e: Exception) {
-                    Timber.e(e, "❌ HTML-to-PDF generation FAILED, falling back to Canvas")
-                    // Fallback to Canvas if HTML service fails
-                    Timber.d("⚠️ Falling back to generateInvoice() (Canvas)...")
-                    generateInvoice(snapshot, isQuote, overwriteExisting)
+                    Timber.e(e, "❌ HTML PDF generation failed")
+                    throw e
                 }
             }
             else -> {
-                Timber.d("✅ THEME: ${theme?.name ?: "NULL/DEFAULT"}")
                 Timber.d("🎨 Using Canvas theme for PDF generation (default)")
                 // Default: use Canvas theme
                 generateInvoice(snapshot, isQuote, overwriteExisting)
