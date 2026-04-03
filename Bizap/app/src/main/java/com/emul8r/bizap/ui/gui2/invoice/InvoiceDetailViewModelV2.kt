@@ -124,9 +124,13 @@ class InvoiceDetailViewModelV2 @Inject constructor(
     fun recordPayment(amount: Long) {
         viewModelScope.launch {
             val currentState = _uiState.value
-            if (currentState !is InvoiceDetailUiStateV2.Success) return@launch
+            if (currentState !is InvoiceDetailUiStateV2.Success) {
+                Timber.w("recordPayment: Invalid state, cannot record payment")  // ⬅️ ADD
+                return@launch
+            }
 
             // Set loading state
+            Timber.d("recordPayment: Starting payment recording - invoiceId=$invoiceId, amount=$amount cents")  // ⬅️ ADD
             _uiState.value = currentState.copy(
                 paymentLoading = true,
                 paymentError = null
@@ -134,6 +138,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
 
             try {
                 val invoice = invoiceDao.getInvoiceById(invoiceId) ?: run {
+                    Timber.w("recordPayment: Invoice not found - invoiceId=$invoiceId")  // ⬅️ ADD
                     _uiState.value = currentState.copy(
                         paymentLoading = false,
                         paymentError = "Invoice not found"
@@ -143,6 +148,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
 
                 val remaining = invoice.totalAmount - invoice.amountPaid
                 if (amount <= 0) {
+                    Timber.w("recordPayment: Invalid amount - amount=$amount (must be > 0)")  // ⬅️ ADD
                     _uiState.value = currentState.copy(
                         paymentLoading = false,
                         paymentError = "Payment amount must be greater than zero."
@@ -150,6 +156,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                     return@launch
                 }
                 if (amount > remaining) {
+                    Timber.w("recordPayment: Amount exceeds balance - requested=$amount, remaining=$remaining")  // ⬅️ ADD
                     _uiState.value = currentState.copy(
                         paymentLoading = false,
                         paymentError = "Payment exceeds the outstanding balance of ${CentsFormatter.formatCents(remaining)}."
@@ -158,7 +165,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                 }
 
                 val newAmountPaid = invoice.amountPaid + amount
-                Timber.d("InvoiceDetailViewModelV2: Recording payment of $amount cents")
+                Timber.d("recordPayment: Updating database - ${invoice.amountPaid} → $newAmountPaid cents")  // ⬅️ ENHANCE
                 invoiceDao.updateAmountPaid(invoiceId, newAmountPaid)
 
                 // Update status based on payment
@@ -168,8 +175,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                     InvoiceStatus.PARTIALLY_PAID
                 }
                 invoiceDao.updateStatus(invoiceId, newStatus)
-                Timber.d("InvoiceDetailViewModelV2: Status updated to $newStatus")
-                Timber.d("InvoiceDetailViewModelV2: Payment recorded successfully")
+                Timber.i("✅ recordPayment: Payment recorded successfully - invoiceId=$invoiceId, newStatus=$newStatus")  // ⬅️ ADD
 
                 // Close dialog on success
                 _uiState.value = currentState.copy(
@@ -178,7 +184,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                     paymentError = null
                 )
             } catch (e: Exception) {
-                Timber.e(e, "InvoiceDetailViewModelV2: Failed to record payment")
+                Timber.e(e, "❌ recordPayment: Database error during payment recording - invoiceId=$invoiceId")  // ⬅️ ENHANCE
                 _uiState.value = currentState.copy(
                     paymentLoading = false,
                     paymentError = "Failed to record payment: ${e.message}"
@@ -191,35 +197,38 @@ class InvoiceDetailViewModelV2 @Inject constructor(
     fun updateInvoiceStatus(newStatus: InvoiceStatus) {
         viewModelScope.launch {
             val currentState = _uiState.value
-            if (currentState !is InvoiceDetailUiStateV2.Success) return@launch
+            if (currentState !is InvoiceDetailUiStateV2.Success) {
+                Timber.w("updateInvoiceStatus: Invalid state, cannot update status")  // ⬅️ ADD
+                return@launch
+            }
 
             try {
-                Timber.d("InvoiceDetailViewModelV2: Updating status to $newStatus")
+                Timber.d("updateInvoiceStatus: Starting status update - invoiceId=$invoiceId, newStatus=$newStatus")  // ⬅️ ENHANCE
                 if (newStatus == InvoiceStatus.PAID) {
                     paymentRepositoryV2.markInvoiceAsPaid(invoiceId, businessId)
                         .onSuccess {
-                            Timber.d("InvoiceDetailViewModelV2: Invoice marked as paid and payment auto-recorded")
+                            Timber.i("✅ updateInvoiceStatus: Invoice marked as paid - invoiceId=$invoiceId")  // ⬅️ ADD
                             _uiState.value = currentState.copy(
                                 dialogState = DialogState.None,
                                 statusUpdateError = null
                             )
                         }
                         .onFailure { e ->
-                            Timber.e(e, "InvoiceDetailViewModelV2: Failed to mark invoice as paid")
+                            Timber.e(e, "❌ updateInvoiceStatus: Failed to mark as paid - invoiceId=$invoiceId")  // ⬅️ ADD
                             _uiState.value = currentState.copy(
                                 statusUpdateError = "Failed to mark invoice as paid: ${e.message}"
                             )
                         }
                 } else {
                     invoiceDao.updateStatus(invoiceId, newStatus)
-                    Timber.d("InvoiceDetailViewModelV2: Status updated successfully")
+                    Timber.i("✅ updateInvoiceStatus: Status updated successfully - invoiceId=$invoiceId, status=$newStatus")  // ⬅️ ENHANCE
                     _uiState.value = currentState.copy(
                         dialogState = DialogState.None,
                         statusUpdateError = null
                     )
                 }
             } catch (e: Exception) {
-                Timber.e(e, "InvoiceDetailViewModelV2: Failed to update status")
+                Timber.e(e, "❌ updateInvoiceStatus: Exception during status update - invoiceId=$invoiceId")  // ⬅️ ENHANCE
                 _uiState.value = currentState.copy(
                     statusUpdateError = "Failed to update status: ${e.message}"
                 )
