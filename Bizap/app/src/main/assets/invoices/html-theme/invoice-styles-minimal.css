@@ -86,10 +86,10 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: var(--spacing-lg);
-    padding: 0;
-    padding-bottom: var(--spacing-lg);
-    border-bottom: 2px solid var(--primary-color);
+    margin-bottom: var(--spacing-xl);
+    padding: 0 0 var(--spacing-xl) 0;
+    border-bottom: 4px solid #000000;
+    border-top: 12px solid #ffffff;
     background: transparent;
     color: var(--text-color);
 }

@@ -36,8 +36,10 @@ fun RecordPaymentDialogV2(
     amountPaid: Long,
     invoiceDate: Long,
     invoiceStatus: InvoiceStatus,
+    isLoading: Boolean = false,
+    error: String? = null,
     onDismiss: () -> Unit,
-    onSuccess: () -> Unit,
+    onSuccess: (amount: Long) -> Unit,
     viewModel: RecordPaymentViewModel = hiltViewModel()
 ) {
     val formState by viewModel.formState.collectAsStateWithLifecycle()
@@ -61,7 +63,8 @@ fun RecordPaymentDialogV2(
         viewModel.events.collect { event ->
             when (event) {
                 is PaymentEvent.Success -> {
-                    onSuccess()
+                    val amount = formState.amountCents ?: 0L
+                    onSuccess(amount)
                     onDismiss()
                 }
                 is PaymentEvent.Error -> { /* error is already shown in formState */ }

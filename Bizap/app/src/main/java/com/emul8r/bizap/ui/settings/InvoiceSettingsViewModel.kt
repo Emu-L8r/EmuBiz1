@@ -3,6 +3,7 @@ package com.emul8r.bizap.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
+import com.emul8r.bizap.di.UserIdProvider
 import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
 import com.emul8r.bizap.domain.model.InvoiceSettings
 import com.emul8r.bizap.domain.model.InvoiceTheme
@@ -40,14 +41,16 @@ data class InvoiceSettingsUiState(
  */
 @HiltViewModel
 class InvoiceSettingsViewModel @Inject constructor(
-    private val repository: InvoiceSettingsRepository
+    private val repository: InvoiceSettingsRepository,
+    private val userIdProvider: UserIdProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InvoiceSettingsUiState())
     val uiState: StateFlow<InvoiceSettingsUiState> = _uiState.asStateFlow()
 
-    // TODO: Get from auth/session instead of hardcoding
-    private val userId = "current_user"
+    // Get user ID from provider (single source of truth)
+    private val userId: String
+        get() = userIdProvider.getCurrentUserId()
 
     init {
         loadSettings()

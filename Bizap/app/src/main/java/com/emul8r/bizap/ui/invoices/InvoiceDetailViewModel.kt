@@ -9,6 +9,7 @@ import com.emul8r.bizap.data.local.entities.GeneratedDocumentEntity
 import com.emul8r.bizap.domain.analytics.AnalyticsRepository
 import com.emul8r.bizap.domain.analytics.InvoiceAnalyticsEvent
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
+import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
 import com.emul8r.bizap.data.service.CsvExportService
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.data.service.PrintService
@@ -53,6 +54,7 @@ class InvoiceDetailViewModel @Inject constructor(
     private val invoiceRepo: InvoiceRepository,
     private val analyticsRepository: AnalyticsRepository,
     private val documentRepository: com.emul8r.bizap.domain.repository.DocumentRepository,
+    private val invoiceSettingsRepository: InvoiceSettingsRepository,
     private val pdfService: InvoicePdfService,
     private val csvExportService: CsvExportService,
     private val businessProfileRepository: BusinessProfileRepository,
@@ -290,18 +292,30 @@ class InvoiceDetailViewModel @Inject constructor(
                 val businessProfile = businessProfileRepository.activeProfile.first()
                 val snapshot = buildSnapshot(invoiceData, businessProfile)
 
+                // 🔧 FIX: Load invoice settings to get the selected theme
+                val invoiceSettings = try {
+                    invoiceSettingsRepository.getSettings("current_user")
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to load invoice settings, using default theme")
+                    null
+                }
+                val selectedTheme = invoiceSettings?.selectedTheme
+                Timber.d("📄 Loaded theme for PDF generation: ${selectedTheme?.name ?: "NULL (will use default)"}")
+
                 val quoteResult = generateAndSaveInvoiceUseCase(
                     invoice = invoiceData,
                     snapshot = snapshot,
                     isQuote = true,
-                    overwriteExisting = overwriteExisting
+                    overwriteExisting = overwriteExisting,
+                    theme = selectedTheme
                 )
 
                 val invoiceResult = generateAndSaveInvoiceUseCase(
                     invoice = invoiceData,
                     snapshot = snapshot,
                     isQuote = false,
-                    overwriteExisting = overwriteExisting
+                    overwriteExisting = overwriteExisting,
+                    theme = selectedTheme
                 )
 
                 if (quoteResult.isSuccess && invoiceResult.isSuccess) {

@@ -115,11 +115,14 @@ class HtmlToPdfConverter(
      *
      * @param context Android context to access assets
      * @param htmlContent HTML content with external CSS link reference
+     * @param styleFileName Name of the CSS file to load (e.g., "invoice-styles.css", "invoice-styles-minimal.css")
      * @return HTML with CSS embedded as <style> tag, or original HTML if CSS loading fails
      */
-    fun embedCssFromAssets(context: Context, htmlContent: String): String {
+    fun embedCssFromAssets(context: Context, htmlContent: String, styleFileName: String = "invoice-styles.css"): String {
         return try {
-            val assetPath = "invoices/html-theme/invoice-styles.css"
+            val assetPath = "invoices/html-theme/$styleFileName"
+            Timber.d("🎨 LOADING CSS FOR STYLE: Loading $styleFileName from $assetPath")
+
             val cssContent = context.assets.open(assetPath)
                 .bufferedReader(Charsets.UTF_8)
                 .use { it.readText() }
@@ -138,7 +141,7 @@ class HtmlToPdfConverter(
                 styleTag
             )
 
-            Timber.d("CSS embedded successfully (${cssContent.length} bytes)")
+            Timber.d("✅ CSS loaded successfully: ${cssContent.length} characters")
             result
 
         } catch (e: Exception) {

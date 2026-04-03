@@ -26,18 +26,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /**
- * Dialog state to manage multiple dialogs without recomposition issues.
- */
-private sealed class DialogState {
-    object None : DialogState()
-    object PaymentDialog : DialogState()
-    object StatusMenu : DialogState()
-    object ExportPdf : DialogState()
-}
-
-/**
  * GUI2 invoice detail screen.
  * Displays a read-only view of a single invoice's details and line items.
+ *
+ * STATE MANAGEMENT: All dialog state is managed by the ViewModel.
+ * Composable is a pure presenter layer - only reads state and calls ViewModel methods.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +41,6 @@ fun InvoiceDetailScreenV2(
     viewModel: InvoiceDetailViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var dialogState by remember { mutableStateOf<DialogState>(DialogState.None) }
 
     Scaffold(
         topBar = {
@@ -61,13 +53,13 @@ fun InvoiceDetailScreenV2(
                 },
                 actions = {
                     if (uiState is InvoiceDetailUiStateV2.Success) {
-                        IconButton(onClick = { dialogState = DialogState.ExportPdf }) {
+                        IconButton(onClick = { viewModel.openPdfExport() }) {
                             Icon(Icons.Default.GetApp, contentDescription = "Export PDF")
                         }
-                        IconButton(onClick = { dialogState = DialogState.PaymentDialog }) {
+                        IconButton(onClick = { viewModel.openPaymentDialog() }) {
                             Icon(Icons.Default.Payment, contentDescription = "Record Payment")
                         }
-                        IconButton(onClick = { dialogState = DialogState.StatusMenu }) {
+                        IconButton(onClick = { viewModel.openStatusMenu() }) {
                             Icon(Icons.Default.Edit, contentDescription = "Update Status")
                         }
                     }
@@ -104,8 +96,8 @@ fun InvoiceDetailScreenV2(
                     }.getOrElse { InvoiceStatus.DRAFT }
                 }
 
-                // Payment Dialog
-                if (dialogState is DialogState.PaymentDialog) {
+                // ===== PAYMENT DIALOG =====
+                if (state.dialogState is DialogState.PaymentDialog) {
                     RecordPaymentDialogV2(
                         invoiceId = state.invoice.invoice.id,
                         businessId = businessId,
@@ -113,79 +105,89 @@ fun InvoiceDetailScreenV2(
                         amountPaid = state.invoice.invoice.amountPaid,
                         invoiceDate = state.invoice.invoice.date,
                         invoiceStatus = currentStatus,
-                        onDismiss = { dialogState = DialogState.None },
-                        onSuccess = { dialogState = DialogState.None }
+                        isLoading = state.paymentLoading,
+                        error = state.paymentError,
+                        onDismiss = { viewModel.closeDialog() },
+                        onSuccess = { amount -> viewModel.recordPayment(amount) }
                     )
                 }
 
-                // Status Update Menu
-                if (dialogState is DialogState.StatusMenu) {
+                // ===== STATUS UPDATE DIALOG =====
+                if (state.dialogState is DialogState.StatusMenu) {
                     StatusUpdateMenuV2(
                         currentStatus = currentStatus,
+                        error = state.statusUpdateError,
                         onStatusSelected = { status: InvoiceStatus ->
                             viewModel.updateInvoiceStatus(status)
-                            dialogState = DialogState.None
                         },
-                        onDismiss = { dialogState = DialogState.None }
+                        onDismiss = { viewModel.closeDialog() }
                     )
                 }
 
-                // PDF Export Handler
-                if (dialogState is DialogState.ExportPdf) {
-                    val pdfExportState by viewModel.pdfExportState.collectAsStateWithLifecycle()
-
-                    LaunchedEffect(Unit) {
-                        viewModel.exportToPdf(state.invoice)
-                    }
-
-                    when (pdfExportState) {
-                        is PdfExportState.Loading -> {
-                            // Show loading dialog
-                            AlertDialog(
-                                onDismissRequest = { /* Don't allow dismiss during loading */ },
-                                confirmButton = { /* No action during loading */ },
-                                title = { Text("Exporting PDF") },
-                                text = { Text("Please wait while your invoice is being exported to PDF...") }
-                            )
-                        }
-                        is PdfExportState.Success -> {
-                            // Show success with file details - KEEP DIALOG OPEN
-                            val file = (pdfExportState as PdfExportState.Success).file
-                            AlertDialog(
-                                onDismissRequest = { dialogState = DialogState.None },
-                                confirmButton = {
-                                    Button(onClick = { dialogState = DialogState.None }) {
-                                        Text("Done")
-                                    }
-                                },
-                                title = { Text("✅ PDFs Generated Successfully") },
-                                text = {
-                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Text("Both Quote and Invoice PDFs have been generated and saved to the vault.")
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("Invoice PDF: ${file.name}", style = MaterialTheme.typography.labelSmall)
-                                        Text("Size: ${(file.length() / 1024).toInt()} KB", style = MaterialTheme.typography.labelSmall)
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text("Both files are now available in the Vault.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
+                // ===== PDF EXPORT DIALOGS =====
+                when (state.dialogState) {
+                    is DialogState.PdfExport.Loading -> {
+                        AlertDialog(
+                            onDismissRequest = { /* Don't allow dismiss during loading */ },
+                            confirmButton = { /* No action during loading */ },
+                            title = { Text("📄 Generating PDF") },
+                            text = {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    CircularProgressIndicator()
+                                    Text(
+                                        "Creating professional invoice PDF with selected styling...",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        "This may take a few seconds. Please wait.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
-                            )
-                        }
-                        is PdfExportState.Error -> {
-                            // Show error with message
-                            AlertDialog(
-                                onDismissRequest = { dialogState = DialogState.None },
-                                confirmButton = {
-                                    Button(onClick = { dialogState = DialogState.None }) {
-                                        Text("OK")
-                                    }
-                                },
-                                title = { Text("Export Failed") },
-                                text = { Text((pdfExportState as PdfExportState.Error).message) }
-                            )
-                        }
-                        else -> {} // Idle state
+                            }
+                        )
                     }
+                    is DialogState.PdfExport.Success -> {
+                        val file = (state.dialogState as DialogState.PdfExport.Success).file
+                        AlertDialog(
+                            onDismissRequest = { viewModel.closeDialog() },
+                            confirmButton = {
+                                Button(onClick = { viewModel.closeDialog() }) {
+                                    Text("Done")
+                                }
+                            },
+                            title = { Text("✅ PDFs Generated Successfully") },
+                            text = {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text("Both Quote and Invoice PDFs have been generated and saved to the vault.")
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text("Invoice PDF: ${file.name}", style = MaterialTheme.typography.labelSmall)
+                                    Text("Size: ${(file.length() / 1024).toInt()} KB", style = MaterialTheme.typography.labelSmall)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text("Both files are now available in the Vault.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        )
+                    }
+                    is DialogState.PdfExport.Error -> {
+                        AlertDialog(
+                            onDismissRequest = { viewModel.closeDialog() },
+                            confirmButton = {
+                                Button(onClick = { viewModel.closeDialog() }) {
+                                    Text("OK")
+                                }
+                            },
+                            title = { Text("❌ Export Failed") },
+                            text = { Text((state.dialogState as DialogState.PdfExport.Error).message) }
+                        )
+                    }
+                    else -> {} // No PDF dialog
                 }
             }
         }
