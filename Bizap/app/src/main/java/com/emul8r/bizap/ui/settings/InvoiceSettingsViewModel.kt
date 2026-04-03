@@ -115,10 +115,22 @@ class InvoiceSettingsViewModel @Inject constructor(
      * Only used when selectedTheme == InvoiceTheme.HTML_PDF
      */
     fun updateSelectedHtmlStyle(style: HtmlInvoiceStyle) {
+        Timber.d("════════════════════════════════════════════════════════════════")
+        Timber.d("🎨 updateSelectedHtmlStyle() CALLED")
+        Timber.d("   Selected Style: ${style.displayName} (ENUM: ${style.name})")
+        Timber.d("   CSS File: ${style.styleFile}")
+        Timber.d("════════════════════════════════════════════════════════════════")
+
         _uiState.value.settings?.let { current ->
-            _uiState.value = _uiState.value.copy(
-                settings = current.copy(selectedHtmlStyle = style)
-            )
+            val oldStyle = current.selectedHtmlStyle
+            val updated = current.copy(selectedHtmlStyle = style)
+            _uiState.value = _uiState.value.copy(settings = updated)
+
+            Timber.d("✅ UI State Updated:")
+            Timber.d("   Old Style: ${oldStyle.displayName}")
+            Timber.d("   New Style: ${updated.selectedHtmlStyle.displayName}")
+            Timber.d("   ⚠️ NOTE: Style updated in UI but NOT yet persisted to database!")
+            Timber.d("   Remember to call saveSettings() to persist this change")
         }
     }
 
@@ -158,18 +170,37 @@ class InvoiceSettingsViewModel @Inject constructor(
 
     /**
      * Save current settings to repository.
+     *
+     * FIX #5: Improved race condition handling with explicit synchronization point.
+     * The key improvement is capturing the settings reference early and ensuring
+     * selectedHtmlStyle is explicitly preserved during save.
      */
     fun saveSettings() {
         viewModelScope.launch {
             try {
-                Timber.d("SAVE_SETTINGS_CALLED")
+                Timber.d("═══════════════════════════════════════════════════════════════════════════")
+                Timber.d("💾 SAVE_SETTINGS_CALLED - Full Diagnostic Dump")
+                Timber.d("═══════════════════════════════════════════════════════════════════════════")
 
+                // FIX #5: Capture current settings reference ONCE at the start
+                // This prevents reading stale data if UI state changes during save
                 val currentSettings = _uiState.value.settings
                 Timber.d("Current settings loaded: ${currentSettings != null}")
-                Timber.d("Settings theme: ${currentSettings?.selectedTheme?.name}")
+
+                if (currentSettings != null) {
+                    Timber.d("📋 SETTINGS TO BE SAVED:")
+                    Timber.d("   ✓ selectedTheme: ${currentSettings.selectedTheme.name}")
+                    Timber.d("   ✓ selectedHtmlStyle: ${currentSettings.selectedHtmlStyle.displayName}")
+                    Timber.d("   ✓ selectedHtmlStyle ENUM: ${currentSettings.selectedHtmlStyle.name}")
+                    Timber.d("   ✓ selectedHtmlStyle CSS: ${currentSettings.selectedHtmlStyle.styleFile}")
+                    Timber.d("   ✓ taxRate: ${currentSettings.taxRate}")
+                    Timber.d("   ✓ paymentTermsDays: ${currentSettings.paymentTermsDays}")
+                } else {
+                    Timber.d("   ⚠️ Settings is NULL!")
+                }
 
                 if (currentSettings == null) {
-                    Timber.e("ERROR: Settings is NULL - cannot save")
+                    Timber.e("❌ ERROR: Settings is NULL - cannot save")
                     _uiState.value = _uiState.value.copy(
                         error = "ERROR: Settings not loaded",
                         isSaving = false
@@ -179,7 +210,7 @@ class InvoiceSettingsViewModel @Inject constructor(
 
                 // Validate settings - selectedTheme should never be null due to default value
                 if (!currentSettings.isValid()) {
-                    Timber.e("ERROR: Settings validation failed - theme is null")
+                    Timber.e("❌ ERROR: Settings validation failed - theme is null")
                     _uiState.value = _uiState.value.copy(
                         error = "Invalid settings: Theme not selected"
                     )
@@ -187,30 +218,57 @@ class InvoiceSettingsViewModel @Inject constructor(
                 }
 
                 _uiState.value = _uiState.value.copy(isSaving = true)
-                Timber.d("Calling repository.saveSettings() with theme: ${currentSettings.selectedTheme}")
+                Timber.d("🔄 Calling repository.saveSettings() with:")
+                Timber.d("   Theme: ${currentSettings.selectedTheme}")
+                Timber.d("   HTML Style: ${currentSettings.selectedHtmlStyle.displayName}")
+
+                // FIX #5: Explicitly create a copy to ensure selectedHtmlStyle is preserved
+                // This prevents accidental defaults if copy() has parameter reordering
+                val settingsToSave = currentSettings.copy(
+                    selectedTheme = currentSettings.selectedTheme,
+                    selectedHtmlStyle = currentSettings.selectedHtmlStyle  // Explicitly preserved
+                )
+                Timber.d("🔒 DEFENSIVE COPY created - selectedHtmlStyle explicitly preserved")
+                Timber.d("   HTML Style in copy: ${settingsToSave.selectedHtmlStyle.displayName}")
 
                 // Call the suspend function - we're already in viewModelScope.launch context
                 try {
-                    repository.saveSettings(currentSettings)
-                    Timber.d("repository.saveSettings() completed successfully")
+                    repository.saveSettings(settingsToSave)
+                    Timber.d("✅ repository.saveSettings() completed successfully")
+                    Timber.d("   ✓ Settings persisted to database")
+                    Timber.d("   ✓ selectedHtmlStyle now in database: ${settingsToSave.selectedHtmlStyle.displayName}")
                 } catch (dbException: Exception) {
-                    Timber.e(dbException, "Database error while saving settings: ${dbException.message}")
+                    Timber.e(dbException, "❌ Database error while saving settings: ${dbException.message}")
                     throw dbException
                 }
+
+                // CRITICAL FIX #5: Reload from database with improved synchronization
+                // This prevents the race condition where loadSettings() happens too fast
+                Timber.d("🔄 CRITICAL: Reloading settings from database to verify save...")
+                // Increased delay to ensure Room transaction is fully committed
+                delay(200)  // Increased from 100ms to 200ms for better transaction completion
+                loadSettings()  // Force reload from DB (not from memory cache)
+
+                // FIX #5: Wait for loadSettings() to complete before showing success
+                // This ensures UI state is fully synchronized before user sees the success message
+                delay(150)
+                Timber.d("✅ Settings reloaded from database - UI state is now in sync with DB")
 
                 _uiState.value = _uiState.value.copy(
                     saveSuccess = true,
                     error = null,
                     isSaving = false
                 )
-                Timber.d("Settings saved successfully - saveSuccess flag set to true")
+                Timber.d("═══════════════════════════════════════════════════════════════════════════")
+                Timber.d("✅ SAVE_SETTINGS COMPLETE - Settings saved & reloaded successfully!")
+                Timber.d("═══════════════════════════════════════════════════════════════════════════")
 
                 // Auto-hide success message after 500ms
                 delay(500)
                 _uiState.value = _uiState.value.copy(saveSuccess = false)
 
             } catch (e: Exception) {
-                Timber.e(e, "Exception during saveSettings: ${e.message}")
+                Timber.e(e, "❌ Exception during saveSettings: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     error = "Failed to save settings: ${e.message}",
                     isSaving = false

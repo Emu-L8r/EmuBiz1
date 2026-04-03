@@ -130,6 +130,18 @@ fun DocumentVaultScreen(
                                                         return@ElevatedCard
                                                     }
 
+                                                    // DEBUG: Verify file is accessible before trying to open
+                                                    Timber.e("════════════════════════════════════════════════════════════════")
+                                                    Timber.e("🔍 PDF VIEWER - FILE ACCESS VERIFICATION")
+                                                    Timber.e("════════════════════════════════════════════════════════════════")
+                                                    Timber.e("File name: ${file.name}")
+                                                    Timber.e("File path: ${file.absolutePath}")
+                                                    Timber.e("File exists: ${file.exists()}")
+                                                    Timber.e("File size: ${file.length()} bytes (${file.length() / 1024.0} KB)")
+                                                    Timber.e("Can read: ${file.canRead()}")
+                                                    Timber.e("File parent exists: ${file.parentFile?.exists()}")
+                                                    Timber.e("════════════════════════════════════════════════════════════════")
+
                                                     Timber.d("📂 Opening document: ${file.name}")
                                                     val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", file)
                                                     val intent = Intent(Intent.ACTION_VIEW).apply {

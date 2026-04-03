@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GetApp
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -38,6 +39,7 @@ fun InvoiceDetailScreenV2(
     businessId: Long,
     invoiceId: Long,
     onBack: () -> Unit,
+    onNavigateToVault: (() -> Unit)? = null,
     viewModel: InvoiceDetailViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -158,6 +160,16 @@ fun InvoiceDetailScreenV2(
                         AlertDialog(
                             onDismissRequest = { viewModel.closeDialog() },
                             confirmButton = {
+                                Button(onClick = {
+                                    viewModel.closeDialog()
+                                    onNavigateToVault?.invoke()
+                                }) {
+                                    Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Go to Vault")
+                                }
+                            },
+                            dismissButton = {
                                 Button(onClick = { viewModel.closeDialog() }) {
                                     Text("Done")
                                 }
@@ -170,7 +182,7 @@ fun InvoiceDetailScreenV2(
                                     Text("Invoice PDF: ${file.name}", style = MaterialTheme.typography.labelSmall)
                                     Text("Size: ${(file.length() / 1024).toInt()} KB", style = MaterialTheme.typography.labelSmall)
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text("Both files are now available in the Vault.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("Tap 'Go to Vault' to view your PDFs immediately.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         )

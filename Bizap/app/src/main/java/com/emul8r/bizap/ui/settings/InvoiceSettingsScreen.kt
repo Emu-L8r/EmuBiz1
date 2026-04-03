@@ -1,6 +1,7 @@
 package com.emul8r.bizap.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,7 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.InvoiceSettings
@@ -409,13 +412,43 @@ fun HtmlStyleSelectionSection(
 ) {
     var previewStyle by remember { mutableStateOf<HtmlInvoiceStyle?>(null) }
 
+    // FIX #4: Track the selected style in local state so UI updates immediately
+    // Initialize with database value if available, otherwise use MODERN as fallback
+    var selectedStyle by remember { mutableStateOf(currentStyle ?: HtmlInvoiceStyle.MODERN) }
+
+    // FIX #6: Track if this is the first composition to avoid unnecessary callbacks
+    var isFirstComposition by remember { mutableStateOf(true) }
+
+    // FIX #4: When currentStyle changes (from DB), update local state AND sync with ViewModel
+    // This ensures bidirectional synchronization between DB, ViewModel, and UI
+    LaunchedEffect(currentStyle) {
+        currentStyle?.let { dbStyle ->
+            // Only update if it actually changed to avoid infinite loops
+            if (selectedStyle != dbStyle) {
+                selectedStyle = dbStyle
+                Timber.d("📝 HTML STYLE SYNCED FROM DB: ${dbStyle.displayName}")
+
+                // FIX #4: Invoke callback to notify ViewModel that DB and UI are now synchronized
+                // This prevents the "selection reverts" issue by explicitly confirming the selection
+                onStyleSelected(dbStyle)
+                Timber.d("✅ DB SYNC CALLBACK INVOKED: ${dbStyle.displayName}")
+            }
+            isFirstComposition = false
+        } ?: run {
+            // FIX #6: If currentStyle is NULL (DB value not loaded), warn developer
+            if (!isFirstComposition) {
+                Timber.w("⚠️ WARNING: currentStyle is NULL - Settings may not have loaded from database")
+            }
+        }
+    }
+
     // Log available styles
     LaunchedEffect(Unit) {
         Timber.d("📋 HTML INVOICE STYLES AVAILABLE:")
         HtmlInvoiceStyle.values().forEach { style ->
             Timber.d("  ✓ ${style.displayName} (${style.styleFile})")
         }
-        Timber.d("📝 CURRENT SELECTED STYLE: ${currentStyle?.displayName ?: "NONE (using default MODERN)"}")
+        Timber.d("📝 CURRENT SELECTED STYLE: ${selectedStyle.displayName}")
     }
 
     Card(
@@ -461,8 +494,6 @@ fun HtmlStyleSelectionSection(
                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
             )
 
-            val style = currentStyle ?: HtmlInvoiceStyle.MODERN
-
             // List all available HTML styles with color previews
             HtmlInvoiceStyle.values().forEach { htmlStyle ->
                 val styleColorScheme = getStyleColorScheme(htmlStyle)
@@ -471,12 +502,12 @@ fun HtmlStyleSelectionSection(
                         .fillMaxWidth()
                         .padding(bottom = 12.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (style == htmlStyle)
+                        containerColor = if (selectedStyle == htmlStyle)
                             MaterialTheme.colorScheme.primaryContainer
                         else
                             MaterialTheme.colorScheme.surfaceVariant
                     ),
-                    border = if (style == htmlStyle)
+                    border = if (selectedStyle == htmlStyle)
                         androidx.compose.foundation.BorderStroke(
                             2.dp,
                             MaterialTheme.colorScheme.primary
@@ -492,8 +523,9 @@ fun HtmlStyleSelectionSection(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         RadioButton(
-                            selected = style == htmlStyle,
+                            selected = selectedStyle == htmlStyle,
                             onClick = {
+                                selectedStyle = htmlStyle
                                 Timber.d("🎨 USER SELECTED STYLE: ${htmlStyle.displayName}")
                                 onStyleSelected(htmlStyle)
                             }
@@ -530,7 +562,7 @@ fun HtmlStyleSelectionSection(
                         ) {
                             Text("Preview", style = MaterialTheme.typography.labelSmall)
                         }
-                        if (style == htmlStyle) {
+                        if (selectedStyle == htmlStyle) {
                             Icon(
                                 Icons.Default.Check,
                                 contentDescription = "Selected",
@@ -573,6 +605,22 @@ fun ColorsSection(
     primaryColor: String,
     onColorChanged: (String) -> Unit
 ) {
+    // List of user-friendly colors - NO HEX CODES NEEDED
+    val colors = listOf(
+        ColorOption("Professional Purple", "#6B4C9A"),
+        ColorOption("Corporate Blue", "#2E5090"),
+        ColorOption("Success Green", "#27AE60"),
+        ColorOption("Warm Orange", "#E67E22"),
+        ColorOption("Elegant Navy", "#1A3A52"),
+        ColorOption("Vibrant Red", "#E74C3C"),
+        ColorOption("Trusty Teal", "#16A085"),
+        ColorOption("Rich Burgundy", "#8B0000"),
+        ColorOption("Modern Gray", "#34495E"),
+        ColorOption("Sunny Yellow", "#F39C12"),
+        ColorOption("Calm Sky", "#3498DB"),
+        ColorOption("Fresh Mint", "#1ABC9C")
+    )
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -587,7 +635,7 @@ fun ColorsSection(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                "Customize the primary color used in your invoices",
+                "Select a color for your invoices",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
@@ -612,25 +660,86 @@ fun ColorsSection(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "Preview Color",
+                        "Current Color Preview",
                         style = MaterialTheme.typography.labelMedium,
                         color = Color.White
                     )
                 }
             }
 
-            OutlinedTextField(
-                value = primaryColor,
-                onValueChange = onColorChanged,
-                label = { Text("Hex Color Code") },
-                placeholder = { Text("#6B4C9A") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                supportingText = { Text("Format: #RRGGBB (e.g., #FF5722)") }
+            // Color grid - NO HEX CODES!
+            Text(
+                "Choose a color below:",
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
+
+            // 3x4 grid of color options
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (i in colors.indices step 3) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        repeat(3) { offset ->
+                            val index = i + offset
+                            if (index < colors.size) {
+                                val color = colors[index]
+                                val colorValue = try {
+                                    Color(android.graphics.Color.parseColor(color.hexCode))
+                                } catch (e: Exception) {
+                                    Color.Gray
+                                }
+
+                                Button(
+                                    onClick = { onColorChanged(color.hexCode) },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(60.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colorValue
+                                    ),
+                                    border = if (primaryColor.equals(color.hexCode, ignoreCase = true))
+                                        BorderStroke(3.dp, MaterialTheme.colorScheme.primary)
+                                    else
+                                        null
+                                ) {
+                                    Column(
+                                        modifier = Modifier.fillMaxSize(),
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            color.displayName,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.White,
+                                            fontSize = 10.sp,
+                                            textAlign = TextAlign.Center
+                                        )
+                                        if (primaryColor.equals(color.hexCode, ignoreCase = true)) {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = "Selected",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Empty space for grid alignment
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
+
+// Helper data class for color selection
+data class ColorOption(val displayName: String, val hexCode: String)
 
 @Composable
 fun PaymentSection(
