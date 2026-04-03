@@ -153,6 +153,18 @@ private fun DashboardContentV2(
                 color = MaterialTheme.colorScheme.primary
             )
 
+            // ── WIN #12: QUICK STATS CARD (HIGH VISIBILITY) ────────────────
+            // Shows 4 key metrics at a glance: Revenue, Overdue, Due This Month, Pending
+            QuickStatsCard(
+                totalRevenue = state.revenueMetrics.ytdRevenue,
+                amountOverdue = state.revenueMetrics.overdueAmount,
+                dueThisMonth = statusCounts["SENT"]?.let { it + (statusCounts["PARTIALLY_PAID"] ?: 0) } ?: 0,
+                pendingPayments = statusCounts["PARTIALLY_PAID"] ?: 0,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            HorizontalDivider()
+
             // ── Analytics Search Bar (NEW) ────────────────────────────────
             val searchResults = remember { mutableStateOf<List<SearchResult>>(emptyList()) }
 
