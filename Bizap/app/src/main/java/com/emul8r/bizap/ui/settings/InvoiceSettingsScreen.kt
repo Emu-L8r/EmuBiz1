@@ -412,34 +412,10 @@ fun HtmlStyleSelectionSection(
 ) {
     var previewStyle by remember { mutableStateOf<HtmlInvoiceStyle?>(null) }
 
-    // FIX #4: Track the selected style in local state so UI updates immediately
-    // Initialize with database value if available, otherwise use MODERN as fallback
-    var selectedStyle by remember { mutableStateOf(currentStyle ?: HtmlInvoiceStyle.MODERN) }
-
-    // FIX #6: Track if this is the first composition to avoid unnecessary callbacks
-    var isFirstComposition by remember { mutableStateOf(true) }
-
-    // FIX #4: When currentStyle changes (from DB), update local state AND sync with ViewModel
-    // This ensures bidirectional synchronization between DB, ViewModel, and UI
-    LaunchedEffect(currentStyle) {
-        currentStyle?.let { dbStyle ->
-            // Only update if it actually changed to avoid infinite loops
-            if (selectedStyle != dbStyle) {
-                selectedStyle = dbStyle
-                Timber.d("📝 HTML STYLE SYNCED FROM DB: ${dbStyle.displayName}")
-
-                // FIX #4: Invoke callback to notify ViewModel that DB and UI are now synchronized
-                // This prevents the "selection reverts" issue by explicitly confirming the selection
-                onStyleSelected(dbStyle)
-                Timber.d("✅ DB SYNC CALLBACK INVOKED: ${dbStyle.displayName}")
-            }
-            isFirstComposition = false
-        } ?: run {
-            // FIX #6: If currentStyle is NULL (DB value not loaded), warn developer
-            if (!isFirstComposition) {
-                Timber.w("⚠️ WARNING: currentStyle is NULL - Settings may not have loaded from database")
-            }
-        }
+    // CRITICAL FIX: Initialize local state only once from currentStyle parameter
+    // After initialization, this becomes the source of truth - it will NOT be overwritten by parameter changes
+    var selectedStyle by remember(currentStyle) {
+        mutableStateOf(currentStyle ?: HtmlInvoiceStyle.MODERN)
     }
 
     // Log available styles

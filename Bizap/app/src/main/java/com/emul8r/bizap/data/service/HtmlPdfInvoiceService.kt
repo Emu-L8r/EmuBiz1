@@ -51,20 +51,46 @@ class HtmlPdfInvoiceService(
         overwriteExisting: Boolean,
         theme: com.emul8r.bizap.domain.model.InvoiceTheme?
     ): File {
+        Timber.d("════════════════════════════════════════════════════════════════════")
         Timber.d("📝 HtmlPdfInvoiceService.generatePdf() START")
+        Timber.d("════════════════════════════════════════════════════════════════════")
+        Timber.d("Input parameters:")
         Timber.d("   isQuote: $isQuote")
         Timber.d("   theme: ${theme?.name ?: "NULL"}")
-        Timber.d("   ================================")
-        Timber.d("   📋 SERVICE SETTINGS CHECK:")
-        Timber.d("   Settings object present: ${settings != null}")
-        if (settings != null) {
-            Timber.d("   - selectedTheme: ${settings.selectedTheme.name}")
-            Timber.d("   - selectedHtmlStyle: ${settings.selectedHtmlStyle.displayName} (${settings.selectedHtmlStyle.name})")
-            Timber.d("   - selectedHtmlStyle file: ${settings.selectedHtmlStyle.styleFile}")
-        } else {
-            Timber.w("   ⚠️ WARNING: settings object is NULL - will use MODERN default")
+        
+        // FIX #3: Validate settings BEFORE any processing
+        Timber.d("")
+        Timber.d("═ VALIDATION PHASE ═════════════════════════════════════════════════")
+        Timber.d("Checking if settings object exists...")
+        if (settings == null) {
+            Timber.e("❌ CRITICAL ERROR: Settings object is NULL")
+            Timber.e("   This means selectedHtmlStyle cannot be retrieved")
+            Timber.e("   PDF generation will FAIL (not use silent MODERN default)")
+            throw IllegalStateException(
+                "HtmlPdfInvoiceService requires settings to be passed in constructor, " +
+                "but received NULL. This prevents application of selectedHtmlStyle."
+            )
         }
-        Timber.d("   ================================")
+        
+        Timber.d("✅ Settings object exists")
+        Timber.d("")
+        Timber.d("📋 SETTINGS CONTENT:")
+        Timber.d("   Selected Theme: ${settings.selectedTheme.name}")
+        Timber.d("   Selected HTML Style: ${settings.selectedHtmlStyle.displayName}")
+        Timber.d("   Style Enum Value: ${settings.selectedHtmlStyle.name}")
+        Timber.d("   Style CSS File: ${settings.selectedHtmlStyle.styleFile}")
+        
+        // Validate selectedHtmlStyle is not null (shouldn't happen, but check anyway)
+        if (settings.selectedHtmlStyle == null) {
+            Timber.e("❌ ERROR: selectedHtmlStyle field is NULL")
+            throw IllegalStateException(
+                "Settings loaded but selectedHtmlStyle is NULL. " +
+                "This indicates a data model corruption or deserialization error."
+            )
+        }
+        
+        Timber.d("✅ All validations passed")
+        Timber.d("════════════════════════════════════════════════════════════════════")
 
         return try {
             val fileType = if (isQuote) "Quote" else "Invoice"
@@ -574,4 +600,3 @@ class HtmlPdfInvoiceService(
         return file
     }
 }
-

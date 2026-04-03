@@ -170,10 +170,6 @@ class InvoiceSettingsViewModel @Inject constructor(
 
     /**
      * Save current settings to repository.
-     *
-     * FIX #5: Improved race condition handling with explicit synchronization point.
-     * The key improvement is capturing the settings reference early and ensuring
-     * selectedHtmlStyle is explicitly preserved during save.
      */
     fun saveSettings() {
         viewModelScope.launch {
@@ -182,8 +178,6 @@ class InvoiceSettingsViewModel @Inject constructor(
                 Timber.d("💾 SAVE_SETTINGS_CALLED - Full Diagnostic Dump")
                 Timber.d("═══════════════════════════════════════════════════════════════════════════")
 
-                // FIX #5: Capture current settings reference ONCE at the start
-                // This prevents reading stale data if UI state changes during save
                 val currentSettings = _uiState.value.settings
                 Timber.d("Current settings loaded: ${currentSettings != null}")
 
@@ -222,45 +216,26 @@ class InvoiceSettingsViewModel @Inject constructor(
                 Timber.d("   Theme: ${currentSettings.selectedTheme}")
                 Timber.d("   HTML Style: ${currentSettings.selectedHtmlStyle.displayName}")
 
-                // FIX #5: Explicitly create a copy to ensure selectedHtmlStyle is preserved
-                // This prevents accidental defaults if copy() has parameter reordering
-                val settingsToSave = currentSettings.copy(
-                    selectedTheme = currentSettings.selectedTheme,
-                    selectedHtmlStyle = currentSettings.selectedHtmlStyle  // Explicitly preserved
-                )
-                Timber.d("🔒 DEFENSIVE COPY created - selectedHtmlStyle explicitly preserved")
-                Timber.d("   HTML Style in copy: ${settingsToSave.selectedHtmlStyle.displayName}")
-
                 // Call the suspend function - we're already in viewModelScope.launch context
                 try {
-                    repository.saveSettings(settingsToSave)
+                    repository.saveSettings(currentSettings)
                     Timber.d("✅ repository.saveSettings() completed successfully")
                     Timber.d("   ✓ Settings persisted to database")
-                    Timber.d("   ✓ selectedHtmlStyle now in database: ${settingsToSave.selectedHtmlStyle.displayName}")
+                    Timber.d("   ✓ selectedHtmlStyle now in database: ${currentSettings.selectedHtmlStyle.displayName}")
                 } catch (dbException: Exception) {
                     Timber.e(dbException, "❌ Database error while saving settings: ${dbException.message}")
                     throw dbException
                 }
 
-                // CRITICAL FIX #5: Reload from database with improved synchronization
-                // This prevents the race condition where loadSettings() happens too fast
-                Timber.d("🔄 CRITICAL: Reloading settings from database to verify save...")
-                // Increased delay to ensure Room transaction is fully committed
-                delay(200)  // Increased from 100ms to 200ms for better transaction completion
-                loadSettings()  // Force reload from DB (not from memory cache)
-
-                // FIX #5: Wait for loadSettings() to complete before showing success
-                // This ensures UI state is fully synchronized before user sees the success message
-                delay(150)
-                Timber.d("✅ Settings reloaded from database - UI state is now in sync with DB")
-
+                // FIX #1: Don't call loadSettings() immediately to avoid race condition
+                // Instead, just update the UI state to confirm success
                 _uiState.value = _uiState.value.copy(
                     saveSuccess = true,
                     error = null,
                     isSaving = false
                 )
                 Timber.d("═══════════════════════════════════════════════════════════════════════════")
-                Timber.d("✅ SAVE_SETTINGS COMPLETE - Settings saved & reloaded successfully!")
+                Timber.d("✅ SAVE_SETTINGS COMPLETE - Settings saved successfully!")
                 Timber.d("═══════════════════════════════════════════════════════════════════════════")
 
                 // Auto-hide success message after 500ms
