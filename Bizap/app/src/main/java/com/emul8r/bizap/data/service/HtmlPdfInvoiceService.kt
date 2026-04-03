@@ -68,6 +68,13 @@ class HtmlPdfInvoiceService(
     // Data validation — cleans snapshot before rendering
     // -------------------------------------------------------------------------
 
+    companion object {
+        /** Regex matching a well-formed email address. */
+        private val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+        /** Common placeholder / keyboard-mash pattern used in test data. */
+        private const val GARBAGE_PATTERN = "asdasd"
+    }
+
     /**
      * Validates and cleans invoice data before template rendering.
      * Removes placeholder/garbage data and ensures professional appearance.
@@ -90,7 +97,7 @@ class HtmlPdfInvoiceService(
     private fun validateBusinessName(name: String): String = when {
         name.isEmpty() -> ""
         name.contains("DEFAULT", ignoreCase = true) -> ""
-        name.contains(Regex("\\d{3,}")) -> ""   // reject names with corrupted digit runs
+        name.contains(Regex("\\d{3,}")) -> ""   // reject names with consecutive digit sequences
         name.length < 2 -> ""
         else -> name.trim()
     }
@@ -104,14 +111,11 @@ class HtmlPdfInvoiceService(
         }
     }
 
-    private fun validateEmail(email: String): String {
-        val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
-        return when {
-            email.isEmpty() -> ""
-            email.contains("asdasd", ignoreCase = true) -> ""
-            !email.matches(emailRegex) -> ""
-            else -> email.trim()
-        }
+    private fun validateEmail(email: String): String = when {
+        email.isEmpty() -> ""
+        email.contains(GARBAGE_PATTERN, ignoreCase = true) -> ""
+        !email.matches(EMAIL_REGEX) -> ""
+        else -> email.trim()
     }
 
     private fun validatePhone(phone: String): String {
@@ -128,22 +132,22 @@ class HtmlPdfInvoiceService(
         name.isEmpty() -> ""
         name.length <= 2 -> ""
         name.matches(Regex("^[a-zA-Z0-9]{1,3}$")) -> ""
-        name.contains("asdasd", ignoreCase = true) -> ""
+        name.contains(GARBAGE_PATTERN, ignoreCase = true) -> ""
         else -> name.trim()
     }
 
     private fun validateAddress(address: String): String = when {
         address.isEmpty() -> ""
         address.matches(Regex("^[a-zA-Z0-9]{1,5}$")) -> ""
-        address.contains("asdasd", ignoreCase = true) -> ""
+        address.contains(GARBAGE_PATTERN, ignoreCase = true) -> ""
         else -> address.trim()
     }
 
     private fun validateHeaderText(text: String): String =
-        if (text.isEmpty() || text.contains("asdasd", ignoreCase = true)) "" else text.trim()
+        if (text.isEmpty() || text.contains(GARBAGE_PATTERN, ignoreCase = true)) "" else text.trim()
 
     private fun validateNotes(text: String): String =
-        if (text.isEmpty() || text.contains("asdasd", ignoreCase = true)) "" else text.trim()
+        if (text.isEmpty() || text.contains(GARBAGE_PATTERN, ignoreCase = true)) "" else text.trim()
 
     private fun validateFooterText(text: String): String =
         if (text.isEmpty()) "Thank you for your business." else text.trim()
