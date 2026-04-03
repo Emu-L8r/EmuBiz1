@@ -103,42 +103,48 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            ErrorBoundary {
-                BizapApp(themeManager = themeManager, themeRepository = themeRepository) {
-                    val appStateViewModel: AppStateViewModel = hiltViewModel()
-                    val appState by appStateViewModel.appState.collectAsStateWithLifecycle()
+            // ✅ FIX: Extract AppStateViewModel to top level
+            val appStateViewModel: AppStateViewModel = hiltViewModel()
+            val appState by appStateViewModel.appState.collectAsStateWithLifecycle()
 
-                    // Single when-expression: ONE screen at a time, no layered conditionals
-                    when (val state = appState) {
-                        is AppState.SplashLoading -> SplashScreen()
+            // ✅ FIX: Prioritize SplashScreen render to avoid black screen during DataStore init
+            if (appState is AppState.SplashLoading) {
+                SplashScreen()
+            } else {
+                ErrorBoundary {
+                    BizapApp(themeManager = themeManager, themeRepository = themeRepository) {
+                        // Single when-expression: ONE screen at a time, no layered conditionals
+                        when (val state = appState) {
+                            is AppState.SplashLoading -> { /* Handled above */ }
 
-                        is AppState.PINSetup -> PINSetupScreen(
-                            onSetupComplete = { appStateViewModel.refreshAuth() }
-                        )
-
-                        is AppState.Login -> LoginScreen(
-                            onAuthenticated = { appStateViewModel.refreshAuth() }
-                        )
-
-                        is AppState.FirstLaunchWarning -> FirstLaunchWarningDialog(
-                            onDismiss = { appStateViewModel.markFirstLaunchWarningShown() }
-                        )
-
-                        is AppState.GUISelection -> {
-                            // This state should never occur in v2.0 since AppStateViewModel
-                            // always defaults to AppReady(GUI2). Log if reached unexpectedly.
-                            android.util.Log.w("MainActivity", "Unexpected GUISelection state in v2.0; defaulting to GUI2")
-                            appStateViewModel.selectGui(GuiMode.GUI2)
-                        }
-
-                        is AppState.AppReady -> {
-                            val navController = rememberNavController()
-
-                            // Use unified NavGraph with theme-aware navigation
-                            NavGraph(
-                                navController = navController,
-                                themeManager = themeManager
+                            is AppState.PINSetup -> PINSetupScreen(
+                                onSetupComplete = { appStateViewModel.refreshAuth() }
                             )
+
+                            is AppState.Login -> LoginScreen(
+                                onAuthenticated = { appStateViewModel.refreshAuth() }
+                            )
+
+                            is AppState.FirstLaunchWarning -> FirstLaunchWarningDialog(
+                                onDismiss = { appStateViewModel.markFirstLaunchWarningShown() }
+                            )
+
+                            is AppState.GUISelection -> {
+                                // This state should never occur in v2.0 since AppStateViewModel
+                                // always defaults to AppReady(GUI2). Log if reached unexpectedly.
+                                android.util.Log.w("MainActivity", "Unexpected GUISelection state in v2.0; defaulting to GUI2")
+                                appStateViewModel.selectGui(GuiMode.GUI2)
+                            }
+
+                            is AppState.AppReady -> {
+                                val navController = rememberNavController()
+
+                                // Use unified NavGraph with theme-aware navigation
+                                NavGraph(
+                                    navController = navController,
+                                    themeManager = themeManager
+                                )
+                            }
                         }
                     }
                 }
