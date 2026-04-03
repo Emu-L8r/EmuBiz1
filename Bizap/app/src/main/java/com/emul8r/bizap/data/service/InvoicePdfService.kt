@@ -19,6 +19,7 @@ import com.emul8r.bizap.ui.templates.TemplateSnapshotManager
 import com.emul8r.bizap.utils.DocumentNamingUtils
 import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
 import com.emul8r.bizap.di.UserIdProvider
+import com.emul8r.bizap.domain.model.CanvasInvoiceTemplate
 import timber.log.Timber
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -136,8 +137,22 @@ class InvoicePdfService @Inject constructor(
             }
             else -> {
                 Timber.d("🎨 Using Canvas theme for PDF generation (default)")
-                // Default: use Canvas theme
-                generateInvoice(snapshot, isQuote, overwriteExisting)
+                val currentUserId = userIdProvider.getCurrentUserId()
+                val settings = try {
+                    invoiceSettingsRepository.getSettings(currentUserId)
+                } catch (e: Exception) {
+                    Timber.w(e, "Could not load settings for Canvas template selection; using MODERN")
+                    null
+                }
+                val template = settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN
+                Timber.d("🎨 Canvas template: ${template.displayName}")
+                val overrideColors = PdfColors(
+                    primary = android.graphics.Color.parseColor(template.primaryHex),
+                    secondary = android.graphics.Color.parseColor(template.accentHex),
+                    text = android.graphics.Color.BLACK,
+                    textLight = android.graphics.Color.DKGRAY
+                )
+                generateInvoice(snapshot, isQuote, overwriteExisting, overrideColors = overrideColors)
             }
         }
     }
@@ -153,7 +168,8 @@ class InvoicePdfService @Inject constructor(
         isQuote: Boolean,
         overwriteExisting: Boolean = true,
         templateSnapshotJson: String? = null,
-        customFieldValuesJson: String? = null
+        customFieldValuesJson: String? = null,
+        overrideColors: PdfColors? = null
     ): File {
         val fileType = if (isQuote) "Quote" else "Invoice"
         val baseFileName = DocumentNamingUtils.generateFileName(
@@ -174,7 +190,7 @@ class InvoicePdfService @Inject constructor(
         val templateSnapshot = snapshotManager.restoreSnapshot(templateSnapshotJson)
         val customFieldValues = snapshotManager.restoreCustomFieldValues(customFieldValuesJson)
 
-        val colors = pdfStyler.extractColors(templateSnapshot)
+        val colors = overrideColors ?: pdfStyler.extractColors(templateSnapshot)
         val hideLineItems = pdfStyler.shouldHideLineItems(templateSnapshot)
         val hidePaymentTerms = pdfStyler.shouldHidePaymentTerms(templateSnapshot)
 
