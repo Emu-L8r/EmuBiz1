@@ -177,26 +177,47 @@ class HtmlPdfInvoiceService(
      * @return HTML with embedded CSS
      */
     private fun embedCssIntoHtml(htmlContent: String, cssContent: String): String {
-        Timber.d("🎨 EMBEDDING CSS INTO HTML...")
-        Timber.d("   HTML size: ${htmlContent.length} characters")
-        Timber.d("   CSS size: ${cssContent.length} characters")
+        Timber.d("════════════════════════════════════════════════════════════════════")
+        Timber.d("🎨 STEP 3: EMBEDDING CSS INTO HTML")
+        Timber.d("════════════════════════════════════════════════════════════════════")
 
+        Timber.d("📊 INPUT SIZES:")
+        Timber.d("   HTML: ${htmlContent.length} characters")
+        Timber.d("   CSS: ${cssContent.length} characters")
+        Timber.d("   CSS is empty: ${cssContent.isBlank()}")
+
+        Timber.d("🔍 SEARCHING FOR STYLE TAGS:")
         // Find and replace the style tag placeholder
         val styleTagStart = htmlContent.indexOf("<style>")
         val styleTagEnd = htmlContent.indexOf("</style>", styleTagStart)
 
+        Timber.d("   <style> tag position: $styleTagStart")
+        Timber.d("   </style> tag position: $styleTagEnd")
+        Timber.d("   Both tags found: ${styleTagStart >= 0 && styleTagEnd > styleTagStart}")
+
         return if (styleTagStart >= 0 && styleTagEnd > styleTagStart) {
-            Timber.d("   ✅ Found style tags at positions $styleTagStart - ${styleTagEnd + 8}")
+            Timber.d("✅ STYLE TAGS FOUND - EMBEDDING CSS:")
+            Timber.d("   Extracting HTML before: $styleTagStart chars")
+            Timber.d("   Extracting HTML after: ${htmlContent.length - (styleTagEnd + 8)} chars")
+
             val beforeStyle = htmlContent.substring(0, styleTagStart)
             val afterStyle = htmlContent.substring(styleTagEnd + "</style>".length)
             val result = beforeStyle + "<style>\n" + cssContent + "\n</style>" + afterStyle
-            Timber.d("   ✅ CSS embedded successfully. Result size: ${result.length} characters")
+
+            Timber.d("✅ RESULT:")
+            Timber.d("   Result HTML size: ${result.length} characters")
+            Timber.d("   Size increase: ${result.length - htmlContent.length} characters (CSS + tags)")
+            Timber.d("   CSS is now embedded in the HTML")
+            "════════════════════════════════════════════════════════════════════"
             result
         } else {
-            Timber.e("❌ CRITICAL: Style tags not found in HTML!")
-            Timber.e("   styleTagStart: $styleTagStart")
-            Timber.e("   styleTagEnd: $styleTagEnd")
-            Timber.e("   This means CSS styling will NOT be applied to the PDF!")
+            Timber.e("❌ CRITICAL ERROR: STYLE TAGS NOT FOUND!")
+            Timber.e("   styleTagStart: $styleTagStart (should be >= 0)")
+            Timber.e("   styleTagEnd: $styleTagEnd (should be > $styleTagStart)")
+            Timber.e("   HTML Content Sample: ${htmlContent.take(500).replace("\n", "\\n")}")
+            Timber.e("   ⚠️  CSS STYLING WILL NOT BE APPLIED TO PDF!")
+            Timber.e("   This is why the PDF might look blank or unstyled")
+            "════════════════════════════════════════════════════════════════════"
             htmlContent  // Return unchanged if style tag not found (CSS won't work)
         }
     }
@@ -211,16 +232,70 @@ class HtmlPdfInvoiceService(
         snapshot: InvoiceSnapshot,
         isQuote: Boolean
     ): String {
+        Timber.d("════════════════════════════════════════════════════════════════════")
+        Timber.d("📝 GENERATING HTML CONTENT FROM INVOICE DATA")
+        Timber.d("════════════════════════════════════════════════════════════════════")
+
         val documentType = if (isQuote) "QUOTE" else "INVOICE"
+
+        // CRITICAL DEBUG LOGGING: Verify invoice data exists
+        Timber.e("════════════════════════════════════════════════════════════════")
+        Timber.e("⚠️  CRITICAL: PDF DATA VERIFICATION")
+        Timber.e("════════════════════════════════════════════════════════════════")
+        Timber.e("Invoice snapshot check:")
+        Timber.e("   Items count: ${snapshot.items.size}")
+        Timber.e("   Total amount: ${snapshot.totalAmount} cents")
+        Timber.e("   Customer name: ${snapshot.customerName}")
+        Timber.e("   Business name: ${snapshot.businessName}")
+
+        if (snapshot.items.isEmpty()) {
+            Timber.e("   ❌ PROBLEM: Invoice has ZERO items!")
+            Timber.e("   Result: PDF will show blank page because table has no rows")
+        } else {
+            snapshot.items.forEach { item ->
+                Timber.e("   ✓ Item: ${item.description} | Qty: ${item.quantity} | Price: ${item.unitPrice} cents | Total: ${item.total} cents")
+            }
+        }
+
+        if (snapshot.totalAmount <= 0) {
+            Timber.e("   ❌ PROBLEM: Total amount is ${snapshot.totalAmount} cents (zero or negative)!")
+            Timber.e("   Result: Amounts will not calculate correctly")
+        }
+
+        Timber.e("════════════════════════════════════════════════════════════════")
+
+        // Verify basic invoice data
+        Timber.d("✅ INVOICE METADATA:")
+        Timber.d("   Invoice ID: ${snapshot.invoiceId}")
+        Timber.d("   Type: $documentType")
+        Timber.d("   Business: ${snapshot.businessName}")
+        Timber.d("   Customer: ${snapshot.customerName}")
+        Timber.d("   Date: ${snapshot.date}")
+        Timber.d("   Due Date: ${snapshot.dueDate ?: "Upon Receipt"}")
 
         // Convert cents to dollars
         val subtotalDollars = snapshot.subtotal / 100.0
         val taxDollars = snapshot.taxAmount / 100.0
         val totalDollars = snapshot.totalAmount / 100.0
 
+        Timber.d("✅ FINANCIAL DATA:")
+        Timber.d("   Subtotal: \$${String.format("%.2f", subtotalDollars)} (${snapshot.subtotal} cents)")
+        Timber.d("   Tax: \$${String.format("%.2f", taxDollars)} (${snapshot.taxAmount} cents)")
+        Timber.d("   Total: \$${String.format("%.2f", totalDollars)} (${snapshot.totalAmount} cents)")
+
+        // Process line items
+        Timber.d("✅ LINE ITEMS DATA:")
+        Timber.d("   Total Items: ${snapshot.items.size}")
+
         val itemsHtml = snapshot.items.joinToString("\n") { item ->
             val amountDollars = item.total / 100.0
             val unitPriceDollars = item.unitPrice / 100.0
+
+            Timber.d("   ✓ Item: ${item.description}")
+            Timber.d("     - Qty: ${String.format("%.2f", item.quantity)}")
+            Timber.d("     - Unit Price: \$${String.format("%.2f", unitPriceDollars)}")
+            Timber.d("     - Total: \$${String.format("%.2f", amountDollars)}")
+
             """
                 <tr class="table-row">
                     <td class="col-description">${item.description}</td>
@@ -230,6 +305,14 @@ class HtmlPdfInvoiceService(
                 </tr>
             """.trimIndent()
         }
+
+        if (snapshot.items.isEmpty()) {
+            Timber.w("⚠️  WARNING: Invoice has NO line items! PDF will show empty table")
+        }
+
+        Timber.d("✅ HTML GENERATION:")
+        Timber.d("   Items HTML size: ${itemsHtml.length} characters")
+        Timber.d("   Items HTML is empty: ${itemsHtml.isBlank()}")
 
         return """
             <!DOCTYPE html>
@@ -368,7 +451,12 @@ class HtmlPdfInvoiceService(
                 </div>
             </body>
             </html>
-        """.trimIndent()
+        """.trimIndent().also {
+            Timber.d("════════════════════════════════════════════════════════════════════")
+            Timber.d("✅ HTML CONTENT GENERATION COMPLETE")
+            Timber.d("   Total HTML size: ${it.length} characters")
+            Timber.d("════════════════════════════════════════════════════════════════════")
+        }
     }
 
     /**
@@ -390,66 +478,91 @@ class HtmlPdfInvoiceService(
         file.parentFile?.mkdirs()
 
         try {
-            Timber.d("🎨 ════════════════════════════════════════════════════════════════════")
-            Timber.d("🎨 STEP 4.1: Starting HTML-to-PDF conversion (iText7)")
-            Timber.d("🎨 Output file: ${file.absolutePath}")
-            Timber.d("🎨 HTML input size: ${htmlContent.length} characters")
-            Timber.d("🎨 ════════════════════════════════════════════════════════════════════")
+            Timber.d("════════════════════════════════════════════════════════════════════")
+            Timber.d("🔄 STEP 4: HTML-TO-PDF CONVERSION (iText7)")
+            Timber.d("════════════════════════════════════════════════════════════════════")
 
-            Timber.d("🎨 4.1a: Creating PdfWriter and PdfDocument...")
+            Timber.d("📋 INPUT:")
+            Timber.d("   HTML size: ${htmlContent.length} characters")
+            Timber.d("   HTML starts with: ${htmlContent.take(100).replace("\n", " ")}...")
+            Timber.d("   Has <body>: ${htmlContent.contains("<body>")}")
+            Timber.d("   Has invoice-container: ${htmlContent.contains("invoice-container")}")
+            Timber.d("   Has table rows: ${htmlContent.contains("<tr class=\"table-row\">")}")
+
+            Timber.d("")
+            Timber.d("🔄 4.1a: Creating PdfWriter and PdfDocument...")
             // Use iText7 to convert HTML to real PDF binary
             val pdfWriter = com.itextpdf.kernel.pdf.PdfWriter(file)
             val pdfDocument = com.itextpdf.kernel.pdf.PdfDocument(pdfWriter)
-            Timber.d("🎨 ✅ PdfDocument created")
+            Timber.d("   ✅ PdfDocument created successfully")
 
-            Timber.d("🎨 4.1b: Configuring page size (A4)...")
+            Timber.d("🔄 4.1b: Configuring page size (A4)...")
             // Configure page (A4)
             val pageSize = com.itextpdf.kernel.geom.PageSize.A4
             pdfDocument.defaultPageSize = pageSize
-            Timber.d("🎨 ✅ Page size configured: A4 (${pageSize.width}x${pageSize.height} points)")
+            Timber.d("   ✅ Page size: A4 (${pageSize.width}x${pageSize.height} points)")
 
-            Timber.d("🎨 4.1c: Setting PDF metadata...")
+            Timber.d("🔄 4.1c: Setting PDF metadata...")
             // Set PDF metadata
             val pdfMetaInfo = pdfDocument.documentInfo
             pdfMetaInfo.title = "Invoice"
             pdfMetaInfo.author = "Bizap"
             pdfMetaInfo.creator = "Bizap HTML-to-PDF"
-            Timber.d("🎨 ✅ PDF metadata set")
+            Timber.d("   ✅ Metadata set")
 
-            Timber.d("🎨 4.1d: Configuring HTML converter properties...")
+            Timber.d("🔄 4.1d: Configuring HTML converter properties...")
             // Configure HTML converter properties
             val converterProperties = com.itextpdf.html2pdf.ConverterProperties()
             converterProperties.setBaseUri("file://")
-            Timber.d("🎨 ✅ Converter properties configured")
+            Timber.d("   ✅ Converter properties configured")
 
-            Timber.d("🎨 4.1e: Converting HTML to PDF (this may take a few seconds)...")
+            Timber.d("🔄 4.1e: Converting HTML to PDF (may take a few seconds)...")
+            Timber.d("   Converting ${htmlContent.length} bytes of HTML...")
+
             // Convert HTML string to PDF
             val htmlBytes = htmlContent.toByteArray(Charsets.UTF_8)
             val htmlInputStream = java.io.ByteArrayInputStream(htmlBytes)
 
-            Timber.d("🎨 Converting ${htmlBytes.size} bytes of HTML to PDF...")
             com.itextpdf.html2pdf.HtmlConverter.convertToDocument(
                 htmlInputStream,
                 pdfDocument,
                 converterProperties
             )
-            Timber.d("🎨 ✅ HTML conversion complete")
+            Timber.d("   ✅ HTML parsed and converted to PDF document")
+            Timber.d("   ✅ Page count: ${pdfDocument.numberOfPages}")
 
-            Timber.d("🎨 4.1f: Closing PDF document...")
+            Timber.d("🔄 4.1f: Closing and flushing PDF to disk...")
             pdfDocument.close()
-            Timber.d("🎨 ✅ PDF document closed and flushed to disk")
+            Timber.d("   ✅ PDF document closed and flushed")
 
-            Timber.d("✅ ════════════════════════════════════════════════════════════════════")
-            Timber.d("✅ HTML-to-PDF conversion SUCCESSFUL")
-            Timber.d("✅ Output PDF: ${file.name}")
-            Timber.d("✅ File size: ${file.length()} bytes")
-            Timber.d("✅ This PDF should display the selected invoice style")
-            Timber.d("✅ ════════════════════════════════════════════════════════════════════")
+            Timber.d("")
+            Timber.d("════════════════════════════════════════════════════════════════════")
+            Timber.d("✅ HTML-TO-PDF CONVERSION SUCCESSFUL")
+            Timber.d("════════════════════════════════════════════════════════════════════")
+
+            val fileSize = file.length()
+            Timber.d("📦 OUTPUT PDF:")
+            Timber.d("   File name: ${file.name}")
+            Timber.d("   File path: ${file.absolutePath}")
+            Timber.d("   File size: $fileSize bytes (${String.format("%.1f", fileSize / 1024.0)} KB)")
+            Timber.d("   File exists: ${file.exists()}")
+
+            if (fileSize == 0L) {
+                Timber.e("❌ WARNING: PDF file is 0 bytes - may be empty or conversion failed silently!")
+            } else if (fileSize < 5000) {
+                Timber.w("⚠️  WARNING: PDF is very small (${String.format("%.1f", fileSize / 1024.0)} KB) - may contain minimal content")
+            } else {
+                Timber.d("✅ PDF file size looks reasonable")
+            }
+
+            Timber.d("════════════════════════════════════════════════════════════════════")
 
         } catch (e: Exception) {
-            Timber.e(e, "❌ HTML-to-PDF conversion FAILED")
-            Timber.e("❌ Error: ${e.message}")
-            Timber.e("❌ This may be why all PDFs look the same or PDF doesn't load")
+            Timber.e(e, "❌ HTML-TO-PDF CONVERSION FAILED")
+            Timber.e("   Error type: ${e::class.simpleName}")
+            Timber.e("   Error message: ${e.message}")
+            Timber.e("   Stack trace: ${e.stackTrace.take(5).joinToString("\n")}")
+
             // Clean up incomplete file
             if (file.exists()) {
                 file.delete()
@@ -461,5 +574,4 @@ class HtmlPdfInvoiceService(
         return file
     }
 }
-
 

@@ -94,7 +94,8 @@ fun GuiV2NavGraph(
             InvoiceDetailScreenV2(
                 businessId = route.businessId,
                 invoiceId = route.invoiceId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onNavigateToVault = { navController.navigate(ScreenV2.Vault(route.businessId)) }
             )
         }
 

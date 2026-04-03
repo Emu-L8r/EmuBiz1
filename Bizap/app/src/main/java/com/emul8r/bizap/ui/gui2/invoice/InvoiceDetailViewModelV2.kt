@@ -370,6 +370,22 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                 Timber.d("  Quote PDF: ${quotePdf.absolutePath}")
                 Timber.d("  Invoice PDF: ${invoicePdf.absolutePath}")
 
+                // CRITICAL DEBUG LOGGING: Verify PDF files were actually created
+                Timber.e("════════════════════════════════════════════════════════════════")
+                Timber.e("🔍 PDF FILE VERIFICATION - CRITICAL FOR BLANK PAGE DIAGNOSIS")
+                Timber.e("════════════════════════════════════════════════════════════════")
+                Timber.e("Quote PDF:")
+                Timber.e("  Path: ${quotePdf.absolutePath}")
+                Timber.e("  File exists: ${quotePdf.exists()}")
+                Timber.e("  File size: ${quotePdf.length()} bytes (${quotePdf.length() / 1024.0} KB)")
+                Timber.e("  Can read: ${quotePdf.canRead()}")
+                Timber.e("Invoice PDF:")
+                Timber.e("  Path: ${invoicePdf.absolutePath}")
+                Timber.e("  File exists: ${invoicePdf.exists()}")
+                Timber.e("  File size: ${invoicePdf.length()} bytes (${invoicePdf.length() / 1024.0} KB)")
+                Timber.e("  Can read: ${invoicePdf.canRead()}")
+                Timber.e("════════════════════════════════════════════════════════════════")
+
                 // Insert both into vault
                 try {
                     val quoteDoc = GeneratedDocumentEntity(
