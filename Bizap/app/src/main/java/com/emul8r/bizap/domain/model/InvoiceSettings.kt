@@ -113,10 +113,12 @@ enum class PdfEngine {
  *
  * CLASSIC: Original layout - Header | Bill To + Invoice Details | Items | Totals | Footer
  * MODERN: Compact side-by-side layout with grid organization
+ * SPACIOUS: Generous spacing and larger fonts for premium feel
  */
 enum class PageLayout {
     CLASSIC,     // Traditional invoice layout
-    MODERN       // Compact modern grid-based layout
+    MODERN,      // Compact modern grid-based layout
+    SPACIOUS     // Premium spacious layout with generous spacing
 }
 
 /**

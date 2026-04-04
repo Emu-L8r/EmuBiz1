@@ -79,16 +79,20 @@ fun InvoiceSettingsScreen(
                     InfoSection()
                 }
 
+                // ════════════════════════════════════════════════════════════════════
+                // UNIFIED WORKFLOW: PDF GENERATION SETTINGS (Steps 1-4)
+                // ════════════════════════════════════════════════════════════════════
+
                 item {
-                    // Section 1: PDF Engine Selection
-                    PdfEngineSelectionSection(
-                        currentTheme = uiState.settings?.selectedTheme ?: InvoiceTheme.CANVAS,
-                        onThemeSelected = { viewModel.updateSelectedTheme(it) }
+                    // 1️⃣ Step 1: Choose PDF Engine (Canvas vs HTML)
+                    PdfEngineSection(
+                        selectedEngine = uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS,
+                        onEngineSelected = { viewModel.updateSelectedPdfEngine(it) }
                     )
                 }
 
                 item {
-                    // Section 2: Template Selection (dynamic based on engine)
+                    // 2️⃣ Step 2: Choose Template/Style (updates based on engine)
                     val currentTheme = uiState.settings?.selectedTheme ?: InvoiceTheme.CANVAS
                     TemplateSelectionSection(
                         currentTheme = currentTheme,
@@ -100,6 +104,41 @@ fun InvoiceSettingsScreen(
                 }
 
                 item {
+                    // 3️⃣ Step 3: Choose Page Layout (Classic vs Modern)
+                    PageLayoutSection(
+                        selectedLayout = uiState.settings?.selectedPageLayout ?: PageLayout.CLASSIC,
+                        onLayoutSelected = { viewModel.updateSelectedPageLayout(it) }
+                    )
+                }
+
+                item {
+                    // 4️⃣ Step 4: Live Preview (real-time visualization of all choices)
+                    LivePreviewSection(
+                        previewHtml = previewHtml,
+                        onRefresh = { viewModel.generatePreview() },
+                        selectedEngine = uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS,
+                        selectedCanvasTemplate = uiState.settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN
+                    )
+                }
+
+                item {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                }
+
+                // ════════════════════════════════════════════════════════════════════
+                // OPTIONAL: BUSINESS SETTINGS (Steps 5+)
+                // ════════════════════════════════════════════════════════════════════
+
+                item {
+                    // 5️⃣ Preview Mode (optional - use sample data instead of real)
+                    PreviewModeSection(
+                        previewWithPlaceholder = uiState.settings?.previewWithPlaceholder ?: false,
+                        onToggle = { viewModel.updatePreviewWithPlaceholder(it) }
+                    )
+                }
+
+                item {
+                    // 6️⃣ Payment Terms Configuration
                     uiState.settings?.let { settings ->
                         PaymentSection(
                             paymentTermsDays = settings.paymentTermsDays,
@@ -109,6 +148,7 @@ fun InvoiceSettingsScreen(
                 }
 
                 item {
+                    // 7️⃣ Tax Configuration
                     uiState.settings?.let { settings ->
                         TaxSection(
                             taxRate = settings.taxRate,
@@ -120,43 +160,10 @@ fun InvoiceSettingsScreen(
                 }
 
                 item {
+                    // 8️⃣ Save & Reset Actions
                     ActionButtonsSection(
                         onSave = { viewModel.saveSettings() },
                         onReset = { viewModel.resetToDefaults() }
-                    )
-                }
-
-                // ============================================================================
-
-                item {
-                    // PHASE 2: PDF Engine Section
-                    PdfEngineSection(
-                        selectedEngine = uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS,
-                        onEngineSelected = { viewModel.updateSelectedPdfEngine(it) }
-                    )
-                }
-
-                item {
-                    // PHASE 2: Page Layout Section
-                    PageLayoutSection(
-                        selectedLayout = uiState.settings?.selectedPageLayout ?: PageLayout.CLASSIC,
-                        onLayoutSelected = { viewModel.updateSelectedPageLayout(it) }
-                    )
-                }
-
-                item {
-                    // PHASE 2: Preview Mode Toggle
-                    PreviewModeSection(
-                        previewWithPlaceholder = uiState.settings?.previewWithPlaceholder ?: false,
-                        onToggle = { viewModel.updatePreviewWithPlaceholder(it) }
-                    )
-                }
-
-                item {
-                    // PHASE 2: Live Preview Placeholder
-                    LivePreviewSection(
-                        previewHtml = previewHtml,
-                        onRefresh = { viewModel.generatePreview() }
                     )
                 }
             }
@@ -169,89 +176,6 @@ private fun InfoSection() {
     Column {
         Text("PDF Invoice Settings", style = MaterialTheme.typography.headlineSmall)
         Text("Choose your PDF engine and template style", style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-/** Section 1: Two large clickable cards for engine selection (Canvas vs HTML). */
-@Composable
-fun PdfEngineSelectionSection(
-    currentTheme: InvoiceTheme,
-    onThemeSelected: (InvoiceTheme) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "1️⃣  PDF Engine",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-        }
-        Text(
-            "Select how your PDF invoices are generated",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        EngineCard(
-            title = "CANVAS",
-            subtitle = "Artistic, colorful, full design control",
-            emoji = "🎨",
-            isSelected = currentTheme == InvoiceTheme.CANVAS,
-            selectedColor = MaterialTheme.colorScheme.primary,
-            onClick = { onThemeSelected(InvoiceTheme.CANVAS) }
-        )
-
-        EngineCard(
-            title = "HTML",
-            subtitle = "Simple, clean, minimal design",
-            emoji = "📄",
-            isSelected = currentTheme == InvoiceTheme.HTML_PDF,
-            selectedColor = MaterialTheme.colorScheme.secondary,
-            onClick = { onThemeSelected(InvoiceTheme.HTML_PDF) }
-        )
-    }
-}
-
-@Composable
-private fun EngineCard(
-    title: String,
-    subtitle: String,
-    emoji: String,
-    isSelected: Boolean,
-    selectedColor: Color,
-    onClick: () -> Unit
-) {
-    val border = if (isSelected) BorderStroke(2.dp, selectedColor) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-    val containerColor = if (isSelected) selectedColor.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        border = border,
-        colors = CardDefaults.cardColors(containerColor = containerColor)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(emoji, fontSize = 28.sp)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (isSelected) {
-                Icon(
-                    Icons.Default.Check,
-                    contentDescription = "Selected",
-                    tint = selectedColor
-                )
-            } else {
-                RadioButton(selected = false, onClick = onClick)
-            }
-        }
     }
 }
 
@@ -479,75 +403,14 @@ private fun HtmlStyleCard(
 }
 
 @Composable
-fun ThemeSelectionSection(currentTheme: InvoiceTheme?, onThemeSelected: (InvoiceTheme) -> Unit) {
-    PdfEngineSelectionSection(
-        currentTheme = currentTheme ?: InvoiceTheme.CANVAS,
-        onThemeSelected = onThemeSelected
-    )
-}
-
-@Composable
-fun HtmlStyleSelectionSection(
-    selectedStyle: HtmlInvoiceStyle,
-    onStyleSelected: (HtmlInvoiceStyle) -> Unit,
-    isActive: Boolean
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        border = if (isActive) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("HTML Invoice Styles", style = MaterialTheme.typography.titleMedium)
-
-            HtmlInvoiceStyle.values().forEach { style ->
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(selected = selectedStyle == style, onClick = { onStyleSelected(style) })
-                    Column {
-                        Text(style.displayName, fontWeight = FontWeight.Bold)
-                        Text(style.description, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ColorsSection(primaryColor: String, onColorChanged: (String) -> Unit) {
-    val colors = listOf("#6B4C9A", "#2E5090", "#27AE60", "#E67E22")
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Brand Color", style = MaterialTheme.typography.titleMedium)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                colors.forEach { hex ->
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(Color(android.graphics.Color.parseColor(hex)))
-                            .padding(4.dp)
-                    ) {
-                        RadioButton(
-                            selected = primaryColor == hex,
-                            onClick = { onColorChanged(hex) }
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun PaymentSection(paymentTermsDays: Int, onPaymentTermsChanged: (Int) -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Payment Terms (Days)", style = MaterialTheme.typography.titleMedium)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("6️⃣  Payment Terms (Days)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             OutlinedTextField(
                 value = paymentTermsDays.toString(),
                 onValueChange = { it.toIntOrNull()?.let(onPaymentTermsChanged) },
+                modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
         }
@@ -557,13 +420,14 @@ fun PaymentSection(paymentTermsDays: Int, onPaymentTermsChanged: (Int) -> Unit) 
 @Composable
 fun TaxSection(taxRate: Double, taxName: String, onTaxRateChanged: (Double) -> Unit, onTaxNameChanged: (String) -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Tax Configuration", style = MaterialTheme.typography.titleMedium)
-            OutlinedTextField(value = taxName, onValueChange = onTaxNameChanged, label = { Text("Tax Name") })
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("7️⃣  Tax Configuration", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            OutlinedTextField(value = taxName, onValueChange = onTaxNameChanged, label = { Text("Tax Name") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(
                 value = taxRate.toString(),
                 onValueChange = { it.toDoubleOrNull()?.let(onTaxRateChanged) },
                 label = { Text("Tax Rate") },
+                modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
         }
@@ -573,6 +437,7 @@ fun TaxSection(taxRate: Double, taxName: String, onTaxRateChanged: (Double) -> U
 @Composable
 private fun ActionButtonsSection(onSave: () -> Unit, onReset: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("8️⃣  Actions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Button(onClick = onSave, modifier = Modifier.fillMaxWidth()) { Text("Save Settings") }
         OutlinedButton(onClick = onReset, modifier = Modifier.fillMaxWidth()) { Text("Reset to Defaults") }
     }
@@ -672,7 +537,7 @@ private fun EngineOptionCard(
 }
 
 /**
- * SECTION 2: Page Layout Selection (Classic vs Modern)
+ * SECTION 3: Page Layout Selection (Classic vs Modern vs Spacious)
  */
 @Composable
 fun PageLayoutSection(
@@ -681,7 +546,7 @@ fun PageLayoutSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            "2️⃣  Page Layout",
+            "3️⃣  Page Layout",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -692,6 +557,7 @@ fun PageLayoutSection(
         )
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Row 1: Classic & Modern
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -712,6 +578,21 @@ fun PageLayoutSection(
                 isSelected = selectedLayout == PageLayout.MODERN,
                 modifier = Modifier.weight(1f),
                 onClick = { onLayoutSelected(PageLayout.MODERN) }
+            )
+        }
+
+        // Row 2: Spacious (centered)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            LayoutOptionCard(
+                title = "Spacious",
+                emoji = "✨",
+                description = "Generous spacing",
+                isSelected = selectedLayout == PageLayout.SPACIOUS,
+                modifier = Modifier.fillMaxWidth(0.5f),
+                onClick = { onLayoutSelected(PageLayout.SPACIOUS) }
             )
         }
     }
@@ -761,7 +642,7 @@ private fun LayoutOptionCard(
 }
 
 /**
- * SECTION 4: Preview Mode Toggle
+ * SECTION 5: Preview Mode Toggle
  */
 @Composable
 private fun PreviewModeSection(
@@ -780,7 +661,7 @@ private fun PreviewModeSection(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        "4️⃣  Preview Mode",
+                        "5️⃣  Preview Mode",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -805,11 +686,169 @@ private fun PreviewModeSection(
 }
 
 /**
- * SECTION 5: Live Preview — shows a WebView rendering of the selected invoice style.
+ * SECTION 4: Live Preview — shows a WebView rendering of the selected invoice style.
  * Updates automatically when the style changes.
  */
 @Composable
 private fun LivePreviewSection(
+    previewHtml: String?,
+    onRefresh: () -> Unit,
+    selectedEngine: PdfEngine = PdfEngine.CANVAS,
+    selectedCanvasTemplate: CanvasInvoiceTemplate = CanvasInvoiceTemplate.MODERN
+) {
+    when (selectedEngine) {
+        PdfEngine.CANVAS -> {
+            CanvasTemplatePreview(
+                template = selectedCanvasTemplate,
+                previewHtml = previewHtml,
+                onRefresh = onRefresh
+            )
+        }
+        PdfEngine.HTML_CSS -> {
+            HtmlPreview(
+                previewHtml = previewHtml,
+                onRefresh = onRefresh
+            )
+        }
+    }
+}
+
+/**
+ * Canvas template visual preview
+ */
+@Composable
+private fun CanvasTemplatePreview(
+    template: CanvasInvoiceTemplate,
+    previewHtml: String?,
+    onRefresh: () -> Unit
+) {
+    val primaryColor = try {
+        Color(android.graphics.Color.parseColor(template.primaryHex))
+    } catch (e: Exception) {
+        MaterialTheme.colorScheme.primary
+    }
+    val accentColor = try {
+        Color(android.graphics.Color.parseColor(template.accentHex))
+    } catch (e: Exception) {
+        MaterialTheme.colorScheme.secondary
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    "4️⃣  Live Preview (Canvas)",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "${template.displayName} - ${template.colorScheme}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            IconButton(onClick = onRefresh) {
+                Icon(
+                    Icons.Default.Refresh,
+                    contentDescription = "Refresh preview",
+                    tint = primaryColor
+                )
+            }
+        }
+
+        // Visual color swatch preview
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(primaryColor, RoundedCornerShape(8.dp))
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Primary", style = MaterialTheme.typography.labelSmall)
+                Text(template.primaryHex, style = MaterialTheme.typography.labelSmall, fontSize = 9.sp)
+            }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(accentColor, RoundedCornerShape(8.dp))
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Accent", style = MaterialTheme.typography.labelSmall)
+                Text(template.accentHex, style = MaterialTheme.typography.labelSmall, fontSize = 9.sp)
+            }
+        }
+
+        // HTML preview of Canvas template
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            if (previewHtml != null) {
+                AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            settings.apply {
+                                javaScriptEnabled = false
+                                loadWithOverviewMode = true
+                                useWideViewPort = true
+                                builtInZoomControls = true
+                                displayZoomControls = false
+                                setSupportZoom(true)
+                                cacheMode = WebSettings.LOAD_NO_CACHE
+                            }
+                            setInitialScale(60)
+                        }
+                    },
+                    update = { webView ->
+                        webView.loadDataWithBaseURL(
+                            null,
+                            previewHtml,
+                            "text/html",
+                            "UTF-8",
+                            null
+                        )
+                    }
+                )
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Generating preview...", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * HTML preview component
+ */
+@Composable
+private fun HtmlPreview(
     previewHtml: String?,
     onRefresh: () -> Unit
 ) {
@@ -820,7 +859,7 @@ private fun LivePreviewSection(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                "5️⃣  Live Preview",
+                "4️⃣  Live Preview (HTML)",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -853,10 +892,6 @@ private fun LivePreviewSection(
                     factory = { ctx ->
                         WebView(ctx).apply {
                             settings.apply {
-                                // JavaScript is intentionally disabled: the preview renders
-                                // server-generated HTML containing only static invoice content
-                                // (no scripts). Disabling JS reduces the attack surface for
-                                // any malicious data that might reach the preview.
                                 javaScriptEnabled = false
                                 loadWithOverviewMode = true
                                 useWideViewPort = true
@@ -865,7 +900,6 @@ private fun LivePreviewSection(
                                 setSupportZoom(true)
                                 cacheMode = WebSettings.LOAD_NO_CACHE
                             }
-                            // Scale to show a full-page preview
                             setInitialScale(50)
                         }
                     },
