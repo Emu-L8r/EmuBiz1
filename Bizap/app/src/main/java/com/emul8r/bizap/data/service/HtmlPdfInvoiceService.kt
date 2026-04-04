@@ -178,7 +178,7 @@ class HtmlPdfInvoiceService(
             return when (style) {
                 HtmlInvoiceStyle.PREMIUM_PROFESSIONAL -> generatePremiumProfessionalTemplate(clean, isQuote)
                 HtmlInvoiceStyle.WARM_APPROACHABLE    -> generateWarmApproachableTemplate(clean, isQuote)
-                else -> generateModernTemplate(clean, isQuote) // unreachable
+                else -> throw IllegalStateException("Unexpected style in premium branch: $style")
             }
         }
 

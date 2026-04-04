@@ -145,6 +145,9 @@ class InvoiceSettingsViewModel @Inject constructor(
             val currentSettings = _uiState.value.settings ?: return@launch
             try {
                 val previewSnapshot = PlaceholderInvoiceGenerator.generatePreviewInvoice()
+                // HtmlPdfInvoiceService is instantiated per-call since its settings are dynamic
+                // (change with every style selection). HTML generation does not use context;
+                // only the PDF file-writing path requires it.
                 val htmlService = HtmlPdfInvoiceService(context, currentSettings)
                 val html = htmlService.buildPreviewHtml(previewSnapshot, isQuote = false)
                 _previewHtml.value = html
