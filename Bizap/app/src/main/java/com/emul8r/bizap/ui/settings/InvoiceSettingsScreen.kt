@@ -2,6 +2,7 @@ package com.emul8r.bizap.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,8 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.webkit.WebSettings
+import android.webkit.WebView
 import com.emul8r.bizap.domain.model.CanvasInvoiceTemplate
 import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
 import com.emul8r.bizap.domain.model.InvoiceTheme
@@ -35,6 +40,7 @@ fun InvoiceSettingsScreen(
     onBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val previewHtml by viewModel.previewHtml.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.saveSuccess) {
@@ -148,7 +154,10 @@ fun InvoiceSettingsScreen(
 
                 item {
                     // PHASE 2: Live Preview Placeholder
-                    LivePreviewSection()
+                    LivePreviewSection(
+                        previewHtml = previewHtml,
+                        onRefresh = { viewModel.generatePreview() }
+                    )
                 }
             }
         }
@@ -406,10 +415,17 @@ private fun HtmlStyleCard(
     onClick: () -> Unit
 ) {
     val accentColor = when (style) {
-        HtmlInvoiceStyle.MODERN -> MaterialTheme.colorScheme.primary
-        HtmlInvoiceStyle.MINIMAL -> Color(0xFF2C3E50)
-        HtmlInvoiceStyle.CORPORATE -> Color(0xFF003366)
-        HtmlInvoiceStyle.CREATIVE -> Color(0xFF00A8A8)
+        HtmlInvoiceStyle.MODERN                -> MaterialTheme.colorScheme.primary
+        HtmlInvoiceStyle.MINIMAL               -> Color(0xFF2C3E50)
+        HtmlInvoiceStyle.CORPORATE             -> Color(0xFF003366)
+        HtmlInvoiceStyle.CREATIVE              -> Color(0xFF00A8A8)
+        HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> Color(0xFF2563EB)
+        HtmlInvoiceStyle.WARM_APPROACHABLE     -> Color(0xFFF59E0B)
+    }
+    val secondaryColor = when (style) {
+        HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> Color(0xFF1C1C2E)
+        HtmlInvoiceStyle.WARM_APPROACHABLE     -> Color(0xFF1F2937)
+        else                                   -> null
     }
 
     val border = if (isSelected) BorderStroke(2.dp, accentColor) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
@@ -422,13 +438,21 @@ private fun HtmlStyleCard(
         )
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Box(
                     modifier = Modifier
                         .size(20.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .background(accentColor)
                 )
+                if (secondaryColor != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(secondaryColor)
+                    )
+                }
                 if (isSelected) {
                     Spacer(modifier = Modifier.weight(1f))
                     Icon(
@@ -781,55 +805,93 @@ private fun PreviewModeSection(
 }
 
 /**
- * SECTION 5: Live Preview Placeholder
+ * SECTION 5: Live Preview — shows a WebView rendering of the selected invoice style.
+ * Updates automatically when the style changes.
  */
 @Composable
-private fun LivePreviewSection() {
+private fun LivePreviewSection(
+    previewHtml: String?,
+    onRefresh: () -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                "5️⃣  Live Preview",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            IconButton(onClick = onRefresh) {
+                Icon(
+                    Icons.Default.Refresh,
+                    contentDescription = "Refresh preview",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
         Text(
-            "5️⃣  Live Preview",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            "Preview how your invoice will look",
+            "Preview how your invoice will look with the selected style",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(280.dp)
+                .height(380.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .border(1.dp, MaterialTheme.colorScheme.outline),
-            contentAlignment = Alignment.Center
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    "PDF Preview",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            if (previewHtml != null) {
+                AndroidView(
+                    modifier = Modifier.fillMaxSize(),
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            settings.apply {
+                                javaScriptEnabled = false
+                                loadWithOverviewMode = true
+                                useWideViewPort = true
+                                builtInZoomControls = true
+                                displayZoomControls = false
+                                setSupportZoom(true)
+                                cacheMode = WebSettings.LOAD_NO_CACHE
+                            }
+                            // Scale to show a full-page preview
+                            setInitialScale(50)
+                        }
+                    },
+                    update = { webView ->
+                        webView.loadDataWithBaseURL(
+                            null,
+                            previewHtml,
+                            "text/html",
+                            "UTF-8",
+                            null
+                        )
+                    }
                 )
-                Text(
-                    "(Coming Soon)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Real-time preview rendering",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(32.dp),
+                        strokeWidth = 3.dp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        "Generating preview...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

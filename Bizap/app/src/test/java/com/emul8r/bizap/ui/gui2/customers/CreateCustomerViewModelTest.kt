@@ -115,7 +115,7 @@ class CreateCustomerViewModelTest : BaseUnitTest() {
 
     @Test
     fun `createCustomer_Error - repository failure triggers error callback`() = runTest {
-        val customer = Customer(name = "Jane Doe")
+        val customer = Customer(name = "Jane Doe", email = "jane@example.com")
         coEvery { customerRepository.insert(customer) } throws RuntimeException("DB error")
 
         var errorMessage: String? = null
@@ -145,7 +145,7 @@ class CreateCustomerViewModelTest : BaseUnitTest() {
 
     @Test
     fun `uiEvent_Emission - onSuccess navigates after successful creation`() = runTest {
-        val customer = Customer(name = "Navigate Test")
+        val customer = Customer(name = "Navigate Test", email = "navigate@example.com")
         coEvery { customerRepository.insert(customer) } returns Result.success(3L)
 
         var navigateCalled = false
