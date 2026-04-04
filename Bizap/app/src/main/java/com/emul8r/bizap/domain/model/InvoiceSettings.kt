@@ -26,6 +26,14 @@ data class InvoiceSettings(
     @ColumnInfo(name = "selected_theme")
     val selectedTheme: InvoiceTheme = InvoiceTheme.CANVAS,
 
+    // PDF ENGINE SELECTION (new three-tier architecture)
+    @ColumnInfo(name = "selected_pdf_engine")
+    val selectedPdfEngine: PdfEngine = PdfEngine.HTML_CSS,
+
+    // PAGE LAYOUT SELECTION
+    @ColumnInfo(name = "selected_page_layout")
+    val selectedPageLayout: PageLayout = PageLayout.MODERN,
+
     // PDF HTML STYLE SELECTION (for HTML-to-PDF theme)
     @ColumnInfo(name = "selected_html_style")
     val selectedHtmlStyle: HtmlInvoiceStyle = HtmlInvoiceStyle.MODERN,
@@ -33,6 +41,10 @@ data class InvoiceSettings(
     // CANVAS TEMPLATE SELECTION (for Canvas theme)
     @ColumnInfo(name = "selected_canvas_template")
     val selectedCanvasTemplate: CanvasInvoiceTemplate = CanvasInvoiceTemplate.MODERN,
+
+    // PREVIEW MODE
+    @ColumnInfo(name = "preview_with_placeholder")
+    val previewWithPlaceholder: Boolean = false,
 
     // PDF STYLING (kept for invoice appearance)
     @ColumnInfo(name = "primary_color")
@@ -86,7 +98,30 @@ data class InvoiceSettings(
 }
 
 /**
+ * Enum for PDF rendering engine selection.
+ *
+ * CANVAS: Android's PdfDocument API - direct coordinate control, artistic designs
+ * HTML_CSS: HTML-to-PDF conversion - professional layouts, CSS styling
+ */
+enum class PdfEngine {
+    CANVAS,      // Canvas-based rendering with coordinate control
+    HTML_CSS     // HTML-to-PDF rendering with CSS styling
+}
+
+/**
+ * Enum for page layout organization.
+ *
+ * CLASSIC: Original layout - Header | Bill To + Invoice Details | Items | Totals | Footer
+ * MODERN: Compact side-by-side layout with grid organization
+ */
+enum class PageLayout {
+    CLASSIC,     // Traditional invoice layout
+    MODERN       // Compact modern grid-based layout
+}
+
+/**
  * Enum for invoice theme selection.
+ * DEPRECATED: Use PdfEngine instead.
  *
  * CANVAS: Existing Canvas-based PDF generation (Phase 9 implementation)
  * HTML_PDF: New HTML-to-PDF modern style (Phase 6 implementation)

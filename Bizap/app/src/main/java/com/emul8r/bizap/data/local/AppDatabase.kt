@@ -42,7 +42,7 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
         AnalyticsEventEntity::class,  // Event tracking
         com.emul8r.bizap.domain.model.InvoiceSettings::class  // Invoice settings
     ],
-    version = 39,  // v38→39: Add selected_html_style and selected_canvas_template columns
+    version = 40,  // v39→40: Add PDF engine, page layout, and preview with placeholder columns
     exportSchema = true
 )
 @TypeConverters(
