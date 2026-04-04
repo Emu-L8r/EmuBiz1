@@ -14,6 +14,8 @@ import com.emul8r.bizap.domain.pdf.PdfTableRenderer
 import com.emul8r.bizap.domain.pdf.PdfBrandingRenderer
 import com.emul8r.bizap.domain.pdf.PdfPageManager
 import com.emul8r.bizap.domain.pdf.PdfWatermarkRenderer
+import com.emul8r.bizap.domain.pdf.GridLayoutManager
+import com.emul8r.bizap.domain.pdf.InvoiceSpacingConfig
 import com.emul8r.bizap.domain.service.PdfGenerationService
 import com.emul8r.bizap.ui.templates.TemplateSnapshotManager
 import com.emul8r.bizap.utils.DocumentNamingUtils
@@ -198,6 +200,9 @@ class InvoicePdfService @Inject constructor(
         val pageManager = PdfPageManager(pdfDocument, 595, 842)
         var canvas = pageManager.startNewPage()
 
+        // PHASE 2: Initialize grid layout manager for systematic positioning
+        val layoutManager = GridLayoutManager()
+
         val boldTypeface = pdfStyler.getTypeface(templateSnapshot?.fontFamily, context, isBold = true)
         val regularTypeface = pdfStyler.getTypeface(templateSnapshot?.fontFamily, context, isBold = false)
         val italicTypeface = Typeface.create(regularTypeface, Typeface.ITALIC)
@@ -209,15 +214,24 @@ class InvoicePdfService @Inject constructor(
         val bodyPaint = Paint().apply { typeface = regularTypeface; textSize = 10f; color = colors.textLight; isAntiAlias = true }
         val labelPaint = Paint().apply { typeface = boldTypeface; textSize = 9f; color = colors.primary; isAntiAlias = true }
 
-        // ===== PHASE 9A: ARTISTIC/LAYERED HEADER WITH OVERLAPPING SHAPES =====
-        val artisticHeaderHeight = 100f
+        // ===== PHASE 2: GRID-BASED HEADER (Compressed: 100px → 60px) =====
+        // Using InvoiceSpacingConfig.HEADER_HEIGHT (60px) from design spec
+        val headerY = layoutManager.getHeaderY()
+        val headerHeight = InvoiceSpacingConfig.HEADER_HEIGHT
+        val headerBottom = headerY + headerHeight
 
         // LAYER 1: Primary color background (base)
         val headerBackgroundPaint = Paint().apply {
             color = colors.primary
             style = Paint.Style.FILL
         }
-        canvas.drawRect(0f, 0f, 595f, artisticHeaderHeight, headerBackgroundPaint)
+        canvas.drawRect(
+            layoutManager.getContentLeft(),
+            headerY,
+            layoutManager.getContentRight(),
+            headerBottom,
+            headerBackgroundPaint
+        )
 
         // LAYER 2: Diagonal accent overlay (right side) - creates visual interest
         val diagonalAccentPaint = Paint().apply {
@@ -225,10 +239,10 @@ class InvoicePdfService @Inject constructor(
             style = Paint.Style.FILL
         }
         val diagonalPath = Path().apply {
-            moveTo(420f, 0f)
-            lineTo(595f, 0f)
-            lineTo(595f, 90f)
-            lineTo(470f, artisticHeaderHeight)
+            moveTo(420f, headerY)
+            lineTo(595f, headerY)
+            lineTo(595f, headerY + 50f)
+            lineTo(470f, headerBottom)
             close()
         }
         canvas.drawPath(diagonalPath, diagonalAccentPaint)
@@ -238,7 +252,7 @@ class InvoicePdfService @Inject constructor(
             color = android.graphics.Color.argb(20, 0, 0, 0)
             style = Paint.Style.FILL
         }
-        canvas.drawRect(0f, artisticHeaderHeight - 4f, 595f, artisticHeaderHeight, waveBottomPaint)
+        canvas.drawRect(layoutManager.getContentLeft(), headerBottom - 4f, layoutManager.getContentRight(), headerBottom, waveBottomPaint)
 
         // Draw logo if available (left side, fully visible)
         val brandingRenderer = PdfBrandingRenderer(canvas, 595f)
@@ -247,20 +261,25 @@ class InvoicePdfService @Inject constructor(
         // Premium white text styling
         val artisticHeaderPaint = Paint().apply {
             typeface = boldTypeface
-            textSize = 18f
+            textSize = InvoiceSpacingConfig.TEXT_SIZE_HEADER
             color = Color.WHITE
             isAntiAlias = true
         }
 
         val artisticSubheaderPaint = Paint().apply {
             typeface = regularTypeface
-            textSize = 8f
+            textSize = InvoiceSpacingConfig.TEXT_SIZE_SMALL
             color = Color.parseColor("#E8E8E8")
             isAntiAlias = true
         }
 
-        // Company name (left side, prominent)
-        canvas.drawText(snapshot.businessName.uppercase(), 120f, 35f, artisticHeaderPaint)
+        // Company name (left side, prominent) - Grid-based positioning
+        canvas.drawText(
+            snapshot.businessName.uppercase(),
+            layoutManager.getX(14),  // 14 grid units from left margin
+            headerY + 20f,           // 20px down from header top
+            artisticHeaderPaint
+        )
 
         // INVOICE LABEL (right side, elegant positioning - not a stamp)
         val invoiceLabelPaint = Paint().apply {
@@ -270,26 +289,27 @@ class InvoicePdfService @Inject constructor(
             isAntiAlias = true
             textAlign = Paint.Align.RIGHT
         }
-        canvas.drawText("INVOICE", 555f, 28f, invoiceLabelPaint)
-        canvas.drawText(snapshot.invoiceNumber, 555f, 40f, invoiceLabelPaint)
+        canvas.drawText("INVOICE", layoutManager.getContentRight() - 10f, headerY + 8f, invoiceLabelPaint)
+        canvas.drawText(snapshot.invoiceNumber, layoutManager.getContentRight() - 10f, headerY + 20f, invoiceLabelPaint)
 
-        // Business info (right-aligned, clean)
+        // Business info (right-aligned, clean) - Grid-based
         artisticSubheaderPaint.textAlign = Paint.Align.RIGHT
-        canvas.drawText("ABN: ${snapshot.businessAbn}", 555f, 55f, artisticSubheaderPaint)
-        canvas.drawText(snapshot.businessPhone, 555f, 65f, artisticSubheaderPaint)
-        canvas.drawText(snapshot.businessEmail, 555f, 75f, artisticSubheaderPaint)
+        canvas.drawText("ABN: ${snapshot.businessAbn}", layoutManager.getContentRight() - 10f, headerY + 35f, artisticSubheaderPaint)
+        canvas.drawText(snapshot.businessPhone, layoutManager.getContentRight() - 10f, headerY + 45f, artisticSubheaderPaint)
+        canvas.drawText(snapshot.businessEmail, layoutManager.getContentRight() - 10f, headerY + 55f, artisticSubheaderPaint)
 
-        // ===== HEADER SECTION: TWO-COLUMN LAYOUT (Bill To | Invoice Details) =====
+        // ===== PHASE 2: TWO-COLUMN LAYOUT (Bill To | Invoice Details - Side-by-Side) =====
+        // Using grid manager for systematic positioning
+        // Each column: 80px height, equal width, 12px gap between
 
-        // ===== PHASE 9B: PREMIUM FLOATING CARDS WITH SHADOWS & ROUNDED CORNERS =====
         // Card background (white with subtle accent tint)
         val cardBackgroundPaint = Paint().apply {
             color = Color.WHITE
             style = Paint.Style.FILL
         }
         val cardBorderPaint = Paint().apply {
-            color = Color.parseColor("#D8D8D8")  // Slightly darker border
-            strokeWidth = 0.8f
+            color = Color.parseColor("#D8D8D8")
+            strokeWidth = InvoiceSpacingConfig.BORDER_WIDTH
             style = Paint.Style.STROKE
         }
 
@@ -299,33 +319,42 @@ class InvoicePdfService @Inject constructor(
             style = Paint.Style.FILL
         }
 
-        // Bill To Card (left) - Enhanced with shadow & rounded corners
-        val billToLeft = 38f
-        val billToTop = 125f
-        val billToRight = 282f
-        val billToBottom = 228f
+        // ===== BILL TO CARD (Left) =====
+        val billToY = layoutManager.getBillToY()
+        val billToHeight = InvoiceSpacingConfig.BILL_TO_HEIGHT
+        val billToLeft = layoutManager.getBillToLeft()
+        val billToRight = layoutManager.getBillToRight()
+        val billToBottom = billToY + billToHeight
 
         // Draw shadow first (darker layer below)
-        canvas.drawRoundRect(billToLeft + 2f, billToTop + 2f, billToRight + 2f, billToBottom + 2f, 8f, 8f, shadowPaint)
+        canvas.drawRoundRect(
+            billToLeft + InvoiceSpacingConfig.SHADOW_OFFSET,
+            billToY + InvoiceSpacingConfig.SHADOW_OFFSET,
+            billToRight + InvoiceSpacingConfig.SHADOW_OFFSET,
+            billToBottom + InvoiceSpacingConfig.SHADOW_OFFSET,
+            InvoiceSpacingConfig.CORNER_RADIUS,
+            InvoiceSpacingConfig.CORNER_RADIUS,
+            shadowPaint
+        )
         // Draw card background with rounded corners
-        canvas.drawRoundRect(billToLeft, billToTop, billToRight, billToBottom, 8f, 8f, cardBackgroundPaint)
+        canvas.drawRoundRect(billToLeft, billToY, billToRight, billToBottom, InvoiceSpacingConfig.CORNER_RADIUS, InvoiceSpacingConfig.CORNER_RADIUS, cardBackgroundPaint)
         // Draw border
-        canvas.drawRoundRect(billToLeft, billToTop, billToRight, billToBottom, 8f, 8f, cardBorderPaint)
+        canvas.drawRoundRect(billToLeft, billToY, billToRight, billToBottom, InvoiceSpacingConfig.CORNER_RADIUS, InvoiceSpacingConfig.CORNER_RADIUS, cardBorderPaint)
 
         // Add accent color left-side bar (modern design element)
         val accentBarPaint = Paint().apply {
             color = colors.secondary
             style = Paint.Style.FILL
         }
-        canvas.drawRect(billToLeft, billToTop, billToLeft + 4f, billToBottom, accentBarPaint)
+        canvas.drawRect(billToLeft, billToY, billToLeft + InvoiceSpacingConfig.ACCENT_BAR_WIDTH, billToBottom, accentBarPaint)
 
         val cardLabelPaint = Paint().apply {
             typeface = boldTypeface
-            textSize = 8.5f
+            textSize = InvoiceSpacingConfig.TEXT_SIZE_SECTION_HEADER
             color = colors.primary
             isAntiAlias = true
         }
-        canvas.drawText("BILL TO", 50f, 142f, cardLabelPaint)
+        canvas.drawText("BILL TO", billToLeft + InvoiceSpacingConfig.PADDING_H, billToY + 17f, cardLabelPaint)
 
         val cardNamePaint = Paint().apply {
             typeface = boldTypeface
@@ -333,37 +362,46 @@ class InvoicePdfService @Inject constructor(
             color = Color.BLACK
             isAntiAlias = true
         }
-        canvas.drawText(snapshot.customerName, 50f, 160f, cardNamePaint)
+        canvas.drawText(snapshot.customerName, billToLeft + InvoiceSpacingConfig.PADDING_H, billToY + 35f, cardNamePaint)
 
         val cardDetailPaint = Paint().apply {
             typeface = regularTypeface
-            textSize = 8.5f
+            textSize = InvoiceSpacingConfig.TEXT_SIZE_SMALL
             color = Color.parseColor("#666666")
             isAntiAlias = true
         }
-        canvas.drawText(snapshot.customerAddress, 50f, 173f, cardDetailPaint)
+        canvas.drawText(snapshot.customerAddress, billToLeft + InvoiceSpacingConfig.PADDING_H, billToY + 48f, cardDetailPaint)
         snapshot.customerEmail?.let {
-            canvas.drawText(it, 50f, 186f, cardDetailPaint)
+            canvas.drawText(it, billToLeft + InvoiceSpacingConfig.PADDING_H, billToY + 61f, cardDetailPaint)
         }
-        canvas.drawText("Mob: ${snapshot.businessPhone}", 50f, 199f, cardDetailPaint)
+        canvas.drawText("Mob: ${snapshot.businessPhone}", billToLeft + InvoiceSpacingConfig.PADDING_H, billToY + 74f, cardDetailPaint)
 
-        // Invoice Details Card (right) - Enhanced with shadow & rounded corners
-        val invoiceLeft = 313f
-        val invoiceTop = 125f
-        val invoiceRight = 557f
-        val invoiceBottom = 228f
+        // ===== INVOICE DETAILS CARD (Right - Side-by-Side with Bill To) =====
+        val invoiceDetailsY = layoutManager.getInvoiceDetailsY()
+        val invoiceDetailsHeight = InvoiceSpacingConfig.INVOICE_DETAILS_HEIGHT
+        val invoiceDetailsLeft = layoutManager.getInvoiceDetailsLeft()
+        val invoiceDetailsRight = layoutManager.getInvoiceDetailsRight()
+        val invoiceDetailsBottom = invoiceDetailsY + invoiceDetailsHeight
 
         // Draw shadow first
-        canvas.drawRoundRect(invoiceLeft + 2f, invoiceTop + 2f, invoiceRight + 2f, invoiceBottom + 2f, 8f, 8f, shadowPaint)
+        canvas.drawRoundRect(
+            invoiceDetailsLeft + InvoiceSpacingConfig.SHADOW_OFFSET,
+            invoiceDetailsY + InvoiceSpacingConfig.SHADOW_OFFSET,
+            invoiceDetailsRight + InvoiceSpacingConfig.SHADOW_OFFSET,
+            invoiceDetailsBottom + InvoiceSpacingConfig.SHADOW_OFFSET,
+            InvoiceSpacingConfig.CORNER_RADIUS,
+            InvoiceSpacingConfig.CORNER_RADIUS,
+            shadowPaint
+        )
         // Draw card with rounded corners
-        canvas.drawRoundRect(invoiceLeft, invoiceTop, invoiceRight, invoiceBottom, 8f, 8f, cardBackgroundPaint)
+        canvas.drawRoundRect(invoiceDetailsLeft, invoiceDetailsY, invoiceDetailsRight, invoiceDetailsBottom, InvoiceSpacingConfig.CORNER_RADIUS, InvoiceSpacingConfig.CORNER_RADIUS, cardBackgroundPaint)
         // Draw border
-        canvas.drawRoundRect(invoiceLeft, invoiceTop, invoiceRight, invoiceBottom, 8f, 8f, cardBorderPaint)
+        canvas.drawRoundRect(invoiceDetailsLeft, invoiceDetailsY, invoiceDetailsRight, invoiceDetailsBottom, InvoiceSpacingConfig.CORNER_RADIUS, InvoiceSpacingConfig.CORNER_RADIUS, cardBorderPaint)
 
         // Add accent color left-side bar (modern design element)
-        canvas.drawRect(invoiceLeft, invoiceTop, invoiceLeft + 4f, invoiceBottom, accentBarPaint)
+        canvas.drawRect(invoiceDetailsLeft, invoiceDetailsY, invoiceDetailsLeft + InvoiceSpacingConfig.ACCENT_BAR_WIDTH, invoiceDetailsBottom, accentBarPaint)
 
-        canvas.drawText("INVOICE", 325f, 142f, cardLabelPaint)
+        canvas.drawText("INVOICE", invoiceDetailsLeft + InvoiceSpacingConfig.PADDING_H, invoiceDetailsY + 17f, cardLabelPaint)
 
         val invoiceNumberPaint = Paint().apply {
             typeface = boldTypeface
@@ -371,24 +409,25 @@ class InvoicePdfService @Inject constructor(
             color = colors.primary
             isAntiAlias = true
         }
-        canvas.drawText(snapshot.displayName.ifBlank { snapshot.invoiceNumber }, 325f, 160f, invoiceNumberPaint)
+        canvas.drawText(snapshot.displayName.ifBlank { snapshot.invoiceNumber }, invoiceDetailsLeft + InvoiceSpacingConfig.PADDING_H, invoiceDetailsY + 35f, invoiceNumberPaint)
 
         val invoiceDatePaint = Paint().apply {
             typeface = regularTypeface
-            textSize = 8.5f
+            textSize = InvoiceSpacingConfig.TEXT_SIZE_SMALL
             color = Color.parseColor("#555555")
             isAntiAlias = true
         }
-        canvas.drawText("Date: ${formatDate(snapshot.date)}", 325f, 175f, invoiceDatePaint)
-        canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", 325f, 188f, invoiceDatePaint)
-        canvas.drawText("Status: ${snapshot.invoiceStatus}", 325f, 201f, invoiceDatePaint)
+        canvas.drawText("Date: ${formatDate(snapshot.date)}", invoiceDetailsLeft + InvoiceSpacingConfig.PADDING_H, invoiceDetailsY + 50f, invoiceDatePaint)
+        canvas.drawText("Due: ${formatDate(snapshot.dueDate)}", invoiceDetailsLeft + InvoiceSpacingConfig.PADDING_H, invoiceDetailsY + 63f, invoiceDatePaint)
+        canvas.drawText("Status: ${snapshot.invoiceStatus}", invoiceDetailsLeft + InvoiceSpacingConfig.PADDING_H, invoiceDetailsY + 76f, invoiceDatePaint)
 
         // ===== WATERMARK (appears on first page) =====
         val watermarkRenderer = PdfWatermarkRenderer(canvas, 595f, 842f)
         watermarkRenderer.drawWatermark(snapshot.invoiceStatus)
 
-        // Update Y position after enhanced cards (now 228px bottom vs old 210px)
-        var currentY = 235f  // Increased from 210f to account for 100px header and larger cards
+        // ===== PHASE 2: Update Y position using grid-based calculation =====
+        // Header block bottom: header + gap + bill to = complete top section
+        var currentY = layoutManager.getInvoiceHeaderBlockBottom() + InvoiceSpacingConfig.SECTION_GAP
         pageManager.setY(currentY)
 
 
@@ -416,7 +455,7 @@ class InvoicePdfService @Inject constructor(
         }
 
         if (!hideLineItems) {
-            // ===== LINE ITEMS TABLE WITH PAGINATION =====
+            // ===== PHASE 2: ITEMS TABLE WITH GRID-BASED POSITIONING =====
             // Draw table header with professional styling
             val headerTextPaint = Paint(headerPaint).apply {
                 color = Color.WHITE
@@ -424,8 +463,15 @@ class InvoicePdfService @Inject constructor(
                 typeface = boldTypeface
             }
 
-            // Ensure space for header row (approximately 40 points)
-            canvas = pageManager.ensureSpace(40f)
+            // Get table position from grid manager
+            val itemsTableY = layoutManager.getItemsTableY()
+            val tableHeaderHeight = InvoiceSpacingConfig.TABLE_HEADER_HEIGHT
+
+            // Ensure space for header row
+            canvas = pageManager.ensureSpace(tableHeaderHeight + (snapshot.items.size * InvoiceSpacingConfig.TABLE_ROW_HEIGHT))
+
+            // Set page manager to table position
+            pageManager.setY(itemsTableY)
 
             // Draw table border top
             val tableBorderPaint = Paint().apply {
@@ -433,12 +479,12 @@ class InvoicePdfService @Inject constructor(
                 strokeWidth = 2f
                 style = Paint.Style.STROKE
             }
-            canvas.drawLine(40f, pageManager.currentY, 555f, pageManager.currentY, tableBorderPaint)
+            canvas.drawLine(layoutManager.getItemsTableLeft(), itemsTableY, layoutManager.getItemsTableRight(), itemsTableY, tableBorderPaint)
 
             val tableRenderer = PdfTableRenderer(
                 canvas = canvas,
-                startX = 40f,
-                currentY = pageManager.currentY,
+                startX = layoutManager.getItemsTableLeft(),
+                currentY = itemsTableY,
                 pageWidth = 595f,
                 columnWeights = listOf(0.5f, 0.1f, 0.15f, 0.25f),
                 headerBackgroundColor = colors.primary,
@@ -456,9 +502,10 @@ class InvoicePdfService @Inject constructor(
             }
             tableRenderer.drawColumnSeparators(canvas, 20f, tableRenderer.getPosition() - 20f, columnSeparatorPaint)
 
-            // Draw table rows with automatic pagination
-            snapshot.items.forEach { item ->
-                val rowHeight = 35f  // Estimated row height with wrapping
+            // Draw table rows using grid-based row height
+            snapshot.items.forEachIndexed { index, item ->
+                // Use consistent row height from InvoiceSpacingConfig
+                val rowHeight = InvoiceSpacingConfig.TABLE_ROW_HEIGHT
 
                 // Check if we need to start a new page
                 canvas = pageManager.ensureSpace(rowHeight)
@@ -477,96 +524,94 @@ class InvoicePdfService @Inject constructor(
             }
 
             // Draw table border bottom
-            canvas.drawLine(40f, pageManager.currentY, 555f, pageManager.currentY, tableBorderPaint)
+            canvas.drawLine(layoutManager.getItemsTableLeft(), pageManager.currentY, layoutManager.getItemsTableRight(), pageManager.currentY, tableBorderPaint)
 
-            currentY = pageManager.currentY + 20f
+            // Update current position after items table
+            currentY = pageManager.currentY + InvoiceSpacingConfig.SECTION_GAP
             pageManager.setY(currentY)
         }
 
-        val rightX = 545f
         bodyPaint.textAlign = Paint.Align.RIGHT
         headerPaint.textAlign = Paint.Align.RIGHT
 
+        // ===== PHASE 2: INTEGRATED TOTALS SECTION (Typography-Driven) =====
+        // Get totals position from grid manager (depends on items count)
+        val itemCount = snapshot.items.size
+        val totalsY = layoutManager.getTotalsY(itemCount)
+        val totalsHeight = InvoiceSpacingConfig.TOTALS_HEIGHT
+        val totalsLeft = layoutManager.getTotalsLeft()
+        val totalsRight = layoutManager.getTotalsRight()
+
         // Ensure space for totals section
-        canvas = pageManager.ensureSpace(100f)
+        canvas = pageManager.ensureSpace(totalsHeight + InvoiceSpacingConfig.SECTION_GAP)
+        pageManager.setY(totalsY)
 
-        // ===== PHASE 9D: PREMIUM COLOR-BLOCKED TOTALS DESIGN =====
-        val totalsCapsuleLeft = 320f
-        val totalsCapsuleTop = pageManager.currentY - 10f
-        val totalsCapsuleRight = 560f
-        val totalsCapsuleHeight = 90f
+        // ===== TYPOGRAPHY-DRIVEN HIERARCHY (No Floating Box) =====
 
-        // Primary color background for top section (subtotals)
-        val capsuleHeaderBackgroundPaint = Paint().apply {
-            color = colors.primary
-            style = Paint.Style.FILL
+        // Subtotal line
+        val subtotalLabelPaint = Paint().apply {
+            typeface = regularTypeface
+            textSize = InvoiceSpacingConfig.TEXT_SIZE_BODY
+            color = Color.parseColor("#333333")
+            textAlign = Paint.Align.RIGHT
+            isAntiAlias = true
         }
-        // Draw rounded header background
-        canvas.drawRoundRect(totalsCapsuleLeft, totalsCapsuleTop, totalsCapsuleRight, totalsCapsuleTop + 48f, 10f, 10f, capsuleHeaderBackgroundPaint)
+        val subtotalY = totalsY
+        canvas.drawText("Subtotal:", totalsRight - 10f, subtotalY + 12f, subtotalLabelPaint)
+        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal / 100.0), totalsRight - 10f, subtotalY + 12f, subtotalLabelPaint)
 
-        // Light background for total amount section
-        val capsuleBackgroundPaint = Paint().apply {
-            color = Color.parseColor("#F5F5F5")
-            style = Paint.Style.FILL
+        // Tax line (if present)
+        if (snapshot.taxAmount > 0) {
+            val taxLabelPaint = Paint().apply {
+                typeface = regularTypeface
+                textSize = InvoiceSpacingConfig.TEXT_SIZE_BODY
+                color = Color.parseColor("#333333")
+                textAlign = Paint.Align.RIGHT
+                isAntiAlias = true
+            }
+            val taxY = subtotalY + 16f
+            canvas.drawText("Tax (${(snapshot.taxRate * 100).toInt()}%):", totalsRight - 10f, taxY + 12f, taxLabelPaint)
+            canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount / 100.0), totalsRight - 10f, taxY + 12f, taxLabelPaint)
         }
-        // Draw rounded bottom section
-        canvas.drawRoundRect(totalsCapsuleLeft, totalsCapsuleTop + 45f, totalsCapsuleRight, totalsCapsuleTop + totalsCapsuleHeight, 10f, 10f, capsuleBackgroundPaint)
 
-        // Accent border on capsule
-        val capsuleBorderPaint = Paint().apply {
+        // Divider line (visual separation)
+        val dividerPaint = Paint().apply {
             color = colors.secondary
+            strokeWidth = 1f
+            style = Paint.Style.STROKE
+        }
+        val dividerY = totalsY + 30f
+        canvas.drawLine(totalsLeft + 10f, dividerY, totalsRight - 10f, dividerY, dividerPaint)
+
+        // TOTAL DUE - EMPHASIZED (Large, bold, primary color)
+        val totalDueLabelPaint = Paint().apply {
+            typeface = boldTypeface
+            textSize = InvoiceSpacingConfig.TEXT_SIZE_TOTAL_LABEL
+            color = Color.parseColor("#333333")
+            textAlign = Paint.Align.RIGHT
+            isAntiAlias = true
+        }
+        val totalDueAmountPaint = Paint().apply {
+            typeface = boldTypeface
+            textSize = InvoiceSpacingConfig.TEXT_SIZE_TOTAL_AMOUNT
+            color = colors.primary  // Primary color for prominence
+            textAlign = Paint.Align.RIGHT
+            isAntiAlias = true
+        }
+        val totalDueY = dividerY + 8f
+        canvas.drawText("TOTAL DUE", totalsRight - 10f, totalDueY + 12f, totalDueLabelPaint)
+        val formattedAmount = String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount / 100.0)
+        canvas.drawText(formattedAmount, totalsRight - 10f, totalDueY + 32f, totalDueAmountPaint)
+
+        // Accent underline under TOTAL DUE (visual emphasis)
+        val accentUnderlinePaint = Paint().apply {
+            color = colors.primary
             strokeWidth = 2f
             style = Paint.Style.STROKE
         }
-        canvas.drawRoundRect(totalsCapsuleLeft, totalsCapsuleTop, totalsCapsuleRight, totalsCapsuleTop + totalsCapsuleHeight, 10f, 10f, capsuleBorderPaint)
+        canvas.drawLine(totalsLeft + 10f, totalDueY + 38f, totalsRight - 10f, totalDueY + 38f, accentUnderlinePaint)
 
-        // Totals header label - WHITE TEXT on primary color
-        val totalsHeaderPaint = Paint().apply {
-            typeface = boldTypeface
-            textSize = 11f
-            color = Color.WHITE
-            isAntiAlias = true
-        }
-        canvas.drawText("TOTALS", 335f, totalsCapsuleTop + 16f, totalsHeaderPaint)
-
-        // Subtotal with luxury spacing - WHITE TEXT on primary color
-        val subtotalLabelPaint = Paint().apply {
-            typeface = regularTypeface
-            textSize = 9.5f
-            color = Color.WHITE
-            textAlign = Paint.Align.RIGHT
-            isAntiAlias = true
-        }
-        canvas.drawText("Subtotal:", 480f, totalsCapsuleTop + 32f, subtotalLabelPaint)
-        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal / 100.0), 545f, totalsCapsuleTop + 32f, subtotalLabelPaint)
-
-        // Tax with generous spacing (if present)
-        if (snapshot.taxAmount > 0) {
-            canvas.drawText("Tax (${(snapshot.taxRate * 100).toInt()}%):", 480f, totalsCapsuleTop + 50f, subtotalLabelPaint)
-            canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount / 100.0), 545f, totalsCapsuleTop + 50f, subtotalLabelPaint)
-        }
-
-        // Total Amount Due - ACCENT COLOR for visual prominence
-        val totalDueLabelPaint = Paint().apply {
-            typeface = boldTypeface
-            textSize = 10f
-            color = Color.parseColor("#666666")
-            textAlign = Paint.Align.RIGHT
-            isAntiAlias = true
-        }
-        canvas.drawText("TOTAL DUE:", 480f, totalsCapsuleTop + 70f, totalDueLabelPaint)
-
-        val totalDuePaint = Paint().apply {
-            typeface = boldTypeface
-            textSize = 20f
-            color = colors.secondary
-            textAlign = Paint.Align.RIGHT
-            isAntiAlias = true
-        }
-        val formattedAmount = String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.totalAmount / 100.0)
-        canvas.drawText(formattedAmount, 545f, totalsCapsuleTop + 70f, totalDuePaint)
-
-        pageManager.advanceY(totalsCapsuleHeight + 15f)
+        pageManager.advanceY(totalsHeight + InvoiceSpacingConfig.SECTION_GAP)
 
         // ===== SPACING CONSTANTS FOR PROPER LAYOUT =====
         val SECTION_MARGIN_TOP = 24f      // Gap before section
@@ -725,12 +770,12 @@ class InvoicePdfService @Inject constructor(
             val notesBoxBorderPaint = Paint().apply { color = colors.secondary; strokeWidth = 1f; style = Paint.Style.STROKE }
 
             val notesBoxTop = pageManager.currentY
-            canvas.drawRect(40f, notesBoxTop, 555f, notesBoxTop + 55f, notesBoxPaint)
-            canvas.drawRect(40f, notesBoxTop, 555f, notesBoxTop + 55f, notesBoxBorderPaint)
+            canvas.drawRect(layoutManager.getContentLeft(), notesBoxTop, layoutManager.getContentRight(), notesBoxTop + 55f, notesBoxPaint)
+            canvas.drawRect(layoutManager.getContentLeft(), notesBoxTop, layoutManager.getContentRight(), notesBoxTop + 55f, notesBoxBorderPaint)
 
-            canvas.drawText("NOTES", 50f, pageManager.currentY + 12f, labelPaint)
+            canvas.drawText("NOTES", layoutManager.getContentLeft() + InvoiceSpacingConfig.PADDING_H, pageManager.currentY + 12f, labelPaint)
             pageManager.advanceY(18f)
-            pageManager.setY(drawWrappedText(canvas, snapshot.notes, 50f, pageManager.currentY, 490f, bodyPaint))
+            pageManager.setY(drawWrappedText(canvas, snapshot.notes, layoutManager.getContentLeft() + InvoiceSpacingConfig.PADDING_H, pageManager.currentY, layoutManager.getContentWidth() - InvoiceSpacingConfig.PADDING_H * 2, bodyPaint))
         }
 
         if (snapshot.footerText.isNotBlank()) {
@@ -741,17 +786,21 @@ class InvoicePdfService @Inject constructor(
             val footerBoxBorderPaint = Paint().apply { color = colors.secondary; strokeWidth = 1f; style = Paint.Style.STROKE }
 
             val footerBoxTop = pageManager.currentY
-            canvas.drawRect(40f, footerBoxTop, 555f, footerBoxTop + 55f, footerBoxPaint)
-            canvas.drawRect(40f, footerBoxTop, 555f, footerBoxTop + 55f, footerBoxBorderPaint)
+            canvas.drawRect(layoutManager.getContentLeft(), footerBoxTop, layoutManager.getContentRight(), footerBoxTop + 55f, footerBoxPaint)
+            canvas.drawRect(layoutManager.getContentLeft(), footerBoxTop, layoutManager.getContentRight(), footerBoxTop + 55f, footerBoxBorderPaint)
 
-            canvas.drawText("FOOTER", 50f, pageManager.currentY + 12f, labelPaint)
+            canvas.drawText("FOOTER", layoutManager.getContentLeft() + InvoiceSpacingConfig.PADDING_H, pageManager.currentY + 12f, labelPaint)
             pageManager.advanceY(18f)
-            pageManager.setY(drawWrappedText(canvas, snapshot.footerText, 50f, pageManager.currentY, 490f, footerBodyPaint))
+            pageManager.setY(drawWrappedText(canvas, snapshot.footerText, layoutManager.getContentLeft() + InvoiceSpacingConfig.PADDING_H, pageManager.currentY, layoutManager.getContentWidth() - InvoiceSpacingConfig.PADDING_H * 2, bodyPaint))
         }
 
-        // ===== PHASE 9F: ELEGANT MINIMAL FOOTER REDESIGN =====
-        canvas = pageManager.ensureSpace(50f)
-        pageManager.advanceY(20f)  // Slim spacing
+        // ===== PHASE 2: ELEGANT MINIMAL FOOTER (Grid-Based) =====
+        // Using GridLayoutManager for footer positioning
+        canvas = pageManager.ensureSpace(InvoiceSpacingConfig.FOOTER_HEIGHT + 10f)
+        pageManager.advanceY(InvoiceSpacingConfig.SECTION_GAP)
+
+        val footerY = pageManager.currentY
+        val footerHeight = InvoiceSpacingConfig.FOOTER_HEIGHT
 
         // Footer background (primary color)
         val artFooterBackgroundPaint = Paint().apply {
@@ -759,42 +808,41 @@ class InvoicePdfService @Inject constructor(
             style = Paint.Style.FILL
         }
 
-        val artFooterBarHeight = 35f  // Slim, not heavy
-        canvas.drawRect(0f, pageManager.currentY, 595f, pageManager.currentY + artFooterBarHeight, artFooterBackgroundPaint)
+        canvas.drawRect(0f, footerY, 595f, footerY + footerHeight, artFooterBackgroundPaint)
 
         // Subtle accent top line (elegance)
         val footerAccentPaint = Paint().apply {
             color = android.graphics.Color.argb(30, 255, 255, 255)
             style = Paint.Style.FILL
         }
-        canvas.drawRect(0f, pageManager.currentY, 595f, pageManager.currentY + 2f, footerAccentPaint)
+        canvas.drawRect(0f, footerY, 595f, footerY + 2f, footerAccentPaint)
 
         // Footer styling - elegant and premium
         val artFooterMainPaint = Paint().apply {
             typeface = boldTypeface
-            textSize = 11f  // Larger "thank you" message
+            textSize = InvoiceSpacingConfig.TEXT_SIZE_SECTION_HEADER
             color = Color.WHITE
             isAntiAlias = true
         }
 
         val artFooterSmallPaint = Paint().apply {
             typeface = regularTypeface
-            textSize = 7.5f  // Subtle contact info
+            textSize = InvoiceSpacingConfig.TEXT_SIZE_SMALL
             color = Color.parseColor("#E8E8E8")
             isAntiAlias = true
         }
 
         // Center "Thank you" message - primary focus
         artFooterMainPaint.textAlign = Paint.Align.CENTER
-        canvas.drawText("Thank you for your business.", 297f, pageManager.currentY + 13f, artFooterMainPaint)
+        canvas.drawText("Thank you for your business.", 297f, footerY + 13f, artFooterMainPaint)
 
         // Contact info - subtle and compact (centered)
         artFooterSmallPaint.textAlign = Paint.Align.CENTER
         val footerWebsiteDomain = snapshot.businessEmail.substringAfter("@").lowercase()
         val footerContactInfo = "${snapshot.businessEmail} | ${snapshot.businessPhone} | www.$footerWebsiteDomain"
-        canvas.drawText(footerContactInfo, 297f, pageManager.currentY + 25f, artFooterSmallPaint)
+        canvas.drawText(footerContactInfo, 297f, footerY + 25f, artFooterSmallPaint)
 
-        pageManager.advanceY(artFooterBarHeight + 3f)
+        pageManager.advanceY(footerHeight + 3f)
 
         // Finalize all pages and close document
         pageManager.finalize()
