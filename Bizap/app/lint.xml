@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Treat unused resource references as errors -->
+    <issue id="UnusedResources" severity="error"/>
+
+    <!-- Missing quantity plurals are informational only (many string IDs use count suffix) -->
+    <issue id="MissingQuantityPlural" severity="ignore"/>
+
+    <!-- Disallow SimpleDateFormat without explicit Locale -->
+    <issue id="SimpleDateFormat" severity="error"/>
+
+    <!-- Warn on hardcoded text strings that should be in resources -->
+    <issue id="HardcodedText" severity="warning"/>
+
+    <!-- Disable ObsoleteSdkInt for minSdk=26 — annotations may still target older APIs -->
+    <issue id="ObsoleteSdkInt" severity="ignore"/>
+
+    <!-- Ensure all Drawables have content descriptions -->
+    <issue id="ContentDescription" severity="warning"/>
+
+    <!-- Disable WrongThreadInterprocedural which produces false-positives with coroutines -->
+    <issue id="WrongThreadInterprocedural" severity="ignore"/>
+</lint>

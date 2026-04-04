@@ -1,5 +1,6 @@
 package com.emul8r.bizap.ui.invoices.html
 
+import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceSettings
 import timber.log.Timber
@@ -14,33 +15,44 @@ import java.util.*
  * - Numbers → Formatted strings (currency, percentages, etc.)
  * - Dates → Readable format
  * - Settings → Company/payment details
+ * - BusinessProfile → Company name, contact, and banking details
  *
  * This mapper prepares all data needed for the Freemarker template rendering.
  */
 class InvoiceTemplateDataMapper {
 
     /**
-     * Map invoice and settings to template data.
+     * Map invoice, settings, and business profile to template data.
      *
      * @param invoice The invoice to map
      * @param settings The invoice settings for customization
+     * @param businessProfile Optional business profile for company/banking details
      * @return Map of template variables ready for Freemarker processing
      */
     fun mapToTemplateData(
         invoice: Invoice,
-        settings: InvoiceSettings
+        settings: InvoiceSettings,
+        businessProfile: BusinessProfile? = null
     ): Map<String, Any> {
         return try {
             val mappedData = mutableMapOf<String, Any>()
 
             // ===== COMPANY/BUSINESS INFORMATION =====
-            // NOTE: Business information now comes from BusinessProfile, not InvoiceSettings
-            // TODO: Update this to accept BusinessProfile parameter and use it here
-            mappedData["companyName"] = ""  // From BusinessProfile.businessName
-            mappedData["businessEmail"] = ""  // From BusinessProfile.email
-            mappedData["businessPhone"] = ""  // From BusinessProfile.phone
-            mappedData["businessAddress"] = ""  // From BusinessProfile.address
-            mappedData["businessWebsite"] = ""  // From BusinessProfile.website
+            mappedData["companyName"] = businessProfile?.businessName.orEmpty()
+            mappedData["businessEmail"] = businessProfile?.email.orEmpty()
+            mappedData["businessPhone"] = businessProfile?.phone.orEmpty()
+            mappedData["businessAddress"] = businessProfile?.address.orEmpty()
+            mappedData["businessWebsite"] = businessProfile?.website.orEmpty()
+            mappedData["abn"] = businessProfile?.abn.orEmpty()
+
+            // ===== BANKING DETAILS =====
+            mappedData["bankName"] = businessProfile?.bankName.orEmpty()
+            mappedData["accountNumber"] = businessProfile?.accountNumber.orEmpty()
+            mappedData["accountName"] = businessProfile?.accountName.orEmpty()
+            mappedData["bsbNumber"] = businessProfile?.bsbNumber.orEmpty()
+            // Masked version for display on PDF (hides most of account number)
+            val rawAccount = businessProfile?.accountNumber.orEmpty()
+            mappedData["accountNumberMasked"] = if (rawAccount.isNotBlank()) maskAccountNumber(rawAccount) else ""
 
             // ===== CLIENT/CUSTOMER INFORMATION =====
             mappedData["clientName"] = invoice.customerName
@@ -78,11 +90,6 @@ class InvoiceTemplateDataMapper {
             if (settings.paymentTermsDays > 0) {
                 mappedData["paymentTerms"] = "${settings.paymentTermsDays} days"
             }
-
-            // NOTE: Bank details now come from BusinessProfile, not InvoiceSettings
-            // TODO: Update this to accept BusinessProfile parameter
-            mappedData["bankName"] = ""  // From BusinessProfile.bankName
-            mappedData["accountNumber"] = ""  // From BusinessProfile.accountNumber
 
             // ===== ADDITIONAL INFORMATION =====
             if (!invoice.notes.isNullOrBlank()) {

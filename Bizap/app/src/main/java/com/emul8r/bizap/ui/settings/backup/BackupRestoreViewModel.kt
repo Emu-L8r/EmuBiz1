@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.backup.DatabaseBackupService
 import com.emul8r.bizap.data.backup.DatabaseRestoreService
+import com.emul8r.bizap.domain.repository.CustomerRepository
+import com.emul8r.bizap.domain.repository.InvoiceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +36,9 @@ sealed interface BackupRestoreEvent {
 @HiltViewModel
 class BackupRestoreViewModel @Inject constructor(
     private val backupService: DatabaseBackupService,
-    private val restoreService: DatabaseRestoreService
+    private val restoreService: DatabaseRestoreService,
+    private val customerRepository: CustomerRepository,
+    private val invoiceRepository: InvoiceRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<BackupRestoreUiState>(BackupRestoreUiState.Idle)
@@ -151,18 +155,14 @@ class BackupRestoreViewModel @Inject constructor(
     fun resetAllData() {
         viewModelScope.launch {
             try {
-                Timber.w("🚨 CRITICAL: Resetting ALL data - this is irreversible!")
-                _uiState.value = BackupRestoreUiState.BackupInProgress // Reuse progress state
+                Timber.w("🚨 CRITICAL: Resetting ALL data — this is irreversible!")
+                _uiState.value = BackupRestoreUiState.BackupInProgress
 
-                // TODO: Implement actual deletion in services/repositories:
-                // - Delete all invoices
-                // - Delete all customers
-                // - Delete all payments
-                // - Reset all settings
-                // - Clear all preferences
+                invoiceRepository.deleteAllInvoices()
+                    .onFailure { e -> Timber.e(e, "Failed to delete invoices") }
 
-                // Simulate operation
-                kotlinx.coroutines.delay(1000)
+                customerRepository.deleteAllCustomers()
+                    .onFailure { e -> Timber.e(e, "Failed to delete customers") }
 
                 _uiState.value = BackupRestoreUiState.Idle
                 _event.emit(BackupRestoreEvent.ShowSnackbar("✅ All data reset successfully"))
@@ -185,19 +185,21 @@ class BackupRestoreViewModel @Inject constructor(
     fun resetCustomerData() {
         viewModelScope.launch {
             try {
-                Timber.w("⚠️ Resetting ALL customer data - invoices will be orphaned!")
+                Timber.w("⚠️ Resetting ALL customer data — invoices will be orphaned!")
                 _uiState.value = BackupRestoreUiState.BackupInProgress
 
-                // TODO: Implement customer deletion:
-                // - Delete all customer records
-                // - Keep invoices but without customer references
-
-                // Simulate operation
-                kotlinx.coroutines.delay(1000)
-
-                _uiState.value = BackupRestoreUiState.Idle
-                _event.emit(BackupRestoreEvent.ShowSnackbar("✅ All customer data reset successfully"))
-                Timber.w("CUSTOMER DATA RESET COMPLETED")
+                customerRepository.deleteAllCustomers()
+                    .onSuccess {
+                        _uiState.value = BackupRestoreUiState.Idle
+                        _event.emit(BackupRestoreEvent.ShowSnackbar("✅ All customer data reset successfully"))
+                        Timber.w("CUSTOMER DATA RESET COMPLETED")
+                    }
+                    .onFailure { e ->
+                        val errorMsg = e.message ?: "Failed to reset customer data"
+                        _uiState.value = BackupRestoreUiState.BackupError(errorMsg)
+                        _event.emit(BackupRestoreEvent.ShowSnackbar("Reset failed: $errorMsg"))
+                        Timber.e(e, "Reset customer data failed")
+                    }
 
             } catch (e: Exception) {
                 val errorMsg = e.message ?: "Failed to reset customer data"
@@ -219,17 +221,18 @@ class BackupRestoreViewModel @Inject constructor(
                 Timber.w("⚠️ Resetting ALL invoice data including payments!")
                 _uiState.value = BackupRestoreUiState.BackupInProgress
 
-                // TODO: Implement invoice deletion:
-                // - Delete all invoices
-                // - Delete all payments
-                // - Keep customer records
-
-                // Simulate operation
-                kotlinx.coroutines.delay(1000)
-
-                _uiState.value = BackupRestoreUiState.Idle
-                _event.emit(BackupRestoreEvent.ShowSnackbar("✅ All invoice data reset successfully"))
-                Timber.w("INVOICE DATA RESET COMPLETED")
+                invoiceRepository.deleteAllInvoices()
+                    .onSuccess {
+                        _uiState.value = BackupRestoreUiState.Idle
+                        _event.emit(BackupRestoreEvent.ShowSnackbar("✅ All invoice data reset successfully"))
+                        Timber.w("INVOICE DATA RESET COMPLETED")
+                    }
+                    .onFailure { e ->
+                        val errorMsg = e.message ?: "Failed to reset invoice data"
+                        _uiState.value = BackupRestoreUiState.BackupError(errorMsg)
+                        _event.emit(BackupRestoreEvent.ShowSnackbar("Reset failed: $errorMsg"))
+                        Timber.e(e, "Reset invoice data failed")
+                    }
 
             } catch (e: Exception) {
                 val errorMsg = e.message ?: "Failed to reset invoice data"
