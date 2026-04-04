@@ -398,15 +398,9 @@ private fun AdvancedFilters(
 private fun parseDdMmYyyy(text: String): Long? {
     if (text.isBlank()) return null
     return try {
-        val parts = text.trim().split("/")
-        if (parts.size != 3) return null
-        val day = parts[0].toInt()
-        val month = parts[1].toInt() - 1  // Calendar months are 0-based
-        val year = parts[2].toInt()
-        java.util.Calendar.getInstance().apply {
-            set(year, month, day, 0, 0, 0)
-            set(java.util.Calendar.MILLISECOND, 0)
-        }.timeInMillis
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        val date = java.time.LocalDate.parse(text.trim(), formatter)
+        date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
     } catch (e: Exception) {
         null
     }
@@ -424,8 +418,18 @@ private fun parseDateRange(startText: String, endText: String): Pair<DateRange?,
 /** Returns (LongRange?, errorMessage?) where range is in cents */
 private fun parseAmountRange(minText: String, maxText: String): Pair<LongRange?, String?> {
     if (minText.isBlank() && maxText.isBlank()) return null to null
-    val min = minText.toDoubleOrNull()?.let { (it * 100).toLong() } ?: if (minText.isBlank()) 0L else return null to "Invalid min amount"
-    val max = maxText.toDoubleOrNull()?.let { (it * 100).toLong() } ?: if (maxText.isBlank()) Long.MAX_VALUE else return null to "Invalid max amount"
+    val min: Long = if (minText.isBlank()) {
+        0L
+    } else {
+        minText.toDoubleOrNull()?.let { (it * 100).toLong() }
+            ?: return null to "Invalid min amount"
+    }
+    val max: Long = if (maxText.isBlank()) {
+        Long.MAX_VALUE
+    } else {
+        maxText.toDoubleOrNull()?.let { (it * 100).toLong() }
+            ?: return null to "Invalid max amount"
+    }
     if (min > max) return null to "Min amount must be ≤ max amount"
     return (min..max) to null
 }
