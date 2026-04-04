@@ -93,7 +93,12 @@ fun InvoiceSettingsScreen(
 
                 item {
                     // 2️⃣ Step 2: Choose Template/Style (updates based on engine)
-                    val currentTheme = uiState.settings?.selectedTheme ?: InvoiceTheme.CANVAS
+                    // Derive theme from selectedPdfEngine (authoritative) so the template
+                    // grid always reflects what the user picked in Step 1.
+                    val currentTheme = when (uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS) {
+                        PdfEngine.HTML_CSS -> InvoiceTheme.HTML_PDF
+                        PdfEngine.CANVAS   -> InvoiceTheme.CANVAS
+                    }
                     TemplateSelectionSection(
                         currentTheme = currentTheme,
                         selectedCanvasTemplate = uiState.settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN,
@@ -797,7 +802,7 @@ private fun CanvasTemplatePreview(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp)
+                .height(560.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -881,7 +886,7 @@ private fun HtmlPreview(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(380.dp)
+                .height(560.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
