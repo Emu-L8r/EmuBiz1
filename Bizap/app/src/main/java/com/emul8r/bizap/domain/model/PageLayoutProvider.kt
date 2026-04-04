@@ -424,4 +424,177 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:12px;text-align:
     }
 }
 
+/**
+ * SPACIOUS layout - Premium spacious design with generous spacing
+ *
+ * Structure:
+ * - Larger header with more breathing room
+ * - Generous margins and padding throughout
+ * - Larger fonts for better readability
+ * - More space between sections
+ * - Premium feel with open layout
+ * - Items Table with more padding
+ * - Extra space in totals section
+ *
+ * Key differences from MODERN:
+ * - Larger font sizes (11pt body vs 9pt)
+ * - More generous padding and margins
+ * - Taller row heights for items
+ * - Extra spacing between sections
+ * - Premium, luxurious appearance
+ */
+class SpaciousPageLayout : PageLayoutProvider {
+    override fun getLayoutName(): String = "SPACIOUS"
+
+    override fun buildInvoiceHtml(
+        snapshot: InvoiceSnapshot,
+        isQuote: Boolean,
+        colorScheme: InvoiceColorScheme
+    ): String {
+        val docType = if (isQuote) "QUOTE" else "INVOICE"
+        val primary = colorScheme.primaryColor
+        val itemRows = buildItemsRows(snapshot, primary, colorScheme)
+        val totalRows = buildTotalsRows(snapshot, primary)
+        val logoHtml = if (!snapshot.logoBase64.isNullOrBlank())
+            """<img src="data:image/png;base64,${snapshot.logoBase64}" style="max-height:70px;max-width:150px;" alt="logo"/>"""
+        else ""
+
+        return """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: white; line-height: 1.8; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 50px; padding-bottom: 30px; border-bottom: 3px solid $primary; }
+        .company h1 { margin: 0 0 15px 0; font-size: 32pt; color: $primary; }
+        .company p { margin: 8px 0; color: #666; font-size: 11pt; }
+        .doc-title { text-align: right; }
+        .doc-title h2 { margin: 0; font-size: 28pt; color: #333; }
+        .doc-title p { margin: 10px 0 0 0; color: #666; font-size: 13pt; }
+        .info-section { display: flex; justify-content: space-between; margin-bottom: 50px; padding-bottom: 30px; border-bottom: 1px solid #ddd; }
+        .info-label { font-weight: bold; color: $primary; font-size: 11pt; text-transform: uppercase; margin-bottom: 8px; }
+        .info-value { color: #333; font-size: 11pt; line-height: 1.8; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+        th { background-color: $primary; color: white; padding: 15px; text-align: left; font-size: 11pt; font-weight: bold; }
+        td { padding: 18px 15px; border-bottom: 1px solid #eee; font-size: 11pt; }
+        .amount { text-align: right; }
+        .footer { margin-top: 50px; padding-top: 30px; border-top: 1px solid #ddd; text-align: center; color: #999; font-size: 10pt; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="company">
+                $logoHtml
+                <h1>${escapeHtml(snapshot.businessName)}</h1>
+                <p>${escapeHtml(snapshot.businessAbn)}</p>
+                <p>${escapeHtml(snapshot.businessEmail)}</p>
+            </div>
+            <div class="doc-title">
+                <h2>$docType</h2>
+                <p>${escapeHtml(snapshot.invoiceNumber)}</p>
+            </div>
+        </div>
+        <div class="info-section">
+            <div style="flex:1;">
+                <div class="info-label">Bill To</div>
+                <div class="info-value">
+                    <div><strong>${escapeHtml(snapshot.customerName)}</strong></div>
+                    <div>${addressLines(snapshot.customerAddress)}</div>
+                    ${if (!snapshot.customerEmail.isNullOrBlank()) """<div>${escapeHtml(snapshot.customerEmail)}</div>""" else ""}
+                </div>
+            </div>
+            <div style="flex:1;text-align:right;">
+                <div class="info-label">Invoice Details</div>
+                <div class="info-value">
+                    <div><strong>Date:</strong> ${formatDate(snapshot.date)}</div>
+                    <div><strong>Due:</strong> ${formatDate(snapshot.dueDate)}</div>
+                </div>
+            </div>
+        </div>
+        <table>
+            <thead><tr>
+                <th>Description</th>
+                <th style="text-align:center;">Qty</th>
+                <th style="text-align:right;">Unit Price</th>
+                <th style="text-align:right;">Amount</th>
+            </tr></thead>
+            <tbody>
+                $itemRows
+                <tr style="height:20px;"><td colspan="4"></td></tr>
+                $totalRows
+            </tbody>
+        </table>
+        <div class="footer">
+            <p>Thank you for your business!</p>
+        </div>
+    </div>
+</body>
+</html>
+        """.trimIndent()
+    }
+
+    private fun escapeHtml(text: String): String = text
+        .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+
+    private fun addressLines(address: String): String =
+        escapeHtml(address).replace("\n", "<br/>")
+
+    private fun formatDate(millis: Long): String =
+        if (millis > 0) java.text.SimpleDateFormat("dd-MM-yyyy", java.util.Locale.getDefault()).format(java.util.Date(millis)) else ""
+
+    private fun formatMoney(cents: Long, currencyCode: String): String {
+        val symbol = when (currencyCode.uppercase()) {
+            "AUD", "USD", "CAD", "SGD", "NZD", "HKD" -> "$"
+            "GBP" -> "£"
+            else -> "$"
+        }
+        return "$symbol${String.format(java.util.Locale.getDefault(), "%.2f", cents / 100.0)}"
+    }
+
+    private fun formatQty(qty: Double): String =
+        if (qty == qty.toLong().toDouble()) qty.toLong().toString() else String.format(java.util.Locale.getDefault(), "%.2f", qty)
+
+    private fun buildItemsRows(
+        snapshot: InvoiceSnapshot,
+        primary: String,
+        colorScheme: InvoiceColorScheme
+    ): String {
+        return snapshot.items.mapIndexed { i, item ->
+            val bg = if (i % 2 == 0) "#ffffff" else colorScheme.lightBackground
+            """<tr style="background-color:$bg;height:40px;">
+                <td>${escapeHtml(item.description)}</td>
+                <td style="text-align:center;">${formatQty(item.quantity)}</td>
+                <td class="amount">${formatMoney(item.unitPrice, snapshot.currencyCode)}</td>
+                <td class="amount" style="font-weight:bold;color:$primary;">${formatMoney(item.total, snapshot.currencyCode)}</td>
+            </tr>"""
+        }.joinToString("\n")
+    }
+
+    private fun buildTotalsRows(snapshot: InvoiceSnapshot, primary: String): String {
+        val taxPct = snapshot.taxRate * 100
+        val taxLabel = if (snapshot.taxRate > 0) {
+            val formatted = if (taxPct == taxPct.toLong().toDouble())
+                "${taxPct.toLong()}%"
+            else
+                "${String.format(java.util.Locale.getDefault(), "%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
+            "Tax ($formatted)"
+        } else "Tax"
+        return """
+            <tr>
+                <td colspan="3" style="text-align:right;color:#666666;font-size:11pt;">Subtotal</td>
+                <td style="text-align:right;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align:right;color:#666666;font-size:11pt;">$taxLabel</td>
+                <td style="text-align:right;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
+            </tr>
+            <tr style="background-color:transparent;">
+                <td colspan="3" style="text-align:right;font-weight:bold;font-size:13pt;color:$primary;border:none;">TOTAL</td>
+                <td style="text-align:right;font-weight:bold;font-size:13pt;color:$primary;border:none;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</td>
+            </tr>
+        """.trimIndent()
+    }
+}
 

@@ -4,6 +4,7 @@ import com.emul8r.bizap.domain.model.ClassicPageLayout
 import com.emul8r.bizap.domain.model.InvoiceColorScheme
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.model.ModernPageLayout
+import com.emul8r.bizap.domain.model.SpaciousPageLayout
 import com.emul8r.bizap.domain.model.PageLayout
 import com.emul8r.bizap.domain.model.PageLayoutProvider
 import timber.log.Timber
@@ -13,18 +14,25 @@ import timber.log.Timber
  *
  * Routes invoice rendering to the correct layout implementation.
  * Each layout defines how content is organized on the page.
+ *
+ * Supported layouts:
+ * - CLASSIC: Traditional layout with full spacing
+ * - MODERN: Compact grid-based layout
+ * - SPACIOUS: Premium spacious layout with generous spacing
  */
 object PageLayoutFactory {
     fun createLayout(layout: PageLayout): PageLayoutProvider {
         return when (layout) {
             PageLayout.CLASSIC -> ClassicPageLayout()
             PageLayout.MODERN -> ModernPageLayout()
+            PageLayout.SPACIOUS -> SpaciousPageLayout()
         }
     }
 
     fun getLayoutName(layout: PageLayout): String = when (layout) {
         PageLayout.CLASSIC -> "CLASSIC"
         PageLayout.MODERN -> "MODERN"
+        PageLayout.SPACIOUS -> "SPACIOUS"
     }
 }
 
