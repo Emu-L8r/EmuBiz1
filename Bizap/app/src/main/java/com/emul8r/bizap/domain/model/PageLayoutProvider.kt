@@ -425,23 +425,19 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:12px;text-align:
 }
 
 /**
- * SPACIOUS layout - Premium spacious design with generous spacing
+ * SPACIOUS layout - Premium spacious design with generous spacing.
  *
- * Structure:
- * - Larger header with more breathing room
- * - Generous margins and padding throughout
- * - Larger fonts for better readability
- * - More space between sections
- * - Premium feel with open layout
- * - Items Table with more padding
- * - Extra space in totals section
+ * Uses only table-based layout (no flexbox/CSS grid) for full iText7 compatibility.
  *
- * Key differences from MODERN:
- * - Larger font sizes (11pt body vs 9pt)
- * - More generous padding and margins
- * - Taller row heights for items
- * - Extra spacing between sections
- * - Premium, luxurious appearance
+ * Key visual characteristics vs Classic and Modern:
+ * - Margins: 20mm on all sides (vs 15mm Classic, 12mm Modern)
+ * - Font size: 12pt body (vs 10pt Classic, 10pt Modern)
+ * - Item row padding: 16px (vs 10px Classic, 8px Modern)
+ * - Line height: 2.0 (vs 1.8 Classic, 1.6 Modern)
+ * - Section spacing: 30px gaps between sections (vs 20px Classic, 16px Modern)
+ * - Header: Spacious two-row layout, logo given generous vertical space
+ * - Totals: Presented in their own full-width table with large typography
+ * - Payment: Full-width section with generous cell padding
  */
 class SpaciousPageLayout : PageLayoutProvider {
     override fun getLayoutName(): String = "SPACIOUS"
@@ -453,86 +449,92 @@ class SpaciousPageLayout : PageLayoutProvider {
     ): String {
         val docType = if (isQuote) "QUOTE" else "INVOICE"
         val primary = colorScheme.primaryColor
+        val textDark = colorScheme.textDark
         val itemRows = buildItemsRows(snapshot, primary, colorScheme)
         val totalRows = buildTotalsRows(snapshot, primary)
+        val paymentSection = buildPaymentSection(snapshot, primary)
+        val notesSection = buildNotesSection(snapshot, primary)
+
         val logoHtml = if (!snapshot.logoBase64.isNullOrBlank())
-            """<img src="data:image/png;base64,${snapshot.logoBase64}" style="max-height:70px;max-width:150px;" alt="logo"/>"""
+            """<img src="data:image/png;base64,${snapshot.logoBase64}" style="max-height:80px;max-width:160px;" alt="logo"/>"""
         else ""
 
         return """<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: white; line-height: 1.8; }
-        .container { max-width: 900px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; margin-bottom: 50px; padding-bottom: 30px; border-bottom: 3px solid $primary; }
-        .company h1 { margin: 0 0 15px 0; font-size: 32pt; color: $primary; }
-        .company p { margin: 8px 0; color: #666; font-size: 11pt; }
-        .doc-title { text-align: right; }
-        .doc-title h2 { margin: 0; font-size: 28pt; color: #333; }
-        .doc-title p { margin: 10px 0 0 0; color: #666; font-size: 13pt; }
-        .info-section { display: flex; justify-content: space-between; margin-bottom: 50px; padding-bottom: 30px; border-bottom: 1px solid #ddd; }
-        .info-label { font-weight: bold; color: $primary; font-size: 11pt; text-transform: uppercase; margin-bottom: 8px; }
-        .info-value { color: #333; font-size: 11pt; line-height: 1.8; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
-        th { background-color: $primary; color: white; padding: 15px; text-align: left; font-size: 11pt; font-weight: bold; }
-        td { padding: 18px 15px; border-bottom: 1px solid #eee; font-size: 11pt; }
-        .amount { text-align: right; }
-        .footer { margin-top: 50px; padding-top: 30px; border-top: 1px solid #ddd; text-align: center; color: #999; font-size: 10pt; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="company">
-                $logoHtml
-                <h1>${escapeHtml(snapshot.businessName)}</h1>
-                <p>${escapeHtml(snapshot.businessAbn)}</p>
-                <p>${escapeHtml(snapshot.businessEmail)}</p>
-            </div>
-            <div class="doc-title">
-                <h2>$docType</h2>
-                <p>${escapeHtml(snapshot.invoiceNumber)}</p>
-            </div>
-        </div>
-        <div class="info-section">
-            <div style="flex:1;">
-                <div class="info-label">Bill To</div>
-                <div class="info-value">
-                    <div><strong>${escapeHtml(snapshot.customerName)}</strong></div>
-                    <div>${addressLines(snapshot.customerAddress)}</div>
-                    ${if (!snapshot.customerEmail.isNullOrBlank()) """<div>${escapeHtml(snapshot.customerEmail)}</div>""" else ""}
-                </div>
-            </div>
-            <div style="flex:1;text-align:right;">
-                <div class="info-label">Invoice Details</div>
-                <div class="info-value">
-                    <div><strong>Date:</strong> ${formatDate(snapshot.date)}</div>
-                    <div><strong>Due:</strong> ${formatDate(snapshot.dueDate)}</div>
-                </div>
-            </div>
-        </div>
-        <table>
-            <thead><tr>
-                <th>Description</th>
-                <th style="text-align:center;">Qty</th>
-                <th style="text-align:right;">Unit Price</th>
-                <th style="text-align:right;">Amount</th>
-            </tr></thead>
-            <tbody>
-                $itemRows
-                <tr style="height:20px;"><td colspan="4"></td></tr>
-                $totalRows
-            </tbody>
-        </table>
-        <div class="footer">
-            <p>Thank you for your business!</p>
-        </div>
+<html><head><meta charset="UTF-8"/>
+<style>
+@page { margin: 20mm 20mm 20mm 20mm; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12pt; color: $textDark; margin: 0; padding: 0; line-height: 2.0; }
+table { border-collapse: collapse; }
+td, th { word-wrap: break-word; }
+</style>
+</head><body>
+
+<!-- SPACIOUS HEADER: generous padding, logo row + company name row -->
+<table width="100%" style="background-color:$primary;color:#ffffff;margin-bottom:30px;">
+<tr>
+  <td style="padding:30px 30px 10px 30px;vertical-align:top;">
+    $logoHtml
+    ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:24pt;font-weight:bold;color:#ffffff;margin-top:10px;line-height:1.4;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
+    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:14pt;color:#ddd8f8;margin-top:8px;line-height:1.6;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    <div style="margin-top:12px;">
+    ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:10pt;color:#e0d8f0;margin-top:6px;line-height:2.0;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
+    ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:10pt;color:#e0d8f0;margin-top:6px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
+    ${if (snapshot.businessPhone.isNotBlank()) """<div style="font-size:10pt;color:#e0d8f0;margin-top:6px;">${escapeHtml(snapshot.businessPhone)}</div>""" else ""}
+    ${if (snapshot.businessAbn.isNotBlank()) """<div style="font-size:10pt;color:#e0d8f0;margin-top:6px;">ABN: ${escapeHtml(snapshot.businessAbn)}</div>""" else ""}
     </div>
-</body>
-</html>
-        """.trimIndent()
+  </td>
+  <td style="padding:30px 30px 10px 30px;text-align:right;vertical-align:top;">
+    <div style="font-size:28pt;font-weight:bold;letter-spacing:4px;color:#ffffff;">$docType</div>
+  </td>
+</tr>
+<tr><td colspan="2" style="padding:0 0 20px 0;"></td></tr>
+</table>
+
+<!-- SPACIOUS BILL TO + INVOICE META (generous vertical rhythm) -->
+<table width="100%" style="margin-bottom:30px;">
+<tr>
+  <td width="50%" style="vertical-align:top;padding-right:16px;">
+    <table width="100%" style="background-color:#fafafa;border-left:5px solid #aaaaaa;">
+      <tr><td style="padding:14px 18px;font-weight:bold;font-size:13pt;color:$primary;line-height:2.0;">BILL TO</td></tr>
+      ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:10px 18px;font-weight:bold;font-size:13pt;line-height:2.0;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
+      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:10px 18px;font-size:11pt;line-height:2.0;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
+      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:10px 18px;font-size:11pt;line-height:2.0;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
+    </table>
+  </td>
+  <td width="50%" style="vertical-align:top;padding-left:16px;">
+    <table width="100%" style="background-color:#f5f5f5;border-left:5px solid $primary;">
+      <tr><td colspan="2" style="padding:14px 18px;font-weight:bold;font-size:13pt;color:$primary;line-height:2.0;">INVOICE DETAILS</td></tr>
+      <tr><td style="padding:10px 18px;font-weight:bold;width:45%;line-height:2.0;">Invoice #</td><td style="padding:10px 18px;line-height:2.0;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
+      <tr><td style="padding:10px 18px;font-weight:bold;line-height:2.0;">Date</td><td style="padding:10px 18px;line-height:2.0;">${formatDate(snapshot.date)}</td></tr>
+      <tr><td style="padding:10px 18px;font-weight:bold;line-height:2.0;">Due Date</td><td style="padding:10px 18px;line-height:2.0;">${formatDate(snapshot.dueDate)}</td></tr>
+      <tr><td style="padding:10px 18px;font-weight:bold;line-height:2.0;">Currency</td><td style="padding:10px 18px;line-height:2.0;">${escapeHtml(snapshot.currencyCode)}</td></tr>
+      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:10px 18px;font-weight:bold;line-height:2.0;">Status</td><td style="padding:10px 18px;line-height:2.0;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
+    </table>
+  </td>
+</tr>
+</table>
+
+${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:24px;font-style:italic;color:#555555;line-height:2.0;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+
+<!-- SPACIOUS LINE ITEMS TABLE: 16px row padding, 12pt font -->
+<table width="100%" style="border-collapse:collapse;margin-bottom:4px;">
+  <tr style="background-color:$primary;color:#ffffff;">
+    <th style="padding:16px 18px;text-align:left;font-size:12pt;">Description</th>
+    <th style="padding:16px 18px;text-align:center;font-size:12pt;width:10%;">Qty</th>
+    <th style="padding:16px 18px;text-align:right;font-size:12pt;width:18%;">Unit Price</th>
+    <th style="padding:16px 18px;text-align:right;font-size:12pt;width:18%;">Total</th>
+  </tr>
+  $itemRows
+  <tr><td colspan="4" style="padding:8px 0;"></td></tr>
+  $totalRows
+</table>
+
+$paymentSection
+$notesSection
+
+${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:30px;text-align:center;font-size:11pt;color:#888888;border-top:1px solid #dddddd;padding-top:16px;line-height:2.0;">${escapeHtml(snapshot.footerText)}</p>""" else ""}
+
+</body></html>"""
     }
 
     private fun escapeHtml(text: String): String = text
@@ -563,11 +565,13 @@ class SpaciousPageLayout : PageLayoutProvider {
     ): String {
         return snapshot.items.mapIndexed { i, item ->
             val bg = if (i % 2 == 0) "#ffffff" else colorScheme.lightBackground
-            """<tr style="background-color:$bg;height:40px;">
-                <td>${escapeHtml(item.description)}</td>
-                <td style="text-align:center;">${formatQty(item.quantity)}</td>
-                <td class="amount">${formatMoney(item.unitPrice, snapshot.currencyCode)}</td>
-                <td class="amount" style="font-weight:bold;color:$primary;">${formatMoney(item.total, snapshot.currencyCode)}</td>
+            val unitDollars = formatMoney(item.unitPrice, snapshot.currencyCode)
+            val totalDollars = formatMoney(item.total, snapshot.currencyCode)
+            """<tr style="background-color:$bg;">
+                <td style="padding:16px 18px;border-bottom:1px solid #e0e0e0;line-height:2.0;word-wrap:break-word;">${escapeHtml(item.description)}</td>
+                <td style="padding:16px 18px;border-bottom:1px solid #e0e0e0;text-align:center;line-height:2.0;">${formatQty(item.quantity)}</td>
+                <td style="padding:16px 18px;border-bottom:1px solid #e0e0e0;text-align:right;line-height:2.0;">$unitDollars</td>
+                <td style="padding:16px 18px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:bold;color:$primary;line-height:2.0;">$totalDollars</td>
             </tr>"""
         }.joinToString("\n")
     }
@@ -583,17 +587,42 @@ class SpaciousPageLayout : PageLayoutProvider {
         } else "Tax"
         return """
             <tr>
-                <td colspan="3" style="text-align:right;color:#666666;font-size:11pt;">Subtotal</td>
-                <td style="text-align:right;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
+                <td colspan="3" style="padding:14px 18px;text-align:right;color:#555555;font-size:12pt;">Subtotal</td>
+                <td style="padding:14px 18px;text-align:right;font-size:12pt;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
             </tr>
             <tr>
-                <td colspan="3" style="text-align:right;color:#666666;font-size:11pt;">$taxLabel</td>
-                <td style="text-align:right;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
+                <td colspan="3" style="padding:14px 18px;text-align:right;color:#555555;font-size:12pt;">$taxLabel</td>
+                <td style="padding:14px 18px;text-align:right;font-size:12pt;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
             </tr>
-            <tr style="background-color:transparent;">
-                <td colspan="3" style="text-align:right;font-weight:bold;font-size:13pt;color:$primary;border:none;">TOTAL</td>
-                <td style="text-align:right;font-weight:bold;font-size:13pt;color:$primary;border:none;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</td>
+            <tr style="background-color:#f5f5f5;">
+                <td colspan="3" style="padding:18px 18px;text-align:right;font-weight:bold;font-size:15pt;color:$primary;">TOTAL DUE</td>
+                <td style="padding:18px 18px;text-align:right;font-weight:bold;font-size:15pt;color:$primary;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</td>
             </tr>
+        """.trimIndent()
+    }
+
+    private fun buildPaymentSection(snapshot: InvoiceSnapshot, primary: String): String {
+        val hasBank = snapshot.bankName.isNotBlank() || snapshot.bankAccountName.isNotBlank()
+            || snapshot.bankAccountNumber.isNotBlank() || snapshot.bankBsb.isNotBlank()
+        if (!hasBank) return ""
+        return """
+            <table width="100%" style="border-collapse:collapse;margin-top:30px;">
+                <tr><td colspan="2" style="padding:16px 20px;background-color:#f5f5f5;font-weight:bold;font-size:13pt;color:$primary;border-left:5px solid $primary;letter-spacing:0.5px;text-transform:uppercase;">PAYMENT DETAILS</td></tr>
+                ${if (snapshot.bankName.isNotBlank()) """<tr><td style="padding:16px 20px;font-weight:bold;width:40%;line-height:2.0;color:#333333;">Bank</td><td style="padding:16px 20px;line-height:2.0;color:#555555;">${escapeHtml(snapshot.bankName)}</td></tr>""" else ""}
+                ${if (snapshot.bankAccountName.isNotBlank()) """<tr><td style="padding:16px 20px;font-weight:bold;line-height:2.0;color:#333333;">Account Name</td><td style="padding:16px 20px;line-height:2.0;color:#555555;">${escapeHtml(snapshot.bankAccountName)}</td></tr>""" else ""}
+                ${if (snapshot.bankAccountNumber.isNotBlank()) """<tr><td style="padding:16px 20px;font-weight:bold;line-height:2.0;color:#333333;">Account Number</td><td style="padding:16px 20px;line-height:2.0;color:#555555;">${escapeHtml(snapshot.bankAccountNumber)}</td></tr>""" else ""}
+                ${if (snapshot.bankBsb.isNotBlank()) """<tr><td style="padding:16px 20px;font-weight:bold;line-height:2.0;color:#333333;">BSB</td><td style="padding:16px 20px;line-height:2.0;color:#555555;">${escapeHtml(snapshot.bankBsb)}</td></tr>""" else ""}
+            </table>
+        """.trimIndent()
+    }
+
+    private fun buildNotesSection(snapshot: InvoiceSnapshot, primary: String): String {
+        if (snapshot.notes.isBlank()) return ""
+        return """
+            <table width="100%" style="border-collapse:collapse;margin-top:30px;">
+                <tr><td style="padding:14px 20px;background-color:#f5f5f5;font-weight:bold;font-size:13pt;color:$primary;border-left:5px solid $primary;">NOTES</td></tr>
+                <tr><td style="padding:14px 20px;font-size:12pt;line-height:2.0;word-wrap:break-word;">${escapeHtml(snapshot.notes)}</td></tr>
+            </table>
         """.trimIndent()
     }
 }
