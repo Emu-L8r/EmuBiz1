@@ -29,9 +29,11 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import com.emul8r.bizap.domain.model.CanvasInvoiceTemplate
 import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
+import com.emul8r.bizap.domain.model.InvoiceLocale
 import com.emul8r.bizap.domain.model.InvoiceTheme
 import com.emul8r.bizap.domain.model.PdfEngine
 import com.emul8r.bizap.domain.model.PageLayout
+import com.emul8r.bizap.domain.model.Typography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,19 +133,63 @@ fun InvoiceSettingsScreen(
                 }
 
                 // ════════════════════════════════════════════════════════════════════
-                // OPTIONAL: BUSINESS SETTINGS (Steps 5+)
+                // OPTIONAL: DESIGN CUSTOMIZATION (Steps 5-6)
                 // ════════════════════════════════════════════════════════════════════
 
                 item {
-                    // 5️⃣ Preview Mode (optional - use sample data instead of real)
-                    PreviewModeSection(
-                        previewWithPlaceholder = uiState.settings?.previewWithPlaceholder ?: false,
-                        onToggle = { viewModel.updatePreviewWithPlaceholder(it) }
-                    )
+                    // 5️⃣ Typography Selection
+                    uiState.settings?.let { settings ->
+                        TypographySection(
+                            selectedTypography = settings.selectedTypography,
+                            onTypographySelected = { viewModel.updateSelectedTypography(it) }
+                        )
+                    }
                 }
 
                 item {
-                    // 6️⃣ Payment Terms Configuration
+                    // 6️⃣ Visibility Toggles
+                    uiState.settings?.let { settings ->
+                        VisibilityTogglesSection(
+                            showBusinessAbn = settings.showBusinessAbn,
+                            showCustomerPhone = settings.showCustomerPhone,
+                            showStatusWatermark = settings.showStatusWatermark,
+                            showPageNumbers = settings.showPageNumbers,
+                            onShowBusinessAbnChanged = { viewModel.toggleShowBusinessAbn(it) },
+                            onShowCustomerPhoneChanged = { viewModel.toggleShowCustomerPhone(it) },
+                            onShowStatusWatermarkChanged = { viewModel.toggleShowStatusWatermark(it) },
+                            onShowPageNumbersChanged = { viewModel.toggleShowPageNumbers(it) }
+                        )
+                    }
+                }
+
+                item {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                }
+
+                // ════════════════════════════════════════════════════════════════════
+                // INTERNATIONAL SETTINGS (Step 7)
+                // ════════════════════════════════════════════════════════════════════
+
+                item {
+                    // 7️⃣ Locale & Currency Formatting
+                    uiState.settings?.let { settings ->
+                        LocaleSelectionSection(
+                            selectedLocale = settings.selectedLocale,
+                            onLocaleSelected = { viewModel.updateSelectedLocale(it) }
+                        )
+                    }
+                }
+
+                item {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                }
+
+                // ════════════════════════════════════════════════════════════════════
+                // OPTIONAL: BUSINESS SETTINGS (Steps 8+)
+                // ════════════════════════════════════════════════════════════════════
+
+                item {
+                    // 8️⃣ Payment Terms Configuration
                     uiState.settings?.let { settings ->
                         PaymentSection(
                             paymentTermsDays = settings.paymentTermsDays,
@@ -153,7 +199,7 @@ fun InvoiceSettingsScreen(
                 }
 
                 item {
-                    // 7️⃣ Tax Configuration
+                    // 9️⃣ Tax Configuration
                     uiState.settings?.let { settings ->
                         TaxSection(
                             taxRate = settings.taxRate,
@@ -165,7 +211,7 @@ fun InvoiceSettingsScreen(
                 }
 
                 item {
-                    // 8️⃣ Save & Reset Actions
+                    // 🔟 Save & Reset Actions
                     ActionButtonsSection(
                         onSave = { viewModel.saveSettings() },
                         onReset = { viewModel.resetToDefaults() }
@@ -194,14 +240,19 @@ fun TemplateSelectionSection(
     onHtmlStyleSelected: (HtmlInvoiceStyle) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        val (titleText, descriptionText) = if (currentTheme == InvoiceTheme.CANVAS) {
+            "2️⃣  Brand Palette" to "Choose your color palette for Canvas invoices"
+        } else {
+            "2️⃣  Invoice Style" to "Choose your HTML invoice template style"
+        }
+
         Text(
-            "2️⃣  Template Selection",
+            titleText,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         Text(
-            if (currentTheme == InvoiceTheme.CANVAS) "Choose your Canvas invoice template style"
-            else "Choose your HTML invoice template style",
+            descriptionText,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -411,7 +462,7 @@ private fun HtmlStyleCard(
 fun PaymentSection(paymentTermsDays: Int, onPaymentTermsChanged: (Int) -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("6️⃣  Payment Terms (Days)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("8️⃣  Payment Terms (Days)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             OutlinedTextField(
                 value = paymentTermsDays.toString(),
                 onValueChange = { it.toIntOrNull()?.let(onPaymentTermsChanged) },
@@ -426,7 +477,7 @@ fun PaymentSection(paymentTermsDays: Int, onPaymentTermsChanged: (Int) -> Unit) 
 fun TaxSection(taxRate: Double, taxName: String, onTaxRateChanged: (Double) -> Unit, onTaxNameChanged: (String) -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("7️⃣  Tax Configuration", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("9️⃣  Tax Configuration", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             OutlinedTextField(value = taxName, onValueChange = onTaxNameChanged, label = { Text("Tax Name") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(
                 value = taxRate.toString(),
@@ -442,7 +493,7 @@ fun TaxSection(taxRate: Double, taxName: String, onTaxRateChanged: (Double) -> U
 @Composable
 private fun ActionButtonsSection(onSave: () -> Unit, onReset: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("8️⃣  Actions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text("🔟 Actions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Button(onClick = onSave, modifier = Modifier.fillMaxWidth()) { Text("Save Settings") }
         OutlinedButton(onClick = onReset, modifier = Modifier.fillMaxWidth()) { Text("Reset to Defaults") }
     }
@@ -542,7 +593,7 @@ private fun EngineOptionCard(
 }
 
 /**
- * SECTION 3: Page Layout Selection (Classic vs Modern vs Spacious)
+ * SECTION 3: Page Layout Selection (Classic vs Modern vs Spacious vs Compact)
  */
 @Composable
 fun PageLayoutSection(
@@ -586,18 +637,27 @@ fun PageLayoutSection(
             )
         }
 
-        // Row 2: Spacious (centered)
+        // Row 2: Spacious & Compact
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             LayoutOptionCard(
                 title = "Spacious",
                 emoji = "✨",
                 description = "Generous spacing",
                 isSelected = selectedLayout == PageLayout.SPACIOUS,
-                modifier = Modifier.fillMaxWidth(0.5f),
+                modifier = Modifier.weight(1f),
                 onClick = { onLayoutSelected(PageLayout.SPACIOUS) }
+            )
+
+            LayoutOptionCard(
+                title = "Compact",
+                emoji = "📊",
+                description = "Executive tight fit",
+                isSelected = selectedLayout == PageLayout.COMPACT,
+                modifier = Modifier.weight(1f),
+                onClick = { onLayoutSelected(PageLayout.COMPACT) }
             )
         }
     }
@@ -936,6 +996,261 @@ private fun HtmlPreview(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun TypographySection(
+    selectedTypography: Typography,
+    onTypographySelected: (Typography) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "5️⃣  Typography",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            "Choose your font style for invoices",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Typography.values().forEach { typography ->
+                TypographyOptionCard(
+                    title = when (typography) {
+                        Typography.MODERN -> "Modern"
+                        Typography.CLASSIC -> "Classic"
+                        Typography.ROUNDED -> "Rounded"
+                    },
+                    description = when (typography) {
+                        Typography.MODERN -> "Sans-serif"
+                        Typography.CLASSIC -> "Serif"
+                        Typography.ROUNDED -> "Rounded"
+                    },
+                    isSelected = selectedTypography == typography,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onTypographySelected(typography) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TypographyOptionCard(
+    title: String,
+    description: String,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val border = if (isSelected) BorderStroke(2.dp, primaryColor) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        border = border,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) primaryColor.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(
+                description,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (isSelected) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = "Selected",
+                    tint = primaryColor,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun VisibilityTogglesSection(
+    showBusinessAbn: Boolean,
+    showCustomerPhone: Boolean,
+    showStatusWatermark: Boolean,
+    showPageNumbers: Boolean,
+    onShowBusinessAbnChanged: (Boolean) -> Unit,
+    onShowCustomerPhoneChanged: (Boolean) -> Unit,
+    onShowStatusWatermarkChanged: (Boolean) -> Unit,
+    onShowPageNumbersChanged: (Boolean) -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                "6️⃣  Component Visibility",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Choose what information to display on invoices",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            VisibilityToggleItem(
+                label = "Show Business ABN",
+                checked = showBusinessAbn,
+                onCheckedChange = onShowBusinessAbnChanged
+            )
+
+            VisibilityToggleItem(
+                label = "Show Customer Phone",
+                checked = showCustomerPhone,
+                onCheckedChange = onShowCustomerPhoneChanged
+            )
+
+            VisibilityToggleItem(
+                label = "Show Status Watermark (PAID/OVERDUE)",
+                checked = showStatusWatermark,
+                onCheckedChange = onShowStatusWatermarkChanged
+            )
+
+            VisibilityToggleItem(
+                label = "Show Page Numbers",
+                checked = showPageNumbers,
+                onCheckedChange = onShowPageNumbersChanged
+            )
+        }
+    }
+}
+
+@Composable
+private fun VisibilityToggleItem(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+    }
+}
+
+@Composable
+fun LocaleSelectionSection(
+    selectedLocale: InvoiceLocale,
+    onLocaleSelected: (InvoiceLocale) -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                "7️⃣  Locale & Currency",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Select your region for currency symbols and date formats",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            // Dropdown-style locale selector
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(12.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    InvoiceLocale.values().forEach { locale ->
+                        LocaleOptionItem(
+                            locale = locale,
+                            isSelected = selectedLocale == locale,
+                            onClick = { onLocaleSelected(locale) }
+                        )
+                    }
+                }
+            }
+
+            // Display current selection info
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(12.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Current: ${selectedLocale.displayName}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Format: ${selectedLocale.currencySymbol} | Date: ${selectedLocale.dateFormat}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LocaleOptionItem(
+    locale: InvoiceLocale,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent)
+            .padding(vertical = 12.dp, horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                locale.displayName,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+            )
+            Text(
+                "${locale.currencySymbol} | ${locale.dateFormat}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if (isSelected) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = "Selected",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }

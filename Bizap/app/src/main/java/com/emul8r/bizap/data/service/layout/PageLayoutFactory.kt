@@ -1,6 +1,7 @@
 package com.emul8r.bizap.data.service.layout
 
 import com.emul8r.bizap.domain.model.ClassicPageLayout
+import com.emul8r.bizap.domain.model.CompactPageLayout
 import com.emul8r.bizap.domain.model.InvoiceColorScheme
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.model.ModernPageLayout
@@ -26,6 +27,7 @@ object PageLayoutFactory {
             PageLayout.CLASSIC -> ClassicPageLayout()
             PageLayout.MODERN -> ModernPageLayout()
             PageLayout.SPACIOUS -> SpaciousPageLayout()
+            PageLayout.COMPACT -> CompactPageLayout()
         }
     }
 
@@ -33,6 +35,7 @@ object PageLayoutFactory {
         PageLayout.CLASSIC -> "CLASSIC"
         PageLayout.MODERN -> "MODERN"
         PageLayout.SPACIOUS -> "SPACIOUS"
+        PageLayout.COMPACT -> "COMPACT"
     }
 }
 

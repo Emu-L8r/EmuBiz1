@@ -627,3 +627,154 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:30px;text-align:
     }
 }
 
+/**
+ * COMPACT layout - Executive compact design for many line items
+ *
+ * Structure:
+ * - Minimal margins (20px instead of 40px)
+ * - Tight spacing throughout
+ * - Small fonts (9pt body text)
+ * - Single-line items (no alternating colors)
+ * - Designed to fit many items without extra pages
+ *
+ * Key differences:
+ * - Smallest margins of all layouts
+ * - Most compact spacing
+ * - Smallest fonts
+ * - Single-color rows (no alternating)
+ * - Ideal for contractors, mechanics with many line items
+ */
+class CompactPageLayout : PageLayoutProvider {
+    override fun getLayoutName(): String = "COMPACT"
+
+    override fun buildInvoiceHtml(
+        snapshot: InvoiceSnapshot,
+        isQuote: Boolean,
+        colorScheme: InvoiceColorScheme
+    ): String {
+        val docType = if (isQuote) "QUOTE" else "INVOICE"
+        val primary = colorScheme.primaryColor
+
+        val itemRows = buildItemsRows(snapshot, primary, colorScheme)
+        val totalRows = buildTotalsRows(snapshot, primary)
+
+        val logoHtml = if (!snapshot.logoBase64.isNullOrBlank())
+            """<img src="data:image/png;base64,${snapshot.logoBase64}" style="max-height:40px;max-width:80px;" alt="logo"/>"""
+        else ""
+
+        return """<!DOCTYPE html>
+<html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+@page { margin: 8mm 8mm 8mm 8mm; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 9pt; color: #333333; margin: 0; padding: 0; line-height: 1.4; }
+table { border-collapse: collapse; }
+td, th { word-wrap: break-word; }
+</style>
+</head><body>
+
+<!-- COMPACT HEADER -->
+<table width="100%" style="margin-bottom:8px;">
+<tr>
+  <td style="vertical-align:middle;padding:6px 0;">
+    $logoHtml
+    ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:14pt;font-weight:bold;color:$primary;margin-top:2px;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
+  </td>
+  <td style="text-align:right;vertical-align:top;padding:6px 0;">
+    <div style="font-size:16pt;font-weight:bold;color:$primary;letter-spacing:1px;">$docType</div>
+    <div style="font-size:8pt;color:#666666;margin-top:2px;">${escapeHtml(snapshot.invoiceNumber)}</div>
+  </td>
+</tr>
+</table>
+
+<!-- COMPACT DETAILS GRID -->
+<table width="100%" style="margin-bottom:6px;">
+<tr>
+  <td width="25%" style="vertical-align:top;padding:4px;font-size:8pt;font-weight:bold;color:$primary;">DATE</td>
+  <td width="25%" style="vertical-align:top;padding:4px;font-size:8pt;font-weight:bold;color:$primary;">DUE DATE</td>
+  <td width="25%" style="vertical-align:top;padding:4px;font-size:8pt;font-weight:bold;color:$primary;">FROM</td>
+  <td width="25%" style="vertical-align:top;padding:4px;font-size:8pt;font-weight:bold;color:$primary;">BILL TO</td>
+</tr>
+<tr>
+  <td style="padding:3px;font-size:8pt;">${formatDate(snapshot.date)}</td>
+  <td style="padding:3px;font-size:8pt;">${formatDate(snapshot.dueDate)}</td>
+  <td style="padding:3px;font-size:8pt;">${escapeHtml(snapshot.businessEmail)}</td>
+  <td style="padding:3px;font-size:8pt;"><strong>${escapeHtml(snapshot.customerName)}</strong></td>
+</tr>
+</table>
+
+<!-- LINE ITEMS TABLE (COMPACT) -->
+<table width="100%" style="border-collapse:collapse;margin-bottom:2px;">
+  <tr style="background-color:$primary;color:#ffffff;">
+    <th style="padding:5px 4px;text-align:left;font-size:8pt;font-weight:bold;">Description</th>
+    <th style="padding:5px 4px;text-align:center;font-size:8pt;font-weight:bold;width:8%;">Qty</th>
+    <th style="padding:5px 4px;text-align:right;font-size:8pt;font-weight:bold;width:15%;">Unit Price</th>
+    <th style="padding:5px 4px;text-align:right;font-size:8pt;font-weight:bold;width:15%;">Total</th>
+  </tr>
+  $itemRows
+  $totalRows
+</table>
+
+<!-- FOOTER -->
+${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:6px;text-align:center;font-size:7pt;color:#888888;border-top:1px solid #dddddd;padding-top:4px;line-height:1.4;">${escapeHtml(snapshot.footerText)}</p>""" else ""}
+
+</body></html>"""
+    }
+
+    private fun escapeHtml(text: String): String = text
+        .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+
+    private fun formatDate(millis: Long): String =
+        if (millis > 0) java.text.SimpleDateFormat("dd-MM-yyyy", java.util.Locale.getDefault()).format(java.util.Date(millis)) else ""
+
+    private fun formatMoney(cents: Long, currencyCode: String): String {
+        val symbol = when (currencyCode.uppercase()) {
+            "AUD", "USD", "CAD", "SGD", "NZD", "HKD" -> "$"
+            "GBP" -> "£"
+            else -> "$"
+        }
+        return "$symbol${String.format(java.util.Locale.getDefault(), "%.2f", cents / 100.0)}"
+    }
+
+    private fun formatQty(qty: Double): String =
+        if (qty == qty.toLong().toDouble()) qty.toLong().toString() else String.format(java.util.Locale.getDefault(), "%.2f", qty)
+
+    private fun buildItemsRows(
+        snapshot: InvoiceSnapshot,
+        primary: String,
+        colorScheme: InvoiceColorScheme
+    ): String {
+        return snapshot.items.map { item ->
+            """<tr style="background-color:#ffffff;">
+                <td style="padding:3px 4px;border-bottom:1px solid #f0f0f0;font-size:8pt;">${escapeHtml(item.description)}</td>
+                <td style="padding:3px 4px;border-bottom:1px solid #f0f0f0;text-align:center;font-size:8pt;">${formatQty(item.quantity)}</td>
+                <td style="padding:3px 4px;border-bottom:1px solid #f0f0f0;text-align:right;font-size:8pt;">${formatMoney(item.unitPrice, snapshot.currencyCode)}</td>
+                <td style="padding:3px 4px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:bold;color:$primary;font-size:8pt;">${formatMoney(item.total, snapshot.currencyCode)}</td>
+            </tr>"""
+        }.joinToString("\n")
+    }
+
+    private fun buildTotalsRows(snapshot: InvoiceSnapshot, primary: String): String {
+        val taxPct = snapshot.taxRate * 100
+        val taxLabel = if (snapshot.taxRate > 0) {
+            val formatted = if (taxPct == taxPct.toLong().toDouble())
+                "${taxPct.toLong()}%"
+            else
+                "${String.format(java.util.Locale.getDefault(), "%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
+            "Tax ($formatted)"
+        } else "Tax"
+        return """
+            <tr>
+                <td colspan="3" style="padding:3px 4px;text-align:right;color:#666666;font-size:8pt;">Subtotal</td>
+                <td style="padding:3px 4px;text-align:right;font-size:8pt;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
+            </tr>
+            <tr>
+                <td colspan="3" style="padding:3px 4px;text-align:right;color:#666666;font-size:8pt;">$taxLabel</td>
+                <td style="padding:3px 4px;text-align:right;font-size:8pt;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
+            </tr>
+            <tr style="background-color:#f5f5f5;">
+                <td colspan="3" style="padding:4px 4px;text-align:right;font-weight:bold;font-size:9pt;color:$primary;">TOTAL</td>
+                <td style="padding:4px 4px;text-align:right;font-weight:bold;font-size:9pt;color:$primary;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</td>
+            </tr>
+        """.trimIndent()
+    }
+}

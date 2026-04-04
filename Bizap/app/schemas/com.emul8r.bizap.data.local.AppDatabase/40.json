@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 40,
-    "identityHash": "06b6118a504e867eb5fdd0675a47c07a",
+    "identityHash": "66a838c2fc79aa893da090abfe60ae4e",
     "entities": [
       {
         "tableName": "customers",
@@ -2806,7 +2806,7 @@
       },
       {
         "tableName": "invoice_settings",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `selected_theme` TEXT NOT NULL, `selected_pdf_engine` TEXT NOT NULL, `selected_page_layout` TEXT NOT NULL, `selected_html_style` TEXT NOT NULL, `selected_canvas_template` TEXT NOT NULL, `preview_with_placeholder` INTEGER NOT NULL, `primary_color` TEXT NOT NULL, `secondary_color` TEXT NOT NULL, `accent_color` TEXT NOT NULL, `font_family` TEXT, `payment_terms_days` INTEGER NOT NULL, `default_payment_notes` TEXT NOT NULL, `footer_message` TEXT NOT NULL, `invoice_number_prefix` TEXT NOT NULL, `tax_rate` REAL NOT NULL, `tax_name` TEXT NOT NULL, `tax_handling` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`user_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `selected_theme` TEXT NOT NULL, `selected_pdf_engine` TEXT NOT NULL, `selected_page_layout` TEXT NOT NULL, `selected_typography` TEXT NOT NULL, `selected_locale` TEXT NOT NULL, `selected_html_style` TEXT NOT NULL, `selected_canvas_template` TEXT NOT NULL, `preview_with_placeholder` INTEGER NOT NULL, `show_business_abn` INTEGER NOT NULL, `show_customer_phone` INTEGER NOT NULL, `show_status_watermark` INTEGER NOT NULL, `show_page_numbers` INTEGER NOT NULL, `primary_color` TEXT NOT NULL, `secondary_color` TEXT NOT NULL, `accent_color` TEXT NOT NULL, `font_family` TEXT, `payment_terms_days` INTEGER NOT NULL, `default_payment_notes` TEXT NOT NULL, `footer_message` TEXT NOT NULL, `invoice_number_prefix` TEXT NOT NULL, `tax_rate` REAL NOT NULL, `tax_name` TEXT NOT NULL, `tax_handling` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`user_id`))",
         "fields": [
           {
             "fieldPath": "userId",
@@ -2833,6 +2833,18 @@
             "notNull": true
           },
           {
+            "fieldPath": "selectedTypography",
+            "columnName": "selected_typography",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "selectedLocale",
+            "columnName": "selected_locale",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
             "fieldPath": "selectedHtmlStyle",
             "columnName": "selected_html_style",
             "affinity": "TEXT",
@@ -2847,6 +2859,30 @@
           {
             "fieldPath": "previewWithPlaceholder",
             "columnName": "preview_with_placeholder",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "showBusinessAbn",
+            "columnName": "show_business_abn",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "showCustomerPhone",
+            "columnName": "show_customer_phone",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "showStatusWatermark",
+            "columnName": "show_status_watermark",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "showPageNumbers",
+            "columnName": "show_page_numbers",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -2942,7 +2978,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '06b6118a504e867eb5fdd0675a47c07a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '66a838c2fc79aa893da090abfe60ae4e')"
     ]
   }
 }

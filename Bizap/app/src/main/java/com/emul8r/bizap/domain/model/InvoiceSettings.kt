@@ -34,6 +34,14 @@ data class InvoiceSettings(
     @ColumnInfo(name = "selected_page_layout")
     val selectedPageLayout: PageLayout = PageLayout.MODERN,
 
+    // TYPOGRAPHY SELECTION
+    @ColumnInfo(name = "selected_typography")
+    val selectedTypography: Typography = Typography.MODERN,
+
+    // LOCALE & FORMATTING SELECTION
+    @ColumnInfo(name = "selected_locale")
+    val selectedLocale: InvoiceLocale = InvoiceLocale.AUSTRALIAN,
+
     // PDF HTML STYLE SELECTION (for HTML-to-PDF theme)
     @ColumnInfo(name = "selected_html_style")
     val selectedHtmlStyle: HtmlInvoiceStyle = HtmlInvoiceStyle.MODERN,
@@ -45,6 +53,19 @@ data class InvoiceSettings(
     // PREVIEW MODE
     @ColumnInfo(name = "preview_with_placeholder")
     val previewWithPlaceholder: Boolean = false,
+
+    // VISIBILITY TOGGLES
+    @ColumnInfo(name = "show_business_abn")
+    val showBusinessAbn: Boolean = true,
+
+    @ColumnInfo(name = "show_customer_phone")
+    val showCustomerPhone: Boolean = true,
+
+    @ColumnInfo(name = "show_status_watermark")
+    val showStatusWatermark: Boolean = true,
+
+    @ColumnInfo(name = "show_page_numbers")
+    val showPageNumbers: Boolean = false,
 
     // PDF STYLING (kept for invoice appearance)
     @ColumnInfo(name = "primary_color")
@@ -114,11 +135,13 @@ enum class PdfEngine {
  * CLASSIC: Original layout - Header | Bill To + Invoice Details | Items | Totals | Footer
  * MODERN: Compact side-by-side layout with grid organization
  * SPACIOUS: Generous spacing and larger fonts for premium feel
+ * COMPACT: Executive compact layout - minimal margins, many items per page
  */
 enum class PageLayout {
     CLASSIC,     // Traditional invoice layout
     MODERN,      // Compact modern grid-based layout
-    SPACIOUS     // Premium spacious layout with generous spacing
+    SPACIOUS,    // Premium spacious layout with generous spacing
+    COMPACT      // Executive compact layout - fits many items
 }
 
 /**
@@ -245,4 +268,93 @@ enum class HtmlInvoiceStyle(val displayName: String, val description: String, va
     companion object {
         fun getDefault() = MODERN
     }
+}
+
+/**
+ * Enum for typography selection.
+ *
+ * MODERN: Sans-serif font (Segoe UI, Arial) - clean, contemporary look
+ * CLASSIC: Serif font (Georgia, Times) - traditional, professional look
+ * ROUNDED: Rounded sans-serif (Trebuchet MS) - friendly, approachable look
+ */
+enum class Typography {
+    MODERN,      // Sans-serif - clean, contemporary
+    CLASSIC,     // Serif - traditional, professional
+    ROUNDED      // Rounded sans-serif - friendly, approachable
+}
+
+/**
+ * Enum for locale-based formatting (currency & date).
+ *
+ * UNITED_STATES: $ before amount (e.g., $1,234.56), MM/DD/YYYY dates
+ * EUROPEAN: € after amount (e.g., 1.234,56 €), DD/MM/YYYY dates
+ * AUSTRALIAN: $ before amount (e.g., $1,234.56), DD/MM/YYYY dates
+ * JAPANESE: ¥ before amount (e.g., ¥1,234), YYYY/MM/DD dates
+ * BRITISH: £ before amount (e.g., £1,234.56), DD/MM/YYYY dates
+ * CANADIAN: $ before amount (e.g., $1,234.56), YYYY/MM/DD dates
+ */
+enum class InvoiceLocale(
+    val displayName: String,
+    val currencySymbol: String,
+    val currencyPosition: CurrencyPosition,
+    val dateFormat: String,
+    val thousandsSeparator: Char,
+    val decimalSeparator: Char
+) {
+    UNITED_STATES(
+        displayName = "United States",
+        currencySymbol = "$",
+        currencyPosition = CurrencyPosition.BEFORE,
+        dateFormat = "MM/dd/yyyy",
+        thousandsSeparator = ',',
+        decimalSeparator = '.'
+    ),
+    EUROPEAN(
+        displayName = "Europe (EUR)",
+        currencySymbol = "€",
+        currencyPosition = CurrencyPosition.AFTER,
+        dateFormat = "dd/MM/yyyy",
+        thousandsSeparator = '.',
+        decimalSeparator = ','
+    ),
+    AUSTRALIAN(
+        displayName = "Australia",
+        currencySymbol = "$",
+        currencyPosition = CurrencyPosition.BEFORE,
+        dateFormat = "dd/MM/yyyy",
+        thousandsSeparator = ',',
+        decimalSeparator = '.'
+    ),
+    BRITISH(
+        displayName = "United Kingdom",
+        currencySymbol = "£",
+        currencyPosition = CurrencyPosition.BEFORE,
+        dateFormat = "dd/MM/yyyy",
+        thousandsSeparator = ',',
+        decimalSeparator = '.'
+    ),
+    CANADIAN(
+        displayName = "Canada",
+        currencySymbol = "$",
+        currencyPosition = CurrencyPosition.BEFORE,
+        dateFormat = "yyyy/MM/dd",
+        thousandsSeparator = ',',
+        decimalSeparator = '.'
+    ),
+    JAPANESE(
+        displayName = "Japan",
+        currencySymbol = "¥",
+        currencyPosition = CurrencyPosition.BEFORE,
+        dateFormat = "yyyy/MM/dd",
+        thousandsSeparator = ',',
+        decimalSeparator = '.'
+    )
+}
+
+/**
+ * Currency symbol position (before or after amount).
+ */
+enum class CurrencyPosition {
+    BEFORE,  // $ 1,234.56
+    AFTER    // 1.234,56 €
 }
