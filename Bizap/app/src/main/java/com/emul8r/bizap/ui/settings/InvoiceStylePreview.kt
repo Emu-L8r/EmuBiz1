@@ -115,6 +115,18 @@ private fun StylePreviewContent(style: HtmlInvoiceStyle) {
             FontFamily.SansSerif,
             "Vibrant, modern gradient"
         )
+
+        HtmlInvoiceStyle.PREMIUM_PROFESSIONAL -> Triple(
+            Color(0xFF1C1C2E),
+            FontFamily.SansSerif,
+            "Dark navy with blue accent"
+        )
+
+        HtmlInvoiceStyle.WARM_APPROACHABLE -> Triple(
+            Color(0xFFF59E0B),
+            FontFamily.SansSerif,
+            "Warm amber, friendly layout"
+        )
     }
 
     Column(
@@ -201,6 +213,20 @@ private fun StyleDetailsCard(style: HtmlInvoiceStyle) {
             "Font" to "Modern sans-serif with color accents",
             "Vibe" to "Vibrant, energetic, startup vibe",
             "Best For" to "Creative agencies, startups, marketing"
+        )
+
+        HtmlInvoiceStyle.PREMIUM_PROFESSIONAL -> mapOf(
+            "Header" to "Dark navy with blue accent bar",
+            "Font" to "Modern sans-serif (Segoe UI)",
+            "Vibe" to "Premium, minimalist, high-contrast",
+            "Best For" to "Premium services, consulting, B2B"
+        )
+
+        HtmlInvoiceStyle.WARM_APPROACHABLE -> mapOf(
+            "Header" to "Warm cream with amber accent",
+            "Font" to "Friendly sans-serif (Segoe UI)",
+            "Vibe" to "Warm, approachable, friendly",
+            "Best For" to "Small business, trades, personal services"
         )
     }
 

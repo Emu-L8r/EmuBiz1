@@ -236,7 +236,9 @@ enum class HtmlInvoiceStyle(val displayName: String, val description: String, va
     MODERN("Modern (Premium)", "Professional modern design with purple gradient", "invoice-styles.css"),
     MINIMAL("Minimalist (Clean)", "Clean, elegant design with minimal styling", "invoice-styles-minimal.css"),
     CORPORATE("Corporate (Formal)", "Formal business design with serif typography", "invoice-styles-corporate.css"),
-    CREATIVE("Creative (Startup)", "Vibrant, modern design perfect for startups", "invoice-styles-creative.css");
+    CREATIVE("Creative (Startup)", "Vibrant, modern design perfect for startups", "invoice-styles-creative.css"),
+    PREMIUM_PROFESSIONAL("Premium Professional", "Modern minimalist design with dark header and blue accents", "invoice-styles-premium.css"),
+    WARM_APPROACHABLE("Warm Approachable", "Friendly design with warm colors and approachable typography", "invoice-styles-warm.css");
 
     companion object {
         fun getDefault() = MODERN
