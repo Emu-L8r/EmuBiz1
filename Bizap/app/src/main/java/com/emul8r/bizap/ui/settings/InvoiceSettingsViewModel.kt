@@ -1,8 +1,11 @@
 package com.emul8r.bizap.ui.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
+import com.emul8r.bizap.data.service.HtmlPdfInvoiceService
+import com.emul8r.bizap.data.service.preview.PlaceholderInvoiceGenerator
 import com.emul8r.bizap.di.UserIdProvider
 import com.emul8r.bizap.domain.model.CanvasInvoiceTemplate
 import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
@@ -11,6 +14,7 @@ import com.emul8r.bizap.domain.model.InvoiceTheme
 import com.emul8r.bizap.domain.model.PdfEngine
 import com.emul8r.bizap.domain.model.PageLayout
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,12 +39,16 @@ data class InvoiceSettingsUiState(
  */
 @HiltViewModel
 class InvoiceSettingsViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val repository: InvoiceSettingsRepository,
     private val userIdProvider: UserIdProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InvoiceSettingsUiState())
     val uiState: StateFlow<InvoiceSettingsUiState> = _uiState.asStateFlow()
+
+    private val _previewHtml = MutableStateFlow<String?>(null)
+    val previewHtml: StateFlow<String?> = _previewHtml.asStateFlow()
 
     private val userId: String
         get() = userIdProvider.getCurrentUserId()
@@ -59,6 +67,10 @@ class InvoiceSettingsViewModel @Inject constructor(
                     isLoading = false
                 )
                 Timber.d("Settings loaded successfully: style=${settings?.selectedHtmlStyle}")
+                // Generate initial preview once settings are loaded
+                if (settings != null) {
+                    generatePreview()
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load settings")
                 _uiState.value = _uiState.value.copy(
@@ -119,6 +131,27 @@ class InvoiceSettingsViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 settings = current.copy(selectedHtmlStyle = style)
             )
+        }
+        // Auto-generate live preview when style changes
+        generatePreview()
+    }
+
+    /**
+     * Generate live preview HTML using placeholder data and current settings.
+     * The result is stored in [previewHtml] for display in the settings UI.
+     */
+    fun generatePreview() {
+        viewModelScope.launch {
+            val currentSettings = _uiState.value.settings ?: return@launch
+            try {
+                val previewSnapshot = PlaceholderInvoiceGenerator.generatePreviewInvoice()
+                val htmlService = HtmlPdfInvoiceService(context, currentSettings)
+                val html = htmlService.buildPreviewHtml(previewSnapshot, isQuote = false)
+                _previewHtml.value = html
+                Timber.d("✅ Live preview HTML generated for style: ${currentSettings.selectedHtmlStyle}")
+            } catch (e: Exception) {
+                Timber.e(e, "❌ Failed to generate live preview")
+            }
         }
     }
 
