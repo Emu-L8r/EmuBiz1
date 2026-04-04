@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,11 +36,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -301,46 +304,152 @@ private fun BusinessProfileScreenV1Content(viewModel: BusinessProfileViewModel =
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Business is tax registered", style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        text = "Enable if your business collects VAT/GST/Sales Tax",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = profile.isTaxRegistered,
-                    onCheckedChange = { viewModel.updateProfile(profile.copy(isTaxRegistered = it)) }
-                )
-            }
+            Spacer(modifier = Modifier.height(12.dp))
 
-            if (profile.isTaxRegistered) {
-                OutlinedTextField(
-                    value = (profile.defaultTaxRate * 100).toString(),
-                    onValueChange = { value ->
-                        val rate = value.toFloatOrNull()
-                        if (rate != null && rate >= 0 && rate <= 100) {
-                            viewModel.updateProfile(profile.copy(defaultTaxRate = rate / 100f))
+            // Tax Registration Toggle Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        width = 2.dp,
+                        color = if (profile.isTaxRegistered) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (profile.isTaxRegistered) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Toggle Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Tax Component",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
+                            Text(
+                                if (profile.isTaxRegistered) "Enabled - Tax will be calculated on all invoices" else "Disabled - Invoices show subtotal only",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                    },
-                    label = { Text("Tax Rate (%)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    supportingText = { Text("Enter the tax rate as a percentage (e.g., 10 for 10%)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            } else {
-                Text(
-                    text = "When disabled, invoices will show subtotal only (no tax)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+                        // Large Toggle Switch
+                        Switch(
+                            checked = profile.isTaxRegistered,
+                            onCheckedChange = { viewModel.updateProfile(profile.copy(isTaxRegistered = it)) },
+                            modifier = Modifier.scale(1.3f)
+                        )
+                    }
+
+                    // Tax Rate Slider (visible only when tax is enabled)
+                    if (profile.isTaxRegistered) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "Tax Rate",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                                )
+                                Text(
+                                    "${String.format("%.1f", profile.defaultTaxRate * 100)}%",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                )
+                            }
+
+                            // Slider for tax rate (0-30%)
+                            Slider(
+                                value = profile.defaultTaxRate,
+                                onValueChange = { viewModel.updateProfile(profile.copy(defaultTaxRate = it)) },
+                                modifier = Modifier.fillMaxWidth(),
+                                valueRange = 0f..0.30f,
+                                steps = 29  // 30 steps = 0.01 increments (1% steps)
+                            )
+
+                            // Alternative text input for precise entry
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OutlinedTextField(
+                                    value = (profile.defaultTaxRate * 100).toString(),
+                                    onValueChange = { value ->
+                                        val rate = value.toFloatOrNull()
+                                        if (rate != null && rate >= 0 && rate <= 100) {
+                                            viewModel.updateProfile(profile.copy(defaultTaxRate = rate / 100f))
+                                        }
+                                    },
+                                    label = { Text("Tax Rate (%)") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(56.dp),
+                                    singleLine = true
+                                )
+                                Text(
+                                    "%",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                            }
+
+                            // Tax impact info
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Text(
+                                    "Example: \$100.00 subtotal + ${String.format("%.1f", profile.defaultTaxRate * 100)}% tax = \$${String.format("%.2f", 100 + (100 * profile.defaultTaxRate))}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
+                    } else {
+                        // Info message when tax is disabled
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                .padding(12.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(
+                                    "💡 Tax Component is Disabled",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    "When disabled, all invoices will show subtotal only. Tax calculations will be skipped entirely. Toggle above to enable.",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    lineHeight = 16.sp
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
