@@ -54,22 +54,22 @@ fun GuiV2NavGraph(
                 DashboardScreenV2(
                     businessId = route.businessId,
                     navController = navController,
-                    onNavigateToInvoices = { navController.navigate(ScreenV2.Invoices(route.businessId)) },
-                    onNavigateToCustomers = { navController.navigate(ScreenV2.Customers(route.businessId)) },
-                    onNavigateToSettings = { navController.navigateToSettingsV2(route.businessId) },
                     onNavigateToRevenue = { navController.navigate(ScreenV2.RevenueAnalytics(route.businessId)) },
                     onNavigateToPayment = { navController.navigate(ScreenV2.PaymentAnalytics(route.businessId)) },
                     onNavigateToRisk = { navController.navigate(ScreenV2.RiskAnalytics(route.businessId)) },
+                    onNavigateToCustomers = { navController.navigate(ScreenV2.Customers(route.businessId)) },
+                    onNavigateToInvoices = { navController.navigate(ScreenV2.Invoices(route.businessId)) },
                     onNavigateToInvoice = { invoiceId -> navController.navigate(ScreenV2.InvoiceDetail(route.businessId, invoiceId)) },
-                    onCreateCustomer = { navController.navigate(ScreenV2.CreateCustomer(route.businessId)) },
-                    onCreateInvoice = { navController.navigate(ScreenV2.CreateInvoice(route.businessId)) },
-                    onNavigateToVault = { navController.navigate(ScreenV2.Vault(route.businessId)) },
                     onNavigateToInvoiceAnalytics = { navController.navigate(ScreenV2.InvoiceAnalytics(route.businessId)) },
+                    onNavigateToDunningNotices = { navController.navigate(ScreenV2.DunningNotices(route.businessId)) },
+                    onNavigateToVault = { navController.navigate(ScreenV2.Vault(route.businessId)) },
                     onNavigateToNotes = {
                         // TODO: Implement Notes screen for GUI2
-                        // For now, navigate to GUI1 notes as temporary workaround
                         Timber.w("Notes navigation not yet implemented for GUI2")
                     },
+                    onCreateCustomer = { navController.navigate(ScreenV2.CreateCustomer(route.businessId)) },
+                    onCreateInvoice = { navController.navigate(ScreenV2.CreateInvoice(route.businessId)) },
+                    onNavigateToSettings = { navController.navigateToSettingsV2(route.businessId) },
                     onSwitchToGui1 = onSwitchToGui1
                 )
             }

@@ -401,10 +401,12 @@ private fun HtmlStyleCard(
         HtmlInvoiceStyle.CREATIVE              -> Color(0xFF00A8A8)
         HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> Color(0xFF2563EB)
         HtmlInvoiceStyle.WARM_APPROACHABLE     -> Color(0xFFF59E0B)
+        HtmlInvoiceStyle.SASS_PROFESSIONAL     -> Color(0xFF0A2540)
     }
     val secondaryColor = when (style) {
         HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> Color(0xFF1C1C2E)
         HtmlInvoiceStyle.WARM_APPROACHABLE     -> Color(0xFF1F2937)
+        HtmlInvoiceStyle.SASS_PROFESSIONAL     -> Color(0xFFF7F9FC)
         else                                   -> null
     }
 

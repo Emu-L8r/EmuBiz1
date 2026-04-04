@@ -127,6 +127,12 @@ private fun StylePreviewContent(style: HtmlInvoiceStyle) {
             FontFamily.SansSerif,
             "Warm amber, friendly layout"
         )
+
+        HtmlInvoiceStyle.SASS_PROFESSIONAL -> Triple(
+            Color(0xFF0A2540),
+            FontFamily.SansSerif,
+            "Professional SASS-compiled styles"
+        )
     }
 
     Column(
@@ -227,6 +233,13 @@ private fun StyleDetailsCard(style: HtmlInvoiceStyle) {
             "Font" to "Friendly sans-serif (Segoe UI)",
             "Vibe" to "Warm, approachable, friendly",
             "Best For" to "Small business, trades, personal services"
+        )
+
+        HtmlInvoiceStyle.SASS_PROFESSIONAL -> mapOf(
+            "Header" to "Deep navy blue with professional layout",
+            "Font" to "Modern sans-serif (Segoe UI)",
+            "Vibe" to "Professional, compiled SASS styles",
+            "Best For" to "Enterprise, professional services, B2B"
         )
     }
 
