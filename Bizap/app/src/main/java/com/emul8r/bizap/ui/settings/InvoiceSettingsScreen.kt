@@ -853,6 +853,10 @@ private fun LivePreviewSection(
                     factory = { ctx ->
                         WebView(ctx).apply {
                             settings.apply {
+                                // JavaScript is intentionally disabled: the preview renders
+                                // server-generated HTML containing only static invoice content
+                                // (no scripts). Disabling JS reduces the attack surface for
+                                // any malicious data that might reach the preview.
                                 javaScriptEnabled = false
                                 loadWithOverviewMode = true
                                 useWideViewPort = true
