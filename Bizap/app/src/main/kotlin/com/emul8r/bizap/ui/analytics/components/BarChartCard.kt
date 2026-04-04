@@ -1,27 +1,22 @@
 package com.emul8r.bizap.ui.analytics.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.domain.analytics.ChartDataPoint
-import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottomAxis
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStartAxis
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.columnSeries
 import timber.log.Timber
 
 /**
- * Bar chart card using Vico column chart.
+ * Bar chart card using simple bar visualization.
  *
- * Renders a Vico [CartesianChartHost] with a [ColumnCartesianLayer].
+ * Renders a simple bar chart with visual bars.
  * Falls back to a placeholder when [data] is empty.
  *
  * @param data List of chart data points
@@ -58,7 +53,7 @@ fun BarChartCard(
             )
 
             if (data.isNotEmpty()) {
-                VicoBarChart(data = data, modifier = Modifier.fillMaxWidth().height(160.dp))
+                SimpleBarChart(data = data, modifier = Modifier.fillMaxWidth().height(160.dp))
                 Text(
                     "${data.size} categories",
                     style = MaterialTheme.typography.labelSmall,
@@ -83,34 +78,58 @@ fun BarChartCard(
 }
 
 /**
- * Internal Vico column chart composable.
+ * Simple bar chart implementation using Compose primitives.
  */
 @Composable
-private fun VicoBarChart(
+private fun SimpleBarChart(
     data: List<ChartDataPoint>,
     modifier: Modifier = Modifier
 ) {
-    val modelProducer = remember { CartesianChartModelProducer() }
+    // Find max value for scaling
+    val maxValue = data.maxOfOrNull { it.value } ?: 1f
+    val normalizedMax = if (maxValue > 0) maxValue else 1f
 
-    LaunchedEffect(data) {
-        try {
-            modelProducer.runTransaction {
-                columnSeries {
-                    series(data.map { it.value })
-                }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceEvenly
+    ) {
+        // Display bars
+        data.take(5).forEachIndexed { index, point ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(24.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Label
+                Text(
+                    text = point.label.take(3),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.width(30.dp)
+                )
+
+                // Bar
+                Box(
+                    modifier = Modifier
+                        .height(20.dp)
+                        .fillMaxWidth((point.value / normalizedMax).coerceIn(0f, 1f))
+                        .background(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(2.dp)
+                        )
+                )
+
+                // Value
+                Text(
+                    text = String.format("%.0f", point.value),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.width(40.dp)
+                )
             }
-        } catch (e: Exception) {
-            Timber.e(e, "BarChartCard: failed to update model producer")
         }
     }
-
-    CartesianChartHost(
-        chart = rememberCartesianChart(
-            rememberColumnCartesianLayer(),
-            startAxis = rememberStartAxis(),
-            bottomAxis = rememberBottomAxis()
-        ),
-        modelProducer = modelProducer,
-        modifier = modifier
-    )
 }

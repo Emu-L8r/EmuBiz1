@@ -1106,7 +1106,7 @@ $compiledCss
 </tr>
 </table>
 
-<!-- ═══ ACCENT BAR (4px electric blue — compiled from \$header-accent-border-width) ═══ -->
+<!-- ═══ ACCENT BAR (4px electric blue — compiled from sass tokens) ═══ -->
 <table width="100%" style="background-color:$accent;margin-bottom:16px;"><tr><td style="padding:2px 0;"></td></tr></table>
 
 <!-- ═══ INVOICE META + BILL TO (2-column grid) ═══ -->
