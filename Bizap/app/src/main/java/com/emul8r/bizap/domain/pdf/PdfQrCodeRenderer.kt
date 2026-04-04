@@ -2,12 +2,17 @@ package com.emul8r.bizap.domain.pdf
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
 import timber.log.Timber
 
 /**
  * Renders QR codes on PDFs for payment references.
  *
- * Uses the zxing library to generate QR codes from payment data.
+ * Uses the ZXing library to generate QR codes from payment data.
  * QR codes are placed in the "Payment Details" section for easy scanning.
  */
 class PdfQrCodeRenderer(
@@ -35,12 +40,8 @@ class PdfQrCodeRenderer(
         }
 
         return try {
-            // TODO: Import zxing and generate QR code
-            // val qrCodeWriter = com.google.zxing.qrcode.QRCodeWriter()
-            // val bitMatrix = qrCodeWriter.encode(paymentReference, com.google.zxing.BarcodeFormat.QR_CODE, QR_CODE_SIZE, QR_CODE_SIZE)
-            // val qrBitmap = createBitmapFromBitMatrix(bitMatrix)
-            // canvas.drawBitmap(qrBitmap, QR_X, QR_Y, null)
-
+            val bitmap = generateQrBitmap(paymentReference) ?: return false
+            canvas.drawBitmap(bitmap, QR_X, QR_Y, null)
             Timber.d("$TAG: QR code rendered for: $paymentReference")
             true
         } catch (e: Exception) {
@@ -62,12 +63,37 @@ class PdfQrCodeRenderer(
         }
 
         return try {
-            // TODO: Same as drawPaymentQrCode but with URL encoding
+            val bitmap = generateQrBitmap(paymentUrl) ?: return false
+            canvas.drawBitmap(bitmap, QR_X, QR_Y, null)
             Timber.d("$TAG: Payment URL QR code rendered for: $paymentUrl")
             true
         } catch (e: Exception) {
             Timber.e(e, "$TAG: Error generating payment URL QR code")
             false
+        }
+    }
+
+    /**
+     * Generates a [Bitmap] containing a QR code for [content].
+     *
+     * @return Bitmap or null if encoding fails
+     */
+    private fun generateQrBitmap(content: String): Bitmap? {
+        return try {
+            val hints = mapOf(EncodeHintType.MARGIN to 1)
+            val writer = QRCodeWriter()
+            val bitMatrix = writer.encode(content, BarcodeFormat.QR_CODE, QR_CODE_SIZE, QR_CODE_SIZE, hints)
+
+            val bitmap = Bitmap.createBitmap(QR_CODE_SIZE, QR_CODE_SIZE, Bitmap.Config.RGB_565)
+            for (x in 0 until QR_CODE_SIZE) {
+                for (y in 0 until QR_CODE_SIZE) {
+                    bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
+                }
+            }
+            bitmap
+        } catch (e: Exception) {
+            Timber.e(e, "$TAG: Failed to generate QR bitmap for content: $content")
+            null
         }
     }
 }

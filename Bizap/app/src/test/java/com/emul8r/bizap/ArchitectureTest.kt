@@ -182,4 +182,81 @@ class ArchitectureTest {
             "Domain use cases must not import from data layer. Violations:\n${violations.joinToString("\n")}"
         )
     }
+
+    // -------------------------------------------------------------------------
+    // Rule 6: No circular imports between domain and data layers
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `domain layer should not import from data layer`() {
+        val domainDir = File(projectDir, "domain")
+        if (!domainDir.exists()) return
+
+        val violations = mutableListOf<String>()
+        domainDir.walkTopDown()
+            .filter { it.extension == "kt" }
+            .forEach { file ->
+                file.readLines().forEachIndexed { lineIdx, line ->
+                    val trimmed = line.trimStart()
+                    if (trimmed.startsWith("import com.emul8r.bizap.data")) {
+                        violations += "${file.name}:${lineIdx + 1} → $line"
+                    }
+                }
+            }
+
+        assertTrue(
+            violations.isEmpty(),
+            "Domain layer must not import from data layer (no circular dependency). " +
+                    "Violations:\n${violations.joinToString("\n")}"
+        )
+    }
+
+    @Test
+    fun `data layer should not import from UI layer`() {
+        val dataDir = File(projectDir, "data")
+        if (!dataDir.exists()) return
+
+        val violations = mutableListOf<String>()
+        dataDir.walkTopDown()
+            .filter { it.extension == "kt" }
+            .forEach { file ->
+                file.readLines().forEachIndexed { lineIdx, line ->
+                    val trimmed = line.trimStart()
+                    if (trimmed.startsWith("import com.emul8r.bizap.ui") ||
+                        trimmed.startsWith("import com.emul8r.bizap.presentation")) {
+                        violations += "${file.name}:${lineIdx + 1} → $line"
+                    }
+                }
+            }
+
+        assertTrue(
+            violations.isEmpty(),
+            "Data layer must not import from UI/presentation layer. " +
+                    "Violations:\n${violations.joinToString("\n")}"
+        )
+    }
+
+    @Test
+    fun `domain use cases should not import from UI layer`() {
+        val useCaseDir = File(projectDir, "domain/usecase")
+        if (!useCaseDir.exists()) return
+
+        val violations = mutableListOf<String>()
+        useCaseDir.walkTopDown()
+            .filter { it.extension == "kt" }
+            .forEach { file ->
+                file.readLines().forEachIndexed { lineIdx, line ->
+                    val trimmed = line.trimStart()
+                    if (trimmed.startsWith("import com.emul8r.bizap.ui") ||
+                        trimmed.startsWith("import com.emul8r.bizap.presentation")) {
+                        violations += "${file.name}:${lineIdx + 1} → $line"
+                    }
+                }
+            }
+
+        assertTrue(
+            violations.isEmpty(),
+            "Domain use cases must not depend on UI layer. Violations:\n${violations.joinToString("\n")}"
+        )
+    }
 }

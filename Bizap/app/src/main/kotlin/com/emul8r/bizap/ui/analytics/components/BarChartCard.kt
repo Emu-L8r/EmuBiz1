@@ -1,20 +1,28 @@
 package com.emul8r.bizap.ui.analytics.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.domain.analytics.ChartDataPoint
+import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottomAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStartAxis
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.core.cartesian.data.columnSeries
 import timber.log.Timber
 
 /**
- * Bar chart card - Simple placeholder UI.
+ * Bar chart card using Vico column chart.
  *
- * TODO: Integrate Vico column chart when dependency is verified.
- * Currently displays a grid visualization as placeholder.
+ * Renders a Vico [CartesianChartHost] with a [ColumnCartesianLayer].
+ * Falls back to a placeholder when [data] is empty.
  *
  * @param data List of chart data points
  * @param title Display title
@@ -46,41 +54,13 @@ fun BarChartCard(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold
             )
 
             if (data.isNotEmpty()) {
-                // Placeholder: Show data points as colored bars
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    val maxValue = data.maxOfOrNull { it.value } ?: 1f
-                    data.forEach { point ->
-                        val heightPercent = (point.value / maxValue)
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
-                            verticalArrangement = Arrangement.Bottom
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight(heightPercent)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
-                                        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
-                                    )
-                            )
-                        }
-                    }
-                }
-
+                VicoBarChart(data = data, modifier = Modifier.fillMaxWidth().height(160.dp))
                 Text(
-                    "${data.size} categories shown",
+                    "${data.size} categories",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -89,7 +69,7 @@ fun BarChartCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp),
-                    contentAlignment = androidx.compose.ui.Alignment.Center
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         "No data available",
@@ -102,5 +82,35 @@ fun BarChartCard(
     }
 }
 
+/**
+ * Internal Vico column chart composable.
+ */
+@Composable
+private fun VicoBarChart(
+    data: List<ChartDataPoint>,
+    modifier: Modifier = Modifier
+) {
+    val modelProducer = remember { CartesianChartModelProducer() }
 
+    LaunchedEffect(data) {
+        try {
+            modelProducer.runTransaction {
+                columnSeries {
+                    series(data.map { it.value })
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "BarChartCard: failed to update model producer")
+        }
+    }
 
+    CartesianChartHost(
+        chart = rememberCartesianChart(
+            rememberColumnCartesianLayer(),
+            startAxis = rememberStartAxis(),
+            bottomAxis = rememberBottomAxis()
+        ),
+        modelProducer = modelProducer,
+        modifier = modifier
+    )
+}

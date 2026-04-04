@@ -1,6 +1,7 @@
 package com.emul8r.bizap.ui.analytics.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -77,6 +78,10 @@ fun LineChartCard(
                                         MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                                     shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
                                 )
+                                .clickable {
+                                    hoveredIndex = index
+                                    onDataPointClick(point)
+                                }
                                 .padding(top = 4.dp)
                         )
                     }

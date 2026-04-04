@@ -75,9 +75,7 @@ See [FEATURE_STATUS_MATRIX.md](FEATURE_STATUS_MATRIX.md) for the full list.
 - Photo attachments
 
 **Remaining GUI2 gaps:**
-- QR code PDFs
-- Backup/restore operations
-- Date range analytics filter
+- *(none — previous gaps resolved in Phase 3)*
 
 ---
 
@@ -86,9 +84,27 @@ See [FEATURE_STATUS_MATRIX.md](FEATURE_STATUS_MATRIX.md) for the full list.
 When the Q3 2026 deprecation milestone is reached:
 
 1. Add `@Deprecated` annotation to `TraditionalGUIMainActivity`
-2. Show one-time in-app dialog: _"You're using the classic interface. Switch to the new experience for better performance and new features."_
-3. Include "Switch Now" button that persists the GUI2 preference
-4. Include "Remind me later" (shows again after 7 days)
+2. Show one-time in-app dialog via **`GuiMigrationDialog`** (located at `ui/landing/GuiMigrationDialog.kt`):
+   _"You're using the classic interface. Switch to the new experience for better performance and new features."_
+3. Include "Switch Now" button that persists the GUI2 (Modern) preference via `ThemeManager`
+4. Include "Later" button — show again after 7 days (persist `migration_dialog_last_shown` timestamp in DataStore)
+
+### GuiMigrationDialog Integration
+
+Add to the `CLASSIC` theme path in `NavGraph.kt`:
+
+```kotlin
+// In NavGraph, CLASSIC theme branch:
+if (!hasSeenMigrationDialog) {
+    GuiMigrationDialog(
+        onSwitchNow = {
+            scope.launch { themeManager.setTheme(AppTheme.MODERN) }
+            markMigrationDialogSeen()
+        },
+        onLater = { markMigrationDialogSeen() }
+    )
+}
+```
 
 ---
 

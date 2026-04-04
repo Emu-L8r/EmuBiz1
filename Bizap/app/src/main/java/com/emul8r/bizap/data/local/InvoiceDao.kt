@@ -342,4 +342,10 @@ interface InvoiceDao {
         status: String = "",  // Empty string = no filter
         limit: Int = 100
     ): List<InvoiceWithItems>
+
+    @Query("DELETE FROM invoices")
+    suspend fun deleteAllInvoices()
+
+    @Query("DELETE FROM line_items")
+    suspend fun deleteAllLineItems()
 }

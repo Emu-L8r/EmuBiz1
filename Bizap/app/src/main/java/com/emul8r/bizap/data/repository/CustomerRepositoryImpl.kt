@@ -120,6 +120,12 @@ class CustomerRepositoryImpl @Inject constructor(
         Unit
     }
 
+    override suspend fun deleteAllCustomers(): Result<Unit> = runCatching {
+        Timber.w("⚠️ Deleting ALL customers — invoices will become orphaned")
+        customerDao.deleteAllCustomers()
+        Timber.d("✅ All customers deleted")
+    }
+
     // --- PHASE 2: Remote Sync ---
 
     override suspend fun createCustomerRemote(customer: Customer): Result<Customer> = runCatching {

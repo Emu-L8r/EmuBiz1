@@ -259,6 +259,13 @@ private fun StatusFilterChips(
 private fun AdvancedFilters(
     onApply: (DateRange?, LongRange?) -> Unit
 ) {
+    var startDateText by remember { mutableStateOf("") }
+    var endDateText by remember { mutableStateOf("") }
+    var minAmountText by remember { mutableStateOf("") }
+    var maxAmountText by remember { mutableStateOf("") }
+    var dateError by remember { mutableStateOf<String?>(null) }
+    var amountError by remember { mutableStateOf<String?>(null) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -273,39 +280,154 @@ private fun AdvancedFilters(
                 style = MaterialTheme.typography.titleSmall
             )
 
-            // Date range section
+            // ===== DATE RANGE =====
             Text(
-                "Date Range",
-                style = MaterialTheme.typography.labelSmall
+                "Date Range (DD/MM/YYYY)",
+                style = MaterialTheme.typography.labelMedium
             )
-            // TODO: Add date picker in future phase
-            Text(
-                "Date filtering coming soon",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            // Amount range section
-            Text(
-                "Amount Range",
-                style = MaterialTheme.typography.labelSmall
-            )
-            // TODO: Add amount range slider in future phase
-            Text(
-                "Amount filtering coming soon",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            // Apply button
-            Button(
-                onClick = { onApply(null, null) },
-                modifier = Modifier.align(Alignment.End)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Apply Filters")
+                OutlinedTextField(
+                    value = startDateText,
+                    onValueChange = { startDateText = it; dateError = null },
+                    label = { Text("From") },
+                    placeholder = { Text("01/01/2026") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = dateError != null
+                )
+                OutlinedTextField(
+                    value = endDateText,
+                    onValueChange = { endDateText = it; dateError = null },
+                    label = { Text("To") },
+                    placeholder = { Text("31/12/2026") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = dateError != null
+                )
+            }
+            if (dateError != null) {
+                Text(
+                    dateError!!,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            // ===== AMOUNT RANGE =====
+            Text(
+                "Amount Range (\$)",
+                style = MaterialTheme.typography.labelMedium
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = minAmountText,
+                    onValueChange = { minAmountText = it; amountError = null },
+                    label = { Text("Min \$") },
+                    placeholder = { Text("0") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = amountError != null
+                )
+                OutlinedTextField(
+                    value = maxAmountText,
+                    onValueChange = { maxAmountText = it; amountError = null },
+                    label = { Text("Max \$") },
+                    placeholder = { Text("10000") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = amountError != null
+                )
+            }
+            if (amountError != null) {
+                Text(
+                    amountError!!,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            // Apply / Clear buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        startDateText = ""
+                        endDateText = ""
+                        minAmountText = ""
+                        maxAmountText = ""
+                        dateError = null
+                        amountError = null
+                        onApply(null, null)
+                    }
+                ) {
+                    Text("Clear")
+                }
+                Button(
+                    onClick = {
+                        val dateRange = parseDateRange(startDateText, endDateText)
+                            .also { (range, error) -> dateError = error }
+                            .first
+                        val amountRange = parseAmountRange(minAmountText, maxAmountText)
+                            .also { (range, error) -> amountError = error }
+                            .first
+                        if (dateError == null && amountError == null) {
+                            onApply(dateRange, amountRange)
+                        }
+                    }
+                ) {
+                    Text("Apply Filters")
+                }
             }
         }
     }
+}
+
+/** Parses DD/MM/YYYY text into a ms timestamp, or null if blank/invalid. */
+private fun parseDdMmYyyy(text: String): Long? {
+    if (text.isBlank()) return null
+    return try {
+        val parts = text.trim().split("/")
+        if (parts.size != 3) return null
+        val day = parts[0].toInt()
+        val month = parts[1].toInt() - 1  // Calendar months are 0-based
+        val year = parts[2].toInt()
+        java.util.Calendar.getInstance().apply {
+            set(year, month, day, 0, 0, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    } catch (e: Exception) {
+        null
+    }
+}
+
+/** Returns (DateRange?, errorMessage?) */
+private fun parseDateRange(startText: String, endText: String): Pair<DateRange?, String?> {
+    if (startText.isBlank() && endText.isBlank()) return null to null
+    val start = parseDdMmYyyy(startText) ?: return null to "Invalid start date (use DD/MM/YYYY)"
+    val end = parseDdMmYyyy(endText) ?: return null to "Invalid end date (use DD/MM/YYYY)"
+    if (start > end) return null to "Start date must be before end date"
+    return DateRange(start, end) to null
+}
+
+/** Returns (LongRange?, errorMessage?) where range is in cents */
+private fun parseAmountRange(minText: String, maxText: String): Pair<LongRange?, String?> {
+    if (minText.isBlank() && maxText.isBlank()) return null to null
+    val min = minText.toDoubleOrNull()?.let { (it * 100).toLong() } ?: if (minText.isBlank()) 0L else return null to "Invalid min amount"
+    val max = maxText.toDoubleOrNull()?.let { (it * 100).toLong() } ?: if (maxText.isBlank()) Long.MAX_VALUE else return null to "Invalid max amount"
+    if (min > max) return null to "Min amount must be ≤ max amount"
+    return (min..max) to null
 }
 
 // Helper extension for sort option display
