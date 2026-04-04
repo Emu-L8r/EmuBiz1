@@ -215,10 +215,12 @@ class AnalyticsRepositoryImpl @Inject constructor(
             val obj = json.asJsonObject
             val type = obj.get("type")?.asString ?: return null
 
+            // Type strings match the simple class names of InvoiceAnalyticsEvent sealed subclasses.
+            // If a subclass is added or renamed, add the corresponding entry here and update logEvent().
             return when (type) {
-                "InvoiceCreated" -> context.deserialize(obj, InvoiceAnalyticsEvent.InvoiceCreated::class.java)
-                "InvoiceViewed"  -> context.deserialize(obj, InvoiceAnalyticsEvent.InvoiceViewed::class.java)
-                "StatusChanged"  -> context.deserialize(obj, InvoiceAnalyticsEvent.StatusChanged::class.java)
+                "InvoiceCreated"  -> context.deserialize(obj, InvoiceAnalyticsEvent.InvoiceCreated::class.java)
+                "InvoiceViewed"   -> context.deserialize(obj, InvoiceAnalyticsEvent.InvoiceViewed::class.java)
+                "StatusChanged"   -> context.deserialize(obj, InvoiceAnalyticsEvent.StatusChanged::class.java)
                 "PaymentRecorded" -> context.deserialize(obj, InvoiceAnalyticsEvent.PaymentRecorded::class.java)
                 else -> {
                     Timber.w("InvoiceAnalyticsEventDeserializer: unknown event type '$type'")
