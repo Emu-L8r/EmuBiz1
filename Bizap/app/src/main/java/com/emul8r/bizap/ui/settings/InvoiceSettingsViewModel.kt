@@ -8,6 +8,8 @@ import com.emul8r.bizap.domain.model.CanvasInvoiceTemplate
 import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
 import com.emul8r.bizap.domain.model.InvoiceSettings
 import com.emul8r.bizap.domain.model.InvoiceTheme
+import com.emul8r.bizap.domain.model.PdfEngine
+import com.emul8r.bizap.domain.model.PageLayout
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,6 +77,30 @@ class InvoiceSettingsViewModel @Inject constructor(
         _uiState.value.settings?.let { current ->
             _uiState.value = _uiState.value.copy(
                 settings = current.copy(selectedTheme = theme)
+            )
+        }
+    }
+
+    fun updateSelectedPdfEngine(engine: PdfEngine) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(selectedPdfEngine = engine)
+            )
+        }
+    }
+
+    fun updateSelectedPageLayout(layout: PageLayout) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(selectedPageLayout = layout)
+            )
+        }
+    }
+
+    fun updatePreviewWithPlaceholder(enabled: Boolean) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(previewWithPlaceholder = enabled)
             )
         }
     }

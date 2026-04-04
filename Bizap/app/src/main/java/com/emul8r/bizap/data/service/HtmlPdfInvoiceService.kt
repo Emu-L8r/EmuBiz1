@@ -158,7 +158,23 @@ class HtmlPdfInvoiceService(
 
     private fun generateHtmlContent(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
         val clean = validateAndCleanInvoiceData(snapshot)
+        val layout = settings?.selectedPageLayout
         val style = settings?.selectedHtmlStyle ?: HtmlInvoiceStyle.MODERN
+
+        Timber.d("📐 Generating HTML with style=$style, layout=$layout")
+
+        // PHASE 3: Route based on page layout if set
+        if (layout != null) {
+            Timber.d("✅ Using layout-aware generation: ${layout.name}")
+            val layoutFactory = com.emul8r.bizap.data.service.layout.PageLayoutFactory
+            val manager = com.emul8r.bizap.data.service.layout.PageLayoutManager()
+            val colorScheme = manager.extractColorScheme(settings!!)
+            val layoutProvider = layoutFactory.createLayout(layout)
+            return layoutProvider.buildInvoiceHtml(clean, isQuote, colorScheme)
+        }
+
+        // Fall back to style-based generation (existing)
+        Timber.d("⚠️  Using style-based generation (legacy mode)")
         return when (style) {
             HtmlInvoiceStyle.MODERN    -> generateModernTemplate(clean, isQuote)
             HtmlInvoiceStyle.MINIMAL   -> generateMinimalTemplate(clean, isQuote)

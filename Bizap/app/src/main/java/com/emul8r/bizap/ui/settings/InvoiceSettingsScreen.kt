@@ -25,6 +25,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.CanvasInvoiceTemplate
 import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
 import com.emul8r.bizap.domain.model.InvoiceTheme
+import com.emul8r.bizap.domain.model.PdfEngine
+import com.emul8r.bizap.domain.model.PageLayout
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,6 +118,37 @@ fun InvoiceSettingsScreen(
                         onSave = { viewModel.saveSettings() },
                         onReset = { viewModel.resetToDefaults() }
                     )
+                }
+
+                // ============================================================================
+
+                item {
+                    // PHASE 2: PDF Engine Section
+                    PdfEngineSection(
+                        selectedEngine = uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS,
+                        onEngineSelected = { viewModel.updateSelectedPdfEngine(it) }
+                    )
+                }
+
+                item {
+                    // PHASE 2: Page Layout Section
+                    PageLayoutSection(
+                        selectedLayout = uiState.settings?.selectedPageLayout ?: PageLayout.CLASSIC,
+                        onLayoutSelected = { viewModel.updateSelectedPageLayout(it) }
+                    )
+                }
+
+                item {
+                    // PHASE 2: Preview Mode Toggle
+                    PreviewModeSection(
+                        previewWithPlaceholder = uiState.settings?.previewWithPlaceholder ?: false,
+                        onToggle = { viewModel.updatePreviewWithPlaceholder(it) }
+                    )
+                }
+
+                item {
+                    // PHASE 2: Live Preview Placeholder
+                    LivePreviewSection()
                 }
             }
         }
@@ -521,4 +554,283 @@ private fun ActionButtonsSection(onSave: () -> Unit, onReset: () -> Unit) {
     }
 }
 
+// ============================================================================
+// PHASE 2: NEW FIVE-SECTION UI COMPONENTS
+// ============================================================================
 
+/**
+ * SECTION 1: PDF Engine Selection (Canvas vs HTML+CSS)
+ */
+@Composable
+fun PdfEngineSection(
+    selectedEngine: PdfEngine,
+    onEngineSelected: (PdfEngine) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "1️⃣  PDF Rendering Engine",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            "Select how your PDF invoices are generated",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            EngineOptionCard(
+                title = "Canvas",
+                emoji = "🎨",
+                description = "Direct coordinate control",
+                isSelected = selectedEngine == PdfEngine.CANVAS,
+                modifier = Modifier.weight(1f),
+                onClick = { onEngineSelected(PdfEngine.CANVAS) }
+            )
+
+            EngineOptionCard(
+                title = "HTML+CSS",
+                emoji = "📄",
+                description = "CSS-based styling",
+                isSelected = selectedEngine == PdfEngine.HTML_CSS,
+                modifier = Modifier.weight(1f),
+                onClick = { onEngineSelected(PdfEngine.HTML_CSS) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun EngineOptionCard(
+    title: String,
+    emoji: String,
+    description: String,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val border = if (isSelected) BorderStroke(2.dp, primaryColor) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        border = border,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) primaryColor.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(emoji, fontSize = 24.sp)
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(
+                description,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (isSelected) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = "Selected",
+                    tint = primaryColor,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * SECTION 2: Page Layout Selection (Classic vs Modern)
+ */
+@Composable
+fun PageLayoutSection(
+    selectedLayout: PageLayout,
+    onLayoutSelected: (PageLayout) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "2️⃣  Page Layout",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            "Choose how invoice content is organized",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            LayoutOptionCard(
+                title = "Classic",
+                emoji = "📋",
+                description = "Traditional layout",
+                isSelected = selectedLayout == PageLayout.CLASSIC,
+                modifier = Modifier.weight(1f),
+                onClick = { onLayoutSelected(PageLayout.CLASSIC) }
+            )
+
+            LayoutOptionCard(
+                title = "Modern",
+                emoji = "🎯",
+                description = "Compact grid layout",
+                isSelected = selectedLayout == PageLayout.MODERN,
+                modifier = Modifier.weight(1f),
+                onClick = { onLayoutSelected(PageLayout.MODERN) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun LayoutOptionCard(
+    title: String,
+    emoji: String,
+    description: String,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val border = if (isSelected) BorderStroke(2.dp, primaryColor) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        border = border,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) primaryColor.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(emoji, fontSize = 24.sp)
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(
+                description,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (isSelected) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = "Selected",
+                    tint = primaryColor,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * SECTION 4: Preview Mode Toggle
+ */
+@Composable
+private fun PreviewModeSection(
+    previewWithPlaceholder: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "4️⃣  Preview Mode",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Show sample data without real info",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = previewWithPlaceholder,
+                    onCheckedChange = onToggle
+                )
+            }
+            Text(
+                if (previewWithPlaceholder) "✅ Preview mode enabled" else "Preview mode disabled",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (previewWithPlaceholder) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * SECTION 5: Live Preview Placeholder
+ */
+@Composable
+private fun LivePreviewSection() {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "5️⃣  Live Preview",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            "Preview how your invoice will look",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .border(1.dp, MaterialTheme.colorScheme.outline),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    "PDF Preview",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "(Coming Soon)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Real-time preview rendering",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+            }
+        }
+    }
+}
