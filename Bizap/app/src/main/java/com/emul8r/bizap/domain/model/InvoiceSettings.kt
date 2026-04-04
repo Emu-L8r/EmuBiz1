@@ -256,6 +256,10 @@ enum class PresetColor(val hexCode: String, val displayName: String) {
  * - MINIMAL: Clean, minimalist design with black/white and simple lines
  * - CORPORATE: Formal business design with serif fonts and blue gradient
  * - CREATIVE: Vibrant, modern design with orange/teal colors (startup style)
+ * - PREMIUM_PROFESSIONAL: Dark navy header with electric-blue accent bar
+ * - WARM_APPROACHABLE: Warm amber tones with friendly typography
+ * - SASS_PROFESSIONAL: SASS-engine compiled style — deep navy + electric blue,
+ *   tight grid layout, large prominent totals; the highest-fidelity template
  */
 enum class HtmlInvoiceStyle(val displayName: String, val description: String, val styleFile: String) {
     MODERN("Modern (Premium)", "Professional modern design with purple gradient", "invoice-styles.css"),
@@ -263,7 +267,8 @@ enum class HtmlInvoiceStyle(val displayName: String, val description: String, va
     CORPORATE("Corporate (Formal)", "Formal business design with serif typography", "invoice-styles-corporate.css"),
     CREATIVE("Creative (Startup)", "Vibrant, modern design perfect for startups", "invoice-styles-creative.css"),
     PREMIUM_PROFESSIONAL("Premium Professional", "Modern minimalist design with dark header and blue accents", "invoice-styles-premium.css"),
-    WARM_APPROACHABLE("Warm Approachable", "Friendly design with warm colors and approachable typography", "invoice-styles-warm.css");
+    WARM_APPROACHABLE("Warm Approachable", "Friendly design with warm colors and approachable typography", "invoice-styles-warm.css"),
+    SASS_PROFESSIONAL("SASS Professional ✨", "SASS-engine compiled: deep navy header, electric-blue accents, tight grid layout", "invoice-styles-sass.css");
 
     companion object {
         fun getDefault() = MODERN
