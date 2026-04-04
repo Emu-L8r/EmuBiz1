@@ -104,7 +104,10 @@ fun RevenueAnalyticsTab(
                     data = state.dailyTrendData,
                     title = "Revenue Trend (Daily)",
                     onDataPointClick = { point ->
-                        // TODO: Implement point-specific drill
+                        onDrillClick(
+                            "Daily Revenue: ${point.label}",
+                            listOf(point.label to point.value.toDouble())
+                        )
                     }
                 )
             }

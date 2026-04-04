@@ -903,6 +903,15 @@ class InvoiceRepositoryImpl @Inject constructor(
                 emit(emptyList())
             }
     }
+
+    override suspend fun deleteAllInvoices(): Result<Unit> = runCatching {
+        timber.log.Timber.w("⚠️ Deleting ALL invoices, line items, and payments")
+        paymentDao.deleteAllPayments()
+        paymentDao.deleteAllSnapshots()
+        invoiceDao.deleteAllLineItems()
+        invoiceDao.deleteAllInvoices()
+        timber.log.Timber.d("✅ All invoices and payments deleted")
+    }
 }
 
 // ==================== EXTENSION FUNCTIONS ====================
