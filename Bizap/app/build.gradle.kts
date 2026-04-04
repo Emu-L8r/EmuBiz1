@@ -25,6 +25,7 @@ plugins {
     alias(libs.plugins.google.hilt.android)  // Dependency injection
     alias(libs.plugins.google.services)  // Firebase integration
     alias(libs.plugins.firebase.crashlytics)  // Crash reporting
+    id("jacoco")
 }
 
 android {
@@ -234,6 +235,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.auth)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
@@ -289,6 +291,9 @@ dependencies {
     implementation(libs.vico.compose.m3)
     implementation(libs.vico.compose)
 
+    // QR Codes
+    implementation(libs.zxing.core)
+
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
@@ -328,4 +333,44 @@ dependencies {
     // Debug Dependencies
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// JaCoCo Code Coverage
+// ──────────────────────────────────────────────────────────────────────────────
+
+jacoco {
+    toolVersion = "0.8.10"
+}
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    sourceDirectories.setFrom(
+        files("src/main/java", "src/main/kotlin")
+    )
+    classDirectories.setFrom(
+        fileTree("build/intermediates/classes/debug") {
+            exclude(
+                "**/R.class",
+                "**/R\$*.class",
+                "**/BuildConfig.*",
+                "**/Manifest*.*",
+                "**/*_Hilt*",
+                "**/*_Factory*",
+                "**/*_MembersInjector*",
+                "**/di/**",
+                "**/databinding/**"
+            )
+        }
+    )
+    executionData.setFrom(
+        files("build/jacoco/testDebugUnitTest.exec")
+    )
 }

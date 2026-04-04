@@ -3,6 +3,7 @@ package com.emul8r.bizap.di
 import android.content.Context
 import com.emul8r.bizap.utils.FirebaseEventTracker
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.auth.FirebaseAuth
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,7 +16,7 @@ import javax.inject.Singleton
  * Firebase Module
  *
  * Provides Firebase services as singletons available throughout the app.
- * This enables dependency injection of Firebase Analytics everywhere.
+ * This enables dependency injection of Firebase Analytics and Firebase Auth everywhere.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -45,6 +46,20 @@ object FirebaseModule {
             Timber.w(e, "⚠️ Failed to initialize FirebaseAnalytics - app will continue without crash reporting")
             null  // Allow app to continue without Firebase
         }
+    }
+
+    /**
+     * Provides FirebaseAuth instance.
+     *
+     * Used by [UserIdProvider] to obtain the real Firebase UID.
+     * Gracefully handles missing google-services.json in development.
+     *
+     * @return FirebaseAuth instance
+     */
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth {
+        return FirebaseAuth.getInstance()
     }
 
     /**
@@ -85,6 +100,4 @@ object FirebaseModule {
         return FirebaseEventTracker(analytics)
     }
 }
-
-
 

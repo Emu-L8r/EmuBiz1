@@ -25,6 +25,12 @@ interface CustomerRepository {
      */
     suspend fun deleteCustomer(id: Long): Result<Unit>
 
+    /**
+     * Deletes all customers locally.
+     * Note: invoices previously belonging to deleted customers will remain (orphaned).
+     */
+    suspend fun deleteAllCustomers(): Result<Unit>
+
     // --- PHASE 2: Remote Sync ---
 
     suspend fun createCustomerRemote(customer: Customer): Result<Customer>

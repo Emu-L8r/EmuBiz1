@@ -124,6 +124,12 @@ interface InvoiceRepository {
      * @throws IllegalArgumentException if invoiceId or businessId <= 0
      */
     fun observePaymentHistory(invoiceId: Long, businessId: Long): Flow<List<com.emul8r.bizap.data.local.entities.InvoicePaymentSnapshot>>
+
+    /**
+     * Deletes all invoices, line items, and payment records.
+     * Customer records are preserved.
+     */
+    suspend fun deleteAllInvoices(): Result<Unit>
 }
 
 
