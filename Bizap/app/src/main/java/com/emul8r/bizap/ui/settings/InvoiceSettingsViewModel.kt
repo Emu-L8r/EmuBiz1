@@ -110,8 +110,13 @@ class InvoiceSettingsViewModel @Inject constructor(
 
     fun updateSelectedPdfEngine(engine: PdfEngine) {
         _uiState.value.settings?.let { current ->
+            // Keep selectedTheme in sync with selectedPdfEngine so preview routing works correctly
+            val syncedTheme = when (engine) {
+                PdfEngine.HTML_CSS -> InvoiceTheme.HTML_PDF
+                PdfEngine.CANVAS   -> InvoiceTheme.CANVAS
+            }
             _uiState.value = _uiState.value.copy(
-                settings = current.copy(selectedPdfEngine = engine)
+                settings = current.copy(selectedPdfEngine = engine, selectedTheme = syncedTheme)
             )
         }
         // ✨ PHASE 4 (Approach 1): Trigger preview refresh with debouncing
@@ -168,20 +173,22 @@ class InvoiceSettingsViewModel @Inject constructor(
             try {
                 val previewSnapshot = PlaceholderInvoiceGenerator.generatePreviewInvoice()
 
-                when (currentSettings.selectedTheme) {
-                    InvoiceTheme.CANVAS -> {
-                        // ✨ PHASE 4 (Approach 3): Generate Canvas preview HTML
-                        val canvasHtml = generateCanvasPreviewHtml(previewSnapshot, currentSettings)
-                        _previewHtml.value = canvasHtml
-                        Timber.d("✅ Canvas preview generated: ${currentSettings.selectedCanvasTemplate.displayName}")
-                    }
-                    InvoiceTheme.HTML_PDF -> {
-                        // Existing HTML preview generation
-                        val htmlService = HtmlPdfInvoiceService(context, currentSettings)
-                        val html = htmlService.buildPreviewHtml(previewSnapshot, isQuote = false)
-                        _previewHtml.value = html
-                        Timber.d("✅ HTML preview generated: ${currentSettings.selectedHtmlStyle}")
-                    }
+                // Route by selectedPdfEngine (the authoritative UI choice).
+                // selectedPdfEngine is persisted with a NOT NULL DEFAULT 'HTML_CSS', so it
+                // is always reliably set for all stored rows.
+                val useCanvas = currentSettings.selectedPdfEngine == PdfEngine.CANVAS
+
+                if (useCanvas) {
+                    // ✨ PHASE 4 (Approach 3): Generate Canvas preview HTML
+                    val canvasHtml = generateCanvasPreviewHtml(previewSnapshot, currentSettings)
+                    _previewHtml.value = canvasHtml
+                    Timber.d("✅ Canvas preview generated: ${currentSettings.selectedCanvasTemplate.displayName}")
+                } else {
+                    // HTML-to-PDF preview generation
+                    val htmlService = HtmlPdfInvoiceService(context, currentSettings)
+                    val html = htmlService.buildPreviewHtml(previewSnapshot, isQuote = false)
+                    _previewHtml.value = html
+                    Timber.d("✅ HTML preview generated: layout=${currentSettings.selectedPageLayout}, style=${currentSettings.selectedHtmlStyle}")
                 }
             } catch (e: Exception) {
                 Timber.e(e, "❌ Failed to generate live preview")
