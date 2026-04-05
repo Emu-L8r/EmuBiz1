@@ -1,0 +1,369 @@
+/*
+ * REFINED Invoice Template - Canvas Grid Match
+ * 
+ * This template exactly matches the Canvas invoice template's grid system,
+ * spacing, and visual hierarchy. It uses the MODERN color scheme (purple/orange).
+ * 
+ * Grid System: 8px base unit
+ * Margins: 15mm (42.5px) all sides  
+ * Color Scheme: Purple (#6B4C9A) + Orange (#FF9F43)
+ * 
+ * This CSS is designed for iText7 HTML-to-PDF rendering with limited CSS support.
+ * Compatible features: tables, basic positioning, solid colors, basic borders
+ * Avoided features: CSS variables, flexbox, grid, complex gradients, transforms
+ */
+
+/* ============================================================================
+   PAGE & BODY SETUP
+   ============================================================================ */
+@page {
+    size: A4;
+    margin: 15mm 15mm 15mm 15mm;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.6;
+    color: #000000;
+}
+
+.invoice-container {
+    width: 100%;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 0;
+    background: white;
+}
+
+/* ============================================================================
+   HEADER SECTION - 60px height with purple gradient background
+   ============================================================================ */
+.invoice-header {
+    background-color: #6B4C9A;
+    color: white;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    height: 60px;
+    position: relative;
+}
+
+.invoice-header table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.invoice-header td {
+    vertical-align: top;
+    padding: 4px 0;
+}
+
+.company-info {
+    text-align: left;
+}
+
+.company-info h1 {
+    font-size: 18pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+    color: white;
+}
+
+.company-details {
+    font-size: 9pt;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.3;
+    margin-top: 4px;
+}
+
+.invoice-title {
+    text-align: right;
+}
+
+.invoice-label {
+    font-size: 11pt;
+    color: #C0C0C0;
+    font-weight: 600;
+}
+
+.invoice-number {
+    font-size: 12pt;
+    color: #C0C0C0;
+    font-weight: 600;
+}
+
+/* ============================================================================
+   TWO-COLUMN LAYOUT (Bill To & Invoice Details - SIDE-BY-SIDE)
+   ============================================================================ */
+.details-section {
+    margin-bottom: 12px;
+}
+
+.details-section table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 8px 0;
+}
+
+.card {
+    background: white;
+    border: 1px solid #D8D8D8;
+    border-left: 4px solid #FF9F43;
+    padding: 12px;
+    vertical-align: top;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #6B4C9A;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-name {
+    font-size: 11pt;
+    font-weight: bold;
+    color: black;
+    margin-bottom: 8px;
+}
+
+.card-detail {
+    font-size: 9pt;
+    color: #666666;
+    line-height: 1.4;
+    margin: 3px 0;
+}
+
+/* ============================================================================
+   ITEMS TABLE - Strict grid matching Canvas
+   ============================================================================ */
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+}
+
+.items-table thead {
+    background-color: #6B4C9A;
+    color: white;
+}
+
+.items-table thead th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 11pt;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.items-table tbody tr {
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.items-table tbody tr:nth-child(odd) {
+    background-color: white;
+}
+
+.items-table tbody tr:nth-child(even) {
+    background-color: #F9F9F9;
+}
+
+.items-table td {
+    padding: 12px;
+    font-size: 10pt;
+    line-height: 1.5;
+}
+
+.col-description {
+    width: 50%;
+    text-align: left;
+}
+
+.col-quantity {
+    width: 13%;
+    text-align: center;
+}
+
+.col-unit-price {
+    width: 18%;
+    text-align: right;
+}
+
+.col-amount {
+    width: 19%;
+    text-align: right;
+    font-weight: bold;
+    color: #6B4C9A;
+}
+
+/* ============================================================================
+   TOTALS SECTION - Typography-driven (NO FLOATING BOX)
+   ============================================================================ */
+.totals-section {
+    margin-bottom: 12px;
+    text-align: right;
+    padding-right: 0;
+}
+
+.totals-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.totals-table td {
+    padding: 6px 0;
+    font-size: 10pt;
+}
+
+.totals-table .label {
+    text-align: right;
+    color: #333333;
+    font-weight: normal;
+    width: 70%;
+}
+
+.totals-table .amount {
+    text-align: right;
+    color: #333333;
+    font-weight: normal;
+    width: 30%;
+    min-width: 80px;
+}
+
+.totals-divider {
+    border-top: 1px solid #FF9F43;
+    padding-top: 8px;
+}
+
+.totals-table .total-due {
+    padding-top: 8px;
+}
+
+.totals-table .total-due .label {
+    font-size: 16pt;
+    font-weight: bold;
+    color: #333333;
+}
+
+.totals-table .total-due .amount {
+    font-size: 16pt;
+    font-weight: bold;
+    color: #6B4C9A;
+}
+
+.totals-underline {
+    border-top: 2px solid #6B4C9A;
+    margin-top: 2px;
+}
+
+/* ============================================================================
+   PAYMENT DETAILS SECTION
+   ============================================================================ */
+.payment-section {
+    background-color: #F8F9FA;
+    border-left: 4px solid #6B4C9A;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.payment-section h3 {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #6B4C9A;
+    margin: 0 0 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.payment-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.payment-table td {
+    padding: 4px 0;
+    font-size: 10pt;
+    line-height: 1.8;
+}
+
+.payment-label {
+    font-weight: bold;
+    color: #333333;
+    width: 40%;
+}
+
+.payment-value {
+    color: #555555;
+    text-align: right;
+    width: 60%;
+}
+
+.payment-subsection {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #D8D8D8;
+}
+
+.payment-subsection h4 {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #6B4C9A;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+}
+
+/* ============================================================================
+   FOOTER - Primary color background, white text
+   ============================================================================ */
+.invoice-footer {
+    background-color: #6B4C9A;
+    color: white;
+    padding: 16px;
+    margin-top: 12px;
+    text-align: center;
+}
+
+.footer-thank-you {
+    font-size: 11pt;
+    font-weight: bold;
+    line-height: 1.4;
+}
+
+.footer-contact {
+    font-size: 9pt;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 8px;
+    line-height: 1.3;
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-bold {
+    font-weight: bold;
+}
+
+.spacer-12 {
+    height: 12px;
+}
+
+.spacer-8 {
+    height: 8px;
+}
