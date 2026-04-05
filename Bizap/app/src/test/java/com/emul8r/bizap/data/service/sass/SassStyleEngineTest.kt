@@ -110,6 +110,8 @@ class SassStyleEngineTest {
         assertTrue("Should include .table-header", css.contains(".table-header"))
         assertTrue("Should include .total-row", css.contains(".total-row"))
         assertTrue("Should include utility classes", css.contains(".text-muted"))
+        assertTrue("Should include .bg-muted utility class", css.contains(".bg-muted"))
+        assertTrue("Should include .text-highlight utility class", css.contains(".text-highlight"))
     }
 
     @Test
@@ -152,5 +154,131 @@ class SassStyleEngineTest {
             "Compiled CSS should contain accent hex colour",
             css.contains(tokens.colorAccent)
         )
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // New design tokens
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `sassprofessional tokens have colorMuted field`() {
+        val tokens = SassTokens.sassprofessional()
+        assertTrue("colorMuted must not be blank", tokens.colorMuted.isNotBlank())
+    }
+
+    @Test
+    fun `sassprofessional tokens have colorHighlight field`() {
+        val tokens = SassTokens.sassprofessional()
+        assertTrue("colorHighlight must not be blank", tokens.colorHighlight.isNotBlank())
+    }
+
+    @Test
+    fun `sassprofessional tokens have colorAccentBorder field`() {
+        val tokens = SassTokens.sassprofessional()
+        assertTrue("colorAccentBorder must not be blank", tokens.colorAccentBorder.isNotBlank())
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // New SassMixins
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `accentBorder mixin contains accent-border class`() {
+        val css = SassMixins.accentBorder("#0066FF", "4px")
+        assertTrue("Should include .accent-border class", css.contains(".accent-border"))
+        assertTrue("Should include border-left", css.contains("border-left"))
+        assertTrue("Should embed provided color", css.contains("#0066FF"))
+    }
+
+    @Test
+    fun `tableRowAlternating mixin contains row-even and row-odd classes`() {
+        val css = SassMixins.tableRowAlternating("#FFFFFF", "#F7F9FC", "#E2E8F0")
+        assertTrue("Should include .row-even class", css.contains(".row-even"))
+        assertTrue("Should include .row-odd class", css.contains(".row-odd"))
+    }
+
+    @Test
+    fun `sectionDivider mixin contains section-divider class`() {
+        val css = SassMixins.sectionDivider("#E2E8F0", "16px")
+        assertTrue("Should include .section-divider class", css.contains(".section-divider"))
+        assertTrue("Should include border-top", css.contains("border-top"))
+    }
+
+    @Test
+    fun `textHighlight mixin contains text-highlight class`() {
+        val css = SassMixins.textHighlight("#0066FF", "700")
+        assertTrue("Should include .text-highlight class", css.contains(".text-highlight"))
+        assertTrue("Should include font-weight", css.contains("700"))
+    }
+
+    @Test
+    fun `footerBand mixin contains footer-band class`() {
+        val css = SassMixins.footerBand("#F1F5F9", "#6B7280", "#0066FF", "4px")
+        assertTrue("Should include .footer-band class", css.contains(".footer-band"))
+        assertTrue("Should include background-color", css.contains("background-color"))
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // New utility classes in compile()
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `compile includes new utility classes`() {
+        val css = SassStyleEngine(SassTokens.sassprofessional()).compile()
+        assertTrue("Should include .bg-muted utility", css.contains(".bg-muted"))
+        assertTrue("Should include .text-highlight utility", css.contains(".text-highlight"))
+        assertTrue("Should include .border-accent utility", css.contains(".border-accent"))
+        assertTrue("Should include .section-divider class", css.contains(".section-divider"))
+    }
+
+    @Test
+    fun `compile includes new mixin output classes`() {
+        val css = SassStyleEngine(SassTokens.sassprofessional()).compile()
+        assertTrue("Should include .accent-border from accentBorder mixin", css.contains(".accent-border"))
+        assertTrue("Should include .row-even from tableRowAlternating mixin", css.contains(".row-even"))
+        assertTrue("Should include .footer-band from footerBand mixin", css.contains(".footer-band"))
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // generateColorHarmony()
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `generateColorHarmony returns map with required keys`() {
+        val harmony = SassStyleEngine.generateColorHarmony("#0A2540")
+        val requiredKeys = listOf(
+            "primary", "accent", "surface", "muted", "text", "textMuted",
+            "border", "totalBg", "totalText", "rowAlt", "highlight", "accentBorder"
+        )
+        requiredKeys.forEach { key ->
+            assertTrue("Missing key '$key' in harmony map", harmony.containsKey(key))
+        }
+    }
+
+    @Test
+    fun `generateColorHarmony preserves primary color`() {
+        val harmony = SassStyleEngine.generateColorHarmony("#0A2540")
+        assertTrue(
+            "Primary should match input (upper-cased)",
+            harmony["primary"].equals("#0A2540", ignoreCase = true)
+        )
+    }
+
+    @Test
+    fun `generateColorHarmony handles hex without hash prefix`() {
+        val harmony = SassStyleEngine.generateColorHarmony("0A2540")
+        assertTrue("Should still return a valid primary", harmony.containsKey("primary"))
+        assertTrue("Primary should not be blank", harmony["primary"]!!.isNotBlank())
+    }
+
+    @Test
+    fun `generateColorHarmony does not produce CSS custom properties`() {
+        val harmony = SassStyleEngine.generateColorHarmony("#6B4C9A")
+        harmony.values.forEach { value ->
+            assertFalse(
+                "Harmony values must be plain hex, not CSS variables: $value",
+                value.contains("var(--")
+            )
+        }
     }
 }

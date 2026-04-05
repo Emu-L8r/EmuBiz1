@@ -45,6 +45,9 @@ data class SassTokens(
     val colorTotalBg: String,          // $color-total-bg
     val colorTotalText: String,        // $color-total-text
     val colorRowAlt: String,           // $color-row-alt
+    val colorMuted: String,            // $color-muted (secondary bg sections)
+    val colorHighlight: String,        // $color-highlight (key figures emphasis)
+    val colorAccentBorder: String,     // $color-accent-border (decorative borders)
 
     // --- Typography ---
     val fontFamily: String,            // $font-family
@@ -87,6 +90,9 @@ data class SassTokens(
             colorTotalBg             = "#0A2540",
             colorTotalText           = "#FFFFFF",
             colorRowAlt              = "#F7F9FC",
+            colorMuted               = "#F1F5F9",
+            colorHighlight           = "#0066FF",
+            colorAccentBorder        = "#0066FF",
             fontFamily               = "Arial, Helvetica, 'Segoe UI', sans-serif",
             fontSizeBase             = "10pt",
             fontSizeSmall            = "8.5pt",
@@ -121,6 +127,9 @@ data class SassTokens(
             colorTotalBg             = "#2D3748",
             colorTotalText           = "#FFFFFF",
             colorRowAlt              = "#F7FAFC",
+            colorMuted               = "#EDF2F7",
+            colorHighlight           = "#00BFA5",
+            colorAccentBorder        = "#00BFA5",
             fontFamily               = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
             fontSizeBase             = "10pt",
             fontSizeSmall            = "8.5pt",
@@ -255,6 +264,68 @@ object SassMixins {
             padding: 12px 14px;
         }
     """.trimIndent()
+
+    /**
+     * @mixin accent-border($color, $width)
+     * Left/top accent border for section emphasis.
+     */
+    fun accentBorder(color: String, width: String): String = """
+        .accent-border {
+            border-left: $width solid $color;
+            padding-left: 12px;
+        }
+        .accent-border-top {
+            border-top: $width solid $color;
+            padding-top: 8px;
+        }
+    """.trimIndent()
+
+    /**
+     * @mixin table-row-alternating($evenBg, $oddBg, $borderColor)
+     * Alternating row background colors with proper contrast.
+     */
+    fun tableRowAlternating(evenBg: String, oddBg: String, borderColor: String): String = """
+        .row-even { background-color: $evenBg; }
+        .row-odd  { background-color: $oddBg; }
+        .row-even td, .row-odd td { border-bottom: 1px solid $borderColor; }
+    """.trimIndent()
+
+    /**
+     * @mixin section-divider($color, $spacing)
+     * Subtle horizontal rule between invoice sections.
+     */
+    fun sectionDivider(color: String, spacing: String): String = """
+        .section-divider {
+            border: 0;
+            border-top: 1px solid $color;
+            margin: $spacing 0;
+        }
+    """.trimIndent()
+
+    /**
+     * @mixin text-highlight($color, $fontWeight)
+     * Bold emphasis styling for important values (amounts, totals).
+     */
+    fun textHighlight(color: String, fontWeight: String): String = """
+        .text-highlight {
+            color: $color;
+            font-weight: $fontWeight;
+        }
+    """.trimIndent()
+
+    /**
+     * @mixin footer-band($bg, $textColor, $borderColor, $borderWidth)
+     * Professional footer band styling.
+     */
+    fun footerBand(bg: String, textColor: String, borderColor: String, borderWidth: String): String = """
+        .footer-band {
+            background-color: $bg;
+            color: $textColor;
+            border-top: $borderWidth solid $borderColor;
+            padding: 12px 16px;
+            text-align: center;
+        }
+    """.trimIndent()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -336,6 +407,44 @@ class SassStyleEngine(private val tokens: SassTokens) {
         ))
         appendLine()
 
+        // accent border utility
+        appendLine(SassMixins.accentBorder(
+            color = tokens.colorAccentBorder,
+            width = tokens.sectionBorderLeftWidth
+        ))
+        appendLine()
+
+        // alternating row colours
+        appendLine(SassMixins.tableRowAlternating(
+            evenBg      = tokens.colorBackground,
+            oddBg       = tokens.colorRowAlt,
+            borderColor = tokens.colorBorder
+        ))
+        appendLine()
+
+        // section divider
+        appendLine(SassMixins.sectionDivider(
+            color   = tokens.colorBorder,
+            spacing = tokens.spacingDouble
+        ))
+        appendLine()
+
+        // text highlight
+        appendLine(SassMixins.textHighlight(
+            color      = tokens.colorHighlight,
+            fontWeight = tokens.fontWeightBold
+        ))
+        appendLine()
+
+        // footer band
+        appendLine(SassMixins.footerBand(
+            bg          = tokens.colorMuted,
+            textColor   = tokens.colorTextMuted,
+            borderColor = tokens.colorAccentBorder,
+            borderWidth = tokens.headerAccentBorderWidth
+        ))
+        appendLine()
+
         // Utility classes derived from tokens
         appendLine(buildUtilityClasses())
     }
@@ -357,6 +466,9 @@ class SassStyleEngine(private val tokens: SassTokens) {
         .text-center  { text-align: center; }
         .text-left    { text-align: left; }
         .surface-bg   { background-color: ${tokens.colorSurface}; }
+        .bg-muted     { background-color: ${tokens.colorMuted}; }
+        .text-highlight { color: ${tokens.colorHighlight}; font-weight: ${tokens.fontWeightBold}; }
+        .border-accent { border-left: ${tokens.sectionBorderLeftWidth} solid ${tokens.colorAccentBorder}; }
         .accent-border-left { border-left: ${tokens.sectionBorderLeftWidth} solid ${tokens.colorAccent}; }
         .primary-border-left { border-left: ${tokens.sectionBorderLeftWidth} solid ${tokens.colorPrimary}; }
         .border-bottom { border-bottom: ${tokens.tableBorderWidth} solid ${tokens.colorBorder}; }
@@ -367,4 +479,72 @@ class SassStyleEngine(private val tokens: SassTokens) {
         .mb-unit  { margin-bottom: ${tokens.spacingUnit}; }
         .mb-double{ margin-bottom: ${tokens.spacingDouble}; }
     """.trimIndent()
+
+    companion object {
+        /**
+         * Generates a simple color harmony map from a primary hex color.
+         *
+         * Returns a map of role → hex string that can be used to build a coherent
+         * color scheme without requiring a SASS runtime.  All derived colors are
+         * hard-coded complementary pairs to keep the logic simple and deterministic.
+         *
+         * @param primaryHex  6-digit hex color string (with or without leading `#`)
+         * @return  Map with keys: primary, accent, surface, muted, text, textMuted, border,
+         *          totalBg, totalText, rowAlt, highlight, accentBorder
+         */
+        fun generateColorHarmony(primaryHex: String): Map<String, String> {
+            val hex = primaryHex.removePrefix("#").uppercase()
+            // Parse r/g/b components (0–255)
+            val r = hex.substring(0, 2).toIntOrNull(16) ?: 0
+            val g = hex.substring(2, 4).toIntOrNull(16) ?: 0
+            val b = hex.substring(4, 6).toIntOrNull(16) ?: 0
+
+            // Perceived luminance (0.0 – 1.0)
+            val luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+
+            // Tint: blend primary with white (85% white)
+            fun tint(factor: Double): String {
+                val tr = (r + (255 - r) * factor).toInt().coerceIn(0, 255)
+                val tg = (g + (255 - g) * factor).toInt().coerceIn(0, 255)
+                val tb = (b + (255 - b) * factor).toInt().coerceIn(0, 255)
+                return "#%02X%02X%02X".format(tr, tg, tb)
+            }
+
+            // Shade: darken primary
+            fun shade(factor: Double): String {
+                val sr = (r * (1.0 - factor)).toInt().coerceIn(0, 255)
+                val sg = (g * (1.0 - factor)).toInt().coerceIn(0, 255)
+                val sb = (b * (1.0 - factor)).toInt().coerceIn(0, 255)
+                return "#%02X%02X%02X".format(sr, sg, sb)
+            }
+
+            val primary     = "#$hex"
+            val accent      = tint(0.30)          // 30% lighter → vivid accent
+            val surface     = tint(0.92)           // very light surface tint
+            val muted       = tint(0.88)           // subtle muted background
+            val text        = if (luminance > 0.5) "#1A1A1A" else "#FFFFFF"
+            val textMuted   = if (luminance > 0.5) "#6B7280" else "#CBD5E1"
+            val border      = tint(0.75)           // light border
+            val totalBg     = shade(0.15)          // slightly darker total band
+            val totalText   = "#FFFFFF"
+            val rowAlt      = tint(0.95)           // barely-there alt row
+            val highlight   = accent
+            val accentBorder = accent
+
+            return mapOf(
+                "primary"      to primary,
+                "accent"       to accent,
+                "surface"      to surface,
+                "muted"        to muted,
+                "text"         to text,
+                "textMuted"    to textMuted,
+                "border"       to border,
+                "totalBg"      to totalBg,
+                "totalText"    to totalText,
+                "rowAlt"       to rowAlt,
+                "highlight"    to highlight,
+                "accentBorder" to accentBorder
+            )
+        }
+    }
 }

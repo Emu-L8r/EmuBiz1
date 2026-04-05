@@ -176,13 +176,15 @@ class HtmlPdfInvoiceService(
         // New premium styles always use their own self-contained templates.
         // They define a complete layout, so we skip the PageLayout routing entirely.
         if (style == HtmlInvoiceStyle.PREMIUM_PROFESSIONAL || style == HtmlInvoiceStyle.WARM_APPROACHABLE
-            || style == HtmlInvoiceStyle.SASS_PROFESSIONAL || style == HtmlInvoiceStyle.REFINED) {
+            || style == HtmlInvoiceStyle.SASS_PROFESSIONAL || style == HtmlInvoiceStyle.REFINED
+            || style == HtmlInvoiceStyle.PROFESSIONAL_PLUS) {
             Timber.d("✅ Using premium style-based generation: ${style.name}")
             return when (style) {
                 HtmlInvoiceStyle.PREMIUM_PROFESSIONAL -> generatePremiumProfessionalTemplate(clean, isQuote)
                 HtmlInvoiceStyle.WARM_APPROACHABLE    -> generateWarmApproachableTemplate(clean, isQuote)
                 HtmlInvoiceStyle.SASS_PROFESSIONAL    -> generateSassProfessionalTemplate(clean, isQuote)
                 HtmlInvoiceStyle.REFINED              -> generateRefinedTemplate(clean, isQuote)
+                HtmlInvoiceStyle.PROFESSIONAL_PLUS    -> generateProfessionalPlusTemplate(clean, isQuote)
                 else -> throw IllegalStateException("Unexpected style in premium branch: $style")
             }
         }
@@ -208,6 +210,7 @@ class HtmlPdfInvoiceService(
             HtmlInvoiceStyle.WARM_APPROACHABLE     -> generateWarmApproachableTemplate(clean, isQuote)
             HtmlInvoiceStyle.SASS_PROFESSIONAL     -> generateSassProfessionalTemplate(clean, isQuote)
             HtmlInvoiceStyle.REFINED               -> generateRefinedTemplate(clean, isQuote)
+            HtmlInvoiceStyle.PROFESSIONAL_PLUS     -> generateProfessionalPlusTemplate(clean, isQuote)
         }
     }
 
@@ -1327,6 +1330,209 @@ ${if (snapshot.footerText.isNotBlank()) """
 """}
 
 </div>
+
+</body></html>"""
+    }
+
+    // -------------------------------------------------------------------------
+    // Template 9: PROFESSIONAL PLUS — Sidebar branding, signature line,
+    //             geometric accents. Highest quality Phase 1 template.
+    // Colors: Dark Charcoal #1A1A2E + Electric Teal #00C9A7 + Gold #FFD700
+    // -------------------------------------------------------------------------
+
+    private fun generateProfessionalPlusTemplate(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
+        val charcoal  = "#1A1A2E"    // primary — dark charcoal sidebar
+        val teal      = "#00C9A7"    // accent — electric teal
+        val gold      = "#E9B84A"    // secondary accent — warm gold
+        val lightGray = "#F8F9FA"    // surface background
+        val mutedGray = "#F1F3F5"    // muted bg for secondary sections
+        val textDark  = "#1A1A2E"    // body text
+        val textGray  = "#6C757D"    // muted text
+        val border    = "#DEE2E6"    // subtle borders
+
+        val docType = if (isQuote) "QUOTE" else "INVOICE"
+        val watermark = buildStatusWatermark(snapshot.invoiceStatus)
+        val logoHtml = if (!snapshot.logoBase64.isNullOrBlank())
+            """<img src="data:image/png;base64,${snapshot.logoBase64}" style="max-height:60px;max-width:140px;margin-bottom:12px;" alt="logo"/>"""
+        else ""
+
+        // Item rows with improved alternating design
+        val itemRows = snapshot.items.mapIndexed { i, item ->
+            val bg    = if (i % 2 == 0) "#FFFFFF" else lightGray
+            val unitD = formatMoney(item.unitPrice, snapshot.currencyCode)
+            val totD  = formatMoney(item.total, snapshot.currencyCode)
+            """<tr style="background-color:$bg;">
+                <td style="padding:11px 14px;border-bottom:1px solid $border;line-height:1.7;word-wrap:break-word;font-size:10pt;">${escapeHtml(item.description)}</td>
+                <td style="padding:11px 14px;border-bottom:1px solid $border;text-align:center;line-height:1.7;font-size:10pt;color:$textGray;">${formatQty(item.quantity)}</td>
+                <td style="padding:11px 14px;border-bottom:1px solid $border;text-align:right;line-height:1.7;font-size:10pt;color:$textGray;">$unitD</td>
+                <td style="padding:11px 14px;border-bottom:1px solid $border;text-align:right;font-weight:700;color:$charcoal;line-height:1.7;font-size:10pt;">$totD</td>
+            </tr>"""
+        }.joinToString("\n")
+
+        // Totals rows with clear hierarchy
+        val taxPct = snapshot.taxRate * 100
+        val taxLabel = if (snapshot.taxRate > 0) {
+            val fmt = if (taxPct == taxPct.toLong().toDouble()) "${taxPct.toLong()}%"
+                      else "${String.format("%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
+            "Tax ($fmt)"
+        } else "Tax"
+
+        // Payment section (iText7-safe table layout)
+        val hasBank = snapshot.bankName.isNotBlank() || snapshot.bankAccountName.isNotBlank()
+            || snapshot.bankAccountNumber.isNotBlank() || snapshot.bankBsb.isNotBlank()
+        val paymentSection = if (hasBank) """
+            <table width="100%" style="border-collapse:collapse;margin-top:18px;">
+                <tr><td colspan="2" style="padding:10px 14px;background-color:$mutedGray;font-weight:700;font-size:10pt;color:$charcoal;border-left:4px solid $teal;letter-spacing:0.5px;text-transform:uppercase;">Payment Details</td></tr>
+                ${if (snapshot.bankName.isNotBlank()) """<tr><td style="padding:9px 14px;font-weight:700;width:40%;font-size:9.5pt;color:$textDark;border-bottom:1px solid $border;">Bank</td><td style="padding:9px 14px;font-size:9.5pt;color:$textGray;border-bottom:1px solid $border;">${escapeHtml(snapshot.bankName)}</td></tr>""" else ""}
+                ${if (snapshot.bankAccountName.isNotBlank()) """<tr style="background-color:$lightGray;"><td style="padding:9px 14px;font-weight:700;font-size:9.5pt;color:$textDark;border-bottom:1px solid $border;">Account Name</td><td style="padding:9px 14px;font-size:9.5pt;color:$textGray;border-bottom:1px solid $border;">${escapeHtml(snapshot.bankAccountName)}</td></tr>""" else ""}
+                ${if (snapshot.bankAccountNumber.isNotBlank()) """<tr><td style="padding:9px 14px;font-weight:700;font-size:9.5pt;color:$textDark;border-bottom:1px solid $border;">Account Number</td><td style="padding:9px 14px;font-size:9.5pt;color:$textGray;border-bottom:1px solid $border;">${escapeHtml(snapshot.bankAccountNumber)}</td></tr>""" else ""}
+                ${if (snapshot.bankBsb.isNotBlank()) """<tr style="background-color:$lightGray;"><td style="padding:9px 14px;font-weight:700;font-size:9.5pt;color:$textDark;">BSB</td><td style="padding:9px 14px;font-size:9.5pt;color:$textGray;">${escapeHtml(snapshot.bankBsb)}</td></tr>""" else ""}
+            </table>
+        """.trimIndent() else ""
+
+        val notesSection = if (snapshot.notes.isNotBlank()) """
+            <table width="100%" style="border-collapse:collapse;margin-top:18px;">
+                <tr><td style="padding:10px 14px;background-color:$mutedGray;font-weight:700;font-size:10pt;color:$charcoal;border-left:4px solid $teal;">Notes</td></tr>
+                <tr><td style="padding:10px 14px;font-size:9.5pt;line-height:1.7;word-wrap:break-word;color:$textGray;">${escapeHtml(snapshot.notes)}</td></tr>
+            </table>
+        """.trimIndent() else ""
+
+        return """<!DOCTYPE html>
+<html><head><meta charset="UTF-8"/>
+<style>
+@page { margin: 12mm 14mm 12mm 14mm; }
+body { font-family: Arial, Helvetica, 'Segoe UI', sans-serif; font-size: 10pt; color: $textDark; margin: 0; padding: 0; line-height: 1.7; }
+table { border-collapse: collapse; }
+td, th { word-wrap: break-word; }
+</style>
+</head><body>
+
+<!-- ═══ HEADER: two-tone (dark sidebar | light title area) ═══ -->
+<table width="100%" style="margin-bottom:0;">
+<tr>
+  <!-- LEFT: dark sidebar branding -->
+  <td width="38%" style="background-color:$charcoal;padding:22px 20px 22px 24px;vertical-align:top;">
+    $logoHtml
+    ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:16pt;font-weight:700;color:#FFFFFF;line-height:1.3;margin-bottom:6px;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
+    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:9.5pt;color:#94A3B8;margin-bottom:10px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    <!-- Teal accent divider line -->
+    <div style="width:40px;height:3px;background-color:$teal;margin-bottom:10px;"></div>
+    <div style="font-size:8.5pt;color:#94A3B8;line-height:1.7;">
+    ${if (snapshot.businessAddress.isNotBlank()) """<div>${addressLines(snapshot.businessAddress)}</div>""" else ""}
+    ${if (snapshot.businessEmail.isNotBlank()) """<div>${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
+    ${if (snapshot.businessPhone.isNotBlank()) """<div>${escapeHtml(snapshot.businessPhone)}</div>""" else ""}
+    ${if (snapshot.businessAbn.isNotBlank()) """<div>ABN: ${escapeHtml(snapshot.businessAbn)}</div>""" else ""}
+    </div>
+  </td>
+  <!-- RIGHT: document title and meta -->
+  <td width="62%" style="background-color:$lightGray;padding:22px 24px 22px 20px;vertical-align:top;text-align:right;">
+    <div style="font-size:30pt;font-weight:700;letter-spacing:3px;color:$charcoal;">$docType</div>
+    <div style="font-size:10pt;color:$teal;font-weight:700;margin-top:4px;letter-spacing:1px;">${escapeHtml(snapshot.invoiceNumber)}</div>
+    $watermark
+    <!-- Invoice meta: date, due, status -->
+    <table style="margin-top:14px;margin-left:auto;">
+      <tr>
+        <td style="padding:4px 10px 4px 0;font-size:9pt;color:$textGray;text-align:right;font-weight:700;">Date:</td>
+        <td style="padding:4px 0;font-size:9pt;color:$textDark;text-align:right;">${formatDate(snapshot.date)}</td>
+      </tr>
+      <tr>
+        <td style="padding:4px 10px 4px 0;font-size:9pt;color:$textGray;text-align:right;font-weight:700;">Due Date:</td>
+        <td style="padding:4px 0;font-size:9pt;color:$textDark;text-align:right;font-weight:700;color:$teal;">${formatDate(snapshot.dueDate)}</td>
+      </tr>
+      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:4px 10px 4px 0;font-size:9pt;color:$textGray;text-align:right;font-weight:700;">Status:</td><td style="padding:4px 0;font-size:9pt;color:$textDark;text-align:right;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
+      <tr>
+        <td style="padding:4px 10px 4px 0;font-size:9pt;color:$textGray;text-align:right;font-weight:700;">Currency:</td>
+        <td style="padding:4px 0;font-size:9pt;color:$textDark;text-align:right;">${escapeHtml(snapshot.currencyCode)}</td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+
+<!-- TEAL ACCENT BAR (geometric separator) -->
+<table width="100%" style="background-color:$teal;margin-bottom:16px;"><tr><td style="padding:3px 0;"></td></tr></table>
+
+<!-- BILL TO SECTION -->
+<table width="100%" style="margin-bottom:14px;">
+<tr>
+  <td width="50%" style="vertical-align:top;padding-right:10px;">
+    <table width="100%" style="background-color:$mutedGray;border-left:4px solid $teal;">
+      <tr><td style="padding:9px 14px;font-weight:700;font-size:10pt;color:$charcoal;text-transform:uppercase;letter-spacing:0.5px;">Bill To</td></tr>
+      ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:6px 14px;font-weight:700;font-size:11pt;color:$charcoal;line-height:1.4;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
+      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:4px 14px 6px 14px;font-size:9pt;color:$textGray;line-height:1.7;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
+      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:4px 14px 6px 14px;font-size:9pt;color:$textGray;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
+    </table>
+  </td>
+  <td width="50%" style="vertical-align:top;padding-left:10px;">
+    ${if (snapshot.headerText.isNotBlank()) """<table width="100%" style="background-color:$lightGray;border-left:3px solid $border;">
+      <tr><td style="padding:9px 14px;font-weight:700;font-size:10pt;color:$charcoal;">Message</td></tr>
+      <tr><td style="padding:6px 14px;font-size:9.5pt;color:$textGray;font-style:italic;line-height:1.7;">${escapeHtml(snapshot.headerText)}</td></tr>
+    </table>""" else ""}
+  </td>
+</tr>
+</table>
+
+<!-- LINE ITEMS TABLE -->
+<table width="100%" style="border-collapse:collapse;margin-bottom:0;">
+  <tr style="background-color:$charcoal;color:#FFFFFF;">
+    <th style="padding:11px 14px;text-align:left;font-size:9.5pt;letter-spacing:0.5px;">DESCRIPTION</th>
+    <th style="padding:11px 14px;text-align:center;font-size:9.5pt;width:9%;letter-spacing:0.5px;">QTY</th>
+    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;letter-spacing:0.5px;">UNIT PRICE</th>
+    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;letter-spacing:0.5px;">AMOUNT</th>
+  </tr>
+  $itemRows
+  <!-- Subtotal / Tax rows -->
+  <tr>
+    <td colspan="3" style="padding:8px 14px;text-align:right;font-size:9.5pt;color:$textGray;">Subtotal</td>
+    <td style="padding:8px 14px;text-align:right;font-size:9.5pt;color:$textDark;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
+  </tr>
+  <tr style="background-color:$lightGray;">
+    <td colspan="3" style="padding:8px 14px;text-align:right;font-size:9.5pt;color:$textGray;">$taxLabel</td>
+    <td style="padding:8px 14px;text-align:right;font-size:9.5pt;color:$textDark;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
+  </tr>
+</table>
+
+<!-- TOTAL DUE BAND — gold accent on dark background -->
+<table width="100%" style="background-color:$charcoal;margin-bottom:16px;">
+<tr>
+  <td width="65%" style="padding:14px 20px;"></td>
+  <td style="padding:14px 20px;text-align:right;">
+    <div style="font-size:9pt;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Due</div>
+    <div style="font-size:22pt;font-weight:700;color:$gold;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</div>
+  </td>
+</tr>
+</table>
+
+$paymentSection
+$notesSection
+
+<!-- SIGNATURE LINE -->
+<table width="100%" style="border-collapse:collapse;margin-top:24px;">
+<tr>
+  <td width="45%" style="padding:0 20px 0 0;vertical-align:bottom;">
+    <div style="border-top:1px solid $border;padding-top:6px;font-size:8.5pt;color:$textGray;">Authorised Signature</div>
+  </td>
+  <td width="10%"></td>
+  <td width="45%" style="padding:0 0 0 20px;vertical-align:bottom;">
+    <div style="border-top:1px solid $border;padding-top:6px;font-size:8.5pt;color:$textGray;">Date</div>
+  </td>
+</tr>
+</table>
+
+<!-- FOOTER BAND -->
+<table width="100%" style="margin-top:18px;background-color:$mutedGray;border-top:3px solid $teal;">
+<tr>
+  <td style="padding:12px 20px;text-align:center;font-size:9pt;color:$textGray;line-height:1.7;">
+    ${if (snapshot.footerText.isNotBlank()) escapeHtml(snapshot.footerText) else "Thank you for your business!"}
+    ${if (snapshot.businessEmail.isNotBlank() || snapshot.businessPhone.isNotBlank()) """
+    <br/><span style="color:$teal;font-weight:700;">
+    ${if (snapshot.businessEmail.isNotBlank()) escapeHtml(snapshot.businessEmail) else ""}
+    ${if (snapshot.businessEmail.isNotBlank() && snapshot.businessPhone.isNotBlank()) " &nbsp;|&nbsp; " else ""}
+    ${if (snapshot.businessPhone.isNotBlank()) escapeHtml(snapshot.businessPhone) else ""}
+    </span>""" else ""}
+  </td>
+</tr>
+</table>
 
 </body></html>"""
     }
