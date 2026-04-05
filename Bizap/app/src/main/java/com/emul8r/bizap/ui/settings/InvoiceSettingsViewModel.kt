@@ -18,6 +18,7 @@ import com.emul8r.bizap.domain.model.InvoiceTheme
 import com.emul8r.bizap.domain.model.PdfEngine
 import com.emul8r.bizap.domain.model.PageLayout
 import com.emul8r.bizap.domain.model.Typography
+import com.emul8r.bizap.domain.util.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
