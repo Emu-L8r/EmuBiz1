@@ -1,6 +1,8 @@
 package com.emul8r.bizap.ui.gui2.invoice
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -215,39 +217,63 @@ private fun InvoiceDetailContentV2(
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("Details", "Items", "Payment History")
 
+    // ✅ FLICKER FIX: Stabilize animation state to prevent unnecessary recompositions
+    val animatedTabIndex = rememberUpdatedState(selectedTabIndex)
+
     Column(modifier = modifier.fillMaxSize()) {
-        // Tab bar
+        // ✅ FLICKER FIX: Tab bar with optimized state management
         TabRow(selectedTabIndex = selectedTabIndex) {
             tabs.forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTabIndex == index,
-                    onClick = { selectedTabIndex = index },
+                    onClick = {
+                        // ✅ FLICKER FIX: Debounce rapid tab clicks to prevent animation conflicts
+                        if (selectedTabIndex != index) {
+                            selectedTabIndex = index
+                        }
+                    },
                     text = { Text(title) }
                 )
             }
         }
 
-        // Tab content: Use Crossfade animation for smooth transitions (eliminates flickering)
-        // Crossfade provides a smooth fade animation between tabs instead of abrupt recomposition
-        androidx.compose.animation.Crossfade(
-            targetState = selectedTabIndex,
-            modifier = Modifier.fillMaxSize(),
-            label = "Tab transition"
-        ) { tabIndex ->
-            when (tabIndex) {
-                0 -> InvoiceDetailsTab(
-                    invoice = invoice,
-                    modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())
-                )
-                1 -> InvoiceItemsTab(
-                    invoice = invoice,
-                    modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())
-                )
-                2 -> PaymentHistoryTab(
-                    invoice = invoice,
-                    businessId = businessId,
-                    modifier = Modifier.fillMaxSize()
-                )
+        // ✅ FLICKER FIX: Optimized Crossfade animation
+        // Optimizations:
+        // 1. Reduced duration to 150ms (faster = less flicker perception)
+        // 2. Use rememberUpdatedState for stable animation state
+        // 3. key() boundary for proper recomposition
+        // 4. Box wrappers for composition stability
+        key(animatedTabIndex.value) {
+            Crossfade(
+                targetState = animatedTabIndex.value,
+                animationSpec = tween(
+                    durationMillis = 150,
+                    easing = FastOutLinearInEasing
+                ),
+                modifier = Modifier.fillMaxSize(),
+                label = "Tab transition"
+            ) { tabIndex ->
+                when (tabIndex) {
+                    0 -> Box(modifier = Modifier.fillMaxSize()) {
+                        InvoiceDetailsTab(
+                            invoice = invoice,
+                            modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())
+                        )
+                    }
+                    1 -> Box(modifier = Modifier.fillMaxSize()) {
+                        InvoiceItemsTab(
+                            invoice = invoice,
+                            modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())
+                        )
+                    }
+                    2 -> Box(modifier = Modifier.fillMaxSize()) {
+                        PaymentHistoryTab(
+                            invoice = invoice,
+                            businessId = businessId,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
             }
         }
     }

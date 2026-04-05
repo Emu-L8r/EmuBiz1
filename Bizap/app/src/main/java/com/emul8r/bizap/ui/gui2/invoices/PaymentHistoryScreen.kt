@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -139,9 +140,13 @@ fun PaymentHistoryScreen(
         return
     }
 
-    // ✅ FIXED: Retrieve ViewModel and initialize with parameters
+    // ✅ CRITICAL FIX FOR FLICKERING: Only initialize once when parameters change
+    // Previously: initialize() was called on EVERY recomposition, causing constant flickering
+    // Now: Use remember to initialize only when invoiceId/businessId change
     val viewModel: PaymentHistoryViewModel = hiltViewModel()
-    val uiState by viewModel.initialize(invoiceId, businessId).collectAsStateWithLifecycle(
+    val uiState by remember(invoiceId, businessId) {
+        viewModel.initialize(invoiceId, businessId)
+    }.collectAsStateWithLifecycle(
         initialValue = PaymentHistoryUiState.Loading
     )
 

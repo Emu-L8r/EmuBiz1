@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
+import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,10 @@ fun InvoiceSettingsScreen(
     val previewHtml by viewModel.previewHtml.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // ✅ UX IMPROVEMENT: Tab state for intuitive navigation
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf("Quick Setup", "Design", "Advanced")
+
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess) {
             snackbarHostState.showSnackbar("✅ Settings saved successfully")
@@ -54,7 +59,7 @@ fun InvoiceSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("PDF Settings") },
+                title = { Text("Invoice Settings") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
@@ -69,153 +74,299 @@ fun InvoiceSettingsScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
+            Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                // ✅ VISUAL GUIDE: Tab navigation for better UX
+                TabRow(selectedTabIndex = selectedTabIndex) {
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTabIndex == index,
+                            onClick = { selectedTabIndex = index },
+                            text = { Text(title, style = MaterialTheme.typography.labelMedium) }
+                        )
+                    }
+                }
+
+                // ✅ SMOOTH TRANSITIONS: Crossfade between tabs
+                Crossfade(
+                    targetState = selectedTabIndex,
+                    modifier = Modifier.fillMaxSize(),
+                    label = "Settings tab transition"
+                ) { tabIndex ->
+                    when (tabIndex) {
+                        0 -> QuickSetupTab(viewModel = viewModel, uiState = uiState)
+                        1 -> DesignTab(viewModel = viewModel, uiState = uiState, previewHtml = previewHtml)
+                        2 -> AdvancedTab(viewModel = viewModel, uiState = uiState)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * ✅ QUICK SETUP TAB: Simplified for new users
+ * Only shows essential settings to get started quickly
+ */
+@Composable
+private fun QuickSetupTab(
+    viewModel: InvoiceSettingsViewModel,
+    uiState: InvoiceSettingsUiState
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+        contentPadding = PaddingValues(vertical = 16.dp)
+    ) {
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    "Getting Started",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Choose how you want your invoices to look",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        item {
+            PdfEngineSection(
+                selectedEngine = uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS,
+                onEngineSelected = { viewModel.updateSelectedPdfEngine(it) }
+            )
+        }
+
+        item {
+            val currentTheme = when (uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS) {
+                PdfEngine.HTML_CSS -> InvoiceTheme.HTML_PDF
+                PdfEngine.CANVAS   -> InvoiceTheme.CANVAS
+            }
+            TemplateSelectionSection(
+                currentTheme = currentTheme,
+                selectedCanvasTemplate = uiState.settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN,
+                selectedHtmlStyle = uiState.settings?.selectedHtmlStyle ?: HtmlInvoiceStyle.MODERN,
+                onCanvasTemplateSelected = { viewModel.updateSelectedCanvasTemplate(it) },
+                onHtmlStyleSelected = { viewModel.updateSelectedHtmlStyle(it) }
+            )
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                )
             ) {
-                item {
-                    InfoSection()
-                }
-
-                // ════════════════════════════════════════════════════════════════════
-                // UNIFIED WORKFLOW: PDF GENERATION SETTINGS (Steps 1-4)
-                // ════════════════════════════════════════════════════════════════════
-
-                item {
-                    // 1️⃣ Step 1: Choose PDF Engine (Canvas vs HTML)
-                    PdfEngineSection(
-                        selectedEngine = uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS,
-                        onEngineSelected = { viewModel.updateSelectedPdfEngine(it) }
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "💡 Tip",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        "Visit the Design tab for typography options and preview. Advanced tab has more settings.",
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
+            }
+        }
 
-                item {
-                    // 2️⃣ Step 2: Choose Template/Style (updates based on engine)
-                    // Derive theme from selectedPdfEngine (authoritative) so the template
-                    // grid always reflects what the user picked in Step 1.
-                    val currentTheme = when (uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS) {
-                        PdfEngine.HTML_CSS -> InvoiceTheme.HTML_PDF
-                        PdfEngine.CANVAS   -> InvoiceTheme.CANVAS
-                    }
-                    TemplateSelectionSection(
-                        currentTheme = currentTheme,
-                        selectedCanvasTemplate = uiState.settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN,
-                        selectedHtmlStyle = uiState.settings?.selectedHtmlStyle ?: HtmlInvoiceStyle.MODERN,
-                        onCanvasTemplateSelected = { viewModel.updateSelectedCanvasTemplate(it) },
-                        onHtmlStyleSelected = { viewModel.updateSelectedHtmlStyle(it) }
-                    )
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = { viewModel.saveSettings() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text("Save")
                 }
-
-                item {
-                    // 3️⃣ Step 3: Choose Page Layout (Classic vs Modern)
-                    PageLayoutSection(
-                        selectedLayout = uiState.settings?.selectedPageLayout ?: PageLayout.CLASSIC,
-                        onLayoutSelected = { viewModel.updateSelectedPageLayout(it) }
-                    )
+                OutlinedButton(
+                    onClick = { viewModel.resetToDefaults() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text("Reset")
                 }
+            }
+        }
+    }
+}
 
-                item {
-                    // 4️⃣ Step 4: Live Preview (real-time visualization of all choices)
-                    LivePreviewSection(
-                        previewHtml = previewHtml,
-                        onRefresh = { viewModel.generatePreview() },
-                        selectedEngine = uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS,
-                        selectedCanvasTemplate = uiState.settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN
-                    )
+/**
+ * ✅ DESIGN TAB: For users who want to customize appearance
+ */
+@Composable
+private fun DesignTab(
+    viewModel: InvoiceSettingsViewModel,
+    uiState: InvoiceSettingsUiState,
+    previewHtml: String?
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(vertical = 16.dp)
+    ) {
+        item {
+            Text(
+                "Customize Your Look",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                PageLayoutSection(
+                    selectedLayout = settings.selectedPageLayout,
+                    onLayoutSelected = { viewModel.updateSelectedPageLayout(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                TypographySection(
+                    selectedTypography = settings.selectedTypography,
+                    onTypographySelected = { viewModel.updateSelectedTypography(it) }
+                )
+            }
+        }
+
+        item {
+            LivePreviewSection(
+                previewHtml = previewHtml,
+                onRefresh = { viewModel.generatePreview() },
+                selectedEngine = uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS,
+                selectedCanvasTemplate = uiState.settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN
+            )
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = { viewModel.saveSettings() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text("Save")
                 }
-
-                item {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                OutlinedButton(
+                    onClick = { viewModel.resetToDefaults() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text("Reset")
                 }
+            }
+        }
+    }
+}
 
-                // ════════════════════════════════════════════════════════════════════
-                // OPTIONAL: DESIGN CUSTOMIZATION (Steps 5-6)
-                // ════════════════════════════════════════════════════════════════════
+/**
+ * ✅ ADVANCED TAB: For power users who need fine-tuning
+ */
+@Composable
+private fun AdvancedTab(
+    viewModel: InvoiceSettingsViewModel,
+    uiState: InvoiceSettingsUiState
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(vertical = 16.dp)
+    ) {
+        item {
+            Text(
+                "Advanced Settings",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
-                item {
-                    // 5️⃣ Typography Selection
-                    uiState.settings?.let { settings ->
-                        TypographySection(
-                            selectedTypography = settings.selectedTypography,
-                            onTypographySelected = { viewModel.updateSelectedTypography(it) }
-                        )
-                    }
+        item {
+            uiState.settings?.let { settings ->
+                VisibilityTogglesSection(
+                    showBusinessAbn = settings.showBusinessAbn,
+                    showCustomerPhone = settings.showCustomerPhone,
+                    showStatusWatermark = settings.showStatusWatermark,
+                    showPageNumbers = settings.showPageNumbers,
+                    onShowBusinessAbnChanged = { viewModel.toggleShowBusinessAbn(it) },
+                    onShowCustomerPhoneChanged = { viewModel.toggleShowCustomerPhone(it) },
+                    onShowStatusWatermarkChanged = { viewModel.toggleShowStatusWatermark(it) },
+                    onShowPageNumbersChanged = { viewModel.toggleShowPageNumbers(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                LocaleSelectionSection(
+                    selectedLocale = settings.selectedLocale,
+                    onLocaleSelected = { viewModel.updateSelectedLocale(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                PaymentSection(
+                    paymentTermsDays = settings.paymentTermsDays,
+                    onPaymentTermsChanged = { viewModel.updatePaymentTermsDays(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                TaxSection(
+                    taxRate = settings.taxRate,
+                    taxName = settings.taxName,
+                    onTaxRateChanged = { viewModel.updateTaxRate(it) },
+                    onTaxNameChanged = { viewModel.updateTaxName(it) }
+                )
+            }
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = { viewModel.saveSettings() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text("Save")
                 }
-
-                item {
-                    // 6️⃣ Visibility Toggles
-                    uiState.settings?.let { settings ->
-                        VisibilityTogglesSection(
-                            showBusinessAbn = settings.showBusinessAbn,
-                            showCustomerPhone = settings.showCustomerPhone,
-                            showStatusWatermark = settings.showStatusWatermark,
-                            showPageNumbers = settings.showPageNumbers,
-                            onShowBusinessAbnChanged = { viewModel.toggleShowBusinessAbn(it) },
-                            onShowCustomerPhoneChanged = { viewModel.toggleShowCustomerPhone(it) },
-                            onShowStatusWatermarkChanged = { viewModel.toggleShowStatusWatermark(it) },
-                            onShowPageNumbersChanged = { viewModel.toggleShowPageNumbers(it) }
-                        )
-                    }
-                }
-
-                item {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
-                }
-
-                // ════════════════════════════════════════════════════════════════════
-                // INTERNATIONAL SETTINGS (Step 7)
-                // ════════════════════════════════════════════════════════════════════
-
-                item {
-                    // 7️⃣ Locale & Currency Formatting
-                    uiState.settings?.let { settings ->
-                        LocaleSelectionSection(
-                            selectedLocale = settings.selectedLocale,
-                            onLocaleSelected = { viewModel.updateSelectedLocale(it) }
-                        )
-                    }
-                }
-
-                item {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
-                }
-
-                // ════════════════════════════════════════════════════════════════════
-                // OPTIONAL: BUSINESS SETTINGS (Steps 8+)
-                // ════════════════════════════════════════════════════════════════════
-
-                item {
-                    // 8️⃣ Payment Terms Configuration
-                    uiState.settings?.let { settings ->
-                        PaymentSection(
-                            paymentTermsDays = settings.paymentTermsDays,
-                            onPaymentTermsChanged = { viewModel.updatePaymentTermsDays(it) }
-                        )
-                    }
-                }
-
-                item {
-                    // 9️⃣ Tax Configuration
-                    uiState.settings?.let { settings ->
-                        TaxSection(
-                            taxRate = settings.taxRate,
-                            taxName = settings.taxName,
-                            onTaxRateChanged = { viewModel.updateTaxRate(it) },
-                            onTaxNameChanged = { viewModel.updateTaxName(it) }
-                        )
-                    }
-                }
-
-                item {
-                    // 🔟 Save & Reset Actions
-                    ActionButtonsSection(
-                        onSave = { viewModel.saveSettings() },
-                        onReset = { viewModel.resetToDefaults() }
-                    )
+                OutlinedButton(
+                    onClick = { viewModel.resetToDefaults() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text("Reset")
                 }
             }
         }
@@ -402,6 +553,7 @@ private fun HtmlStyleCard(
         HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> Color(0xFF2563EB)
         HtmlInvoiceStyle.WARM_APPROACHABLE     -> Color(0xFFF59E0B)
         HtmlInvoiceStyle.SASS_PROFESSIONAL     -> Color(0xFF0A2540)
+        HtmlInvoiceStyle.REFINED               -> Color(0xFF6B4C9A)  // Purple from REFINED template
     }
     val secondaryColor = when (style) {
         HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> Color(0xFF1C1C2E)

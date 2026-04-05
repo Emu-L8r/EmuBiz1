@@ -133,6 +133,12 @@ private fun StylePreviewContent(style: HtmlInvoiceStyle) {
             FontFamily.SansSerif,
             "Professional SASS-compiled styles"
         )
+
+        HtmlInvoiceStyle.REFINED -> Triple(
+            Color(0xFF6B4C9A),
+            FontFamily.SansSerif,
+            "Canvas grid match with purple theme"
+        )
     }
 
     Column(
@@ -240,6 +246,13 @@ private fun StyleDetailsCard(style: HtmlInvoiceStyle) {
             "Font" to "Modern sans-serif (Segoe UI)",
             "Vibe" to "Professional, compiled SASS styles",
             "Best For" to "Enterprise, professional services, B2B"
+        )
+
+        HtmlInvoiceStyle.REFINED -> mapOf(
+            "Header" to "Purple gradient, 60px height",
+            "Font" to "Modern sans-serif (Segoe UI)",
+            "Vibe" to "Grid-matched with Canvas, professional",
+            "Best For" to "Businesses wanting consistent styling"
         )
     }
 
