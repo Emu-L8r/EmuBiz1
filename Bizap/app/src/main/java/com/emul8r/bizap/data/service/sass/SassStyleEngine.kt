@@ -523,7 +523,7 @@ class SassStyleEngine(private val tokens: SassTokens) {
             val surface     = tint(0.92)           // very light surface tint
             val muted       = tint(0.88)           // subtle muted background
             val text        = if (luminance > 0.5) "#1A1A1A" else "#FFFFFF"
-            val textMuted   = if (luminance > 0.5) shade(0.30).let { "#6B7280" } else "#CBD5E1"
+            val textMuted   = if (luminance > 0.5) "#6B7280" else "#CBD5E1"
             val border      = tint(0.75)           // light border
             val totalBg     = shade(0.15)          // slightly darker total band
             val totalText   = "#FFFFFF"
