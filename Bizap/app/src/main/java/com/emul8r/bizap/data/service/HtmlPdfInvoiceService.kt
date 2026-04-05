@@ -176,12 +176,13 @@ class HtmlPdfInvoiceService(
         // New premium styles always use their own self-contained templates.
         // They define a complete layout, so we skip the PageLayout routing entirely.
         if (style == HtmlInvoiceStyle.PREMIUM_PROFESSIONAL || style == HtmlInvoiceStyle.WARM_APPROACHABLE
-            || style == HtmlInvoiceStyle.SASS_PROFESSIONAL) {
+            || style == HtmlInvoiceStyle.SASS_PROFESSIONAL || style == HtmlInvoiceStyle.REFINED) {
             Timber.d("✅ Using premium style-based generation: ${style.name}")
             return when (style) {
                 HtmlInvoiceStyle.PREMIUM_PROFESSIONAL -> generatePremiumProfessionalTemplate(clean, isQuote)
                 HtmlInvoiceStyle.WARM_APPROACHABLE    -> generateWarmApproachableTemplate(clean, isQuote)
                 HtmlInvoiceStyle.SASS_PROFESSIONAL    -> generateSassProfessionalTemplate(clean, isQuote)
+                HtmlInvoiceStyle.REFINED              -> generateRefinedTemplate(clean, isQuote)
                 else -> throw IllegalStateException("Unexpected style in premium branch: $style")
             }
         }
@@ -206,6 +207,7 @@ class HtmlPdfInvoiceService(
             HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> generatePremiumProfessionalTemplate(clean, isQuote)
             HtmlInvoiceStyle.WARM_APPROACHABLE     -> generateWarmApproachableTemplate(clean, isQuote)
             HtmlInvoiceStyle.SASS_PROFESSIONAL     -> generateSassProfessionalTemplate(clean, isQuote)
+            HtmlInvoiceStyle.REFINED               -> generateRefinedTemplate(clean, isQuote)
         }
     }
 
@@ -1155,6 +1157,176 @@ ${if (snapshot.footerText.isNotBlank()) """
 <table width="100%" style="margin-top:16px;">
 <tr><td style="padding:12px 16px;text-align:center;font-size:8.5pt;color:$textMuted;background-color:$surface;border-top:3px solid $accent;line-height:1.8;">${escapeHtml(snapshot.footerText)}</td></tr>
 </table>""" else ""}
+
+</body></html>"""
+    }
+
+    // -------------------------------------------------------------------------
+    // Template 8: REFINED (Canvas Grid Match) - Purple #6B4C9A + Orange #FF9F43
+    // -------------------------------------------------------------------------
+
+    private fun generateRefinedTemplate(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
+        val purple = "#6B4C9A"
+        val orange = "#FF9F43"
+        val docType = if (isQuote) "QUOTE" else "INVOICE"
+        val watermark = buildStatusWatermark(snapshot.invoiceStatus)
+        val logoHtml = if (!snapshot.logoBase64.isNullOrBlank())
+            """<img src="data:image/png;base64,${snapshot.logoBase64}" style="max-height:48px;max-width:130px;" alt="logo"/>"""
+        else ""
+
+        // Build item rows matching Canvas striping
+        val itemRows = snapshot.items.mapIndexed { i, item ->
+            val bg = if (i % 2 == 0) "#FFFFFF" else "#F9F9F9"
+            val unitDollars = formatMoney(item.unitPrice, snapshot.currencyCode)
+            val totalDollars = formatMoney(item.total, snapshot.currencyCode)
+            """<tr style="background-color:$bg;">
+                <td style="padding:12px;border-bottom:1px solid #E0E0E0;line-height:1.5;">${escapeHtml(item.description)}</td>
+                <td style="padding:12px;border-bottom:1px solid #E0E0E0;text-align:center;line-height:1.5;">${formatQty(item.quantity)}</td>
+                <td style="padding:12px;border-bottom:1px solid #E0E0E0;text-align:right;line-height:1.5;">$unitDollars</td>
+                <td style="padding:12px;border-bottom:1px solid #E0E0E0;text-align:right;font-weight:bold;color:$purple;line-height:1.5;">$totalDollars</td>
+            </tr>"""
+        }.joinToString("\n")
+
+        val taxLabel = if (snapshot.taxRate > 0) "Tax (${(snapshot.taxRate * 100).toInt()}%)" else "Tax"
+
+        val hasBank = snapshot.bankName.isNotBlank() || snapshot.bankAccountName.isNotBlank()
+            || snapshot.bankAccountNumber.isNotBlank() || snapshot.bankBsb.isNotBlank()
+        val paymentSection = if (hasBank) """
+            <div class="payment-section">
+                <h3>PAYMENT DETAILS</h3>
+                <table class="payment-table">
+                    ${if (snapshot.bankName.isNotBlank()) """<tr><td class="payment-label">Bank Name:</td><td class="payment-value">${escapeHtml(snapshot.bankName)}</td></tr>""" else ""}
+                    ${if (snapshot.bankAccountName.isNotBlank()) """<tr><td class="payment-label">Account Name:</td><td class="payment-value">${escapeHtml(snapshot.bankAccountName)}</td></tr>""" else ""}
+                    ${if (snapshot.bankAccountNumber.isNotBlank()) """<tr><td class="payment-label">Account Number:</td><td class="payment-value">${escapeHtml(snapshot.bankAccountNumber)}</td></tr>""" else ""}
+                    ${if (snapshot.bankBsb.isNotBlank()) """<tr><td class="payment-label">BSB:</td><td class="payment-value">${escapeHtml(snapshot.bankBsb)}</td></tr>""" else ""}
+                </table>
+            </div>
+        """.trimIndent() else ""
+
+        val notesSection = if (snapshot.notes.isNotBlank()) """
+            <div class="payment-section">
+                <h3>NOTES</h3>
+                <p style="margin:0;padding:8px 0;font-size:10pt;line-height:1.6;">${escapeHtml(snapshot.notes)}</p>
+            </div>
+        """.trimIndent() else ""
+
+        return """<!DOCTYPE html>
+<html><head><meta charset="UTF-8"/>
+<link rel="stylesheet" href="invoice-styles-refined.css"/>
+<style>
+@page { size: A4; margin: 15mm 15mm 15mm 15mm; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; color: #000000; margin: 0; padding: 0; line-height: 1.6; }
+</style>
+</head><body>
+
+<div class="invoice-container">
+
+<!-- HEADER SECTION - 60px height with purple background -->
+<div class="invoice-header">
+    <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td class="company-info">
+        $logoHtml
+        ${if (snapshot.businessName.isNotBlank()) """<h1>${escapeHtml(snapshot.businessName)}</h1>""" else ""}
+        <div class="company-details">
+        ${if (snapshot.businessAddress.isNotBlank()) """${addressLines(snapshot.businessAddress)} &nbsp;|&nbsp; """ else ""}
+        ${if (snapshot.businessEmail.isNotBlank()) """${escapeHtml(snapshot.businessEmail)} &nbsp;|&nbsp; """ else ""}
+        ${if (snapshot.businessPhone.isNotBlank()) """${escapeHtml(snapshot.businessPhone)}""" else ""}
+        ${if (snapshot.businessAbn.isNotBlank()) """<br/>ABN: ${escapeHtml(snapshot.businessAbn)}""" else ""}
+        </div>
+      </td>
+      <td class="invoice-title">
+        <div class="invoice-label">$docType</div>
+        <div class="invoice-number">${escapeHtml(snapshot.invoiceNumber)}</div>
+        $watermark
+      </td>
+    </tr>
+    </table>
+</div>
+
+<!-- TWO-COLUMN LAYOUT (Bill To & Invoice Details) -->
+<div class="details-section">
+    <table style="width:100%;border-collapse:separate;border-spacing:8px 0;">
+    <tr>
+      <td class="card" style="width:50%;">
+        <div class="card-header">BILL TO</div>
+        ${if (snapshot.customerName.isNotBlank()) """<div class="card-name">${escapeHtml(snapshot.customerName)}</div>""" else ""}
+        ${if (snapshot.customerAddress.isNotBlank()) """<div class="card-detail">${addressLines(snapshot.customerAddress)}</div>""" else ""}
+        ${if (!snapshot.customerEmail.isNullOrBlank()) """<div class="card-detail">${escapeHtml(snapshot.customerEmail)}</div>""" else ""}
+      </td>
+      <td class="card" style="width:50%;">
+        <div class="card-header">INVOICE DETAILS</div>
+        <div class="card-detail"><strong>Invoice #:</strong> ${escapeHtml(snapshot.invoiceNumber)}</div>
+        <div class="card-detail"><strong>Date:</strong> ${formatDate(snapshot.date)}</div>
+        <div class="card-detail"><strong>Due Date:</strong> ${formatDate(snapshot.dueDate)}</div>
+        <div class="card-detail"><strong>Currency:</strong> ${escapeHtml(snapshot.currencyCode)}</div>
+        ${if (snapshot.invoiceStatus.isNotBlank()) """<div class="card-detail"><strong>Status:</strong> ${escapeHtml(snapshot.invoiceStatus)}</div>""" else ""}
+      </td>
+    </tr>
+    </table>
+</div>
+
+${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:12px;font-size:9pt;color:#666666;font-style:italic;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+
+<!-- ITEMS TABLE - Strict grid matching Canvas -->
+<table class="items-table">
+  <thead>
+    <tr>
+      <th class="col-description">DESCRIPTION</th>
+      <th class="col-quantity">QTY</th>
+      <th class="col-unit-price">UNIT PRICE</th>
+      <th class="col-amount">AMOUNT</th>
+    </tr>
+  </thead>
+  <tbody>
+    $itemRows
+  </tbody>
+</table>
+
+<!-- TOTALS SECTION - Typography-driven -->
+<div class="totals-section">
+    <table class="totals-table">
+      <tr>
+        <td class="label">Subtotal:</td>
+        <td class="amount">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
+      </tr>
+      <tr>
+        <td class="label">$taxLabel:</td>
+        <td class="amount">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
+      </tr>
+      <tr class="totals-divider">
+        <td colspan="2" style="padding-top:8px;"></td>
+      </tr>
+      <tr class="total-due">
+        <td class="label">TOTAL DUE:</td>
+        <td class="amount">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</td>
+      </tr>
+      <tr class="totals-underline">
+        <td colspan="2"></td>
+      </tr>
+    </table>
+</div>
+
+$paymentSection
+$notesSection
+
+${if (snapshot.footerText.isNotBlank()) """
+<div class="invoice-footer">
+    <div class="footer-thank-you">Thank you for your business!</div>
+    <div class="footer-contact">${escapeHtml(snapshot.footerText)}</div>
+</div>
+""" else """
+<div class="invoice-footer">
+    <div class="footer-thank-you">Thank you for your business!</div>
+    ${if (snapshot.businessEmail.isNotBlank() || snapshot.businessPhone.isNotBlank()) """<div class="footer-contact">
+        ${if (snapshot.businessEmail.isNotBlank()) """Email: ${escapeHtml(snapshot.businessEmail)}""" else ""}
+        ${if (snapshot.businessEmail.isNotBlank() && snapshot.businessPhone.isNotBlank()) """ &nbsp;|&nbsp; """ else ""}
+        ${if (snapshot.businessPhone.isNotBlank()) """Phone: ${escapeHtml(snapshot.businessPhone)}""" else ""}
+    </div>""" else ""}
+</div>
+"""}
+
+</div>
 
 </body></html>"""
     }
