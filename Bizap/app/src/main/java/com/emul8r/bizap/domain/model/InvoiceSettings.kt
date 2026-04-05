@@ -260,6 +260,9 @@ enum class PresetColor(val hexCode: String, val displayName: String) {
  * - WARM_APPROACHABLE: Warm amber tones with friendly typography
  * - SASS_PROFESSIONAL: SASS-engine compiled style — deep navy + electric blue,
  *   tight grid layout, large prominent totals; the highest-fidelity template
+ * - REFINED: HTML template matching Canvas grid system with purple gradient
+ * - PROFESSIONAL_PLUS: Sidebar branding, signature line, geometric accents —
+ *   the highest quality Phase 1 template with modern professional design
  */
 enum class HtmlInvoiceStyle(val displayName: String, val description: String, val styleFile: String) {
     MODERN("Modern (Premium)", "Professional modern design with purple gradient", "invoice-styles.css"),
@@ -269,7 +272,8 @@ enum class HtmlInvoiceStyle(val displayName: String, val description: String, va
     PREMIUM_PROFESSIONAL("Premium Professional", "Modern minimalist design with dark header and blue accents", "invoice-styles-premium.css"),
     WARM_APPROACHABLE("Warm Approachable", "Friendly design with warm colors and approachable typography", "invoice-styles-warm.css"),
     SASS_PROFESSIONAL("SASS Professional ✨", "SASS-engine compiled: deep navy header, electric-blue accents, tight grid layout", "invoice-styles-sass.css"),
-    REFINED("REFINED (Canvas Match)", "HTML template matching Canvas grid system exactly with purple gradient", "invoice-styles-refined.css");
+    REFINED("REFINED (Canvas Match)", "HTML template matching Canvas grid system exactly with purple gradient", "invoice-styles-refined.css"),
+    PROFESSIONAL_PLUS("Professional Plus ⭐", "Sidebar branding, signature line, geometric accents — highest quality template", "invoice-styles-professional-plus.css");
 
     companion object {
         fun getDefault() = MODERN

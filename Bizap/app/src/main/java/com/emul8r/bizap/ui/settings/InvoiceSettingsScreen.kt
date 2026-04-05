@@ -554,11 +554,13 @@ private fun HtmlStyleCard(
         HtmlInvoiceStyle.WARM_APPROACHABLE     -> Color(0xFFF59E0B)
         HtmlInvoiceStyle.SASS_PROFESSIONAL     -> Color(0xFF0A2540)
         HtmlInvoiceStyle.REFINED               -> Color(0xFF6B4C9A)  // Purple from REFINED template
+        HtmlInvoiceStyle.PROFESSIONAL_PLUS     -> Color(0xFF1A1A2E)  // Charcoal from PROFESSIONAL_PLUS
     }
     val secondaryColor = when (style) {
         HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> Color(0xFF1C1C2E)
         HtmlInvoiceStyle.WARM_APPROACHABLE     -> Color(0xFF1F2937)
         HtmlInvoiceStyle.SASS_PROFESSIONAL     -> Color(0xFFF7F9FC)
+        HtmlInvoiceStyle.PROFESSIONAL_PLUS     -> Color(0xFF00C9A7)  // Teal accent
         else                                   -> null
     }
 
