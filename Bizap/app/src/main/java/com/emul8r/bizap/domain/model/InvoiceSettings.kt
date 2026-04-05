@@ -268,7 +268,8 @@ enum class HtmlInvoiceStyle(val displayName: String, val description: String, va
     CREATIVE("Creative (Startup)", "Vibrant, modern design perfect for startups", "invoice-styles-creative.css"),
     PREMIUM_PROFESSIONAL("Premium Professional", "Modern minimalist design with dark header and blue accents", "invoice-styles-premium.css"),
     WARM_APPROACHABLE("Warm Approachable", "Friendly design with warm colors and approachable typography", "invoice-styles-warm.css"),
-    SASS_PROFESSIONAL("SASS Professional ✨", "SASS-engine compiled: deep navy header, electric-blue accents, tight grid layout", "invoice-styles-sass.css");
+    SASS_PROFESSIONAL("SASS Professional ✨", "SASS-engine compiled: deep navy header, electric-blue accents, tight grid layout", "invoice-styles-sass.css"),
+    REFINED("REFINED (Canvas Match)", "HTML template matching Canvas grid system exactly with purple gradient", "invoice-styles-refined.css");
 
     companion object {
         fun getDefault() = MODERN
