@@ -1577,10 +1577,10 @@ $accentDivider
 <!-- LINE ITEMS TABLE (Phase 2: refined column widths and spacing) -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:0;">
   <tr style="background-color:$charcoal;color:#FFFFFF;">
-    <th style="padding:12pt 14px;text-align:left;font-size:9.5pt;letter-spacing:0.5px;">DESCRIPTION</th>
-    <th style="padding:12pt 14px;text-align:center;font-size:9.5pt;width:9%;letter-spacing:0.5px;">QTY</th>
-    <th style="padding:12pt 14px;text-align:right;font-size:9.5pt;width:17%;letter-spacing:0.5px;">UNIT PRICE</th>
-    <th style="padding:12pt 14px;text-align:right;font-size:9.5pt;width:17%;letter-spacing:0.5px;">AMOUNT</th>
+    <th style="padding:11px 14px;text-align:left;font-size:9.5pt;letter-spacing:0.5px;">DESCRIPTION</th>
+    <th style="padding:11px 14px;text-align:center;font-size:9.5pt;width:9%;letter-spacing:0.5px;">QTY</th>
+    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;letter-spacing:0.5px;">UNIT PRICE</th>
+    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;letter-spacing:0.5px;">AMOUNT</th>
   </tr>
   $itemRows
   <!-- Subtotal / Tax rows -->
