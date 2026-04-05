@@ -281,4 +281,62 @@ class SassStyleEngineTest {
             )
         }
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Phase 2: New SassMixins (signatureLine, authorizationSection,
+    //          paymentMethodBadge, sectionCard)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `signatureLine mixin contains signature-line class`() {
+        val css = SassMixins.signatureLine("#00C9A7")
+        assertTrue("Should include .signature-line class", css.contains(".signature-line"))
+        assertTrue("Should include border-bottom", css.contains("border-bottom"))
+        assertTrue("Should embed provided color", css.contains("#00C9A7"))
+    }
+
+    @Test
+    fun `signatureLine mixin contains signature-label class`() {
+        val css = SassMixins.signatureLine("#00C9A7")
+        assertTrue("Should include .signature-label class", css.contains(".signature-label"))
+    }
+
+    @Test
+    fun `authorizationSection mixin contains auth-section class`() {
+        val css = SassMixins.authorizationSection("#DEE2E6", "#FFFFFF")
+        assertTrue("Should include .auth-section class", css.contains(".auth-section"))
+        assertTrue("Should include border-top", css.contains("border-top"))
+    }
+
+    @Test
+    fun `paymentMethodBadge mixin contains payment-badge class`() {
+        val css = SassMixins.paymentMethodBadge("#0066FF", "#EFF6FF")
+        assertTrue("Should include .payment-badge class", css.contains(".payment-badge"))
+        assertTrue("Should include background-color", css.contains("background-color"))
+        assertTrue("Should embed accent color", css.contains("#0066FF"))
+    }
+
+    @Test
+    fun `sectionCard mixin contains section-card class`() {
+        val css = SassMixins.sectionCard("#F1F5F9", "#0066FF", "4px")
+        assertTrue("Should include .section-card class", css.contains(".section-card"))
+        assertTrue("Should include border-left", css.contains("border-left"))
+        assertTrue("Should embed provided color", css.contains("#0066FF"))
+    }
+
+    @Test
+    fun `compile includes Phase 2 signature and payment mixin output`() {
+        val css = SassStyleEngine(SassTokens.sassprofessional()).compile()
+        assertTrue("Should include .signature-line from signatureLine mixin", css.contains(".signature-line"))
+        assertTrue("Should include .auth-section from authorizationSection mixin", css.contains(".auth-section"))
+        assertTrue("Should include .payment-badge from paymentMethodBadge mixin", css.contains(".payment-badge"))
+        assertTrue("Should include .section-card from sectionCard mixin", css.contains(".section-card"))
+    }
+
+    @Test
+    fun `compile Phase 2 output remains iText7-safe (no flexbox or CSS vars)`() {
+        val css = SassStyleEngine(SassTokens.sassprofessional()).compile()
+        assertFalse("iText7 does not support CSS variables", css.contains("var(--"))
+        assertFalse("iText7 does not support flexbox", css.contains("display: flex") || css.contains("display:flex"))
+    }
 }

@@ -326,6 +326,63 @@ object SassMixins {
             text-align: center;
         }
     """.trimIndent()
+
+    /**
+     * @mixin signature-line($borderColor)
+     * Dashed signature / authorization line styling.
+     */
+    fun signatureLine(borderColor: String): String = """
+        .signature-line {
+            border-bottom: 2px dashed $borderColor;
+            height: 28px;
+            width: 80%;
+            margin-bottom: 4px;
+        }
+        .signature-label {
+            font-size: 8.5pt;
+            color: #6B7280;
+        }
+    """.trimIndent()
+
+    /**
+     * @mixin authorization-section($borderColor, $bgColor)
+     * Container styling for the signature / authorization block.
+     */
+    fun authorizationSection(borderColor: String, bgColor: String): String = """
+        .auth-section {
+            border-top: 1px solid $borderColor;
+            padding-top: 12px;
+            margin-top: 20px;
+            background-color: $bgColor;
+        }
+    """.trimIndent()
+
+    /**
+     * @mixin payment-method-badge($accentColor, $bgColor)
+     * Badge styling for payment method icons + labels.
+     */
+    fun paymentMethodBadge(accentColor: String, bgColor: String): String = """
+        .payment-badge {
+            background-color: $bgColor;
+            color: $accentColor;
+            font-size: 8.5pt;
+            font-weight: 700;
+            padding: 2px 8px;
+        }
+    """.trimIndent()
+
+    /**
+     * @mixin section-card($bg, $borderColor, $borderWidth)
+     * Section container with muted background and left accent border.
+     */
+    fun sectionCard(bg: String, borderColor: String, borderWidth: String): String = """
+        .section-card {
+            background-color: $bg;
+            border-left: $borderWidth solid $borderColor;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+        }
+    """.trimIndent()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -442,6 +499,31 @@ class SassStyleEngine(private val tokens: SassTokens) {
             textColor   = tokens.colorTextMuted,
             borderColor = tokens.colorAccentBorder,
             borderWidth = tokens.headerAccentBorderWidth
+        ))
+        appendLine()
+
+        // signature / authorization section
+        appendLine(SassMixins.signatureLine(color = tokens.colorAccent))
+        appendLine()
+
+        appendLine(SassMixins.authorizationSection(
+            borderColor = tokens.colorBorder,
+            bgColor     = tokens.colorBackground
+        ))
+        appendLine()
+
+        // payment method badge
+        appendLine(SassMixins.paymentMethodBadge(
+            accentColor = tokens.colorAccent,
+            bgColor     = tokens.colorMuted
+        ))
+        appendLine()
+
+        // section card
+        appendLine(SassMixins.sectionCard(
+            bg          = tokens.colorMuted,
+            borderColor = tokens.colorAccent,
+            borderWidth = tokens.sectionBorderLeftWidth
         ))
         appendLine()
 
