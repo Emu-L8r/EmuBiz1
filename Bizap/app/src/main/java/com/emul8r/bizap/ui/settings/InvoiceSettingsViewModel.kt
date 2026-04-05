@@ -278,18 +278,36 @@ class InvoiceSettingsViewModel @Inject constructor(
     fun saveSettings() {
         viewModelScope.launch {
             val currentSettings = _uiState.value.settings ?: return@launch
-            
+
             try {
                 _uiState.value = _uiState.value.copy(isSaving = true)
                 Timber.d("💾 Saving settings: style=${currentSettings.selectedHtmlStyle}")
-                
+
+                // CRITICAL FIX: Save settings with proper database synchronization
                 repository.saveSettings(currentSettings)
-                
-                _uiState.value = _uiState.value.copy(
-                    saveSuccess = true,
-                    isSaving = false
-                )
-                
+                Timber.d("✅ Settings persisted to database")
+
+                // CRITICAL FIX: Add delay to ensure Room database transaction is fully committed
+                // This prevents race conditions where subsequent reads get stale data
+                delay(150)
+
+                // CRITICAL FIX: Force reload settings from database to verify save worked
+                // and ensure next PDF generation gets fresh data (not cached/stale)
+                Timber.d("🔄 Reloading settings from database to verify save...")
+                val reloadedSettings = repository.getSettings(currentSettings.userId)
+
+                if (reloadedSettings != null) {
+                    // Update UI state with freshly loaded settings
+                    _uiState.value = _uiState.value.copy(
+                        settings = reloadedSettings,
+                        saveSuccess = true,
+                        isSaving = false
+                    )
+                    Timber.d("✅ Settings verified from database: style=${reloadedSettings.selectedHtmlStyle}")
+                } else {
+                    throw IllegalStateException("Settings not found in database after save")
+                }
+
                 delay(1500)
                 _uiState.value = _uiState.value.copy(saveSuccess = false)
             } catch (e: Exception) {
