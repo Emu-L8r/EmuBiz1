@@ -139,6 +139,12 @@ private fun StylePreviewContent(style: HtmlInvoiceStyle) {
             FontFamily.SansSerif,
             "Canvas grid match with purple theme"
         )
+
+        HtmlInvoiceStyle.PROFESSIONAL_PLUS -> Triple(
+            Color(0xFF1A1A2E),
+            FontFamily.SansSerif,
+            "Sidebar branding, signature line"
+        )
     }
 
     Column(
@@ -253,6 +259,13 @@ private fun StyleDetailsCard(style: HtmlInvoiceStyle) {
             "Font" to "Modern sans-serif (Segoe UI)",
             "Vibe" to "Grid-matched with Canvas, professional",
             "Best For" to "Businesses wanting consistent styling"
+        )
+
+        HtmlInvoiceStyle.PROFESSIONAL_PLUS -> mapOf(
+            "Header" to "Dark charcoal sidebar with teal accent bar",
+            "Font" to "Modern sans-serif (Arial/Segoe UI)",
+            "Vibe" to "Premium, modern, structured — highest quality template",
+            "Best For" to "Premium services, B2B, enterprise"
         )
     }
 
