@@ -14,6 +14,7 @@ import com.emul8r.bizap.data.local.dao.*
 import com.emul8r.bizap.data.local.migrations.*
 import com.emul8r.bizap.data.local.migration.MIGRATION_AddInvoiceSettings
 import com.emul8r.bizap.data.local.migration.MIGRATION_AddPdfEngineAndLayout
+import com.emul8r.bizap.data.local.migration.MIGRATION_AddSignatureField
 import com.emul8r.bizap.data.local.migrations.MIGRATION_38_39
 import dagger.Module
 import dagger.Provides
@@ -67,7 +68,8 @@ object DatabaseModule {
             MIGRATION_36_37,  // Remove UNIQUE constraint on email field
             MIGRATION_AddInvoiceSettings,  // Add invoice_settings table for Phase 4
             MIGRATION_38_39,   // Add selected_html_style and selected_canvas_template columns
-            MIGRATION_AddPdfEngineAndLayout  // Add PDF engine and page layout columns for three-tier architecture
+            MIGRATION_AddPdfEngineAndLayout,  // Add PDF engine and page layout columns for three-tier architecture
+            MIGRATION_AddSignatureField        // Add show_signature_field column for Phase 2 PDF enhancements
         )
 
         // ✅ PRODUCTION SAFE: Only allow destructive fallback in DEBUG builds

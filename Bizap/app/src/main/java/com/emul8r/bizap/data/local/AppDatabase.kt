@@ -9,6 +9,8 @@ import com.emul8r.bizap.data.local.entities.*
 import com.emul8r.bizap.data.local.entity.NoteEntity
 import com.emul8r.bizap.data.local.dao.*
 import com.emul8r.bizap.data.local.migration.MIGRATION_AddInvoiceSettings
+import com.emul8r.bizap.data.local.migration.MIGRATION_AddPdfEngineAndLayout
+import com.emul8r.bizap.data.local.migration.MIGRATION_AddSignatureField
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTimeTypeConverter
@@ -42,7 +44,7 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
         AnalyticsEventEntity::class,  // Event tracking
         com.emul8r.bizap.domain.model.InvoiceSettings::class  // Invoice settings
     ],
-    version = 40,  // v39→40: Add PDF engine, page layout, and preview with placeholder columns
+    version = 41,  // v40→41: Add show_signature_field column for Phase 2 PDF visual enhancements
     exportSchema = true
 )
 @TypeConverters(

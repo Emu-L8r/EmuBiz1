@@ -67,6 +67,10 @@ data class InvoiceSettings(
     @ColumnInfo(name = "show_page_numbers")
     val showPageNumbers: Boolean = false,
 
+    // Phase 2: signature / authorization field visibility
+    @ColumnInfo(name = "show_signature_field")
+    val showSignatureField: Boolean = true,
+
     // PDF STYLING (kept for invoice appearance)
     @ColumnInfo(name = "primary_color")
     val primaryColor: String = "#6B4C9A",      // Default purple
