@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.ViewCompact
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
+import com.emul8r.bizap.ui.theme.UIMode
 
 /**
  * GUI2 Settings Hub Screen
@@ -51,6 +53,8 @@ fun SettingsHubScreenV2(
     onDunningNoticesClick: () -> Unit = {},
     onPrefilledItemsClick: () -> Unit = {},
     onBackupRestoreClick: () -> Unit = {},
+    currentUIMode: UIMode = UIMode.MODERN,
+    onUIModeChange: (UIMode) -> Unit = {},
     onBack: () -> Unit,
     viewModel: SettingsHubViewModelV2 = hiltViewModel()
 ) {
@@ -91,6 +95,8 @@ fun SettingsHubScreenV2(
                     onDunningNoticesClick = onDunningNoticesClick,
                     onPrefilledItemsClick = onPrefilledItemsClick,
                     onBackupRestoreClick = onBackupRestoreClick,
+                    currentUIMode = currentUIMode,
+                    onUIModeChange = onUIModeChange,
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -111,6 +117,8 @@ private fun SettingsContent(
     onDunningNoticesClick: () -> Unit = {},
     onPrefilledItemsClick: () -> Unit = {},
     onBackupRestoreClick: () -> Unit = {},
+    currentUIMode: UIMode = UIMode.MODERN,
+    onUIModeChange: (UIMode) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -151,6 +159,47 @@ private fun SettingsContent(
             description = "Theme, display mode, colors, and presets",
             onClick = onAppAppearanceClick
         )
+
+        // UI density mode toggle
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ViewCompact,
+                    contentDescription = "UI Mode",
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "UI Density",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = if (currentUIMode == UIMode.COMPACT) "Compact — dense list views" else "Modern — spacious cards",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = currentUIMode == UIMode.COMPACT,
+                    onCheckedChange = { isCompact ->
+                        onUIModeChange(if (isCompact) UIMode.COMPACT else UIMode.MODERN)
+                    }
+                )
+            }
+        }
 
         SettingsCardV2(
             icon = Icons.Default.Description,

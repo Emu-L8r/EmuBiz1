@@ -25,6 +25,9 @@ import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.formatCents
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListViewModelV2
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListUiStateV2
+import com.emul8r.bizap.ui.gui2.invoices.components.CompactInvoiceList
+import com.emul8r.bizap.ui.gui2.invoices.components.ModernInvoiceList
+import com.emul8r.bizap.ui.theme.UIMode
 
 /**
  * GUI2 Invoice List Screen
@@ -37,6 +40,7 @@ fun InvoiceListScreenV2(
     onInvoiceClick: (Long) -> Unit,
     onCreateInvoice: () -> Unit,
     onBack: () -> Unit,
+    uiMode: UIMode = UIMode.MODERN,
     viewModel: InvoiceListViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -69,11 +73,19 @@ fun InvoiceListScreenV2(
                 )
             }
             is InvoiceListUiStateV2.Success -> {
-                InvoiceListContent(
-                    invoices = state.invoices,
-                    onInvoiceClick = onInvoiceClick,
-                    modifier = Modifier.padding(paddingValues)
-                )
+                if (uiMode == UIMode.COMPACT) {
+                    CompactInvoiceList(
+                        invoices = state.invoices,
+                        onInvoiceClick = onInvoiceClick,
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                } else {
+                    ModernInvoiceList(
+                        invoices = state.invoices,
+                        onInvoiceClick = onInvoiceClick,
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
             }
         }
     }

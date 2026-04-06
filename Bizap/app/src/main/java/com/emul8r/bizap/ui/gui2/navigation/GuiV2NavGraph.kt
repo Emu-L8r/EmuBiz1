@@ -34,13 +34,16 @@ import com.emul8r.bizap.ui.settings.InvoiceSettingsScreen
 import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.ui.navigation.Screen
+import com.emul8r.bizap.ui.theme.UIMode
 import timber.log.Timber
 
 @Composable
 fun GuiV2NavGraph(
     navController: NavHostController,
     startBusinessId: Long = 1L,
-    onSwitchToGui1: () -> Unit = {}
+    onSwitchToGui1: () -> Unit = {},
+    uiMode: UIMode = UIMode.MODERN,
+    onUIModeChange: (UIMode) -> Unit = {}
 ) {
     NavHost(
         navController = navController,
@@ -77,7 +80,8 @@ fun GuiV2NavGraph(
                     onCreateCustomer = { navController.navigate(ScreenV2.CreateCustomer(route.businessId)) },
                     onCreateInvoice = { navController.navigate(ScreenV2.CreateInvoice(route.businessId)) },
                     onNavigateToSettings = { navController.navigateToSettingsV2(route.businessId) },
-                    onSwitchToGui1 = onSwitchToGui1
+                    onSwitchToGui1 = onSwitchToGui1,
+                    uiMode = uiMode
                 )
             }
         }
@@ -92,7 +96,8 @@ fun GuiV2NavGraph(
                 onCreateInvoice = {
                     navController.navigate(ScreenV2.CreateInvoice(route.businessId))
                 },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                uiMode = uiMode
             )
         }
 
@@ -230,6 +235,8 @@ fun GuiV2NavGraph(
                 onBackupRestoreClick = {
                     navController.navigate(ScreenV2.BackupRestore(route.businessId))
                 },
+                currentUIMode = uiMode,
+                onUIModeChange = onUIModeChange,
                 onBack = { navController.popBackStack() }
             )
         }

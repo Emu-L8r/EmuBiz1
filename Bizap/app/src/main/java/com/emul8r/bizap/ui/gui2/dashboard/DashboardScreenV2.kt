@@ -33,8 +33,13 @@ import com.emul8r.bizap.ui.designsystem.BizapColors
 import com.emul8r.bizap.ui.designsystem.BizapMetricCard
 import com.emul8r.bizap.ui.gui2.common.*
 import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
+import com.emul8r.bizap.ui.gui2.dashboard.components.CompactDashboardMetrics
+import com.emul8r.bizap.ui.gui2.dashboard.components.CompactQuickActions
+import com.emul8r.bizap.ui.gui2.dashboard.components.ModernDashboardMetrics
+import com.emul8r.bizap.ui.gui2.dashboard.components.ModernQuickActions
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.AnalyticsSearchBar
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.DashboardMetricsWidget
+import com.emul8r.bizap.ui.theme.UIMode
 import timber.log.Timber
 
 /**
@@ -62,6 +67,7 @@ fun DashboardScreenV2(
     onCreateInvoice: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
     onSwitchToGui1: () -> Unit = {},
+    uiMode: UIMode = UIMode.MODERN,
     viewModel: DashboardViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -110,6 +116,7 @@ fun DashboardScreenV2(
                 onNavigateToNotes = onNavigateToNotes,
                 onCreateCustomer = onCreateCustomer,
                 onCreateInvoice = onCreateInvoice,
+                uiMode = uiMode,
                 modifier = Modifier.padding(paddingValues)
             )
         }
@@ -133,6 +140,7 @@ private fun DashboardContentV2(
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
     modifier: Modifier = Modifier,
+    uiMode: UIMode = UIMode.MODERN,
     onNavigateToInvoiceAnalytics: () -> Unit = {},
     onNavigateToDunningNotices: () -> Unit = {},
     onNavigateToVault: () -> Unit = {},
@@ -186,23 +194,34 @@ private fun DashboardContentV2(
             HorizontalDivider()
 
             // ── Quick Action Buttons (Top Banner) ──────────────────────────
-            QuickActionButtonsRow(
-                onCreateCustomer = onCreateCustomer,
-                onCreateInvoice = onCreateInvoice,
-                onNavigateToVault = onNavigateToVault,
-                onNavigateToAnalytics = onNavigateToInvoiceAnalytics
-            )
+            if (uiMode == UIMode.COMPACT) {
+                CompactQuickActions(
+                    onCreateInvoice = onCreateInvoice,
+                    onCreateCustomer = onCreateCustomer
+                )
+            } else {
+                QuickActionButtonsRow(
+                    onCreateCustomer = onCreateCustomer,
+                    onCreateInvoice = onCreateInvoice,
+                    onNavigateToVault = onNavigateToVault,
+                    onNavigateToAnalytics = onNavigateToInvoiceAnalytics
+                )
+            }
 
             HorizontalDivider()
 
             // ── Dashboard Metrics Widget ──────────────────────────────────
             // ✅ FIX #2: Wired metrics from ViewModel state
-            DashboardMetricsWidget(
-                metrics = dashboardMetrics,
-                onUnpaidClick = { onNavigateToPayment() },
-                onOverdueClick = { onNavigateToPayment() },
-                onPaidClick = { onNavigateToRevenue() }
-            )
+            if (uiMode == UIMode.COMPACT) {
+                CompactDashboardMetrics(state = state)
+            } else {
+                DashboardMetricsWidget(
+                    metrics = dashboardMetrics,
+                    onUnpaidClick = { onNavigateToPayment() },
+                    onOverdueClick = { onNavigateToPayment() },
+                    onPaidClick = { onNavigateToRevenue() }
+                )
+            }
 
             HorizontalDivider()
             CategorizedSmartQuickTasks(
