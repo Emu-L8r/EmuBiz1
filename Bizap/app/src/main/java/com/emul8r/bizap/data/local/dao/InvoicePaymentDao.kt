@@ -176,4 +176,7 @@ interface InvoicePaymentDao {
 
     @Query("DELETE FROM invoice_payments")
     suspend fun deleteAllPayments()
+
+    @Query("DELETE FROM invoice_payment_snapshots")
+    suspend fun deleteAllSnapshots()
 }
