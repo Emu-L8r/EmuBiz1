@@ -57,6 +57,9 @@ jobs:
         if: success()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          # Requires JaCoCo coverage to be enabled in build.gradle.kts:
+          # testCoverage { enabled = true }
+          # Run: ./gradlew :app:testDebugUnitTestCoverage
           files: Bizap/app/build/reports/jacoco/testDebugUnitTestCoverage/testDebugUnitTestCoverage.xml
           flags: unittests
           name: bizap-coverage

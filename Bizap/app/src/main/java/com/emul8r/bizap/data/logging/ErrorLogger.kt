@@ -61,7 +61,7 @@ interface ErrorLogger {
 @Singleton
 class ErrorLoggerImpl @Inject constructor(
     private val analytics: FirebaseAnalytics?,
-    private val crashlytics: FirebaseCrashlytics
+    private val crashlytics: FirebaseCrashlytics?
 ) : ErrorLogger {
 
     override fun logError(exception: Throwable, context: Map<String, String>) {
@@ -76,8 +76,8 @@ class ErrorLoggerImpl @Inject constructor(
 
         // Record non-fatal in Crashlytics
         try {
-            context.forEach { (key, value) -> crashlytics.setCustomKey(key, value) }
-            crashlytics.recordException(exception)
+            context.forEach { (key, value) -> crashlytics?.setCustomKey(key, value) }
+            crashlytics?.recordException(exception)
         } catch (e: Exception) {
             Timber.w(e, "Crashlytics.recordException failed")
         }
@@ -97,8 +97,8 @@ class ErrorLoggerImpl @Inject constructor(
     override fun logError(tag: String, message: String, context: Map<String, String>) {
         Timber.e("[$tag] $message context=$context")
         try {
-            crashlytics.log("ERROR [$tag]: $message")
-            context.forEach { (key, value) -> crashlytics.setCustomKey(key, value) }
+            crashlytics?.log("ERROR [$tag]: $message")
+            context.forEach { (key, value) -> crashlytics?.setCustomKey(key, value) }
         } catch (e: Exception) {
             Timber.w(e, "Crashlytics.log failed")
         }
@@ -116,7 +116,7 @@ class ErrorLoggerImpl @Inject constructor(
         val detailStr = details.entries.joinToString(", ") { "${it.key}=${it.value}" }
         Timber.d("🔹 $action: $detailStr")
         try {
-            crashlytics.log("🔹 $action: $detailStr")
+            crashlytics?.log("🔹 $action: $detailStr")
         } catch (e: Exception) {
             Timber.w(e, "Crashlytics.log(breadcrumb) failed")
         }
@@ -124,8 +124,8 @@ class ErrorLoggerImpl @Inject constructor(
 
     override fun setUserContext(userId: Long, email: String) {
         try {
-            crashlytics.setUserId(userId.toString())
-            crashlytics.setCustomKey("user_email", email)
+            crashlytics?.setUserId(userId.toString())
+            crashlytics?.setCustomKey("user_email", email)
         } catch (e: Exception) {
             Timber.w(e, "Crashlytics.setUserId failed")
         }

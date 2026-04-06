@@ -160,6 +160,16 @@ class ErrorLoggerTest : BaseUnitTest() {
         loggerNoAnalytics.setUserContext(1L, "x@y.z")
     }
 
+    @Test
+    fun `ErrorLoggerImpl works when both analytics and crashlytics are null`() {
+        val loggerNullAll = ErrorLoggerImpl(analytics = null, crashlytics = null)
+        // Must not throw
+        loggerNullAll.logError(RuntimeException("null both"))
+        loggerNullAll.logError("Tag", "msg")
+        loggerNullAll.addBreadcrumb("action")
+        loggerNullAll.setUserContext(1L, "x@y.z")
+    }
+
     // ─── instance ────────────────────────────────────────────────────────────────
 
     @Test

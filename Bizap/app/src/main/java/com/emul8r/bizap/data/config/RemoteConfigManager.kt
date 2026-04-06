@@ -5,7 +5,8 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.util.concurrent.ConcurrentHashMap
@@ -90,18 +91,22 @@ class RemoteConfigManagerImpl @Inject constructor(
     // ---------------------------------------------------------------------------
 
     private var fetched = false
+    private val fetchMutex = Mutex()
 
     private suspend fun ensureFetched() {
         if (fetched) return
-        try {
-            remoteConfig.fetchAndActivate().await()
-            fetched = true
-            // Sync state flows with freshly fetched values
-            FeatureFlag.entries.forEach { flag ->
-                flagFlows[flag]?.emit(remoteConfig.getBoolean(flag.key))
+        fetchMutex.withLock {
+            if (fetched) return  // double-checked locking under mutex
+            try {
+                remoteConfig.fetchAndActivate().await()
+                fetched = true
+                // Sync state flows with freshly fetched values
+                FeatureFlag.entries.forEach { flag ->
+                    flagFlows[flag]?.emit(remoteConfig.getBoolean(flag.key))
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "RemoteConfig fetch failed — using cached/default values")
             }
-        } catch (e: Exception) {
-            Timber.w(e, "RemoteConfig fetch failed — using cached/default values")
         }
     }
 }
