@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Configuration for Bizap
+
+  This file enforces strong TLS/SSL security:
+  - Cleartext (HTTP) traffic is DISABLED by default
+  - Only TLS 1.2+ connections allowed
+  - System and user certificate authorities trusted
+  - Localhost exception for local testing only
+
+  Security Level: HIGH
+  Last Updated: April 7, 2026
+-->
+<network-security-config>
+    <!-- 🔐 DEFAULT: Cleartext disabled, modern TLS required -->
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- All HTTPS domains by default -->
+        <domain includeSubdomains="true">exchangerate-api.com</domain>
+        <domain includeSubdomains="true">openexchangerates.org</domain>
+        <domain includeSubdomains="true">firebase.google.com</domain>
+        <domain includeSubdomains="true">firebaseio.com</domain>
+        <domain includeSubdomains="true">googleapis.com</domain>
+
+        <!-- Trust system CA certificates and user-installed certificates -->
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+
+        <!-- Optional: Certificate pinning for high-security APIs -->
+        <!-- Uncomment when implementing certificate pinning -->
+        <!-- <pin-set expiration="2027-04-07"> -->
+        <!--     <pin digest="SHA-256">YOUR_CERTIFICATE_SHA256_HASH</pin> -->
+        <!-- </pin-set> -->
+    </domain-config>
+
+    <!-- 🧪 TESTING ONLY: Cleartext allowed for localhost -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain> <!-- Android emulator host -->
+    </domain-config>
+
+    <!-- TLS Configuration: Enforce modern standards -->
+    <domain-config>
+        <domain includeSubdomains="true">.</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
+

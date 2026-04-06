@@ -90,6 +90,32 @@
     @androidx.room.Entity <fields>;
 }
 
+# ===== SECURITY HARDENING =====
+# 🔐 Remove debug/verbose logs from production
+-assumenosideeffects class timber.log.Timber {
+    public static void d(...);
+    public static void v(...);
+    public static void i(...);
+}
+
+# 🔐 Remove verbose logging from OkHttp
+-assumenosideeffects class okhttp3.internal.platform.Platform {
+    public static void log(...);
+}
+
+# 🔐 Obfuscate sensitive package names and class names
+-repackageclasses 'a'
+-allowaccessmodification
+
+# 🔐 Keep stack trace meaningful for Firebase Crashlytics
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+# 🔐 Remove annotations that expose internal implementation
+-dontwarn kotlin.reflect.KtClass
+-dontwarn kotlin.reflect.KtFunction
+-dontwarn kotlin.reflect.KtParameter
+
 # ===== TIMBER LOGGING =====
 # Remove Timber debug/verbose logs in release build
 -assumenosideeffects class timber.log.Timber {

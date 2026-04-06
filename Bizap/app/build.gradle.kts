@@ -156,6 +156,11 @@ android {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
+
+            // 🔐 SECURITY: Disable debugger access in production
+            isDebuggable = false
+            isJniDebuggable = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
