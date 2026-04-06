@@ -150,20 +150,6 @@ private fun InvoiceListItem(
                 )
             }
         }
-    } else {
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(invoices) { invoice ->
-                InvoiceCardV2(
-                    invoice = invoice,
-                    onClick = { onInvoiceClick(invoice.id) }
-                )
-            }
-        }
     }
 }
 
