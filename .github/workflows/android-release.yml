@@ -152,22 +152,42 @@ jobs:
       - name: Build summary
         if: success()
         run: |
-          echo "🎉 Release build completed successfully!"
-          echo "Version: ${{ inputs.version_name }} (code ${{ inputs.version_code }})"
-          echo "APK: app-release-v${{ inputs.version_name }}.apk"
-          echo ""
-          echo "Next steps:"
-          echo "1. Download APK from Artifacts"
-          echo "2. Test on multiple devices"
-          echo "3. Upload to Google Play Console"
+          echo "## 🎉 Release Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ inputs.version_name }} (code ${{ inputs.version_code }})" >> $GITHUB_STEP_SUMMARY
+          echo "**APK:** app-release-v${{ inputs.version_name }}.apk" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download APK from Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Test on multiple devices" >> $GITHUB_STEP_SUMMARY
+          echo "3. Upload to Google Play Console" >> $GITHUB_STEP_SUMMARY
+
+      # Slack notification on success
+      - name: 🔔 Notify Slack on success
+        if: success() && secrets.SLACK_WEBHOOK != ''
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+            -H 'Content-type: application/json' \
+            -d "{\"text\":\"✅ Release build succeeded: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.repository }}> v${{ inputs.version_name }}\"}"
 
       # Failure notification
       - name: Build failure notification
         if: failure()
         run: |
-          echo "❌ Release build failed!"
-          echo "Check logs above for details."
-          echo "Common issues:"
-          echo "  - Missing or incorrect signing credentials"
-          echo "  - Test failures"
-          echo "  - Compilation errors"
+          echo "## ❌ Release Build Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check logs above for details." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Common issues:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Missing or incorrect signing credentials" >> $GITHUB_STEP_SUMMARY
+          echo "- Test failures" >> $GITHUB_STEP_SUMMARY
+          echo "- Compilation errors" >> $GITHUB_STEP_SUMMARY
+
+      # Slack notification on failure
+      - name: 🔔 Notify Slack on failure
+        if: failure() && secrets.SLACK_WEBHOOK != ''
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+            -H 'Content-type: application/json' \
+            -d "{\"text\":\"❌ Release build failed: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.repository }}> v${{ inputs.version_name }}\"}"
+

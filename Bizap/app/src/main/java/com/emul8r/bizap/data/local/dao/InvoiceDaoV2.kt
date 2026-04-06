@@ -468,6 +468,109 @@ interface InvoiceDaoV2 {
           AND status = 'SENT'
     """)
     fun observeSentInvoiceCount(businessId: Long): Flow<Int>
+
+    // ==================== PAGINATED QUERIES ====================
+
+    /**
+     * Returns a page of invoices for a business with optional status and date-range filters.
+     *
+     * All nullable parameters are treated as "no filter" — a null value means
+     * that column is not included in the WHERE predicate.
+     *
+     * @param businessId The business whose invoices to query (mandatory)
+     * @param pageSize   Number of rows per page (default 20)
+     * @param offset     Row offset for pagination (page × pageSize)
+     * @param status     Optional status filter (e.g. "PAID", "SENT")
+     * @param startDate  Optional lower bound on [InvoiceEntity.date] (epoch ms, inclusive)
+     * @param endDate    Optional upper bound on [InvoiceEntity.date] (epoch ms, inclusive)
+     */
+    @Query("""
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND (:status IS NULL OR status = :status)
+          AND (:startDate IS NULL OR date >= :startDate)
+          AND (:endDate IS NULL OR date <= :endDate)
+        ORDER BY date DESC
+        LIMIT :pageSize OFFSET :offset
+    """)
+    suspend fun getInvoicesPaginated(
+        businessId: Long,
+        pageSize: Int = 20,
+        offset: Int = 0,
+        status: String? = null,
+        startDate: Long? = null,
+        endDate: Long? = null
+    ): List<InvoiceEntity>
+
+    /**
+     * Returns overdue invoices: active, not fully paid, and past their due date.
+     *
+     * @param businessId The business whose invoices to query
+     * @param now        Current epoch-ms timestamp; any invoice with dueDate < now is overdue
+     */
+    @Query("""
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND status NOT IN ('PAID', 'DRAFT')
+          AND dueDate > 0
+          AND dueDate < :now
+        ORDER BY dueDate ASC
+    """)
+    suspend fun getOverdueInvoices(businessId: Long, now: Long): List<InvoiceEntity>
+
+    /**
+     * Returns invoices whose [InvoiceEntity.date] falls within [startDate]..[endDate].
+     *
+     * @param businessId The business whose invoices to query
+     * @param startDate  Lower bound (epoch ms, inclusive)
+     * @param endDate    Upper bound (epoch ms, inclusive)
+     */
+    @Query("""
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+          AND date >= :startDate
+          AND date <= :endDate
+        ORDER BY date DESC
+    """)
+    suspend fun getInvoicesByDateRange(
+        businessId: Long,
+        startDate: Long,
+        endDate: Long
+    ): List<InvoiceEntity>
+
+    /**
+     * Returns all active invoices for a specific customer, ordered newest first.
+     *
+     * @param businessId The business context
+     * @param customerId The customer to filter on
+     */
+    @Query("""
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
+          AND customerId = :customerId
+          AND isActive = 1
+        ORDER BY date DESC
+    """)
+    suspend fun getInvoicesByCustomer(
+        businessId: Long,
+        customerId: Long
+    ): List<InvoiceEntity>
+
+    /**
+     * Returns a live count of active invoices, useful for badge metrics.
+     *
+     * @param businessId The business context
+     */
+    @Query("""
+        SELECT COUNT(*)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
+    """)
+    fun observeInvoiceCount(businessId: Long): Flow<Int>
 }
 
 /** Aggregated invoice stats for one time period (week or month). */

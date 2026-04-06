@@ -236,6 +236,8 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.config)
+    implementation(libs.coroutines.play.services)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
