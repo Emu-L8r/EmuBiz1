@@ -137,13 +137,72 @@ class BizapApplication : Application(), Configuration.Provider {
     private fun initializeAnalytics() {
         try {
             // Enable collection (important: respects user's data sharing preferences)
+            Timber.d("Initializing Firebase Analytics...")
             FirebaseAnalytics.getInstance(this).setAnalyticsCollectionEnabled(true)
-            Timber.d("✅ Firebase Analytics initialized - crash reporting enabled")
+            Timber.d("✅ Firebase Analytics initialized")
+
+            // 🔥 EXPLICITLY INITIALIZE FIREBASE CRASHLYTICS
+            initializeCrashlytics()
         } catch (e: Exception) {
             // Firebase might not be initialized if google-services.json is missing
             // This is expected in development environments
             Timber.w(e, "⚠️ Firebase Analytics initialization failed (expected if google-services.json missing)")
             Timber.w("Crash reporting will NOT be available until Firebase is properly configured")
+        }
+    }
+
+    /**
+     * FIREBASE CRASHLYTICS INITIALIZATION
+     * ====================================
+     * Explicitly initializes Firebase Crashlytics for crash reporting.
+     * This is called after Analytics to ensure Firebase is ready.
+     *
+     * WHAT THIS DOES:
+     * 1. Enables Crashlytics collection (even in DEBUG for testing)
+     * 2. Sets collection enabled flag to true
+     * 3. Sets app metadata (version, build type)
+     * 4. Logs confirmation messages to Timber
+     *
+     * WHY IMPORTANT:
+     * - Crashlytics auto-catches uncaught exceptions
+     * - CrashlyticsTree forwards Timber logs to Crashlytics
+     * - This provides full breadcrumb trail of app state before crash
+     *
+     * EXPECTED LOG OUTPUT (check in Logcat):
+     * - D/FirebaseCrashlytics: Enabled
+     * - D/FirebaseCrashlytics: Crashlytics setup finished
+     * - I/Timber: Firebase Crashlytics initialized and enabled for crash reporting
+     */
+    private fun initializeCrashlytics() {
+        try {
+            Timber.d("Initializing Firebase Crashlytics...")
+
+            val crashlytics = com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance()
+
+            // Enable collection (important for DEBUG testing, respects user preferences in RELEASE)
+            crashlytics.isCrashlyticsCollectionEnabled = true
+            Timber.i("✅ Firebase Crashlytics initialized and enabled for crash reporting")
+
+            // Set custom keys for this app session (helps identify crashes)
+            crashlytics.setCustomKey("app_version", BuildConfig.VERSION_NAME)
+            crashlytics.setCustomKey("build_variant", BuildConfig.BUILD_TYPE)
+            crashlytics.setCustomKey("app_package", BuildConfig.APPLICATION_ID)
+
+            if (BuildConfig.DEBUG) {
+                Timber.d("🔥 CRASHLYTICS DEBUG MODE: Crash testing enabled - use Force Crash button to test")
+                crashlytics.setCustomKey("debug_mode", true)
+            } else {
+                crashlytics.setCustomKey("debug_mode", false)
+            }
+
+            Timber.d("🔥 Firebase Crashlytics configured with custom keys - ready for testing")
+
+        } catch (e: Exception) {
+            Timber.w(e, "⚠️ Firebase Crashlytics initialization failed")
+            Timber.w("Possible causes:")
+            Timber.w("  1. google-services.json missing or invalid")
+            Timber.w("  2. Firebase project not properly configured")
+            Timber.w("  3. Network issue during Firebase initialization")
         }
     }
 

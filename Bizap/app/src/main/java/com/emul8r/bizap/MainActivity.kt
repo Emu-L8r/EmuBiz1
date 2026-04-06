@@ -5,6 +5,8 @@ import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -99,9 +101,85 @@ class MainActivity : ComponentActivity() {
         return super.dispatchTouchEvent(ev)
     }
 
+    /**
+     * REQUEST CRITICAL RUNTIME PERMISSIONS
+     * ====================================
+     * Requests necessary permissions at runtime (API 23+).
+     *
+     * WHY NECESSARY:
+     * - POST_NOTIFICATIONS: Required for crash notifications (API 33+)
+     * - CAMERA: May be needed for certain features
+     * - READ/WRITE_EXTERNAL_STORAGE: May be needed for file access
+     *
+     * This ensures features don't crash due to missing permissions.
+     */
+    private fun requestCriticalPermissions() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            // Check if POST_NOTIFICATIONS permission is granted
+            if (androidx.core.content.ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                // Request the permission
+                androidx.core.app.ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                    PERMISSION_REQUEST_CODE
+                )
+                Timber.d("Requesting POST_NOTIFICATIONS permission (API 33+)")
+            }
+        }
+
+        // Request other important permissions
+        val requiredPermissions = mutableListOf<String>()
+
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+            this,
+            android.Manifest.permission.CAMERA
+        ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            requiredPermissions.add(android.Manifest.permission.CAMERA)
+        }
+
+        if (requiredPermissions.isNotEmpty()) {
+            androidx.core.app.ActivityCompat.requestPermissions(
+                this,
+                requiredPermissions.toTypedArray(),
+                PERMISSION_REQUEST_CODE
+            )
+            Timber.d("Requesting additional permissions: ${requiredPermissions.joinToString()}")
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            for (i in permissions.indices) {
+                if (grantResults[i] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    Timber.d("✅ Permission granted: ${permissions[i]}")
+                } else {
+                    Timber.w("❌ Permission denied: ${permissions[i]}")
+                }
+            }
+        }
+    }
+
+    companion object {
+        private const val PERMISSION_REQUEST_CODE = 100
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // 🔐 REQUEST CRITICAL PERMISSIONS
+        requestCriticalPermissions()
 
         setContent {
             // ✅ FIX: Extract AppStateViewModel to top level

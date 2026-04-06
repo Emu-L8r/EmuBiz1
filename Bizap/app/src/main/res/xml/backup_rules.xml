@@ -1,13 +1,26 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   Backup Rules for Bizap - Security Hardening
+
+   This file specifies which app data can be backed up and which should be excluded.
+
+   Security Considerations:
+   - Database (bizap.db) should NOT be backed up to Google Drive
+   - SharedPreferences containing sensitive data should be excluded
+   - Non-sensitive files (documents) can be safely backed up
+
+   Last Updated: April 7, 2026
+
+   Reference: https://developer.android.com/guide/topics/data/autobackup
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- 🔐 SECURITY: Explicitly include only safe paths, exclude sensitive data -->
+    <include domain="file" path="documents/" />
+    <include domain="cache" path="." />
+
+    <!-- 🔐 SECURITY: Exclude sensitive database from backup -->
+    <exclude domain="database" path="." />
+
+    <!-- 🔐 SECURITY: Exclude SharedPreferences (may contain sensitive data) -->
+    <exclude domain="sharedpref" path="." />
 </full-backup-content>
