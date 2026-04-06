@@ -26,6 +26,7 @@ plugins {
     alias(libs.plugins.google.services)  // Firebase integration
     alias(libs.plugins.firebase.crashlytics)  // Crash reporting
     id("jacoco")
+    id("io.gitlab.arturbosch.detekt") version "1.23.0"
 }
 
 android {
@@ -386,6 +387,53 @@ tasks.register<JacocoReport>("jacocoTestReport") {
     sourceDirectories.setFrom(
         files("src/main/java", "src/main/kotlin")
     )
+    classDirectories.setFrom(
+        fileTree("build/intermediates/classes/debug") {
+            exclude(
+                "**/R.class",
+                "**/R\$*.class",
+                "**/BuildConfig.*",
+                "**/Manifest*.*",
+                "**/*_Hilt*",
+                "**/*_Factory*",
+                "**/*_MembersInjector*",
+                "**/di/**",
+                "**/databinding/**"
+            )
+        }
+    )
+    executionData.setFrom(
+        files("build/jacoco/testDebugUnitTest.exec")
+    )
+}
+
+tasks.register("ktlintFormat") {
+    doLast {
+        exec {
+            commandLine("./gradlew", "ktlintFormat")
+        }
+    }
+}
+
+detekt {
+    toolVersion = "1.23.0"
+    config.setFrom("${rootProject.projectDir}/.detekt.yml")
+    baseline = file("$projectDir/detekt-baseline.xml")
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        sarif.required.set(true)
+    }
+}
+
+// Code Coverage Configuration
+tasks.register<JacocoReport>("jacocoTestDebugUnitTestReport") {
+    dependsOn("testDebugUnitTest")
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+    }
+    sourceDirectories.setFrom(files("${project.projectDir}/src/main/java"))
     classDirectories.setFrom(
         fileTree("build/intermediates/classes/debug") {
             exclude(
