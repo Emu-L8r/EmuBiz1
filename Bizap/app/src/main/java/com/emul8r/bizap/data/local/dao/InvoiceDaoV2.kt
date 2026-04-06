@@ -63,9 +63,9 @@ interface InvoiceDaoV2 {
      * Returns list limited by specified count.
      */
     @Query("""
-        SELECT * FROM invoices 
-        WHERE businessProfileId = :businessId 
-          AND isActive = 1 
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
+          AND isActive = 1
           AND invoiceNumber LIKE '%' || :query || '%'
         ORDER BY date DESC
         LIMIT :limit
@@ -571,6 +571,15 @@ interface InvoiceDaoV2 {
           AND isActive = 1
     """)
     fun observeInvoiceCount(businessId: Long): Flow<Int>
+
+    // ==================== FULL-TEXT SEARCH (FTS4) ====================
+    // TODO: PR 171 - Implement FTS4 after Room migration
+    // InvoiceFTS entity created (data/local/entities/InvoiceFTS.kt)
+    // Requires database migration to create FTS virtual table
+    // Methods below will be implemented once:
+    // 1. Migration adds InvoiceFTS virtual table
+    // 2. Triggers maintain InvoiceFTS on invoice updates
+    // Performance gain: O(log n) indexed search vs O(n) LIKE scans
 }
 
 /** Aggregated invoice stats for one time period (week or month). */
