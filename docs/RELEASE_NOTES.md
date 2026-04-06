@@ -11,6 +11,24 @@
 
 This is the first production release of Bizap — a professional invoicing and business management application for Android.
 
+### Dual-Mode UI (New)
+
+Bizap now ships with two UI display modes that can be toggled at any time in **Settings → Appearance**:
+
+- **Modern** (default) — Spacious Material 3 cards with full details visible at a glance.
+- **Compact** — Dense list rows for power users and small screens.
+
+Your choice is persisted automatically and applies instantly across Dashboard, Invoice List, and Customer List screens. Both modes read from the exact same data layer — no fake or stale data in either mode.
+
+See `Bizap/DUAL_MODE_UI_GUIDE.md` for full details.
+
+### Architecture Improvements (v1.0 baseline)
+
+- **No more mock data fallbacks** — Payment and Revenue analytics now show a proper `Error` state instead of hardcoded sample numbers when real data is unavailable.
+- **Clean Architecture enforced** — Domain layer has zero data-layer imports. Data layer has zero UI-layer imports. Enforced by automated `ArchitectureTest`.
+- **Domain models for all repository interfaces** — `DocumentRepository`, `CustomFieldRepository`, and `PrefilledItemRepository` now use pure Kotlin domain models (`GeneratedDocument`, `CustomField`, `PrefilledItem`) instead of Room entities.
+- **Service layer reorganised** — `AccountingService` correctly lives in the data layer alongside the DAOs it uses. HTML/PDF processing classes moved from `ui/` to `data/service/`.
+
 ---
 
 ## What's Included
