@@ -14,17 +14,23 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.data.local.entities.PaymentMethod
-import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
+import com.emul8r.bizap.presentation.viewmodel.PaymentRecordingViewModel
 
 /**
- * Record Payment Screen - Allow users to record payments against invoices.
+ * Record Payment Screen - UI layer for recording invoice payments.
  *
- * Collects:
- * - Payment amount
- * - Payment method (Cash, Check, ACH, Wire, Card)
- * - Optional notes
+ * **Responsibilities (UI Layer Only):**
+ * - Render form fields
+ * - Display validation errors from ViewModel
+ * - Show/hide loading indicator
+ * - Navigate back on success
  *
- * Updates invoice status automatically to PAID or PARTIALLY_PAID.
+ * **NO Business Logic Here:**
+ * - Amount validation → ViewModel
+ * - Payment persistence → ViewModel
+ * - Error state → ViewModel
+ *
+ * All user actions are delegated to [PaymentRecordingViewModel].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,13 +38,16 @@ fun RecordPaymentScreenV2(
     invoiceId: Long,
     invoiceAmount: Long = 0L,
     onBack: () -> Unit,
-    onPaymentRecorded: () -> Unit = {}
+    viewModel: PaymentRecordingViewModel = hiltViewModel()
 ) {
-    var amountInput by remember { mutableStateOf("") }
-    var selectedMethod by remember { mutableStateOf(PaymentMethod.ACH_TRANSFER) }
-    var notesInput by remember { mutableStateOf("") }
-    var isSubmitting by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Navigate back on successful payment recording
+    LaunchedEffect(uiState.paymentRecorded) {
+        if (uiState.paymentRecorded) {
+            onBack()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -78,18 +87,16 @@ fun RecordPaymentScreenV2(
                 }
             }
 
-            // Payment amount input
+            // Payment amount input - delegates to ViewModel
             OutlinedTextField(
-                value = amountInput,
-                onValueChange = {
-                    amountInput = it.filter { char -> char.isDigit() || char == '.' }
-                },
+                value = uiState.amountInput,
+                onValueChange = { viewModel.updateAmount(it) },
                 label = { Text("Payment Amount") },
                 placeholder = { Text("0.00") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 leadingIcon = { Text("$") },
                 modifier = Modifier.fillMaxWidth(),
-                isError = errorMessage != null
+                isError = uiState.errorMessage != null
             )
 
             // Payment method dropdown
@@ -99,7 +106,7 @@ fun RecordPaymentScreenV2(
                 onExpandedChange = { expandedMethod = it }
             ) {
                 OutlinedTextField(
-                    value = selectedMethod.displayName,
+                    value = uiState.selectedMethod.displayName,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Payment Method") },
@@ -112,11 +119,12 @@ fun RecordPaymentScreenV2(
                     expanded = expandedMethod,
                     onDismissRequest = { expandedMethod = false }
                 ) {
-                    PaymentMethod.values().forEach { method ->
+                    // Use PaymentMethod.entries (Kotlin 1.9+) instead of .values()
+                    PaymentMethod.entries.forEach { method ->
                         DropdownMenuItem(
                             text = { Text(method.displayName) },
                             onClick = {
-                                selectedMethod = method
+                                viewModel.updatePaymentMethod(method)
                                 expandedMethod = false
                             }
                         )
@@ -124,10 +132,10 @@ fun RecordPaymentScreenV2(
                 }
             }
 
-            // Notes input
+            // Notes input - delegates to ViewModel
             OutlinedTextField(
-                value = notesInput,
-                onValueChange = { notesInput = it },
+                value = uiState.notesInput,
+                onValueChange = { viewModel.updateNotes(it) },
                 label = { Text("Notes (Optional)") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -135,10 +143,10 @@ fun RecordPaymentScreenV2(
                 maxLines = 4
             )
 
-            // Error message
-            if (errorMessage != null) {
+            // Error message display
+            uiState.errorMessage?.let { error ->
                 Text(
-                    text = errorMessage ?: "",
+                    text = error,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 4.dp)
@@ -147,27 +155,13 @@ fun RecordPaymentScreenV2(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Submit button
+            // Submit button - delegates to ViewModel, NO validation here
             Button(
-                onClick = {
-                    // Validate
-                    val amount = amountInput.toDoubleOrNull()
-                    if (amount == null || amount <= 0) {
-                        errorMessage = "Please enter a valid amount"
-                        return@Button
-                    }
-
-                    errorMessage = null
-                    isSubmitting = true
-
-                    // In a real app, call viewModel.recordPayment()
-                    // For now, simulate success
-                    onPaymentRecorded()
-                },
-                enabled = amountInput.isNotEmpty() && !isSubmitting,
+                onClick = { viewModel.recordPayment(invoiceId) },
+                enabled = !uiState.isSubmitting,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (isSubmitting) {
+                if (uiState.isSubmitting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,
