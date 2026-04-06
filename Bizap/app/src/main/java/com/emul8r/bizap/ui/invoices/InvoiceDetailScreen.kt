@@ -2,7 +2,7 @@ package com.emul8r.bizap.ui.invoices
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
-import com.emul8r.bizap.data.local.entities.InvoiceWithItems
+import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.common.SectionHeaderV2
@@ -811,9 +811,8 @@ private fun InvoiceDetailScreenV2Content(
 }
 
 @Composable
-private fun InvoiceDetailV2Content(invoice: InvoiceWithItems, modifier: Modifier = Modifier) {
+private fun InvoiceDetailV2Content(invoice: Invoice, modifier: Modifier = Modifier) {
     val dateFormatter = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
-    val entity = invoice.invoice
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -821,14 +820,14 @@ private fun InvoiceDetailV2Content(invoice: InvoiceWithItems, modifier: Modifier
         SectionHeaderV2("Invoice Info")
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                InvoiceDetailRowV2("Customer", entity.customerName)
-                InvoiceDetailRowV2("Status", entity.status)
-                InvoiceDetailRowV2("Date", dateFormatter.format(java.util.Date(entity.date)))
-                if (entity.dueDate > 0) InvoiceDetailRowV2("Due Date", dateFormatter.format(java.util.Date(entity.dueDate)))
-                InvoiceDetailRowV2("Total", formatCents(entity.totalAmount))
-                InvoiceDetailRowV2("Amount Paid", formatCents(entity.amountPaid))
-                InvoiceDetailRowV2("Outstanding", formatCents(entity.totalAmount - entity.amountPaid))
-                InvoiceDetailRowV2("Currency", entity.currencyCode)
+                InvoiceDetailRowV2("Customer", invoice.customerName)
+                InvoiceDetailRowV2("Status", invoice.status.name)
+                InvoiceDetailRowV2("Date", dateFormatter.format(java.util.Date(invoice.date)))
+                if (invoice.dueDate > 0) InvoiceDetailRowV2("Due Date", dateFormatter.format(java.util.Date(invoice.dueDate)))
+                InvoiceDetailRowV2("Total", formatCents(invoice.totalAmount))
+                InvoiceDetailRowV2("Amount Paid", formatCents(invoice.amountPaid))
+                InvoiceDetailRowV2("Outstanding", formatCents(invoice.totalAmount - invoice.amountPaid))
+                InvoiceDetailRowV2("Currency", invoice.currencyCode)
             }
         }
         if (invoice.items.isNotEmpty()) {
@@ -839,14 +838,14 @@ private fun InvoiceDetailV2Content(invoice: InvoiceWithItems, modifier: Modifier
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(text = item.description, style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
-                            Text(text = "Qty: ${item.quantity}  ×  ${formatCents(item.unitPrice.toLong())}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(text = "Qty: ${item.quantity}  ×  ${formatCents(item.unitPrice)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Text(text = formatCents((item.unitPrice * item.quantity).toLong()), style = MaterialTheme.typography.bodyMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
                     }
                 }
             }
         }
-        entity.notes?.let { notes -> if (notes.isNotBlank()) { HorizontalDivider(); SectionHeaderV2("Notes"); Text(notes, style = MaterialTheme.typography.bodyMedium) } }
+        invoice.notes?.let { notes -> if (notes.isNotBlank()) { HorizontalDivider(); SectionHeaderV2("Notes"); Text(notes, style = MaterialTheme.typography.bodyMedium) } }
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
