@@ -1,6 +1,6 @@
 package com.emul8r.bizap.domain.repository
 
-import com.emul8r.bizap.data.local.entities.InvoiceCustomField
+import com.emul8r.bizap.domain.model.CustomField
 
 /**
  * Domain-level contract for Custom Field data operations on Invoice Templates.
@@ -16,7 +16,7 @@ interface CustomFieldRepository {
      * @return [Result.success] with the new field ID on success, or [Result.failure] if the
      * maximum field limit is reached or the database operation fails.
      */
-    suspend fun saveCustomField(field: InvoiceCustomField): Result<String>
+    suspend fun saveCustomField(field: CustomField): Result<String>
 
     /**
      * Updates an existing custom field.
@@ -24,7 +24,7 @@ interface CustomFieldRepository {
      * @return [Result.success] on success, or [Result.failure] if the field does not exist or
      * the database operation fails.
      */
-    suspend fun updateCustomField(field: InvoiceCustomField): Result<Unit>
+    suspend fun updateCustomField(field: CustomField): Result<Unit>
 
     /**
      * Soft-deletes a custom field by its ID.
@@ -39,7 +39,7 @@ interface CustomFieldRepository {
      * @return [Result.success] with the list of active fields, or [Result.failure] if the
      * database operation fails.
      */
-    suspend fun getCustomFields(templateId: String): Result<List<InvoiceCustomField>>
+    suspend fun getCustomFields(templateId: String): Result<List<CustomField>>
 
     companion object {
         const val MAX_FIELDS_PER_TEMPLATE = 50

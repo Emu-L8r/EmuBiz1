@@ -2,7 +2,7 @@ package com.emul8r.bizap.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.local.entities.PrefilledItemEntity
+import com.emul8r.bizap.domain.model.PrefilledItem
 import com.emul8r.bizap.domain.repository.PrefilledItemRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,7 +16,7 @@ class PrefilledItemsViewModel @Inject constructor(
     private val repository: PrefilledItemRepository
 ) : ViewModel() {
 
-    val items: StateFlow<List<PrefilledItemEntity>> = repository.getAllItems()
+    val items: StateFlow<List<PrefilledItem>> = repository.getAllItems()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -25,7 +25,7 @@ class PrefilledItemsViewModel @Inject constructor(
 
     fun addItem(description: String, unitPrice: Long) {
         viewModelScope.launch {
-            repository.insertItem(PrefilledItemEntity(description = description, unitPrice = unitPrice))
+            repository.insertItem(PrefilledItem(description = description, unitPrice = unitPrice))
         }
     }
 

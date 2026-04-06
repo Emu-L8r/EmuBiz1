@@ -13,6 +13,7 @@ import com.emul8r.bizap.MainScreen
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
+import com.emul8r.bizap.ui.state.AppStateViewModel
 import com.emul8r.bizap.ui.theme.AppTheme
 import com.emul8r.bizap.ui.theme.ThemeManager
 import kotlinx.coroutines.launch
@@ -48,6 +49,10 @@ fun NavGraph(
     // Get business profile for GUI2 start business ID
     val businessProfileViewModel: BusinessProfileViewModel = hiltViewModel()
     val businessProfile by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
+
+    // Observe UI mode from AppStateViewModel
+    val appStateViewModel: AppStateViewModel = hiltViewModel()
+    val uiMode by appStateViewModel.uiMode.collectAsStateWithLifecycle()
     
     // Default business ID when no valid business profile is available
     // This matches the default used in ModernGUIMainActivity
@@ -78,7 +83,9 @@ fun NavGraph(
                     scope.launch {
                         themeManager.setTheme(AppTheme.CLASSIC)
                     }
-                }
+                },
+                uiMode = uiMode,
+                onUIModeChange = { mode -> appStateViewModel.setUIMode(mode) }
             )
         }
     }

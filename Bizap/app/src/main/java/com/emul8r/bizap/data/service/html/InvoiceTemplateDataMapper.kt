@@ -1,4 +1,4 @@
-package com.emul8r.bizap.ui.invoices.html
+package com.emul8r.bizap.data.service.html
 
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.model.Invoice

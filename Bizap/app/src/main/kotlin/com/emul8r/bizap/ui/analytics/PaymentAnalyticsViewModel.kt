@@ -41,32 +41,14 @@ class PaymentAnalyticsViewModel @Inject constructor(
     private fun loadPaymentMetrics() {
         viewModelScope.launch {
             try {
-                // ✅ FIX #7: Try to load real payment metrics from InvoiceRepository
-                // Fallback to reasonable defaults if invoice data unavailable
-                var totalInvoices = 0
-                var paidCount = 0
-                var overdueCount = 0
-                var dueSoonCount = 0
-                var draftCount = 0
+                val invoices = invoiceRepository.getAllInvoicesWithItems().first()
+                val statusBreakdown = invoices.groupingBy { it.status }.eachCount()
 
-                try {
-                    val invoices = invoiceRepository.getAllInvoicesWithItems().first()
-                    val statusBreakdown = invoices.groupingBy { it.status }.eachCount()
-
-                    totalInvoices = invoices.size
-                    paidCount = statusBreakdown[InvoiceStatus.PAID] ?: 0
-                    overdueCount = statusBreakdown[InvoiceStatus.OVERDUE] ?: 0
-                    dueSoonCount = statusBreakdown[InvoiceStatus.SENT] ?: 0
-                    draftCount = statusBreakdown[InvoiceStatus.DRAFT] ?: 0
-                } catch (e: Exception) {
-                    // Fallback: use reasonable defaults if real data unavailable
-                    Timber.w(e, "Could not load real invoice data, using defaults")
-                    totalInvoices = 70
-                    paidCount = 45
-                    overdueCount = 5
-                    dueSoonCount = 12
-                    draftCount = 8
-                }
+                val totalInvoices = invoices.size
+                val paidCount = statusBreakdown[InvoiceStatus.PAID] ?: 0
+                val overdueCount = statusBreakdown[InvoiceStatus.OVERDUE] ?: 0
+                val dueSoonCount = statusBreakdown[InvoiceStatus.SENT] ?: 0
+                val draftCount = statusBreakdown[InvoiceStatus.DRAFT] ?: 0
 
                 val collectionRate = if (totalInvoices > 0) {
                     (paidCount.toFloat() / totalInvoices.toFloat()) * 100f

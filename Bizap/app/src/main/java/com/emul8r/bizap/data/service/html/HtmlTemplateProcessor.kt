@@ -1,4 +1,4 @@
-package com.emul8r.bizap.ui.invoices.html
+package com.emul8r.bizap.data.service.html
 
 import freemarker.template.Configuration
 import freemarker.template.Template
