@@ -108,6 +108,23 @@ the active `businessId` in memory. ViewModels call
 `setActiveBusinessId(id)` on navigation and `requireActiveBusinessId()` to
 retrieve it.
 
+### Dual-Mode UI
+
+Bizap supports two display modes: **Modern** (spacious cards) and **Compact**
+(dense lists). The user's preference is stored in DataStore and exposed as a
+`StateFlow<UIMode>` from `AppStateViewModel`.
+
+- **`UIMode` enum** lives in `domain/model/UIMode.kt` (pure Kotlin, no Android deps).
+- **`UIPreferences`** interface in `domain/settings/` is implemented by
+  `UIPreferencesImpl` in `data/settings/` using DataStore.
+- **Conditional rendering** is done at the **screen level** (not component level):
+  each screen composable checks `uiMode == UIMode.COMPACT` and delegates to
+  either a `Compact*` or `Modern*` composable.
+- **Compact-mode dimension tokens** live in `ui/theme/CompactDimensions.kt`.
+
+Both modes share the same repositories, DAOs, and ViewModel — toggling the
+mode never triggers a data reload and never shows stale data.
+
 ---
 
 ## Dependency Injection

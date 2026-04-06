@@ -13,7 +13,7 @@ Bizap is a professional-grade invoice management system built with **Kotlin**, *
 - ✅ **Customer Management** - Store and manage customer information
 - ✅ **Currency Support** - Real-time exchange rates and multi-currency support
 - ✅ **Local Database** - Room database for offline functionality
-- ✅ **Modern UI** - Jetpack Compose for beautiful, responsive interfaces
+- ✅ **Dual-Mode UI** - Switch between **Modern** (spacious cards) and **Compact** (dense lists) layouts
 - ✅ **Validation System** - Comprehensive domain validation to prevent data errors
 - ✅ **Testing** - 60+ unit tests with MockK framework
 - ✅ **Crash Reporting** - Firebase Crashlytics integration

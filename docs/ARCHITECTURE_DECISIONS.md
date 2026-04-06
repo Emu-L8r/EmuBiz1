@@ -16,6 +16,8 @@
 6. [Room v32 Migration Strategy](#6-room-v32-migration-strategy)
 7. [AnalyticsRepositoryBridge](#7-analyticsrepositorybridge)
 8. [AccountingService as Single Source](#8-accountingservice-as-single-source)
+9. [Dual-Mode UI (MODERN / COMPACT)](#9-dual-mode-ui-modern--compact) ✅ **Completed**
+10. [No Mock Data Fallbacks](#10-no-mock-data-fallbacks) ✅ **Completed**
 
 ---
 
@@ -185,3 +187,47 @@ try {
 | Cloud backup and sync | Business continuity and multi-device support |
 | Biometric authentication | Convenience + security upgrade from PIN |
 | Multi-user support | Required for team/enterprise use cases |
+
+---
+
+## 9. Dual-Mode UI (MODERN / COMPACT)
+
+**Decision:** A single `GuiV2NavGraph` renders each screen in either a spacious
+**Modern** or dense **Compact** layout based on a `UIMode` enum stored in DataStore.
+
+**Why:**
+- Satisfies diverse user preferences (small-screen efficiency vs. large-screen comfort)
+- Avoids duplicating two separate navigation graphs
+- Screen-level conditional rendering (not component-level) keeps each mode's
+  code isolated and easy to maintain independently
+- `UIMode` lives in `domain/model/` so the preference is accessible from all
+  layers without an upward dependency
+
+**Implementation:**
+- `UIMode.MODERN` | `UIMode.COMPACT` enum in `domain/model/UIMode.kt`
+- `UIPreferences` interface in `domain/settings/` with `UIPreferencesImpl` in `data/settings/`
+- `AppStateViewModel.uiMode: StateFlow<UIMode>` + `setUIMode()` action
+- Compact dimension tokens in `ui/theme/CompactDimensions.kt`
+- Toggle surfaced in **Settings → Appearance** (`SettingsHubScreenV2`)
+
+**Trade-offs:**
+- Slightly more code per screen (each screen has Modern + Compact branch)
+- Acceptable because each branch is simple and the total complexity is lower
+  than maintaining two full navigation graphs
+
+---
+
+## 10. No Mock Data Fallbacks
+
+**Decision:** `PaymentAnalyticsViewModel` and `RevenueAnalyticsViewModel` must
+never fall back to hardcoded sample numbers. On data failure they show an
+`Error` state.
+
+**Why:**
+- Mock data in production creates a false picture of the business health
+- Users have no way to distinguish real metrics from fake ones
+- An honest `Error` state allows users to diagnose the problem
+
+**Evidence:** `PaymentAnalyticsViewModel.kt`, `RevenueAnalyticsViewModel.kt`
+
+---
