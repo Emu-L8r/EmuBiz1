@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.entities.InvoiceWithItems
-import com.emul8r.bizap.data.local.entities.GeneratedDocumentEntity
-import com.emul8r.bizap.data.local.entities.DocumentStatus
+import com.emul8r.bizap.domain.model.GeneratedDocument
+import com.emul8r.bizap.domain.model.DocumentStatus
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
 import com.emul8r.bizap.di.UserIdProvider
@@ -388,7 +388,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
 
                 // Insert both into vault
                 try {
-                    val quoteDoc = GeneratedDocumentEntity(
+                    val quoteDoc = GeneratedDocument(
                         id = 0,
                         relatedInvoiceId = invoiceId,
                         fileName = quotePdf.name,
@@ -400,7 +400,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                     documentRepository.insertDocument(quoteDoc).getOrThrow()
                     Timber.d("InvoiceDetailViewModelV2: ✅ Quote PDF saved to vault - Invoice #$invoiceId")
 
-                    val invoiceDoc = GeneratedDocumentEntity(
+                    val invoiceDoc = GeneratedDocument(
                         id = 0,
                         relatedInvoiceId = invoiceId,
                         fileName = invoicePdf.name,
