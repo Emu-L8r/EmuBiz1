@@ -184,7 +184,7 @@ fun InvoiceList(
         items(invoices) { invoice ->
             val statusColor = invoice.status.getStatusColor()
             val backgroundColor = invoice.status.getBackgroundColor()
-            
+
             Card(
                 onClick = { onInvoiceClick(invoice.id) },
                 modifier = Modifier.fillMaxWidth(),
@@ -207,7 +207,7 @@ fun InvoiceList(
                             .height(3.dp)
                             .padding(bottom = 8.dp)
                     )
-                    
+
                     // Header row with invoice number and status badge
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -221,17 +221,17 @@ fun InvoiceList(
                         )
                         BizapStatusBadge(status = invoice.status)
                     }
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     // Customer name
                     Text(
                         text = invoice.customerName,
                         style = MaterialTheme.typography.bodyLarge
                     )
-                    
+
                     Spacer(modifier = Modifier.height(4.dp))
-                    
+
                     // Amount and date
                     Text(
                         text = "Total: ${CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode)} | ${formatDate(invoice.date)}",
@@ -248,7 +248,7 @@ fun InvoiceList(
 fun EmptyState(modifier: Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(
-            Icons.Filled.Receipt,
+            Icons.Default.Receipt,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.outline

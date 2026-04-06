@@ -129,7 +129,7 @@ fun SyncStatusBanner(
             ) {
                 if (!isOnline) {
                     Icon(
-                        imageVector = Icons.Filled.WifiOff,
+                        imageVector = Icons.Default.WifiOff,
                         contentDescription = "Offline",
                         tint = MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.size(18.dp)
@@ -156,7 +156,7 @@ fun SyncStatusBanner(
                     )
                 } else {
                     Icon(
-                        imageVector = Icons.Filled.DoneAll,
+                        imageVector = Icons.Default.DoneAll,
                         contentDescription = "Synced",
                         tint = BizapColors.StatusPaid,
                         modifier = Modifier.size(16.dp)
