@@ -138,7 +138,7 @@ fun CreateCustomerScreenV2(
                 value = notes,
                 onValueChange = { notes = it },
                 label = { Text("Notes") },
-                leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)) },
+                leadingIcon = { Icon(Icons.Default.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 shape = RoundedCornerShape(12.dp)

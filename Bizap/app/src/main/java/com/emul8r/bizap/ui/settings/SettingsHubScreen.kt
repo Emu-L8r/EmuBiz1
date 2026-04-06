@@ -221,7 +221,7 @@ private fun SettingsHubScreenV1Content(
             onClick = { onNavigate(Screen.CustomerSegments) }
         )
         SettingsItem(
-            icon = Icons.Filled.Help,
+            icon = Icons.Default.Help,
             title = "Help & About",
             subtitle = "App information, version, and support",
             onClick = { onNavigate(Screen.Help) }
@@ -366,7 +366,7 @@ private fun SettingsV2Content(
         )
 
         SettingsCardV2(
-            icon = Icons.AutoMirrored.Filled.Help,
+            icon = Icons.Default.Help,
             title = "Help & About",
             description = "App information, version, and support",
             onClick = onHelpClick

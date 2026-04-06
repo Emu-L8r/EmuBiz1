@@ -329,7 +329,7 @@ fun DashboardScreen(
                     MetricCardBase(
                         title = "Expected Revenue",
                         value = CentsFormatter.formatCents(expectedRevenue),
-                        icon = Icons.AutoMirrored.Filled.TrendingUp,
+                        icon = Icons.Default.TrendingUp,
                         accentColor = BizapColors.StatusPaid,
                         modifier = Modifier.weight(1f)
                     )
