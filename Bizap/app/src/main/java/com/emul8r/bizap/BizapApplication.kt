@@ -40,7 +40,7 @@ class BizapApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        
+
         // 🪵 INITIALIZE LOGGING FRAMEWORK
         initializeLogging()
 
@@ -83,7 +83,11 @@ class BizapApplication : Application(), Configuration.Provider {
             // In DEBUG: Log everything to Logcat AND to file
             Timber.plant(Timber.DebugTree())
             Timber.plant(com.emul8r.bizap.utils.logging.FileLoggingTree(this))
-            Timber.d("🚀 Bizap initialized in DEBUG mode. Logging to Logcat and file.")
+
+            // ✅ ENABLE CRASHLYTICS IN DEBUG (Temporary for testing)
+            Timber.plant(CrashlyticsTree())
+
+            Timber.d("🚀 Bizap initialized in DEBUG mode. Logging to Logcat, file, and Crashlytics.")
         } else {
             // In RELEASE: Log to file and Firebase Crashlytics
             Timber.plant(com.emul8r.bizap.utils.logging.FileLoggingTree(this))
@@ -147,7 +151,7 @@ class BizapApplication : Application(), Configuration.Provider {
         val exchangeRateWork = PeriodicWorkRequestBuilder<ExchangeRateWorker>(
             24, TimeUnit.HOURS
         ).build()
-        
+
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "exchange_rate_update",
             ExistingPeriodicWorkPolicy.KEEP,

@@ -354,6 +354,11 @@ dependencies {
     // Debug Dependencies
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Memory Leak Detection (Debug only)
+    // Automatically detects memory leaks during development
+    // Shows notification with leak trace for investigation
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

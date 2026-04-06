@@ -366,7 +366,7 @@ private fun SettingsV2Content(
         )
 
         SettingsCardV2(
-            icon = Icons.Filled.Help,
+            icon = Icons.AutoMirrored.Filled.Help,
             title = "Help & About",
             description = "App information, version, and support",
             onClick = onHelpClick

@@ -82,7 +82,7 @@ fun PaymentHistorySummary(
 
             // Last Payment Date
             if (lastPayment != null) {
-                Divider(modifier = Modifier.fillMaxWidth())
+                HorizontalDivider(modifier = Modifier.fillMaxWidth())
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

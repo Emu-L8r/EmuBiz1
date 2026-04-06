@@ -185,7 +185,7 @@ private fun StylePreviewContent(style: HtmlInvoiceStyle) {
         Spacer(modifier = Modifier.height(8.dp))
 
         // Footer line
-        Divider(
+        HorizontalDivider(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)

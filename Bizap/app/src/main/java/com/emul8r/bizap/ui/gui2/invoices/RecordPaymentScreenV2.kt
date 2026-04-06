@@ -105,7 +105,7 @@ fun RecordPaymentScreenV2(
                     label = { Text("Payment Method") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMethod) },
                     modifier = Modifier
-                        .menuAnchor()
+                        .menuAnchor(MenuAnchorType.Primary, enabled = true)
                         .fillMaxWidth()
                 )
                 ExposedDropdownMenu(
