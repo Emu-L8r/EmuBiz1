@@ -11,6 +11,8 @@
     <string name="screen_title_dashboard">Dashboard</string>
     <string name="screen_title_customers">Customers</string>
     <string name="screen_title_customer_detail">Customer Detail</string>
+    <string name="screen_title_create_customer">Add Customer</string>
+    <string name="screen_title_edit_customer">Edit Customer</string>
     <string name="screen_title_invoices">Invoices</string>
     <string name="screen_title_document_vault">Document Vault</string>
     <string name="screen_title_settings">Settings</string>
