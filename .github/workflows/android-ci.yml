@@ -10,35 +10,59 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
     defaults:
       run:
         working-directory: Bizap
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: ☕ Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Gradle
+      - name: ⚡ Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
-      - name: Grant execute permission to gradlew
+      - name: 📝 Grant execute permission to gradlew
         run: chmod +x ./gradlew
 
-      - name: Build debug APK
+      - name: 🔨 Build debug APK
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
-      - name: Run unit tests
+      - name: ✅ Run unit tests
         run: ./gradlew :app:testDebugUnitTest --no-daemon
 
-      - name: Upload test reports
+      - name: 📊 Publish JUnit test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: Bizap/app/build/test-results/testDebugUnitTest/*.xml
+          check_name: Unit Test Results
+          comment_mode: always
+          compare_to_earlier_commit: true
+
+      - name: 📈 Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: success()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: Bizap/app/build/reports/jacoco/testDebugUnitTestCoverage/testDebugUnitTestCoverage.xml
+          flags: unittests
+          name: bizap-coverage
+          fail_ci_if_error: false
+
+      - name: 📋 Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -46,7 +70,7 @@ jobs:
           path: Bizap/app/build/reports/tests/
           retention-days: 7
 
-      - name: Upload APK artifact
+      - name: 📦 Upload APK artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
@@ -54,7 +78,20 @@ jobs:
           path: Bizap/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
 
-      - name: Build failure notification
-        if: failure()
-        run: echo "Build failed. Check logs above for details."
+      - name: 📈 Build summary
+        if: always()
+        run: |
+          echo "## 🔨 Build & Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Java:** 17 (Temurin)" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔔 Notify Slack on failure
+        if: failure() && secrets.SLACK_WEBHOOK != ''
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+            -H 'Content-type: application/json' \
+            -d "{\"text\":\"❌ CI build failed: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.repository }}> on branch \`${{ github.ref_name }}\`\"}"
 
