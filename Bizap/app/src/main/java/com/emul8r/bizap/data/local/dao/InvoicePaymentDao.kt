@@ -71,7 +71,7 @@ interface InvoicePaymentDao {
     suspend fun countByStatus(businessId: Long, status: String): Int
 
     @Query("""
-        SELECT 
+        SELECT
             SUM(CASE WHEN ageingBucket = 'CURRENT' THEN outstandingAmount ELSE 0 END) / 100.0 as current,
             SUM(CASE WHEN ageingBucket = 'PAST_30' THEN outstandingAmount ELSE 0 END) / 100.0 as past30,
             SUM(CASE WHEN ageingBucket = 'PAST_60' THEN outstandingAmount ELSE 0 END) / 100.0 as past60,
@@ -85,7 +85,7 @@ interface InvoicePaymentDao {
     suspend fun getRiskInvoices(businessId: Long, limit: Int = 10): List<InvoicePaymentSnapshot>
 
     @Query("""
-        SELECT 
+        SELECT
             COUNT(*) as totalInvoices,
             SUM(totalAmount) / 100.0 as totalAmount,
             SUM(paidAmount) / 100.0 as paidAmount,
@@ -176,7 +176,4 @@ interface InvoicePaymentDao {
 
     @Query("DELETE FROM invoice_payments")
     suspend fun deleteAllPayments()
-
-    @Query("DELETE FROM invoice_payment_snapshots")
-    suspend fun deleteAllSnapshots()
 }
