@@ -68,6 +68,7 @@ import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.notes.NotesScreen
 import com.emul8r.bizap.ui.onboarding.FirstLaunchWarningDialog
 import com.emul8r.bizap.ui.theme.ThemeManager
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -101,7 +102,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         setContent {
             // ✅ FIX: Extract AppStateViewModel to top level
             val appStateViewModel: AppStateViewModel = hiltViewModel()
@@ -137,13 +138,35 @@ class MainActivity : ComponentActivity() {
                             }
 
                             is AppState.AppReady -> {
-                                val navController = rememberNavController()
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    val navController = rememberNavController()
 
-                                // Use unified NavGraph with theme-aware navigation
-                                NavGraph(
-                                    navController = navController,
-                                    themeManager = themeManager
-                                )
+                                    // Use unified NavGraph with theme-aware navigation
+                                    NavGraph(
+                                        navController = navController,
+                                        themeManager = themeManager
+                                    )
+
+                                    // ⚠️ TEMPORARY CRASH TEST BUTTON
+                                    if (BuildConfig.DEBUG) {
+                                        Button(
+                                            onClick = {
+                                                Timber.e("Manual crash triggered by user for testing.")
+                                                FirebaseCrashlytics.getInstance().setCustomKey("test_key", "test_value")
+                                                throw RuntimeException("Bizap Test Crash: ${System.currentTimeMillis()}")
+                                            },
+                                            modifier = Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .padding(16.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                        ) {
+                                            Text("Force Crash")
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -175,8 +198,8 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val isTopLevelScreen = bottomNavItems.any { item -> 
-        currentDestination?.hasRoute(item.screen::class) == true 
+    val isTopLevelScreen = bottomNavItems.any { item ->
+        currentDestination?.hasRoute(item.screen::class) == true
     }
 
     // Get the title resource ID for the current screen using centralized mapping
@@ -210,7 +233,7 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
     // Global Sync and Offline Status Indicator
     Column(modifier = Modifier.fillMaxSize()) {
         SyncStatusIndicator()
-        
+
         Scaffold(
             modifier = Modifier.weight(1f),
             contentWindowInsets = WindowInsets.safeDrawing,
@@ -387,6 +410,40 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                             }
                         }
                     )
+                }
+            }
+
+            // 🔴 DEBUG ONLY: Force Crash Button for Crashlytics Testing
+            // This button only appears in DEBUG builds
+            // Tap it to trigger a test crash that will be reported to Firebase Crashlytics
+            if (BuildConfig.DEBUG) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    FloatingActionButton(
+                        onClick = {
+                            // Log to Timber (which forwards to Crashlytics)
+                            Timber.w("🔴 TEST CRASH: User pressed Force Crash button")
+
+                            // Set custom key in Crashlytics for debugging
+                            FirebaseCrashlytics.getInstance().setCustomKey("test_crash_triggered", true)
+                            FirebaseCrashlytics.getInstance().setCustomKey("crash_reason", "Manual test via Force Crash button")
+
+                            // Throw exception to trigger crash
+                            throw RuntimeException("🔴 INTENTIONAL TEST CRASH - Testing Crashlytics reporting")
+                        },
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            "🔴",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                    }
                 }
             }
         }
