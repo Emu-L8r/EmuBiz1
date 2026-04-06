@@ -118,6 +118,30 @@ class DashboardViewModelV2 @Inject constructor(
             initialValue = emptyMap()
         )
 
+    // ===== DASHBOARD METRICS FOR WIDGET (NEW) =====
+    val dashboardMetrics: StateFlow<com.emul8r.bizap.domain.repository.DashboardMetrics> = combine(
+        uiState,
+        statusCounts
+    ) { state, counts ->
+        if (state is DashboardUiStateV2.Success) {
+            val s = state.state
+            com.emul8r.bizap.domain.repository.DashboardMetrics(
+                unpaidInvoiceCount = counts["SENT"]?.let { it + (counts["PARTIALLY_PAID"] ?: 0) } ?: 0,
+                unpaidAmount = s.paymentMetrics.outstandingAmount,
+                overdueAmount = s.paymentMetrics.overdueCount.toLong(), // Show COUNT of overdue invoices
+                paidThisMonth = s.paymentMetrics.sentCount.toLong(), // Show COUNT of sent invoices
+                totalCustomersOwed = s.paymentMetrics.outstandingAmount,
+                lastUpdatedMs = System.currentTimeMillis()
+            )
+        } else {
+            com.emul8r.bizap.domain.repository.DashboardMetrics(0, 0, 0, 0, 0)
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = com.emul8r.bizap.domain.repository.DashboardMetrics(0, 0, 0, 0, 0)
+    )
+
     // ===== NOTES COUNT FOR NOTES CARD =====
     val currentNotesCount: StateFlow<Int> = noteRepository
         .getCurrentNotesCount(businessId)
