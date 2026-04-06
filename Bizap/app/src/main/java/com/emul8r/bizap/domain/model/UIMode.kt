@@ -1,4 +1,4 @@
-package com.emul8r.bizap.ui.theme
+package com.emul8r.bizap.domain.model
 
 /**
  * UI display mode preference.

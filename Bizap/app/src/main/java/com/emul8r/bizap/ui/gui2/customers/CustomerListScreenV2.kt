@@ -16,7 +16,7 @@ import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.customers.components.CompactCustomerList
 import com.emul8r.bizap.ui.gui2.customers.components.ModernCustomerList
-import com.emul8r.bizap.ui.theme.UIMode
+import com.emul8r.bizap.domain.model.UIMode
 
 /**
  * GUI2 Customer List Screen with dual-mode rendering support.

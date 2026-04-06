@@ -34,7 +34,7 @@ import com.emul8r.bizap.ui.settings.InvoiceSettingsScreen
 import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.ui.navigation.Screen
-import com.emul8r.bizap.ui.theme.UIMode
+import com.emul8r.bizap.domain.model.UIMode
 import timber.log.Timber
 
 @Composable

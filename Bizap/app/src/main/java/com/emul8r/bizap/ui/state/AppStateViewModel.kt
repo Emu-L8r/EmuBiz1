@@ -11,7 +11,7 @@ import com.emul8r.bizap.domain.model.AuthState
 import com.emul8r.bizap.domain.service.AuthenticationManager
 import com.emul8r.bizap.domain.settings.UIPreferences
 import com.emul8r.bizap.ui.landing.GuiMode
-import com.emul8r.bizap.ui.theme.UIMode
+import com.emul8r.bizap.domain.model.UIMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

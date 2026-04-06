@@ -1,6 +1,6 @@
 package com.emul8r.bizap.domain.settings
 
-import com.emul8r.bizap.ui.theme.UIMode
+import com.emul8r.bizap.domain.model.UIMode
 import kotlinx.coroutines.flow.Flow
 
 /**

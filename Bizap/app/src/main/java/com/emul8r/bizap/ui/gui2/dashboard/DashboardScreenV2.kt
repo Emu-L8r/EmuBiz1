@@ -39,7 +39,7 @@ import com.emul8r.bizap.ui.gui2.dashboard.components.ModernDashboardMetrics
 import com.emul8r.bizap.ui.gui2.dashboard.components.ModernQuickActions
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.AnalyticsSearchBar
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.DashboardMetricsWidget
-import com.emul8r.bizap.ui.theme.UIMode
+import com.emul8r.bizap.domain.model.UIMode
 import timber.log.Timber
 
 /**
