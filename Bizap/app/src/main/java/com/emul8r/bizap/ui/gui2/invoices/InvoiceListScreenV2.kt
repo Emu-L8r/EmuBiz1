@@ -29,17 +29,23 @@ import com.emul8r.bizap.ui.gui2.invoices.components.CompactInvoiceList
 import com.emul8r.bizap.ui.gui2.invoices.components.ModernInvoiceList
 import com.emul8r.bizap.domain.model.UIMode
 
+import androidx.navigation.NavController
+import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
+
 /**
  * GUI2 Invoice List Screen
- * Displays all invoices for the active business with navigation to detail.
+ * Displays all invoices for the active business with type-safe navigation.
+ *
+ * **Phase 3 Improvement:**
+ * - Replaced onInvoiceClick/onCreateInvoice/onBack callbacks with NavController
+ * - Type-safe navigation via ScreenV2 routes
+ * - Direct navigation control without callback chaining
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvoiceListScreenV2(
     businessId: Long,
-    onInvoiceClick: (Long) -> Unit,
-    onCreateInvoice: () -> Unit,
-    onBack: () -> Unit,
+    navController: NavController,
     uiMode: UIMode = UIMode.MODERN,
     viewModel: InvoiceListViewModelV2 = hiltViewModel()
 ) {
@@ -50,16 +56,16 @@ fun InvoiceListScreenV2(
             TopAppBar(
                 title = { Text("Invoices") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { navController.navigate(ScreenV2.CreateInvoice(businessId)) }) {
+                        Icon(Icons.Default.Add, contentDescription = "Create Invoice")
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onCreateInvoice) {
-                Icon(Icons.Default.Add, contentDescription = "Create Invoice")
-            }
         }
     ) { paddingValues ->
         when (val state = uiState) {
@@ -73,18 +79,20 @@ fun InvoiceListScreenV2(
                 )
             }
             is InvoiceListUiStateV2.Success -> {
-                if (uiMode == UIMode.COMPACT) {
-                    CompactInvoiceList(
-                        invoices = state.invoices,
-                        onInvoiceClick = onInvoiceClick,
-                        modifier = Modifier.padding(paddingValues)
-                    )
-                } else {
-                    ModernInvoiceList(
-                        invoices = state.invoices,
-                        onInvoiceClick = onInvoiceClick,
-                        modifier = Modifier.padding(paddingValues)
-                    )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(state.invoices) { invoice ->
+                        InvoiceListItem(
+                            invoice = invoice,
+                            onClick = { navController.navigate(ScreenV2.InvoiceDetail(businessId, invoice.id)) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
@@ -92,29 +100,44 @@ fun InvoiceListScreenV2(
 }
 
 @Composable
-private fun InvoiceListContent(
-    invoices: List<Invoice>,
-    onInvoiceClick: (Long) -> Unit,
+private fun InvoiceListItem(
+    invoice: Invoice,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (invoices.isEmpty()) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Icon(
-                    Icons.Default.Receipt,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                Text(
+                    text = "Invoice #${invoice.invoiceNumber}",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelLarge
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = invoice.customerName,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Text(
+                text = formatCents(invoice.totalAmount),
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelMedium
+            )
+    }
+}
                 Text(
                     "No invoices yet",
                     style = MaterialTheme.typography.bodyLarge,
@@ -186,14 +209,14 @@ private fun InvoiceCardV2(
                     style = MaterialTheme.typography.labelSmall
                 )
             }
-            
+
             // Invoice number
             Text(
                 text = invoice.displayName.ifBlank { invoice.invoiceNumber },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
+
             // Amount
             Text(
                 text = formatCents(invoice.totalAmount),

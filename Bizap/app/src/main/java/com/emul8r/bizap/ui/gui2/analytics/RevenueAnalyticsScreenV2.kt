@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.emul8r.bizap.domain.model.DateRangeV2
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.ui.gui2.common.*
@@ -20,12 +21,16 @@ import com.emul8r.bizap.utils.CentsFormatter
  * GUI2 revenue analytics screen.
  * Shows MTD, YTD, weekly, total paid revenue, and a 30-day daily trend.
  * Includes date range filters and export functionality.
+ *
+ * **Phase 3 Improvement:**
+ * - Replaced onBack callback with NavController
+ * - Type-safe navigation via NavController.popBackStack()
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RevenueAnalyticsScreenV2(
     businessId: Long,
-    onBack: () -> Unit,
+    navController: NavController,
     viewModel: RevenueAnalyticsViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -37,7 +42,7 @@ fun RevenueAnalyticsScreenV2(
             TopAppBar(
                 title = { Text("Revenue Analytics") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },

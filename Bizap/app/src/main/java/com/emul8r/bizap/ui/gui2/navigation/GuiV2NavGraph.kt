@@ -90,13 +90,7 @@ fun GuiV2NavGraph(
             val route: ScreenV2.Invoices = backStackEntry.toRoute()
             InvoiceListScreenV2(
                 businessId = route.businessId,
-                onInvoiceClick = { invoiceId ->
-                    navController.navigate(ScreenV2.InvoiceDetail(route.businessId, invoiceId))
-                },
-                onCreateInvoice = {
-                    navController.navigate(ScreenV2.CreateInvoice(route.businessId))
-                },
-                onBack = { navController.popBackStack() },
+                navController = navController,
                 uiMode = uiMode
             )
         }
@@ -181,7 +175,7 @@ fun GuiV2NavGraph(
             val route: ScreenV2.RevenueAnalytics = backStackEntry.toRoute()
             RevenueAnalyticsScreenV2(
                 businessId = route.businessId,
-                onBack = { navController.popBackStack() }
+                navController = navController
             )
         }
 
@@ -189,7 +183,7 @@ fun GuiV2NavGraph(
             val route: ScreenV2.PaymentAnalytics = backStackEntry.toRoute()
             PaymentAnalyticsScreenV2(
                 businessId = route.businessId,
-                onBack = { navController.popBackStack() }
+                navController = navController
             )
         }
 
@@ -197,7 +191,7 @@ fun GuiV2NavGraph(
             val route: ScreenV2.RiskAnalytics = backStackEntry.toRoute()
             RiskAnalyticsScreenV2(
                 businessId = route.businessId,
-                onBack = { navController.popBackStack() }
+                navController = navController
             )
         }
 

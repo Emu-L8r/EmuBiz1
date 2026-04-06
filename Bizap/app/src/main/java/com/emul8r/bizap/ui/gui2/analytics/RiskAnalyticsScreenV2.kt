@@ -10,18 +10,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.emul8r.bizap.domain.model.gui2.RiskMetricsV2
 import com.emul8r.bizap.ui.gui2.common.*
 
 /**
  * GUI2 risk analytics screen.
  * Shows risk tier breakdown: high-risk, at-risk, and healthy invoices.
+ *
+ * **Phase 3 Improvement:**
+ * - Replaced onBack callback with NavController
+ * - Type-safe navigation via NavController.popBackStack()
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RiskAnalyticsScreenV2(
     businessId: Long,
-    onBack: () -> Unit,
+    navController: NavController,
     viewModel: RiskAnalyticsViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -31,7 +36,7 @@ fun RiskAnalyticsScreenV2(
             TopAppBar(
                 title = { Text("Risk Dashboard") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
