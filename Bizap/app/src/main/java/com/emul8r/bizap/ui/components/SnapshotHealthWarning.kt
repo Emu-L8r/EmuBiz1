@@ -70,7 +70,7 @@ fun SnapshotHealthWarningBanner(
             ) {
                 // Warning icon
                 Icon(
-                    imageVector = Icons.Filled.Warning,
+                    imageVector = Icons.Default.Warning,
                     contentDescription = "Warning",
                     tint = BizapColors.AnalyticsWarning,
                     modifier = Modifier.size(24.dp)
@@ -119,7 +119,7 @@ fun SnapshotHealthWarningBanner(
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Close,
+                        imageVector = Icons.Default.Close,
                         contentDescription = "Dismiss",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
@@ -161,7 +161,7 @@ fun SnapshotHealthDetailsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Warning,
+                    imageVector = Icons.Default.Warning,
                     contentDescription = "Warning",
                     tint = Color(0xFFFF9800),
                     modifier = Modifier.size(24.dp)
@@ -290,7 +290,7 @@ fun SnapshotHealthWarningInline(
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Close,
+                        imageVector = Icons.Default.Close,
                         contentDescription = "Dismiss",
                         tint = Color(0xFFD32F2F),
                         modifier = Modifier.size(16.dp)
@@ -316,7 +316,7 @@ fun SnapshotHealthDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Filled.Warning,
+                    imageVector = Icons.Default.Warning,
                     contentDescription = null,
                     tint = Color(0xFFFF9800),
                     modifier = Modifier.size(24.dp)

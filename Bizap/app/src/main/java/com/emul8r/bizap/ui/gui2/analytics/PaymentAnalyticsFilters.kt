@@ -65,7 +65,7 @@ fun DateRangeFilterChips(
                 onClick = onClearClick,
                 label = { Text("Clear") },
                 leadingIcon = {
-                    Icon(Icons.Filled.Close, contentDescription = "Clear filters", modifier = Modifier.padding(4.dp))
+                    Icon(Icons.Default.Close, contentDescription = "Clear filters", modifier = Modifier.padding(4.dp))
                 },
                 modifier = Modifier.padding(4.dp)
             )

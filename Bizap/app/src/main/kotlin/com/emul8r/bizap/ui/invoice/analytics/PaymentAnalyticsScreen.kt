@@ -246,7 +246,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         MetricCard(
-            icon = Icons.Filled.AttachMoney,
+            icon = Icons.Default.AttachMoney,
             label = "Outstanding",
             value = "$" + String.format(Locale.getDefault(), "%.0f", analytics.totalOutstandingAmount),
             backgroundColor = BizapColors.AnalyticsWarning,
@@ -262,7 +262,7 @@ private fun PaymentKeyMetrics(analytics: PaymentAnalyticsSummary) {
         )
 
         MetricCard(
-            icon = Icons.Filled.Warning,
+            icon = Icons.Default.Warning,
             label = "Overdue",
             value = analytics.overdueInvoices.toString(),
             backgroundColor = BizapColors.AnalyticsAtRisk,
@@ -610,7 +610,7 @@ private fun RiskAlertsSection(analytics: PaymentAnalyticsSummary) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Warning,
+                    imageVector = Icons.Default.Warning,
                     contentDescription = "Alert",
                     tint = BizapColors.AnalyticsWarning,
                     modifier = Modifier.size(28.dp)

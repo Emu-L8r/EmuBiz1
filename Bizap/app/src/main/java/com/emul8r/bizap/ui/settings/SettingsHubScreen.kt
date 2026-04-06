@@ -479,7 +479,7 @@ private fun SettingsCardV2(
             }
 
             Icon(
-                imageVector = Icons.Filled.ChevronRight,
+                imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )

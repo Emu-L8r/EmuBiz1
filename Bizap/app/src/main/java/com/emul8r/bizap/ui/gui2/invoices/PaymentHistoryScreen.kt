@@ -378,9 +378,9 @@ private fun PaymentHistoryCard(item: PaymentHistoryItem) {
         ) {
             // Status icon
             val (icon, tint) = when (item.status) {
-                "PAID" -> Icons.Filled.CheckCircle to Color(0xFF4CAF50) // Green
-                "OVERDUE" -> Icons.Filled.Error to Color(0xFFF44336) // Red
-                else -> Icons.Filled.Schedule to Color(0xFFFFC107) // Orange/Amber
+                "PAID" -> Icons.Default.CheckCircle to Color(0xFF4CAF50) // Green
+                "OVERDUE" -> Icons.Default.Error to Color(0xFFF44336) // Red
+                else -> Icons.Default.Schedule to Color(0xFFFFC107) // Orange/Amber
             }
 
             Icon(
