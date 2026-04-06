@@ -67,6 +67,7 @@ fun DashboardScreenV2(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val statusCounts by viewModel.statusCounts.collectAsStateWithLifecycle()
     val currentNotesCount by viewModel.currentNotesCount.collectAsStateWithLifecycle()
+    val dashboardMetrics by viewModel.dashboardMetrics.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -95,6 +96,8 @@ fun DashboardScreenV2(
                 state = state.state,
                 statusCounts = statusCounts,
                 currentNotesCount = currentNotesCount,
+                dashboardMetrics = dashboardMetrics,
+                viewModel = viewModel,
                 onNavigateToRevenue = onNavigateToRevenue,
                 onNavigateToPayment = onNavigateToPayment,
                 onNavigateToRisk = onNavigateToRisk,
@@ -119,6 +122,8 @@ private fun DashboardContentV2(
     state: DashboardStateV2,
     statusCounts: Map<String, Int>,
     currentNotesCount: Int,
+    dashboardMetrics: com.emul8r.bizap.domain.repository.DashboardMetrics,
+    viewModel: DashboardViewModelV2,
     onNavigateToRevenue: () -> Unit,
     onNavigateToPayment: () -> Unit,
     onNavigateToRisk: () -> Unit,
@@ -159,8 +164,6 @@ private fun DashboardContentV2(
 
             AnalyticsSearchBar(
                 onSearch = { query ->
-                    // ✅ FIX #4: Wire real search - use ViewModel's performSearch()
-                    // performSearch handles database queries via SearchRepository
                     viewModel.performSearch(query.keyword) { results ->
                         searchResults.value = results
                     }
@@ -193,17 +196,7 @@ private fun DashboardContentV2(
             HorizontalDivider()
 
             // ── Dashboard Metrics Widget ──────────────────────────────────
-            // ✅ FIX #5: Real metrics from ViewModel state
-            // Data sourced from paymentRepository and statusCounts (invoice repository)
-            val dashboardMetrics = com.emul8r.bizap.domain.repository.DashboardMetrics(
-                unpaidInvoiceCount = statusCounts["SENT"]?.let { it + (statusCounts["PARTIALLY_PAID"] ?: 0) } ?: 0,
-                unpaidAmount = state.paymentMetrics.outstandingAmount,
-                overdueAmount = state.paymentMetrics.overdueCount.toLong(), // Show COUNT of overdue invoices, not amount
-                paidThisMonth = state.paymentMetrics.sentCount.toLong(), // Show COUNT of sent invoices, not amount
-                totalCustomersOwed = state.paymentMetrics.outstandingAmount,
-                lastUpdatedMs = System.currentTimeMillis()
-            )
-
+            // ✅ FIX #2: Wired metrics from ViewModel state
             DashboardMetricsWidget(
                 metrics = dashboardMetrics,
                 onUnpaidClick = { onNavigateToPayment() },
@@ -665,4 +658,3 @@ private fun QuickActionButtonsRow(
         }
     }
 }
-
