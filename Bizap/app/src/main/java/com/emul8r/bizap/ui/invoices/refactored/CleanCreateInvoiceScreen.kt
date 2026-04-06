@@ -245,7 +245,7 @@ fun SummarySection() {
                 Text("$100.00", fontWeight = FontWeight.Bold)
             }
 
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

@@ -108,7 +108,7 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
     val totalAtRisk = riskInvoices.sumOf { it.outstandingAmount }
     val criticalCount = riskInvoices.count { it.daysOverdue > 60 }
     val mediumCount = riskInvoices.count { it.daysOverdue in 30..60 }
-    
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -123,7 +123,7 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
             accentColor = BizapColors.StatusOverdue,
             modifier = Modifier.fillMaxWidth()
         )
-        
+
         // Critical and medium risk counts
         Row(
             modifier = Modifier.fillMaxWidth(),
