@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.emul8r.bizap.data.local.dao.InvoicePeriodStat
+import com.emul8r.bizap.domain.model.InvoicePeriodData
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.common.MetricCardV2
@@ -274,7 +274,7 @@ private fun LegendItem(color: Color, label: String) {
  */
 @Composable
 private fun InvoiceStackedBarChart(
-    data: List<InvoicePeriodStat>,
+    data: List<InvoicePeriodData>,
     paidColor: Color,
     sentColor: Color,
     modifier: Modifier = Modifier
