@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.emul8r.bizap.data.local.entities.InvoiceWithItems
+import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.ui.gui2.common.*
 import com.emul8r.bizap.ui.gui2.invoices.RecordPaymentDialogV2
@@ -85,7 +85,7 @@ fun InvoiceDetailScreenV2(
             )
             is InvoiceDetailUiStateV2.Success -> {
                 // Use key to prevent flickering - keyed by invoice ID
-                key(state.invoice.invoice.id) {
+                key(state.invoice.id) {
                     InvoiceDetailContentV2(
                         invoice = state.invoice,
                         businessId = businessId,
@@ -94,20 +94,18 @@ fun InvoiceDetailScreenV2(
                 }
 
                 // Memoize status parsing to avoid duplicate conversions
-                val currentStatus = remember(state.invoice.invoice.status) {
-                    runCatching {
-                        InvoiceStatus.valueOf(state.invoice.invoice.status)
-                    }.getOrElse { InvoiceStatus.DRAFT }
+                val currentStatus = remember(state.invoice.status) {
+                    state.invoice.status
                 }
 
                 // ===== PAYMENT DIALOG =====
                 if (state.dialogState is DialogState.PaymentDialog) {
                     RecordPaymentDialogV2(
-                        invoiceId = state.invoice.invoice.id,
+                        invoiceId = state.invoice.id,
                         businessId = businessId,
-                        invoiceTotal = state.invoice.invoice.totalAmount,
-                        amountPaid = state.invoice.invoice.amountPaid,
-                        invoiceDate = state.invoice.invoice.date,
+                        invoiceTotal = state.invoice.totalAmount,
+                        amountPaid = state.invoice.amountPaid,
+                        invoiceDate = state.invoice.date,
                         invoiceStatus = currentStatus,
                         isLoading = state.paymentLoading,
                         error = state.paymentError,
@@ -210,7 +208,7 @@ fun InvoiceDetailScreenV2(
 
 @Composable
 private fun InvoiceDetailContentV2(
-    invoice: InvoiceWithItems,
+    invoice: Invoice,
     businessId: Long,
     modifier: Modifier = Modifier
 ) {
@@ -281,11 +279,10 @@ private fun InvoiceDetailContentV2(
 
 @Composable
 private fun InvoiceDetailsTab(
-    invoice: InvoiceWithItems,
+    invoice: Invoice,
     modifier: Modifier = Modifier
 ) {
     val dateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    val entity = invoice.invoice
 
     Column(
         modifier = modifier,
@@ -295,20 +292,20 @@ private fun InvoiceDetailsTab(
 
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                DetailRowV2("Customer", entity.customerName)
-                DetailRowV2("Status", entity.status)
-                DetailRowV2("Date", dateFormatter.format(Date(entity.date)))
-                if (entity.dueDate > 0) {
-                    DetailRowV2("Due Date", dateFormatter.format(Date(entity.dueDate)))
+                DetailRowV2("Customer", invoice.customerName)
+                DetailRowV2("Status", invoice.status.name)
+                DetailRowV2("Date", dateFormatter.format(Date(invoice.date)))
+                if (invoice.dueDate > 0) {
+                    DetailRowV2("Due Date", dateFormatter.format(Date(invoice.dueDate)))
                 }
-                DetailRowV2("Total", formatCents(entity.totalAmount))
-                DetailRowV2("Amount Paid", formatCents(entity.amountPaid))
-                DetailRowV2("Outstanding", formatCents(entity.totalAmount - entity.amountPaid))
-                DetailRowV2("Currency", entity.currencyCode)
+                DetailRowV2("Total", formatCents(invoice.totalAmount))
+                DetailRowV2("Amount Paid", formatCents(invoice.amountPaid))
+                DetailRowV2("Outstanding", formatCents(invoice.totalAmount - invoice.amountPaid))
+                DetailRowV2("Currency", invoice.currencyCode)
             }
         }
 
-        entity.notes?.let { notes ->
+        invoice.notes?.let { notes ->
             if (notes.isNotBlank()) {
                 HorizontalDivider()
                 SectionHeaderV2("Notes")
@@ -322,7 +319,7 @@ private fun InvoiceDetailsTab(
 
 @Composable
 private fun InvoiceItemsTab(
-    invoice: InvoiceWithItems,
+    invoice: Invoice,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -353,7 +350,7 @@ private fun InvoiceItemsTab(
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "Qty: ${item.quantity}  ×  ${formatCents(item.unitPrice.toLong())}",
+                                text = "Qty: ${item.quantity}  ×  ${formatCents(item.unitPrice)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -374,12 +371,12 @@ private fun InvoiceItemsTab(
 
 @Composable
 private fun PaymentHistoryTab(
-    invoice: InvoiceWithItems,
+    invoice: Invoice,
     businessId: Long,
     modifier: Modifier = Modifier
 ) {
     PaymentHistoryScreen(
-        invoiceId = invoice.invoice.id,
+        invoiceId = invoice.id,
         businessId = businessId,
         modifier = modifier.fillMaxWidth()
     )

@@ -1,4 +1,4 @@
-package com.emul8r.bizap.domain.pdf
+package com.emul8r.bizap.data.service.pdf
 
 import android.graphics.Canvas
 import android.graphics.pdf.PdfDocument

@@ -2,8 +2,8 @@ package com.emul8r.bizap.ui.gui2.analytics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
-import com.emul8r.bizap.data.local.dao.InvoicePeriodStat
+import com.emul8r.bizap.domain.model.InvoicePeriodData
+import com.emul8r.bizap.domain.repository.InvoiceAnalyticsRepository
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,14 +24,14 @@ enum class AnalyticsDateRange(val months: Int, val label: String) {
 data class InvoiceAnalyticsState(
     val granularity: AnalyticsGranularity = AnalyticsGranularity.MONTHLY,
     val dateRange: AnalyticsDateRange = AnalyticsDateRange.SIX_MONTHS,
-    val data: List<InvoicePeriodStat> = emptyList(),
+    val data: List<InvoicePeriodData> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
 
 @HiltViewModel
 class InvoiceAnalyticsViewModelV2 @Inject constructor(
-    private val invoiceDaoV2: InvoiceDaoV2,
+    private val invoiceAnalyticsRepository: InvoiceAnalyticsRepository,
     private val businessContextRepository: BusinessContextRepositoryV2
 ) : ViewModel() {
 
@@ -47,8 +47,10 @@ class InvoiceAnalyticsViewModelV2 @Inject constructor(
         .mapLatest { (gran, range, bid) ->
             try {
                 val data = when (gran) {
-                    AnalyticsGranularity.WEEKLY -> invoiceDaoV2.getWeeklyInvoiceTrend(bid, range.months)
-                    AnalyticsGranularity.MONTHLY -> invoiceDaoV2.getMonthlyInvoiceTrend(bid, range.months)
+                    AnalyticsGranularity.WEEKLY ->
+                        invoiceAnalyticsRepository.getWeeklyInvoiceTrend(bid, range.months)
+                    AnalyticsGranularity.MONTHLY ->
+                        invoiceAnalyticsRepository.getMonthlyInvoiceTrend(bid, range.months)
                 }
                 Timber.d("InvoiceAnalyticsViewModelV2: loaded ${data.size} periods for businessId=$bid")
                 InvoiceAnalyticsState(granularity = gran, dateRange = range, data = data)

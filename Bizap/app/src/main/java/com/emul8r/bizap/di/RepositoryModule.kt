@@ -14,6 +14,7 @@ import com.emul8r.bizap.data.repository.PaymentAnalyticsRepositoryImpl
 import com.emul8r.bizap.data.repository.PaymentRecordRepositoryImpl
 import com.emul8r.bizap.data.repository.PDFRepositoryImpl
 import com.emul8r.bizap.data.repository.PrefilledItemRepositoryImpl
+import com.emul8r.bizap.data.repository.InvoiceAnalyticsRepositoryImpl
 import com.emul8r.bizap.data.repository.RevenueRepositoryImpl
 import com.emul8r.bizap.data.repository.SearchRepositoryImpl
 import com.emul8r.bizap.data.repository.TaxRepositoryImpl
@@ -27,6 +28,7 @@ import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.repository.ExportRepository
+import com.emul8r.bizap.domain.repository.InvoiceAnalyticsRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.repository.NoteRepository
 import com.emul8r.bizap.domain.repository.OfflineQueueRepository
@@ -96,6 +98,12 @@ abstract class RepositoryModule {
     abstract fun bindRevenueRepository(
         impl: RevenueRepositoryImpl
     ): RevenueRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindInvoiceAnalyticsRepository(
+        impl: InvoiceAnalyticsRepositoryImpl
+    ): InvoiceAnalyticsRepository
 
     @Binds
     @Singleton
