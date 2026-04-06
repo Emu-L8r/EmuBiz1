@@ -11,8 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.emul8r.bizap.domain.model.DateRangeV2
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.ui.gui2.common.*
+import com.emul8r.bizap.utils.CentsFormatter
 
 /**
  * GUI2 revenue analytics screen.
@@ -27,8 +29,8 @@ fun RevenueAnalyticsScreenV2(
     viewModel: RevenueAnalyticsViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val selectedDateRange = remember { mutableStateOf(DateRangeV2.THIS_MONTH) }
-    val isExporting = remember { mutableStateOf(false) }
+    var selectedDateRange by remember { mutableStateOf<DateRangeV2>(DateRangeV2.THIS_MONTH) }
+    var isExporting by remember { mutableStateOf<Boolean>(false) }
 
     Scaffold(
         topBar = {
@@ -41,9 +43,9 @@ fun RevenueAnalyticsScreenV2(
                 },
                 actions = {
                     ExportMenuButtonV2(
-                        onExportPdf = { isExporting.value = true },
-                        onExportCsv = { isExporting.value = true },
-                        isExporting = isExporting.value
+                        onExportPdf = { isExporting = true },
+                        onExportCsv = { isExporting = true },
+                        isExporting = isExporting
                     )
                 }
             )
@@ -56,13 +58,13 @@ fun RevenueAnalyticsScreenV2(
         ) {
             // Date range filter
             DateRangeFilterV2(
-                selectedRange = selectedDateRange.value,
-                onRangeSelected = { selectedDateRange.value = it },
+                selectedRange = selectedDateRange,
+                onRangeSelected = { selectedDateRange = it },
                 modifier = Modifier.padding(vertical = 12.dp)
             )
 
             // Loading indicator if exporting
-            if (isExporting.value) {
+            if (isExporting) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
@@ -77,7 +79,7 @@ fun RevenueAnalyticsScreenV2(
                 )
                 is RevenueAnalyticsUiStateV2.Success -> RevenueAnalyticsContentV2(
                     metrics = state.metrics,
-                    dateRange = selectedDateRange.value
+                    dateRange = selectedDateRange
                 )
             }
         }
@@ -105,12 +107,12 @@ private fun RevenueAnalyticsContentV2(
         ) {
             MetricCardV2(
                 label = "Month-to-Date",
-                value = formatCents(metrics.mtdRevenue),
+                value = CentsFormatter.formatCents(metrics.mtdRevenue),
                 modifier = Modifier.weight(1f)
             )
             MetricCardV2(
                 label = "Year-to-Date",
-                value = formatCents(metrics.ytdRevenue),
+                value = CentsFormatter.formatCents(metrics.ytdRevenue),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -121,12 +123,12 @@ private fun RevenueAnalyticsContentV2(
         ) {
             MetricCardV2(
                 label = "Last 7 Days",
-                value = formatCents(metrics.weeklyRevenue),
+                value = CentsFormatter.formatCents(metrics.weeklyRevenue),
                 modifier = Modifier.weight(1f)
             )
             MetricCardV2(
                 label = "All-Time Paid",
-                value = formatCents(metrics.totalPaidRevenue),
+                value = CentsFormatter.formatCents(metrics.totalPaidRevenue),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -151,7 +153,7 @@ private fun RevenueAnalyticsContentV2(
                     ) {
                         Text(point.date, style = MaterialTheme.typography.bodyMedium)
                         Text(
-                            formatCents(point.revenueCents),
+                            CentsFormatter.formatCents(point.revenueCents),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
