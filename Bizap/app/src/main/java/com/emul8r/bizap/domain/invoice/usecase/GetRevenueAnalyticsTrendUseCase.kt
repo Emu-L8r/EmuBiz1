@@ -5,6 +5,8 @@ import com.emul8r.bizap.domain.analytics.TrendMetric
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.text.SimpleDateFormat
+import java.util.Locale
 import javax.inject.Inject
 
 /**
@@ -39,6 +41,7 @@ class GetRevenueAnalyticsTrendUseCase @Inject constructor(
      * repository methods.
      */
     operator fun invoke(businessId: Long): Flow<RevenueTrendData> {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         return revenueRepository.observeRevenueMetrics(businessId).map { result ->
             val metrics = result.getOrNull()
             RevenueTrendData(
@@ -58,7 +61,9 @@ class GetRevenueAnalyticsTrendUseCase @Inject constructor(
                     ChartDataPoint(
                         label = point.date,
                         value = point.revenueCents / 100f,
-                        timestamp = 0L
+                        timestamp = runCatching {
+                            dateFormat.parse(point.date)?.time ?: 0L
+                        }.getOrDefault(0L)
                     )
                 } ?: emptyList(),
                 revenueByStatus = emptyMap(),

@@ -4,7 +4,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
-import kotlin.math.sqrt
 
 /**
  * Renders watermarks on PDFs based on invoice status.
