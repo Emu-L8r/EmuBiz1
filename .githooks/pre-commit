@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+echo "🔍 Pre-commit checks..."
+
+echo "  → Running tests..."
+./gradlew testDebugUnitTest || {
+    echo "❌ Tests failed. Fix and try again."
+    exit 1
+}
+
+echo "  → Checking for @Ignore..."
+if grep -r "@Ignore" app/src/test --include="*.kt" | grep -v "expected"; then
+    echo "⚠️  Warning: Found @Ignore decorators in tests"
+fi
+
+echo "  → Checking for commented code..."
+if grep -r "^[[:space:]]*//.*=" app/src/main --include="*.kt" | head -5; then
+    echo "⚠️  Warning: Found commented-out code"
+fi
+
+echo "✅ Pre-commit checks passed!"
+exit 0

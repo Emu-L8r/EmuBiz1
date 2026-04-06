@@ -10,10 +10,10 @@ import android.text.TextPaint
 import androidx.annotation.RequiresApi
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.repository.DocumentRepository
-import com.emul8r.bizap.domain.pdf.PdfTableRenderer
-import com.emul8r.bizap.domain.pdf.PdfBrandingRenderer
-import com.emul8r.bizap.domain.pdf.PdfPageManager
-import com.emul8r.bizap.domain.pdf.PdfWatermarkRenderer
+import com.emul8r.bizap.data.service.pdf.PdfTableRenderer
+import com.emul8r.bizap.data.service.pdf.PdfBrandingRenderer
+import com.emul8r.bizap.data.service.pdf.PdfPageManager
+import com.emul8r.bizap.data.service.pdf.PdfWatermarkRenderer
 import com.emul8r.bizap.domain.pdf.GridLayoutManager
 import com.emul8r.bizap.domain.pdf.InvoiceSpacingConfig
 import com.emul8r.bizap.domain.service.PdfGenerationService

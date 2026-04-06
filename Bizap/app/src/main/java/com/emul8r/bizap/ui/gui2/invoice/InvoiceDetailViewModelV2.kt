@@ -4,8 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.emul8r.bizap.data.local.InvoiceDao
-import com.emul8r.bizap.data.local.entities.InvoiceWithItems
+import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.GeneratedDocument
 import com.emul8r.bizap.domain.model.DocumentStatus
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
@@ -15,6 +14,7 @@ import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.DocumentRepository
+import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.service.PdfGenerationService
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import com.emul8r.bizap.utils.CentsFormatter
@@ -42,7 +42,7 @@ import javax.inject.Inject
 @HiltViewModel
 class InvoiceDetailViewModelV2 @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val invoiceDao: InvoiceDao,
+    private val invoiceRepository: InvoiceRepository,
     private val paymentRepositoryV2: PaymentRepositoryV2,
     private val pdfGenerationService: PdfGenerationService,
     private val businessProfileRepository: BusinessProfileRepository,
@@ -64,7 +64,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
 
     private fun loadInvoice() {
         viewModelScope.launch {
-            invoiceDao.getInvoiceWithItemsById(invoiceId)
+            invoiceRepository.getInvoiceWithItemsById(invoiceId)
                 .collect { invoice ->
                     _uiState.value = if (invoice == null) {
                         Timber.w("InvoiceDetailViewModelV2: invoice $invoiceId not found")
@@ -137,7 +137,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
             )
 
             try {
-                val invoice = invoiceDao.getInvoiceById(invoiceId) ?: run {
+                val invoice = invoiceRepository.getInvoiceWithItemsById(invoiceId).firstOrNull() ?: run {
                     Timber.w("recordPayment: Invoice not found - invoiceId=$invoiceId")  // ⬅️ ADD
                     _uiState.value = currentState.copy(
                         paymentLoading = false,
@@ -166,7 +166,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
 
                 val newAmountPaid = invoice.amountPaid + amount
                 Timber.d("recordPayment: Updating database - ${invoice.amountPaid} → $newAmountPaid cents")  // ⬅️ ENHANCE
-                invoiceDao.updateAmountPaid(invoiceId, newAmountPaid)
+                invoiceRepository.updateAmountPaid(invoiceId, newAmountPaid).getOrThrow()
 
                 // Update status based on payment
                 val newStatus = if (newAmountPaid >= invoice.totalAmount) {
@@ -174,7 +174,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                 } else {
                     InvoiceStatus.PARTIALLY_PAID
                 }
-                invoiceDao.updateStatus(invoiceId, newStatus)
+                invoiceRepository.updateInvoiceStatus(invoiceId, newStatus).getOrThrow()
                 Timber.i("✅ recordPayment: Payment recorded successfully - invoiceId=$invoiceId, newStatus=$newStatus")  // ⬅️ ADD
 
                 // Close dialog on success
@@ -220,7 +220,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                             )
                         }
                 } else {
-                    invoiceDao.updateStatus(invoiceId, newStatus)
+                    invoiceRepository.updateInvoiceStatus(invoiceId, newStatus).getOrThrow()
                     Timber.i("✅ updateInvoiceStatus: Status updated successfully - invoiceId=$invoiceId, status=$newStatus")  // ⬅️ ENHANCE
                     _uiState.value = currentState.copy(
                         dialogState = DialogState.None,
@@ -237,7 +237,7 @@ class InvoiceDetailViewModelV2 @Inject constructor(
     }
 
     // ===== PDF EXPORT =====
-    fun exportToPdf(invoice: InvoiceWithItems) {
+    fun exportToPdf(invoice: Invoice) {
         viewModelScope.launch {
             try {
                 val currentState = _uiState.value
@@ -267,26 +267,26 @@ class InvoiceDetailViewModelV2 @Inject constructor(
 
                 // Create invoice snapshot with REAL business data
                 val snapshot = InvoiceSnapshot(
-                    invoiceId = invoice.invoice.id,
-                    invoiceNumber = invoice.invoice.invoiceNumber,
-                    displayName = invoice.invoice.displayName,
-                    customerName = invoice.invoice.customerName,
-                    customerAddress = invoice.invoice.customerAddress,
-                    customerEmail = invoice.invoice.customerEmail,
-                    date = invoice.invoice.date,
-                    dueDate = invoice.invoice.dueDate,
+                    invoiceId = invoice.id,
+                    invoiceNumber = invoice.invoiceNumber,
+                    displayName = invoice.displayName,
+                    customerName = invoice.customerName,
+                    customerAddress = invoice.customerAddress,
+                    customerEmail = invoice.customerEmail,
+                    date = invoice.date,
+                    dueDate = invoice.dueDate,
                     items = invoice.items.map { item ->
                         com.emul8r.bizap.domain.model.LineItemSnapshot(
                             description = item.description,
                             quantity = item.quantity,
-                            unitPrice = item.unitPrice.toLong(),
+                            unitPrice = item.unitPrice,
                             total = (item.unitPrice * item.quantity).toLong()
                         )
                     },
                     subtotal = subtotal,
-                    taxRate = invoice.invoice.taxRate,
-                    taxAmount = invoice.invoice.taxAmount,
-                    totalAmount = invoice.invoice.totalAmount,
+                    taxRate = invoice.taxRate,
+                    taxAmount = invoice.taxAmount,
+                    totalAmount = invoice.totalAmount,
                     businessName = businessProfile.businessName,
                     businessAbn = businessProfile.abn ?: "",
                     businessEmail = businessProfile.email ?: "",
@@ -294,15 +294,15 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                     businessAddress = businessProfile.address ?: "",
                     logoBase64 = businessProfile.logoBase64,
                     currencyCode = "AUD",
-                    headerText = invoice.invoice.header ?: "",
-                    subheaderText = invoice.invoice.subheader ?: "",
-                    footerText = invoice.invoice.footer ?: "",
-                    notes = invoice.invoice.notes ?: "",
+                    headerText = invoice.header ?: "",
+                    subheaderText = invoice.subheader ?: "",
+                    footerText = invoice.footer ?: "",
+                    notes = invoice.notes ?: "",
                     bankAccountName = businessProfile.accountName ?: "",
                     bankAccountNumber = businessProfile.accountNumber ?: "",
                     bankBsb = businessProfile.bsbNumber ?: "",
                     bankName = businessProfile.bankName ?: "",
-                    invoiceStatus = invoice.invoice.status
+                    invoiceStatus = invoice.status.name
                 )
 
                 Timber.d("InvoiceDetailViewModelV2: Invoice snapshot created successfully")
@@ -452,7 +452,7 @@ sealed class InvoiceDetailUiStateV2 {
     object Loading : InvoiceDetailUiStateV2()
     object NotFound : InvoiceDetailUiStateV2()
     data class Success(
-        val invoice: InvoiceWithItems,
+        val invoice: Invoice,
         val dialogState: DialogState = DialogState.None,
         val paymentLoading: Boolean = false,
         val paymentError: String? = null,
