@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.model.gui2.PaymentMetricsV2
 import com.emul8r.bizap.ui.gui2.common.*
@@ -19,12 +20,16 @@ import com.emul8r.bizap.ui.gui2.common.*
  * GUI2 payment analytics screen.
  * Displays outstanding balances, collection metrics, and invoice status breakdown.
  * Includes status filtering and export functionality.
+ *
+ * **Phase 3 Improvement:**
+ * - Replaced onBack callback with NavController
+ * - Type-safe navigation via NavController.popBackStack()
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaymentAnalyticsScreenV2(
     businessId: Long,
-    onBack: () -> Unit,
+    navController: NavController,
     viewModel: PaymentAnalyticsViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -40,7 +45,7 @@ fun PaymentAnalyticsScreenV2(
             TopAppBar(
                 title = { Text("Payment Analytics") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
