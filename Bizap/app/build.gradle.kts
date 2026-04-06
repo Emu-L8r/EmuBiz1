@@ -1,15 +1,15 @@
 /*
  * Bizap Build Configuration
- * 
+ *
  * This file defines the build configuration for the Bizap Android app.
- * 
+ *
  * Key Features:
  * - Gradle 9.2+ compatible (ready for Gradle 10)
  * - Modern Kotlin DSL with version catalogs
  * - Secure release signing via environment variables
  * - Exchange Rate API integration
  * - SQLCipher database encryption
- * 
+ *
  * Related Documentation:
  * - Build Guide: docs/BUILD_GUIDE.md
  * - Gradle Roadmap: docs/GRADLE_MIGRATION_ROADMAP.md
@@ -40,32 +40,32 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        
+
         /*
          * Exchange Rate API Key Configuration
-         * 
+         *
          * The app uses ExchangeRate-API.com for currency conversion.
          * If no key is configured, the app will:
          * - Use cached exchange rates (if available)
          * - Fall back to default USD rates
          * - Not crash or fail to build
-         * 
+         *
          * To configure:
          * 1. Get free key: https://www.exchangerate-api.com/
          * 2. Add to gradle.properties: EXCHANGE_RATE_API_KEY=your_key_here
          * 3. For CI/CD: Set as GitHub secret
-         * 
+         *
          * See: docs/EXCHANGE_RATE_API_GUIDE.md
          */
         val exchangeRateKey = project.findProperty("EXCHANGE_RATE_API_KEY") as String?
         if (exchangeRateKey.isNullOrBlank()) {
             logger.warn("""
                 ⚠️  EXCHANGE_RATE_API_KEY not found!
-                
+
                 Exchange rate features will be disabled.
                 To enable, add to local.properties or gradle.properties:
                 EXCHANGE_RATE_API_KEY=your_api_key_here
-                
+
                 Get a free key at: https://www.exchangerate-api.com/
             """.trimIndent())
             buildConfigField("String", "EXCHANGE_RATE_API_KEY", "\"\"")
@@ -76,24 +76,24 @@ android {
 
     /*
      * Release Signing Configuration
-     * 
+     *
      * Production builds MUST use environment variables for security.
      * Development builds can use a local keystore for convenience.
-     * 
+     *
      * Environment Variables (Production):
      * - KEYSTORE_PATH: Absolute path to .jks/.keystore file
      * - KEYSTORE_PASSWORD: Keystore password
      * - KEY_ALIAS: Key alias within keystore
      * - KEY_PASSWORD: Key password
-     * 
+     *
      * Development Fallback:
      * - Place release-key.jks in project root (Bizap/../release-key.jks)
      * - Uses default password "bizap123" (DO NOT use in production!)
-     * 
+     *
      * GitHub Actions:
      * - Uses KEYSTORE_BASE64 secret (base64-encoded keystore)
      * - See: .github/workflows/android-release.yml
-     * 
+     *
      * See: docs/SIGNING_SECURITY_POLICY.md
      */
     signingConfigs {
@@ -104,7 +104,7 @@ android {
             val storePass = System.getenv("KEYSTORE_PASSWORD")
             val alias = System.getenv("KEY_ALIAS")
             val keyPass = System.getenv("KEY_PASSWORD")
-            
+
             // Only require environment variables for release builds
             if (keystorePath != null && storePass != null && alias != null && keyPass != null) {
                 storeFile = file(keystorePath)
@@ -160,6 +160,25 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            // ✅ Crashlytics Configuration: Enable mapping file upload for de-obfuscation
+            //
+            // When minify is enabled (isMinifyEnabled = true), ProGuard/R8 obfuscates the code.
+            // Crashlytics needs the mapping files to translate obfuscated stack traces back to
+            // original source code locations. Without this, crash reports are useless.
+            //
+            // This configuration ensures:
+            // 1. Native symbol upload is enabled (for NDK crashes)
+            // 2. Mapping files are uploaded during CI/CD builds
+            // 3. Crashlytics can de-obfuscate crash stacks in the Firebase console
+            //
+            // Result: When a user crashes in production, you see the actual line numbers
+            // and method names, not obfuscated names like "a.b.c(Z)V"
+            configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                nativeSymbolUploadEnabled = true
+                // Optional: Set custom unstripped native libs directory if using NDK
+                // unstrippedNativeLibsDir = file("build/intermediates/merged_native_libs/release/out/lib")
+            }
         }
     }
 
@@ -201,13 +220,13 @@ android {
         }
 
         // FIXED: Removed exclusions for x86 and x86_64 to support emulators
-        // and armeabi-v7a for older/budget devices. 
+        // and armeabi-v7a for older/budget devices.
         // Stripping these saves space but causes UnsatisfiedLinkError on many devices/emulators.
         jniLibs {
             excludes += listOf(
-                // "lib/armeabi-v7a/**", 
-                // "lib/x86/**",          
-                // "lib/x86_64/**"        
+                // "lib/armeabi-v7a/**",
+                // "lib/x86/**",
+                // "lib/x86_64/**"
             )
         }
     }
