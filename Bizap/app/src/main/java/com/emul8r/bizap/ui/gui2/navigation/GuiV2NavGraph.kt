@@ -64,8 +64,15 @@ fun GuiV2NavGraph(
                     onNavigateToDunningNotices = { navController.navigate(ScreenV2.DunningNotices(route.businessId)) },
                     onNavigateToVault = { navController.navigate(ScreenV2.Vault(route.businessId)) },
                     onNavigateToNotes = {
-                        // TODO: Implement Notes screen for GUI2
-                        Timber.w("Notes navigation not yet implemented for GUI2")
+                        // ✅ FIX #1: Notes navigation - bridge to GUI1 Notes screen
+                        // Notes is currently GUI1-only, so we navigate using Screen.Notes
+                        // This allows GUI2 users to access notes functionality
+                        try {
+                            navController.navigate(Screen.Notes)
+                            Timber.d("Navigating to Notes screen from GUI2")
+                        } catch (e: IllegalArgumentException) {
+                            Timber.e(e, "Failed to navigate to Notes screen")
+                        }
                     },
                     onCreateCustomer = { navController.navigate(ScreenV2.CreateCustomer(route.businessId)) },
                     onCreateInvoice = { navController.navigate(ScreenV2.CreateInvoice(route.businessId)) },
