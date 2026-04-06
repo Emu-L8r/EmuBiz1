@@ -42,6 +42,12 @@ object CrashlyticsModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseCrashlytics(): FirebaseCrashlytics =
-        FirebaseCrashlytics.getInstance()
+    fun provideFirebaseCrashlytics(): FirebaseCrashlytics? {
+        return try {
+            FirebaseCrashlytics.getInstance()
+        } catch (e: Exception) {
+            timber.log.Timber.w(e, "⚠️ Failed to initialize FirebaseCrashlytics — app will continue without crash reporting")
+            null
+        }
+    }
 }

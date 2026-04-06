@@ -103,16 +103,17 @@ object FirebaseModule {
     }
 
     /**
-     * Provides FirebaseRemoteConfig configured with a short minimum-fetch interval
-     * (suitable for development) and sensible production defaults.
+     * Provides FirebaseRemoteConfig configured with a 1-hour minimum fetch interval.
+     * In debug builds, the interval is reduced to 0 seconds so changes take effect
+     * immediately during development.
      */
     @Provides
     @Singleton
     fun provideFirebaseRemoteConfig(): FirebaseRemoteConfig {
         val config = FirebaseRemoteConfig.getInstance()
+        val minFetchIntervalSeconds = if (com.emul8r.bizap.BuildConfig.DEBUG) 0L else 3600L
         val settings = FirebaseRemoteConfigSettings.Builder()
-            // 1 hour in production; use 0 in dev to fetch immediately
-            .setMinimumFetchIntervalInSeconds(3600)
+            .setMinimumFetchIntervalInSeconds(minFetchIntervalSeconds)
             .build()
         config.setConfigSettingsAsync(settings)
         return config
