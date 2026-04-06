@@ -14,7 +14,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.emul8r.bizap.R
+import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import timber.log.Timber
 
 /**
@@ -24,19 +26,23 @@ import timber.log.Timber
  * - Render form fields
  * - Display validation errors from ViewModel
  * - Show loading state
- * - Navigate back on success
+ * - Navigate via NavController (type-safe routes)
  *
  * **NO Business Logic:**
  * - No local form state (all in ViewModel)
  * - No validation logic (all in ViewModel)
- * - No callbacks (UI observes StateFlow)
+ * - No callbacks (uses NavController + StateFlow)
+ *
+ * **Phase 3 Improvement:**
+ * - Replaced onBack/onCreate callbacks with NavController
+ * - Type-safe navigation via ScreenV2 routes
+ * - Single source of truth for navigation logic
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateCustomerScreenV2(
     businessId: Long,
-    onCreate: () -> Unit,
-    onBack: () -> Unit,
+    navController: NavController,
     viewModel: CreateCustomerViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -45,7 +51,7 @@ fun CreateCustomerScreenV2(
     // Navigate back on successful customer creation
     LaunchedEffect(uiState.customerCreated) {
         if (uiState.customerCreated) {
-            onCreate()
+            navController.popBackStack()
         }
     }
 
@@ -64,7 +70,7 @@ fun CreateCustomerScreenV2(
             TopAppBar(
                 title = { Text(stringResource(id = R.string.screen_title_create_customer), style = MaterialTheme.typography.headlineSmall) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
