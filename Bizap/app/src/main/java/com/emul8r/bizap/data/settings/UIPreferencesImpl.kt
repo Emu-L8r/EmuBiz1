@@ -5,7 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.emul8r.bizap.domain.settings.UIPreferences
-import com.emul8r.bizap.ui.theme.UIMode
+import com.emul8r.bizap.domain.model.UIMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

@@ -27,7 +27,7 @@ import com.emul8r.bizap.ui.gui2.invoices.InvoiceListViewModelV2
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListUiStateV2
 import com.emul8r.bizap.ui.gui2.invoices.components.CompactInvoiceList
 import com.emul8r.bizap.ui.gui2.invoices.components.ModernInvoiceList
-import com.emul8r.bizap.ui.theme.UIMode
+import com.emul8r.bizap.domain.model.UIMode
 
 /**
  * GUI2 Invoice List Screen
