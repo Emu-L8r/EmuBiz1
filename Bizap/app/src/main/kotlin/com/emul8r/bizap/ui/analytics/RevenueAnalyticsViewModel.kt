@@ -67,40 +67,58 @@ class RevenueAnalyticsViewModel @Inject constructor(
                     set(Calendar.SECOND, 0)
                 }.timeInMillis
 
-                // For MVP: Return mock revenue data
-                // TODO: Wire to actual invoice queries in future
-                val mockDailyRevenue = listOf(
-                    DailyRevenue(today - (6 * 86400000), 0),
-                    DailyRevenue(today - (5 * 86400000), 25000),
-                    DailyRevenue(today - (4 * 86400000), 15000),
-                    DailyRevenue(today - (3 * 86400000), 45000),
-                    DailyRevenue(today - (2 * 86400000), 30000),
-                    DailyRevenue(today - 86400000, 55000),
-                    DailyRevenue(today, 62500)
-                )
+                // ✅ FIX #8: Load real revenue metrics from InvoiceRepository
+                val invoices = invoiceRepository.getAllInvoicesWithItems()
+                    .first()  // Get current value from flow
 
-                val totalRevenue = mockDailyRevenue.sumOf { it.amount }
-                val averageDaily = if (mockDailyRevenue.isNotEmpty()) {
-                    totalRevenue / mockDailyRevenue.size
+                // Filter paid invoices only (these are actual revenue)
+                val paidInvoices = invoices.filter { it.status.toString() == "PAID" }
+
+                // Group by date to calculate daily revenue
+                val dailyRevenueMap = mutableMapOf<Long, Long>()
+                paidInvoices.forEach { invoice ->
+                    val invoiceDateMs = invoice.dateMs - (invoice.dateMs % 86400000)  // Normalize to midnight
+                    val currentAmount = dailyRevenueMap[invoiceDateMs] ?: 0L
+                    dailyRevenueMap[invoiceDateMs] = currentAmount + invoice.totalAmount
+                }
+
+                // Convert to sorted list (last 30 days)
+                val dailyRevenue = dailyRevenueMap
+                    .map { (dateMs, amount) -> DailyRevenue(dateMs, amount) }
+                    .sortedBy { it.dateMs }
+                    .takeLast(30)  // Last 30 days
+
+                val totalRevenue = dailyRevenue.sumOf { it.amount }
+                val averageDaily = if (dailyRevenue.isNotEmpty()) {
+                    totalRevenue / dailyRevenue.size
                 } else {
                     0L
                 }
 
-                // Calculate trend (last 3 days vs previous 3 days)
-                val last3Days = mockDailyRevenue.takeLast(3).sumOf { it.amount }
-                val previous3Days = mockDailyRevenue.dropLast(3).takeLast(3).sumOf { it.amount }
-                val trend = if (previous3Days > 0) {
-                    ((last3Days - previous3Days).toFloat() / previous3Days.toFloat()) * 100f
+                // Calculate trend (last 7 days vs previous 7 days)
+                val last7Days = dailyRevenue.takeLast(7).sumOf { it.amount }
+                val previous7Days = dailyRevenue.dropLast(7).takeLast(7).sumOf { it.amount }
+                val trend = if (previous7Days > 0) {
+                    ((last7Days - previous7Days).toFloat() / previous7Days.toFloat()) * 100f
                 } else {
                     0f
                 }
 
+                // Calculate this month and this year revenue
+                val thisMonthRevenue = paidInvoices
+                    .filter { it.dateMs >= monthStart }
+                    .sumOf { it.totalAmount }
+
+                val thisYearRevenue = paidInvoices
+                    .filter { it.dateMs >= yearStart }
+                    .sumOf { it.totalAmount }
+
                 val metrics = RevenueMetrics(
-                    dailyRevenue = mockDailyRevenue,
+                    dailyRevenue = dailyRevenue,
                     totalRevenue = totalRevenue,
                     averageDaily = averageDaily,
-                    thisMonthRevenue = (totalRevenue * 0.4).toLong(),
-                    thisYearRevenue = (totalRevenue * 0.8).toLong(),
+                    thisMonthRevenue = thisMonthRevenue,
+                    thisYearRevenue = thisYearRevenue,
                     trend = trend
                 )
 

@@ -153,26 +153,17 @@ private fun DashboardContentV2(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            // ── WIN #12: QUICK STATS CARD (HIGH VISIBILITY) ────────────────
-            // Shows 4 key metrics at a glance: Revenue, Overdue, Due This Month, Pending
-            QuickStatsCard(
-                totalRevenue = state.revenueMetrics.ytdRevenue,
-                amountOverdue = state.revenueMetrics.overdueAmount,
-                dueThisMonth = statusCounts["SENT"]?.let { it + (statusCounts["PARTIALLY_PAID"] ?: 0) } ?: 0,
-                pendingPayments = statusCounts["PARTIALLY_PAID"] ?: 0,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            HorizontalDivider()
 
             // ── Analytics Search Bar (NEW) ────────────────────────────────
             val searchResults = remember { mutableStateOf<List<SearchResult>>(emptyList()) }
 
             AnalyticsSearchBar(
                 onSearch = { query ->
-                    // TODO: Wire to actual search repository in Week 2
-                    // For now, using mock data to demonstrate search
-                    searchResults.value = getMockSearchResults(query.keyword)
+                    // ✅ FIX #4: Wire real search - use ViewModel's performSearch()
+                    // performSearch handles database queries via SearchRepository
+                    viewModel.performSearch(query.keyword) { results ->
+                        searchResults.value = results
+                    }
                 },
                 onResultClick = { result ->
                     // Navigate based on result type
@@ -202,9 +193,9 @@ private fun DashboardContentV2(
             HorizontalDivider()
 
             // ── Dashboard Metrics Widget ──────────────────────────────────
-            // TODO: Wire metrics from ViewModel once repository is wired
-            // For now, using mock data to demonstrate UI
-            val mockMetrics = com.emul8r.bizap.domain.repository.DashboardMetrics(
+            // ✅ FIX #5: Real metrics from ViewModel state
+            // Data sourced from paymentRepository and statusCounts (invoice repository)
+            val dashboardMetrics = com.emul8r.bizap.domain.repository.DashboardMetrics(
                 unpaidInvoiceCount = statusCounts["SENT"]?.let { it + (statusCounts["PARTIALLY_PAID"] ?: 0) } ?: 0,
                 unpaidAmount = state.paymentMetrics.outstandingAmount,
                 overdueAmount = state.paymentMetrics.overdueCount.toLong(), // Show COUNT of overdue invoices, not amount
@@ -214,7 +205,7 @@ private fun DashboardContentV2(
             )
 
             DashboardMetricsWidget(
-                metrics = mockMetrics,
+                metrics = dashboardMetrics,
                 onUnpaidClick = { onNavigateToPayment() },
                 onOverdueClick = { onNavigateToPayment() },
                 onPaidClick = { onNavigateToRevenue() }
@@ -237,7 +228,8 @@ private fun DashboardContentV2(
                     onNavigateToInvoices()
                 },
                 onSendReminder = {
-                    // TODO: Navigate to send reminder screen
+                    // ✅ FIX #3: Send Reminder navigation - go to Dunning Notices
+                    onNavigateToDunningNotices()
                 },
                 onViewReports = onNavigateToRevenue,
                 modifier = Modifier
@@ -258,6 +250,20 @@ private fun DashboardContentV2(
 
             // ── Management Section ────────────────────────────────────────
             SectionHeaderV2(title = "Manage")
+
+            // ── WIN #12: QUICK STATS CARD (Business Overview) ──────────────
+            // Shows 4 key metrics at a glance: Revenue, Overdue, Due This Month, Pending
+            QuickStatsCard(
+                totalRevenue = state.revenueMetrics.ytdRevenue,
+                amountOverdue = state.revenueMetrics.overdueAmount,
+                dueThisMonth = statusCounts["SENT"]?.let { it + (statusCounts["PARTIALLY_PAID"] ?: 0) } ?: 0,
+                pendingPayments = statusCounts["PARTIALLY_PAID"] ?: 0,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            HorizontalDivider()
+
+            // ── Management Action Buttons ──────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -660,64 +666,3 @@ private fun QuickActionButtonsRow(
     }
 }
 
-/**
- * Generate mock search results for demonstration.
- *
- * TODO: Replace with real search repository in Week 2
- */
-private fun getMockSearchResults(keyword: String): List<SearchResult> {
-    if (keyword.trim().isEmpty()) return emptyList()
-
-    val keywordLower = keyword.lowercase()
-
-    val mockInvoices = listOf(
-        SearchResult(
-            id = 1001L,
-            title = "Invoice #2024-001",
-            subtitle = "$2,500.00",
-            type = com.emul8r.bizap.domain.analytics.SearchType.INVOICE
-        ),
-        SearchResult(
-            id = 1002L,
-            title = "Invoice #2024-002",
-            subtitle = "$1,850.00",
-            type = com.emul8r.bizap.domain.analytics.SearchType.INVOICE
-        ),
-        SearchResult(
-            id = 1003L,
-            title = "Invoice #2024-003",
-            subtitle = "$3,200.00",
-            type = com.emul8r.bizap.domain.analytics.SearchType.INVOICE
-        ),
-    )
-
-    // Mock customers
-    val mockCustomers = listOf(
-        SearchResult(
-            id = 2001L,
-            title = "Acme Corporation",
-            subtitle = "acme@company.com",
-            type = com.emul8r.bizap.domain.analytics.SearchType.CUSTOMER
-        ),
-        SearchResult(
-            id = 2002L,
-            title = "Tech Solutions Inc",
-            subtitle = "contact@techsolutions.com",
-            type = com.emul8r.bizap.domain.analytics.SearchType.CUSTOMER
-        ),
-        SearchResult(
-            id = 2003L,
-            title = "Global Enterprises",
-            subtitle = "info@globalent.com",
-            type = com.emul8r.bizap.domain.analytics.SearchType.CUSTOMER
-        ),
-    )
-
-    // Filter by keyword
-    val results = (mockInvoices + mockCustomers).filter { result ->
-        result.title.lowercase().contains(keywordLower) ||
-        result.subtitle.lowercase().contains(keywordLower)
-    }
-
-    return results.take(10)  // Limit to 10 results
-}

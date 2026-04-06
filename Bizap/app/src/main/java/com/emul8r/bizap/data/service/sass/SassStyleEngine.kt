@@ -503,7 +503,7 @@ class SassStyleEngine(private val tokens: SassTokens) {
         appendLine()
 
         // signature / authorization section
-        appendLine(SassMixins.signatureLine(color = tokens.colorAccent))
+        appendLine(SassMixins.signatureLine(borderColor = tokens.colorAccent))
         appendLine()
 
         appendLine(SassMixins.authorizationSection(
