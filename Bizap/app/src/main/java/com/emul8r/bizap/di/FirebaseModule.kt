@@ -4,6 +4,8 @@ import android.content.Context
 import com.emul8r.bizap.utils.FirebaseEventTracker
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -98,6 +100,23 @@ object FirebaseModule {
             Timber.w("⚠️ FirebaseEventTracker initialized with null analytics - events will not be sent to Firebase")
         }
         return FirebaseEventTracker(analytics)
+    }
+
+    /**
+     * Provides FirebaseRemoteConfig configured with a 1-hour minimum fetch interval.
+     * In debug builds, the interval is reduced to 0 seconds so changes take effect
+     * immediately during development.
+     */
+    @Provides
+    @Singleton
+    fun provideFirebaseRemoteConfig(): FirebaseRemoteConfig {
+        val config = FirebaseRemoteConfig.getInstance()
+        val minFetchIntervalSeconds = if (com.emul8r.bizap.BuildConfig.DEBUG) 0L else 3600L
+        val settings = FirebaseRemoteConfigSettings.Builder()
+            .setMinimumFetchIntervalInSeconds(minFetchIntervalSeconds)
+            .build()
+        config.setConfigSettingsAsync(settings)
+        return config
     }
 }
 
