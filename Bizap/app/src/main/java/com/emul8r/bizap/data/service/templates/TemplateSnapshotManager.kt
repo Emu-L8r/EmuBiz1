@@ -1,4 +1,4 @@
-package com.emul8r.bizap.ui.templates
+package com.emul8r.bizap.data.service.templates
 
 import com.emul8r.bizap.data.local.entities.InvoiceTemplate
 import com.emul8r.bizap.data.local.entities.InvoiceCustomField

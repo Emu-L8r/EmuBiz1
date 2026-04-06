@@ -6,9 +6,9 @@ import com.emul8r.bizap.domain.model.InvoiceSettings
 import com.emul8r.bizap.domain.pdf.CustomizationOption
 import com.emul8r.bizap.domain.pdf.InvoiceThemeRenderer
 import com.emul8r.bizap.domain.pdf.ValidationResult
-import com.emul8r.bizap.ui.invoices.html.InvoiceTemplateDataMapper
-import com.emul8r.bizap.ui.invoices.html.HtmlTemplateProcessor
-import com.emul8r.bizap.ui.invoices.html.HtmlToPdfConverter
+import com.emul8r.bizap.data.service.html.InvoiceTemplateDataMapper
+import com.emul8r.bizap.data.service.html.HtmlTemplateProcessor
+import com.emul8r.bizap.data.service.html.HtmlToPdfConverter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

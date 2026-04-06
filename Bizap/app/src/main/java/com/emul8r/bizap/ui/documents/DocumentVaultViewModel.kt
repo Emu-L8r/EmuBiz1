@@ -2,7 +2,7 @@ package com.emul8r.bizap.ui.documents
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emul8r.bizap.data.local.entities.DocumentStatus
+import com.emul8r.bizap.domain.model.DocumentStatus
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository

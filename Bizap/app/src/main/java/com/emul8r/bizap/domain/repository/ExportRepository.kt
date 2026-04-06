@@ -2,7 +2,7 @@ package com.emul8r.bizap.domain.repository
 
 import com.emul8r.bizap.domain.model.gui2.PaymentMetricsV2
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
-import com.emul8r.bizap.ui.gui2.common.DateRangeV2
+import com.emul8r.bizap.domain.model.DateRangeV2
 
 /**
  * Repository for exporting analytics reports in various formats.

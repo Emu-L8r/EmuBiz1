@@ -9,7 +9,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.model.AuthState
 import com.emul8r.bizap.domain.service.AuthenticationManager
+import com.emul8r.bizap.domain.settings.UIPreferences
 import com.emul8r.bizap.ui.landing.GuiMode
+import com.emul8r.bizap.domain.model.UIMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -44,7 +46,8 @@ private val KEY_FIRST_LAUNCH_WARNING_SHOWN = booleanPreferencesKey("first_launch
 @HiltViewModel
 class AppStateViewModel @Inject constructor(
     private val authManager: AuthenticationManager,
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val uiPreferences: UIPreferences
 ) : ViewModel() {
 
     /** Mutable auth state, updated synchronously on construction and on demand. */
@@ -84,6 +87,21 @@ class AppStateViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = AppState.SplashLoading
     )
+
+    /** Current UI density mode (MODERN / COMPACT). */
+    val uiMode: StateFlow<UIMode> = uiPreferences.uiMode
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = UIMode.DEFAULT
+        )
+
+    /** Persists the chosen [UIMode] to DataStore. */
+    fun setUIMode(mode: UIMode) {
+        viewModelScope.launch {
+            uiPreferences.setUIMode(mode)
+        }
+    }
 
     // -------------------------------------------------------------------------
     // State computation

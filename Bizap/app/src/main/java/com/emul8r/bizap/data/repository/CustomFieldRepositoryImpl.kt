@@ -2,6 +2,7 @@ package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.data.local.dao.InvoiceCustomFieldDao
 import com.emul8r.bizap.data.local.entities.InvoiceCustomField
+import com.emul8r.bizap.domain.model.CustomField
 import com.emul8r.bizap.domain.repository.CustomFieldRepository
 import com.emul8r.bizap.domain.repository.CustomFieldRepository.Companion.MAX_FIELDS_PER_TEMPLATE
 import timber.log.Timber
@@ -16,12 +17,32 @@ class CustomFieldRepositoryImpl @Inject constructor(
     private val fieldDao: InvoiceCustomFieldDao
 ) : CustomFieldRepository {
 
-    override suspend fun saveCustomField(field: InvoiceCustomField): Result<String> = runCatching {
+    private fun CustomField.toEntity(): InvoiceCustomField = InvoiceCustomField(
+        id = id,
+        templateId = templateId,
+        label = label,
+        fieldType = fieldType,
+        isRequired = isRequired,
+        displayOrder = displayOrder,
+        isActive = isActive
+    )
+
+    private fun InvoiceCustomField.toDomain(): CustomField = CustomField(
+        id = id,
+        templateId = templateId,
+        label = label,
+        fieldType = fieldType,
+        isRequired = isRequired,
+        displayOrder = displayOrder,
+        isActive = isActive
+    )
+
+    override suspend fun saveCustomField(field: CustomField): Result<String> = runCatching {
         val count = fieldDao.getFieldCount(field.templateId)
         require(count < MAX_FIELDS_PER_TEMPLATE) {
             "Maximum custom field limit of $MAX_FIELDS_PER_TEMPLATE reached for this template"
         }
-        fieldDao.insertField(field)
+        fieldDao.insertField(field.toEntity())
         Timber.d("✅ Saved custom field '${field.label}' for template ${field.templateId}")
         field.id
     }.also { result ->
@@ -30,8 +51,8 @@ class CustomFieldRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateCustomField(field: InvoiceCustomField): Result<Unit> = runCatching {
-        fieldDao.updateField(field)
+    override suspend fun updateCustomField(field: CustomField): Result<Unit> = runCatching {
+        fieldDao.updateField(field.toEntity())
         Timber.d("✅ Updated custom field '${field.label}' (${field.id})")
     }.also { result ->
         result.onFailure { e ->
@@ -48,8 +69,8 @@ class CustomFieldRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getCustomFields(templateId: String): Result<List<InvoiceCustomField>> = runCatching {
-        val fields = fieldDao.getFieldsByTemplate(templateId)
+    override suspend fun getCustomFields(templateId: String): Result<List<CustomField>> = runCatching {
+        val fields = fieldDao.getFieldsByTemplate(templateId).map { it.toDomain() }
         Timber.d("✅ Retrieved ${fields.size} custom fields for template $templateId")
         fields
     }.also { result ->

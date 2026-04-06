@@ -44,14 +44,6 @@ class RevenueAnalyticsViewModel @Inject constructor(
                 val now = System.currentTimeMillis()
                 val calendar = Calendar.getInstance()
 
-                // Get today's date
-                val today = calendar.apply {
-                    timeInMillis = now
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                }.timeInMillis
-
                 // Get year start
                 val yearStart = calendar.apply {
                     set(Calendar.DAY_OF_YEAR, 1)
@@ -69,67 +61,41 @@ class RevenueAnalyticsViewModel @Inject constructor(
                     set(Calendar.SECOND, 0)
                 }.timeInMillis
 
-                // ✅ FIX #8: Load real revenue metrics from InvoiceRepository
-                // Try to get real paid invoices, fallback to mock data if unavailable
-                var dailyRevenue: List<DailyRevenue> = emptyList()
-                var totalRevenue: Long = 0
-                var thisMonthRevenue: Long = 0
-                var thisYearRevenue: Long = 0
-                var trend: Float = 0f
+                val invoices = invoiceRepository.getAllInvoicesWithItems().first()
+                val paidInvoices = invoices.filter { it.status == InvoiceStatus.PAID }
 
-                try {
-                    val invoices = invoiceRepository.getAllInvoicesWithItems().first()
-                    val paidInvoices = invoices.filter { it.status == InvoiceStatus.PAID }
-
-                    // Group by date
-                    val dailyRevenueMap = mutableMapOf<Long, Long>()
-                    paidInvoices.forEach { invoice ->
-                        val invoiceDateMs = invoice.date - (invoice.date % 86400000)
-                        val currentAmount = dailyRevenueMap[invoiceDateMs] ?: 0L
-                        dailyRevenueMap[invoiceDateMs] = currentAmount + invoice.totalAmount
-                    }
-
-                    dailyRevenue = dailyRevenueMap
-                        .map { (dateMs, amount) -> DailyRevenue(dateMs, amount) }
-                        .sortedBy { it.dateMs }
-                        .takeLast(30)
-
-                    totalRevenue = dailyRevenue.sumOf { it.amount }
-
-                    // Calculate trend
-                    val last7Days = dailyRevenue.takeLast(7).sumOf { it.amount }
-                    val previous7Days = dailyRevenue.dropLast(7).takeLast(7).sumOf { it.amount }
-                    trend = if (previous7Days > 0) {
-                        ((last7Days - previous7Days).toFloat() / previous7Days.toFloat()) * 100f
-                    } else {
-                        0f
-                    }
-
-                    // Month/year revenue
-                    thisMonthRevenue = paidInvoices
-                        .filter { it.date >= monthStart }
-                        .sumOf { it.totalAmount }
-
-                    thisYearRevenue = paidInvoices
-                        .filter { it.date >= yearStart }
-                        .sumOf { it.totalAmount }
-                } catch (e: Exception) {
-                    // Fallback to mock data if real data unavailable
-                    Timber.w(e, "Could not load real revenue data, using mock defaults")
-                    dailyRevenue = listOf(
-                        DailyRevenue(today - (6 * 86400000), 0),
-                        DailyRevenue(today - (5 * 86400000), 25000),
-                        DailyRevenue(today - (4 * 86400000), 15000),
-                        DailyRevenue(today - (3 * 86400000), 45000),
-                        DailyRevenue(today - (2 * 86400000), 30000),
-                        DailyRevenue(today - 86400000, 55000),
-                        DailyRevenue(today, 62500)
-                    )
-                    totalRevenue = dailyRevenue.sumOf { it.amount }
-                    thisMonthRevenue = (totalRevenue * 0.4).toLong()
-                    thisYearRevenue = (totalRevenue * 0.8).toLong()
-                    trend = 15.5f
+                // Group by date
+                val dailyRevenueMap = mutableMapOf<Long, Long>()
+                paidInvoices.forEach { invoice ->
+                    val invoiceDateMs = invoice.date - (invoice.date % 86400000)
+                    val currentAmount = dailyRevenueMap[invoiceDateMs] ?: 0L
+                    dailyRevenueMap[invoiceDateMs] = currentAmount + invoice.totalAmount
                 }
+
+                val dailyRevenue = dailyRevenueMap
+                    .map { (dateMs, amount) -> DailyRevenue(dateMs, amount) }
+                    .sortedBy { it.dateMs }
+                    .takeLast(30)
+
+                val totalRevenue = dailyRevenue.sumOf { it.amount }
+
+                // Calculate trend
+                val last7Days = dailyRevenue.takeLast(7).sumOf { it.amount }
+                val previous7Days = dailyRevenue.dropLast(7).takeLast(7).sumOf { it.amount }
+                val trend = if (previous7Days > 0) {
+                    ((last7Days - previous7Days).toFloat() / previous7Days.toFloat()) * 100f
+                } else {
+                    0f
+                }
+
+                // Month/year revenue
+                val thisMonthRevenue = paidInvoices
+                    .filter { it.date >= monthStart }
+                    .sumOf { it.totalAmount }
+
+                val thisYearRevenue = paidInvoices
+                    .filter { it.date >= yearStart }
+                    .sumOf { it.totalAmount }
 
                 val averageDaily = if (dailyRevenue.isNotEmpty()) {
                     totalRevenue / dailyRevenue.size
