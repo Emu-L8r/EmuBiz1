@@ -6,7 +6,7 @@
     <string name="nav_customers">Customers</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_settings">Settings</string>
-    
+
     <!-- Screen titles -->
     <string name="screen_title_dashboard">Dashboard</string>
     <string name="screen_title_customers">Customers</string>
@@ -31,4 +31,16 @@
     <string name="screen_title_app_appearance">App Appearance</string>
     <string name="screen_title_help">Help &amp; About</string>
     <string name="screen_title_default">Bizap</string>
+
+    <!-- Payment Recording Strings -->
+    <string name="payment_record_title">Record Payment</string>
+    <string name="payment_invoice_total">Invoice Total</string>
+    <string name="payment_amount">Payment Amount</string>
+    <string name="payment_amount_placeholder">0.00</string>
+    <string name="payment_method">Payment Method</string>
+    <string name="payment_notes">Notes (Optional)</string>
+    <string name="payment_record_button">Record Payment</string>
+    <string name="payment_error_invalid_amount">Please enter a valid amount</string>
+    <string name="payment_error_generic">Failed to record payment</string>
+    <string name="payment_success">Payment recorded successfully</string>
 </resources>
