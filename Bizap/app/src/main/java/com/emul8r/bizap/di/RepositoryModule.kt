@@ -19,7 +19,9 @@ import com.emul8r.bizap.data.repository.SearchRepositoryImpl
 import com.emul8r.bizap.data.repository.TaxRepositoryImpl
 import com.emul8r.bizap.data.repository.ThemeRepositoryImpl
 import com.emul8r.bizap.data.service.InvoicePdfService
+import com.emul8r.bizap.data.settings.UIPreferencesImpl
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.settings.UIPreferences
 import com.emul8r.bizap.domain.repository.CustomFieldRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.CurrencyRepository
@@ -173,4 +175,8 @@ abstract class RepositoryModule {
     abstract fun bindPdfGenerationService(
         impl: InvoicePdfService
     ): PdfGenerationService
+
+    @Binds
+    @Singleton
+    abstract fun bindUIPreferences(impl: UIPreferencesImpl): UIPreferences
 }
