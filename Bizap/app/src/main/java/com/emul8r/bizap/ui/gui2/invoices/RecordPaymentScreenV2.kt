@@ -9,10 +9,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.emul8r.bizap.R
 import com.emul8r.bizap.data.local.entities.PaymentMethod
 import com.emul8r.bizap.presentation.viewmodel.PaymentRecordingViewModel
 
@@ -52,7 +54,7 @@ fun RecordPaymentScreenV2(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Record Payment") },
+                title = { Text(stringResource(id = R.string.payment_record_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -76,7 +78,7 @@ fun RecordPaymentScreenV2(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        "Invoice Total",
+                        stringResource(id = R.string.payment_invoice_total),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -91,8 +93,8 @@ fun RecordPaymentScreenV2(
             OutlinedTextField(
                 value = uiState.amountInput,
                 onValueChange = { viewModel.updateAmount(it) },
-                label = { Text("Payment Amount") },
-                placeholder = { Text("0.00") },
+                label = { Text(stringResource(id = R.string.payment_amount)) },
+                placeholder = { Text(stringResource(id = R.string.payment_amount_placeholder)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 leadingIcon = { Text("$") },
                 modifier = Modifier.fillMaxWidth(),
@@ -109,7 +111,7 @@ fun RecordPaymentScreenV2(
                     value = uiState.selectedMethod.displayName,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Payment Method") },
+                    label = { Text(stringResource(id = R.string.payment_method)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMethod) },
                     modifier = Modifier
                         .menuAnchor(MenuAnchorType.PrimaryNotEditable)
@@ -136,7 +138,7 @@ fun RecordPaymentScreenV2(
             OutlinedTextField(
                 value = uiState.notesInput,
                 onValueChange = { viewModel.updateNotes(it) },
-                label = { Text("Notes (Optional)") },
+                label = { Text(stringResource(id = R.string.payment_notes)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp),
@@ -169,7 +171,7 @@ fun RecordPaymentScreenV2(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text("Record Payment")
+                Text(stringResource(id = R.string.payment_record_button))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
