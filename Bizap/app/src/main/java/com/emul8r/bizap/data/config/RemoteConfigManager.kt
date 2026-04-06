@@ -100,9 +100,15 @@ class RemoteConfigManagerImpl @Inject constructor(
             try {
                 remoteConfig.fetchAndActivate().await()
                 fetched = true
-                // Sync state flows with freshly fetched values
+                // Sync state flows with freshly fetched values.
+                // Each flag is wrapped individually so a single getBoolean failure
+                // does not prevent the remaining flags from being synced.
                 FeatureFlag.entries.forEach { flag ->
-                    flagFlows[flag]?.emit(remoteConfig.getBoolean(flag.key))
+                    try {
+                        flagFlows[flag]?.emit(remoteConfig.getBoolean(flag.key))
+                    } catch (e: Exception) {
+                        Timber.w(e, "RemoteConfig: failed to sync flow for flag ${flag.key}")
+                    }
                 }
             } catch (e: Exception) {
                 Timber.w(e, "RemoteConfig fetch failed — using cached/default values")
