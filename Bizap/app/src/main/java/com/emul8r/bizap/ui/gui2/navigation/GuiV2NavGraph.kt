@@ -163,8 +163,7 @@ fun GuiV2NavGraph(
             val route: ScreenV2.CreateCustomer = backStackEntry.toRoute()
             CreateCustomerScreenV2(
                 businessId = route.businessId,
-                onBack = { navController.popBackStack() },
-                onCreate = { navController.popBackStack() }
+                navController = navController
             )
         }
 
