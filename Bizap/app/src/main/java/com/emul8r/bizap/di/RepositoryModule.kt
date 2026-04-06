@@ -1,5 +1,9 @@
 package com.emul8r.bizap.di
 
+import com.emul8r.bizap.data.config.FeatureFlagManager
+import com.emul8r.bizap.data.config.RemoteConfigManagerImpl
+import com.emul8r.bizap.data.logging.ErrorLogger
+import com.emul8r.bizap.data.logging.ErrorLoggerImpl
 import com.emul8r.bizap.data.repository.BusinessProfileRepositoryImpl
 import com.emul8r.bizap.data.repository.CustomFieldRepositoryImpl
 import com.emul8r.bizap.data.repository.CustomerRepositoryImpl
@@ -187,4 +191,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindUIPreferences(impl: UIPreferencesImpl): UIPreferences
+
+    @Binds
+    @Singleton
+    abstract fun bindErrorLogger(impl: ErrorLoggerImpl): ErrorLogger
+
+    @Binds
+    @Singleton
+    abstract fun bindFeatureFlagManager(impl: RemoteConfigManagerImpl): FeatureFlagManager
 }
