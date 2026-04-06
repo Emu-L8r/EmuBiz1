@@ -4,8 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.DocumentManager
-import com.emul8r.bizap.data.local.entities.DocumentStatus
-import com.emul8r.bizap.data.local.entities.GeneratedDocumentEntity
+import com.emul8r.bizap.domain.model.DocumentStatus
+import com.emul8r.bizap.domain.model.GeneratedDocument
 import com.emul8r.bizap.domain.analytics.AnalyticsRepository
 import com.emul8r.bizap.domain.analytics.InvoiceAnalyticsEvent
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
@@ -337,7 +337,7 @@ class InvoiceDetailViewModel @Inject constructor(
                     // 📝 INSERT DOCUMENTS INTO VAULT
                     // Create document records so they appear in the vault
                     try {
-                        val quoteDoc = GeneratedDocumentEntity(
+                        val quoteDoc = GeneratedDocument(
                             id = 0, // Auto-generated
                             relatedInvoiceId = invoiceData.id,
                             fileName = quotePdf.name,
@@ -349,7 +349,7 @@ class InvoiceDetailViewModel @Inject constructor(
                         documentRepository.insertDocument(quoteDoc).getOrThrow()
                         Timber.d("✅ Vault: Inserted Quote PDF for invoice #${invoiceData.id}")
 
-                        val invoiceDoc = GeneratedDocumentEntity(
+                        val invoiceDoc = GeneratedDocument(
                             id = 0, // Auto-generated
                             relatedInvoiceId = invoiceData.id,
                             fileName = invoicePdf.name,

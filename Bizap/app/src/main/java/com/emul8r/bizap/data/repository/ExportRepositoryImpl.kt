@@ -3,7 +3,7 @@ package com.emul8r.bizap.data.repository
 import com.emul8r.bizap.domain.model.gui2.PaymentMetricsV2
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.domain.repository.ExportRepository
-import com.emul8r.bizap.ui.gui2.common.DateRangeV2
+import com.emul8r.bizap.domain.model.DateRangeV2
 import com.emul8r.bizap.utils.CentsFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

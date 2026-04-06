@@ -7,7 +7,7 @@ import androidx.navigation.toRoute
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
-import com.emul8r.bizap.ui.gui2.common.DateRangeV2
+import com.emul8r.bizap.domain.model.DateRangeV2
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*

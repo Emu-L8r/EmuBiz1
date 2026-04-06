@@ -2,7 +2,7 @@ package com.emul8r.bizap.data.service
 
 import android.graphics.Color
 import android.graphics.Typeface
-import com.emul8r.bizap.ui.templates.TemplateSnapshot
+import com.emul8r.bizap.data.service.templates.TemplateSnapshot
 import timber.log.Timber
 
 /**

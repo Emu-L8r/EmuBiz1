@@ -17,7 +17,7 @@ import com.emul8r.bizap.domain.pdf.PdfWatermarkRenderer
 import com.emul8r.bizap.domain.pdf.GridLayoutManager
 import com.emul8r.bizap.domain.pdf.InvoiceSpacingConfig
 import com.emul8r.bizap.domain.service.PdfGenerationService
-import com.emul8r.bizap.ui.templates.TemplateSnapshotManager
+import com.emul8r.bizap.data.service.templates.TemplateSnapshotManager
 import com.emul8r.bizap.utils.DocumentNamingUtils
 import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
 import com.emul8r.bizap.di.UserIdProvider
