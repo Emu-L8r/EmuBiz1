@@ -27,7 +27,6 @@ import timber.log.Timber
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerListScreen(
-    guiMode: GuiMode = GuiMode.GUI1,
     businessId: Long? = null,
     onCustomerClick: (Long) -> Unit,
     onCreateCustomer: () -> Unit = {},
@@ -35,57 +34,13 @@ fun CustomerListScreen(
     onViewAnalytics: (() -> Unit)? = null,
     onBack: () -> Unit = {},
 ) {
-    when (guiMode) {
-        GuiMode.GUI1 -> CustomerListScreenV1Content(
-            onCustomerClick = onCustomerClick,
-            onViewSegments = onViewSegments,
-            onViewAnalytics = onViewAnalytics,
-        )
-        GuiMode.GUI2 -> CustomerListScreenV2Content(
-            businessId = businessId ?: 1L,
-            onCustomerClick = onCustomerClick,
-            onCreateCustomer = onCreateCustomer,
-            onBack = onBack,
-        )
-    }
-}
-
-@Composable
-private fun CustomerListScreenV1Content(
-    onCustomerClick: (Long) -> Unit,
-    onViewSegments: (() -> Unit)? = null,
-    onViewAnalytics: (() -> Unit)? = null,
-    viewModel: CustomerViewModel = hiltViewModel()
-) {
-    val customers by viewModel.uiState.collectAsStateWithLifecycle()
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        if (onViewAnalytics != null) {
-            OutlinedButton(
-                onClick = onViewAnalytics,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Icon(Icons.Default.Insights, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("View Customer Analytics")
-            }
-        }
-        if (onViewSegments != null) {
-            OutlinedButton(
-                onClick = onViewSegments,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Icon(Icons.Default.PieChart, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("View Customer Segments")
-            }
-        }
-        CustomerList(customers = customers, onCustomerClick = onCustomerClick)
-    }
+    // GUI2 only - GUI1 legacy code removed
+    CustomerListScreenV2Content(
+        businessId = businessId ?: 1L,
+        onCustomerClick = onCustomerClick,
+        onCreateCustomer = onCreateCustomer,
+        onBack = onBack,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -6,10 +6,35 @@ import timber.log.Timber
 import kotlin.math.pow
 
 /**
- * NetworkRetryPolicy - Implements exponential backoff retry logic
+ * NetworkRetryPolicy - Implements exponential backoff retry logic for business-layer operations
  *
- * WHY EXPONENTIAL BACKOFF?
- * ========================
+ * **Architecture Layers:**
+ * - HTTP Layer: RetryInterceptor (automatic retry on connection/timeout errors)
+ * - Business Layer: NetworkRetryPolicy (manual retry on business logic failures)
+ *
+ * **When to use NetworkRetryPolicy:**
+ * Use this in repositories when you need to retry due to business logic failures:
+ * - Rate limiting (HTTP 429)
+ * - Server validation errors (HTTP 422)
+ * - Stale data detection (custom error codes)
+ *
+ * **When NOT to use:**
+ * - Connection failures: RetryInterceptor handles these automatically
+ * - HTTP 5xx errors: RetryInterceptor handles these automatically
+ * - Timeout errors: RetryInterceptor handles these automatically
+ *
+ * **Example in Repository:**
+ * ```kotlin
+ * private val retryPolicy = NetworkRetryPolicy(maxRetries = 3)
+ *
+ * override suspend fun fetchInvoice(id: Long): Invoice {
+ *     return retryPolicy.execute("fetchInvoice") {
+ *         invoiceApi.getInvoice(id)  // Will retry on rate limit or stale data
+ *     }
+ * }
+ * ```
+ *
+ * **Exponential Backoff Explanation:**
  * Problem: Simple retry (immediate, same speed) floods the server
  * ✅ Exponential backoff: Wait longer between retries
  *

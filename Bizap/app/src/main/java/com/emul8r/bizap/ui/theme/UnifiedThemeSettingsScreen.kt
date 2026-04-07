@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,6 +28,7 @@ import com.emul8r.bizap.ui.components.theme.ColorSelectorButton
 import com.emul8r.bizap.ui.components.theme.PresetTheme
 import com.emul8r.bizap.ui.components.theme.PresetThemeSelector
 import com.emul8r.bizap.ui.designsystem.BizapColors
+import com.emul8r.bizap.R
 import timber.log.Timber
 
 // ── DIALOG STATE MANAGEMENT ─────────────────────────────────────────
@@ -296,7 +298,7 @@ private fun PreviewPanel(colors: ThemeColors) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                "Live Preview",
+                stringResource(R.string.label_live_preview),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -313,7 +315,7 @@ private fun PreviewPanel(colors: ThemeColors) {
                     colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Primary")
+                    Text(stringResource(R.string.label_primary))
                 }
 
                 // Secondary preview
@@ -322,7 +324,7 @@ private fun PreviewPanel(colors: ThemeColors) {
                     colors = ButtonDefaults.buttonColors(containerColor = colors.secondary),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Secondary")
+                    Text(stringResource(R.string.label_secondary))
                 }
 
                 // Tertiary preview
@@ -331,7 +333,7 @@ private fun PreviewPanel(colors: ThemeColors) {
                     colors = ButtonDefaults.buttonColors(containerColor = colors.tertiary),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Tertiary")
+                    Text(stringResource(R.string.label_tertiary))
                 }
             }
 

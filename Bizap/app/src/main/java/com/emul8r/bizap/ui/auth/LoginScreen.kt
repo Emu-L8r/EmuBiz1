@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -213,7 +214,7 @@ fun LoginScreen(
 
                 // Subtitle
                 Text(
-                    text = "Unlock to continue",
+                    text = stringResource(R.string.label_unlock_to_continue),
                     style = MaterialTheme.typography.bodySmall,
                     color = colorResource(R.color.colorOnSurfaceVariant),
                     textAlign = TextAlign.Center
@@ -233,7 +234,7 @@ fun LoginScreen(
 
                 // "Enter your PIN" title
                 Text(
-                    text = "Enter your PIN",
+                    text = stringResource(R.string.label_enter_pin),
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
@@ -292,7 +293,7 @@ fun LoginScreen(
                         )
                     } else {
                         Text(
-                            text = "Unlock",
+                            text = stringResource(R.string.button_unlock),
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
                         )
                     }
@@ -303,7 +304,7 @@ fun LoginScreen(
                 // "Forgot PIN?" link
                 TextButton(onClick = { viewModel.onForgotPINClicked() }) {
                     Text(
-                        text = "Forgot PIN?",
+                        text = stringResource(R.string.label_forgot_pin),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.primary
                     )

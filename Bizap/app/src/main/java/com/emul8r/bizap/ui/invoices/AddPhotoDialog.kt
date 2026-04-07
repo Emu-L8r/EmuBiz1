@@ -15,7 +15,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.emul8r.bizap.R
 
 @Composable
 fun AddPhotoDialog(
@@ -25,16 +27,16 @@ fun AddPhotoDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Photo") },
+        title = { Text(stringResource(R.string.dialog_add_photo)) },
         text = {
             Column {
-                DialogOption(icon = Icons.Default.AddAPhoto, text = "Take Photo", onClick = onTakePhoto)
-                DialogOption(icon = Icons.Default.PhotoLibrary, text = "Choose from Gallery", onClick = onChooseFromGallery)
+                DialogOption(icon = Icons.Default.AddAPhoto, text = stringResource(R.string.button_take_photo), onClick = onTakePhoto)
+                DialogOption(icon = Icons.Default.PhotoLibrary, text = stringResource(R.string.button_choose_gallery), onClick = onChooseFromGallery)
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.button_cancel))
             }
         }
     )

@@ -18,3 +18,25 @@ local.properties
 *.keystore
 *.jks
 
+# Documentation files (use /docs directory instead)
+*.md
+!README.md
+!CONTRIBUTING.md
+
+# Build and log files (use /docs directory)
+*.log
+*.txt
+build_*.log
+compile_*.log
+test_*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# IDE temporary files
+.vscode/
+*.DS_Store
+Thumbs.db

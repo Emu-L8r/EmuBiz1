@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.emul8r.bizap.R
 
 /**
  * Period selector for comparative analytics.
@@ -30,7 +32,7 @@ fun PeriodSelectorV2(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = "Select Comparison Period",
+            text = stringResource(R.string.label_select_comparison_period),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -52,7 +54,7 @@ fun PeriodSelectorV2(
                         MaterialTheme.colorScheme.surface
                 )
             ) {
-                Text("MTD vs Last Month")
+                Text(stringResource(R.string.label_mtd_vs_last_month))
             }
 
             // Year-over-Year Button
@@ -69,7 +71,7 @@ fun PeriodSelectorV2(
                         MaterialTheme.colorScheme.surface
                 )
             ) {
-                Text("YTD vs Last Year")
+                Text(stringResource(R.string.label_ytd_vs_last_year))
             }
 
             // Quarter-over-Quarter Button
@@ -86,7 +88,7 @@ fun PeriodSelectorV2(
                         MaterialTheme.colorScheme.surface
                 )
             ) {
-                Text("QTD vs Last Quarter")
+                Text(stringResource(R.string.label_qtd_vs_last_quarter))
             }
 
             // Custom Period Button
@@ -103,7 +105,7 @@ fun PeriodSelectorV2(
                         MaterialTheme.colorScheme.surface
                 )
             ) {
-                Text("Custom Period")
+                Text(stringResource(R.string.label_custom_period))
             }
         }
     }
