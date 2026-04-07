@@ -25,11 +25,16 @@ object MemoryOptimizer {
      */
     fun getMemoryUsage(): Triple<Long, Long, Long> {
         val runtime = Runtime.getRuntime()
-        val nativeHeap = Debug.getNativeHeap().toByteArray().size / (1024 * 1024)
-        val javaHeap = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+        // Get memory stats from Runtime
         val totalMemory = runtime.totalMemory() / (1024 * 1024)
+        val freeMemory = runtime.freeMemory() / (1024 * 1024)
+        val javaHeap = totalMemory - freeMemory
+        val maxMemory = runtime.maxMemory() / (1024 * 1024)
 
-        return Triple(nativeHeap.toLong(), javaHeap, totalMemory)
+        // Estimate native heap as portion of max memory
+        val nativeHeap = (maxMemory - totalMemory).coerceAtLeast(0L)
+
+        return Triple(nativeHeap, javaHeap, totalMemory)
     }
 
     /**

@@ -45,4 +45,67 @@
     <string name="payment_error_invalid_amount">Please enter a valid amount</string>
     <string name="payment_error_generic">Failed to record payment</string>
     <string name="payment_success">Payment recorded successfully</string>
+
+    <!-- Common Button Labels -->
+    <string name="button_cancel">Cancel</string>
+    <string name="button_save">Save</string>
+    <string name="button_delete">Delete</string>
+    <string name="button_edit">Edit</string>
+    <string name="button_remove">Remove</string>
+    <string name="button_close">Close</string>
+    <string name="button_submit">Submit</string>
+    <string name="button_confirm">Confirm</string>
+    <string name="button_next">Next</string>
+    <string name="button_back">Back</string>
+    <string name="button_skip">Skip</string>
+    <string name="button_ok">OK</string>
+    <string name="button_get_started">Get Started</string>
+    <string name="button_unlock">Unlock</string>
+    <string name="button_send_notice">Send Notice</string>
+    <string name="button_take_photo">Take Photo</string>
+    <string name="button_choose_gallery">Choose from Gallery</string>
+
+    <!-- Dialog & Form Labels -->
+    <string name="label_file_name">File Name</string>
+    <string name="label_enter_pin">Enter your PIN</string>
+    <string name="label_unlock_to_continue">Unlock to continue</string>
+    <string name="label_forgot_pin">Forgot PIN?</string>
+    <string name="label_live_preview">Live Preview</string>
+    <string name="label_primary">Primary</string>
+    <string name="label_secondary">Secondary</string>
+    <string name="label_tertiary">Tertiary</string>
+    <string name="label_ytd_vs_last_year">YTD vs Last Year</string>
+    <string name="label_mtd_vs_last_month">MTD vs Last Month</string>
+    <string name="label_qtd_vs_last_quarter">QTD vs Last Quarter</string>
+    <string name="label_custom_period">Custom Period</string>
+    <string name="label_select_comparison_period">Select Comparison Period</string>
+    <string name="label_about">About</string>
+    <string name="label_app_name_label">App Name</string>
+    <string name="label_app_name_value">Bizap</string>
+
+    <!-- Screen Descriptive Text -->
+    <string name="text_smart_invoice_payment_mgmt">Smart Invoice &amp; Payment Management</string>
+    <string name="text_modern_interface_description">The modern interface you know and trust.</string>
+    <string name="text_classic_experience_description">The original interface you know and trust.</string>
+    <string name="text_help_and_about">Help &amp; About</string>
+    <string name="text_help_description">App information, version, and support</string>
+    <string name="text_app_information">App Information, Version, and Support</string>
+
+    <!-- Common Accessibility Labels -->
+    <string name="icon_description_lock">Lock</string>
+    <string name="icon_description_delete">Delete</string>
+    <string name="icon_description_photo">Photo</string>
+    <string name="icon_description_gallery">Gallery</string>
+    <string name="icon_description_description">Description</string>
+    <string name="icon_description_menu">Menu</string>
+    <string name="icon_description_close">Close</string>
+
+    <!-- Empty States -->
+    <string name="empty_state_no_data">No data available</string>
+    <string name="empty_state_no_invoices">No invoices yet</string>
+    <string name="empty_state_no_customers">No customers yet</string>
+    <string name="empty_state_no_payments">No payments yet</string>
+
+    <!-- Dialog Titles -->
+    <string name="dialog_add_photo">Add Photo</string>
 </resources>

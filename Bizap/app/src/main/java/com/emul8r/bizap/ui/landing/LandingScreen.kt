@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -90,7 +91,7 @@ fun LandingScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Smart Invoice & Payment Management",
+                        text = stringResource(R.string.text_smart_invoice_payment_mgmt),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
                         textAlign = TextAlign.Center
@@ -167,7 +168,7 @@ fun LandingScreen(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
-                            Text("Get Started", modifier = Modifier.padding(vertical = 8.dp))
+                            Text(stringResource(R.string.button_get_started), modifier = Modifier.padding(vertical = 8.dp))
                         }
                     }
                 }
@@ -181,13 +182,13 @@ fun LandingScreen(
                 ) {
                     Column(modifier = Modifier.padding(24.dp)) {
                         Text(
-                            text = "Classic Experience",
+                            text = stringResource(R.string.text_modern_interface_description),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "The original interface you know and trust.",
+                            text = stringResource(R.string.text_classic_experience_description),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

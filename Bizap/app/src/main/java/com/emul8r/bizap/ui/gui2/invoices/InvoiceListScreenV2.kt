@@ -136,19 +136,6 @@ private fun InvoiceListItem(
                 fontWeight = FontWeight.SemiBold,
                 style = MaterialTheme.typography.labelMedium
             )
-    }
-}
-                Text(
-                    "No invoices yet",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    "Tap + to create your first invoice",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
     }
 }
