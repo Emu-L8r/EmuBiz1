@@ -11,6 +11,7 @@ import com.emul8r.bizap.ui.invoices.InvoiceDetailUiState
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -86,12 +87,14 @@ class StateManagementSyncTest : BaseUnitTest() {
             generateAndSaveInvoiceUseCase = mockk(relaxed = true),
             savedStateHandle = savedStateHandle
         )
+        // Note: advanceUntilIdle() will be called inside each test's runTest block
     }
 
     // ── TEST 1: Initial State is Loading ──────────────────────────────────────
 
     @Test
     fun `test_initial_state_is_loading`() = runTest {
+        advanceUntilIdle()  // Let ViewModel initialization complete
         val initialState = viewModel.uiState.value
         assertEquals(
             InvoiceDetailUiState.Loading,
@@ -105,6 +108,7 @@ class StateManagementSyncTest : BaseUnitTest() {
     @Test
     fun `test_viewmodel_emits_success_state_when_invoice_loads`() = runTest {
         // Arrange: ViewModel is created with mocked invoice repo
+        advanceUntilIdle()  // Let ViewModel initialization coroutines complete
 
         // Act: Wait for ViewModel to emit success state
         val states = mutableListOf<InvoiceDetailUiState>()
@@ -143,11 +147,15 @@ class StateManagementSyncTest : BaseUnitTest() {
     @Test
     fun `test_no_ghost_data_on_rapid_state_changes`() = runTest {
         // Arrange: ViewModel is loaded
+        advanceUntilIdle()
 
-        // Act: Collect all states emitted
+        // Act: Collect all states emitted with timeout
         val states = mutableListOf<InvoiceDetailUiState>()
         viewModel.uiState.collect { state ->
             states.add(state)
+            if (state is InvoiceDetailUiState.Success || states.size > 10) {
+                return@collect  // Stop after success or max states
+            }
         }
 
         // Assert: States are in correct order, no duplicates
@@ -202,6 +210,7 @@ class StateManagementSyncTest : BaseUnitTest() {
             generateAndSaveInvoiceUseCase = mockk(relaxed = true),
             savedStateHandle = errorSavedStateHandle
         )
+        advanceUntilIdle()  // Let error initialization complete
 
         // Act: Collect states
         val states = mutableListOf<InvoiceDetailUiState>()
@@ -229,6 +238,7 @@ class StateManagementSyncTest : BaseUnitTest() {
     @Test
     fun `test_all_state_emissions_are_processed_in_order`() = runTest {
         // Arrange: Collect all emissions without early exit
+        advanceUntilIdle()
 
         // Act
         val states = mutableListOf<InvoiceDetailUiState>()
@@ -261,6 +271,8 @@ class StateManagementSyncTest : BaseUnitTest() {
         // This test verifies that collectAsStateWithLifecycle() properly observes
         // ViewModel emissions without losing any state changes.
 
+        advanceUntilIdle()
+
         // Arrange: Collect state changes with timestamps
         val stateChanges = mutableListOf<Pair<Long, InvoiceDetailUiState>>()
 
@@ -292,6 +304,7 @@ class StateManagementSyncTest : BaseUnitTest() {
 
         // Arrange
         val states = mutableListOf<InvoiceDetailUiState>()
+        advanceUntilIdle()
 
         // Act
         viewModel.uiState.collect { state ->
