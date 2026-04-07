@@ -2,25 +2,20 @@
 <!--
    Backup Rules for Bizap - Security Hardening
 
-   This file specifies which app data can be backed up and which should be excluded.
+   This file specifies which app data should be excluded from Google Cloud backups.
 
    Security Considerations:
-   - Database (bizap.db) should NOT be backed up to Google Drive
+   - Sensitive databases should NOT be backed up
    - SharedPreferences containing sensitive data should be excluded
-   - Non-sensitive files (documents) can be safely backed up
+   - By default, all other data (documents, cache) is backed up
 
    Last Updated: April 7, 2026
-
    Reference: https://developer.android.com/guide/topics/data/autobackup
 -->
 <full-backup-content>
-    <!-- 🔐 SECURITY: Explicitly include only safe paths, exclude sensitive data -->
-    <include domain="file" path="documents/" />
-    <include domain="cache" path="." />
+    <!-- 🔐 SECURITY: Exclude sensitive database from Google backup -->
+    <exclude domain="database" path="bizap.db" />
 
-    <!-- 🔐 SECURITY: Exclude sensitive database from backup -->
-    <exclude domain="database" path="." />
-
-    <!-- 🔐 SECURITY: Exclude SharedPreferences (may contain sensitive data) -->
-    <exclude domain="sharedpref" path="." />
+    <!-- 🔐 SECURITY: Exclude SharedPreferences (may contain sensitive auth data) -->
+    <exclude domain="sharedpref" path="com.emul8r.bizap_preferences.xml" />
 </full-backup-content>
