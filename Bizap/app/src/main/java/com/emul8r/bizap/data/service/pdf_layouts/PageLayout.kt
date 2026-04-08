@@ -49,8 +49,8 @@ class ClassicLayout : PageLayout {
         val subtotalAmount = snapshot.subtotal / 100.0
         val taxAmount = snapshot.taxAmount / 100.0
         val totalAmount = snapshot.totalAmount / 100.0
-        val invoiceDate = java.text.SimpleDateFormat("dd-MM-yyyy").format(java.util.Date(snapshot.date))
-        val dueDate = java.text.SimpleDateFormat("dd-MM-yyyy").format(java.util.Date(snapshot.dueDate))
+        val invoiceDate = java.text.SimpleDateFormat("dd-MM-yyyy", java.util.Locale.US).format(java.util.Date(snapshot.date))
+        val dueDate = java.text.SimpleDateFormat("dd-MM-yyyy", java.util.Locale.US).format(java.util.Date(snapshot.dueDate))
 
         return """
 <!DOCTYPE html>
@@ -151,7 +151,7 @@ class ClassicLayout : PageLayout {
 
         <!-- Footer -->
         <div class="footer">
-            <p>Generated on ${java.text.SimpleDateFormat("dd-MM-yyyy HH:mm").format(java.util.Date())}</p>
+            <p>Generated on ${java.text.SimpleDateFormat("dd-MM-yyyy HH:mm", java.util.Locale.US).format(java.util.Date())}</p>
         </div>
     </div>
 </body>
@@ -188,8 +188,8 @@ class ModernLayout : PageLayout {
         val subtotalAmount = snapshot.subtotal / 100.0
         val taxAmount = snapshot.taxAmount / 100.0
         val totalAmount = snapshot.totalAmount / 100.0
-        val invoiceDate = java.text.SimpleDateFormat("dd-MM-yyyy").format(java.util.Date(snapshot.date))
-        val dueDate = java.text.SimpleDateFormat("dd-MM-yyyy").format(java.util.Date(snapshot.dueDate))
+        val invoiceDate = java.text.SimpleDateFormat("dd-MM-yyyy", java.util.Locale.US).format(java.util.Date(snapshot.date))
+        val dueDate = java.text.SimpleDateFormat("dd-MM-yyyy", java.util.Locale.US).format(java.util.Date(snapshot.dueDate))
 
         return """
 <!DOCTYPE html>

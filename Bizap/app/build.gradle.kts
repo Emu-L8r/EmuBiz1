@@ -215,6 +215,7 @@ android {
 
     lint {
         abortOnError = true  // ✅ Phase 2: Enforce strict linting (no hidden errors)
+        baseline = file("lint-baseline.xml")  // Capture existing warnings/errors as baseline
         // Allow build to continue with warnings while we fix lint errors
         disable += "MissingTranslation"  // Will be documented in LINT_SUPPRESSIONS_JUSTIFICATION.md
         disable += "ExtraTranslation"    // Will be documented in LINT_SUPPRESSIONS_JUSTIFICATION.md

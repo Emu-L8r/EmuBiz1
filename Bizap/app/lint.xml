@@ -3,8 +3,6 @@
     <!-- Treat unused resource references as errors -->
     <issue id="UnusedResources" severity="error"/>
 
-    <!-- Missing quantity plurals are informational only (many string IDs use count suffix) -->
-    <issue id="MissingQuantityPlural" severity="ignore"/>
 
     <!-- Disallow SimpleDateFormat without explicit Locale -->
     <issue id="SimpleDateFormat" severity="error"/>
