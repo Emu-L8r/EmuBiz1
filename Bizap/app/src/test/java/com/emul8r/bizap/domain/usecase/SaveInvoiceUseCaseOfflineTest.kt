@@ -20,10 +20,13 @@ import kotlin.test.assertEquals
 
 /**
  * SPRINT 3: Simplified to match new SaveInvoiceUseCase architecture
- * NOTE: Temporarily marked as @Ignore - needs Hilt infrastructure
+ * NOTE: Marked @Ignore because testInstrumentationRunner=HiltTestRunner forces
+ * Hilt initialization on ALL unit tests, but these tests only use MockK.
+ * The build.gradle.kts testInstrumentationRunner setting prevents pure unit tests
+ * from running. These could be moved to androidTest if Hilt injection verification needed.
  */
 @RunWith(AndroidJUnit4::class)
-@Ignore("Requires Hilt infrastructure - move to androidTest if needed")
+@Ignore("testInstrumentationRunner=HiltTestRunner prevents non-Hilt tests from running")
 class SaveInvoiceUseCaseOfflineTest {
 
     private lateinit var context: Context

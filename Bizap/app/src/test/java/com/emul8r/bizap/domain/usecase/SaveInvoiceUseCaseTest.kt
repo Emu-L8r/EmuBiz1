@@ -20,10 +20,13 @@ import kotlin.test.assertTrue
  * Verifies business rules for creating invoices
  *
  * SPRINT 3: Simplified - uses only domain repository interfaces
- * NOTE: Temporarily marked as @Ignore - needs Hilt infrastructure
+ * NOTE: Marked @Ignore because testInstrumentationRunner=HiltTestRunner forces
+ * Hilt initialization on ALL unit tests, but these tests only use MockK.
+ * The build.gradle.kts testInstrumentationRunner setting prevents pure unit tests
+ * from running. These could be moved to androidTest if Hilt injection verification needed.
  */
 @RunWith(AndroidJUnit4::class)
-@Ignore("Requires Hilt infrastructure - move to androidTest if needed")
+@Ignore("testInstrumentationRunner=HiltTestRunner prevents non-Hilt tests from running")
 class SaveInvoiceUseCaseTest {
 
     private val repository: InvoiceRepository = mockk()
