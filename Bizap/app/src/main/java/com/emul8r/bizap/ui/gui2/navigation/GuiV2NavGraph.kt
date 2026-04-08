@@ -20,7 +20,7 @@ import com.emul8r.bizap.ui.customers.CustomerListScreen
 import com.emul8r.bizap.ui.gui2.customers.CreateCustomerScreenV2
 import com.emul8r.bizap.ui.gui2.customers.EditCustomerScreenV2
 import com.emul8r.bizap.ui.landing.GuiMode
-import com.emul8r.bizap.ui.gui2.dashboard.DashboardScreenV2
+import com.emul8r.bizap.ui.dashboard.DashboardScreen
 import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailScreenV2
 import com.emul8r.bizap.ui.gui2.invoices.CreateInvoiceScreenV2
 import com.emul8r.bizap.ui.gui2.invoices.EditInvoiceScreenV2
@@ -54,34 +54,10 @@ fun GuiV2NavGraph(
             val route: ScreenV2.Dashboard = backStackEntry.toRoute()
             Column {
                 SyncStatusIndicator()
-                DashboardScreenV2(
+                DashboardScreen(
                     businessId = route.businessId,
-                    navController = navController,
-                    onNavigateToRevenue = { navController.navigate(ScreenV2.RevenueAnalytics(route.businessId)) },
-                    onNavigateToPayment = { navController.navigate(ScreenV2.PaymentAnalytics(route.businessId)) },
-                    onNavigateToRisk = { navController.navigate(ScreenV2.RiskAnalytics(route.businessId)) },
-                    onNavigateToCustomers = { navController.navigate(ScreenV2.Customers(route.businessId)) },
-                    onNavigateToInvoices = { navController.navigate(ScreenV2.Invoices(route.businessId)) },
-                    onNavigateToInvoice = { invoiceId -> navController.navigate(ScreenV2.InvoiceDetail(route.businessId, invoiceId)) },
-                    onNavigateToInvoiceAnalytics = { navController.navigate(ScreenV2.InvoiceAnalytics(route.businessId)) },
-                    onNavigateToDunningNotices = { navController.navigate(ScreenV2.DunningNotices(route.businessId)) },
-                    onNavigateToVault = { navController.navigate(ScreenV2.Vault(route.businessId)) },
-                    onNavigateToNotes = {
-                        // ✅ FIX #1: Notes navigation - bridge to GUI1 Notes screen
-                        // Notes is currently GUI1-only, so we navigate using Screen.Notes
-                        // This allows GUI2 users to access notes functionality
-                        try {
-                            navController.navigate(Screen.Notes)
-                            Timber.d("Navigating to Notes screen from GUI2")
-                        } catch (e: IllegalArgumentException) {
-                            Timber.e(e, "Failed to navigate to Notes screen")
-                        }
-                    },
-                    onCreateCustomer = { navController.navigate(ScreenV2.CreateCustomer(route.businessId)) },
-                    onCreateInvoice = { navController.navigate(ScreenV2.CreateInvoice(route.businessId)) },
-                    onNavigateToSettings = { navController.navigateToSettingsV2(route.businessId) },
-                    onSwitchToGui1 = onSwitchToGui1,
-                    uiMode = uiMode
+                    guiMode = GuiMode.GUI2,
+                    navController = navController
                 )
             }
         }

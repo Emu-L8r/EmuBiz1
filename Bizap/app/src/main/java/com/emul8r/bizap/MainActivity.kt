@@ -381,7 +381,13 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 startDestination = Screen.Dashboard,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable<Screen.Dashboard> { DashboardScreen(navController) }
+                composable<Screen.Dashboard> {
+                    DashboardScreen(
+                        businessId = 1L,
+                        guiMode = GuiMode.GUI1,
+                        navController = navController
+                    )
+                }
                 composable<Screen.Customers> {
                     CustomerListScreen(
                         onCustomerClick = { customerId ->
