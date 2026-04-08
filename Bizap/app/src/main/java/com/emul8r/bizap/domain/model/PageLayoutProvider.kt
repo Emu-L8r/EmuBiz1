@@ -171,11 +171,11 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:20px;text-align:
             "GBP" -> "£"
             else -> "$"
         }
-        return "$symbol${String.format("%.2f", cents / 100.0)}"
+        return "$symbol${String.format(java.util.Locale.US, "%.2f", cents / 100.0)}"
     }
 
     private fun formatQty(qty: Double): String =
-        if (qty == qty.toLong().toDouble()) qty.toLong().toString() else String.format("%.2f", qty)
+        if (qty == qty.toLong().toDouble()) qty.toLong().toString() else String.format(java.util.Locale.US, "%.2f", qty)
 
     private fun buildItemsRows(snapshot: InvoiceSnapshot, primary: String, colorScheme: InvoiceColorScheme): String =
         snapshot.items.mapIndexed { i, item ->
@@ -196,7 +196,7 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:20px;text-align:
             val formatted = if (taxPct == taxPct.toLong().toDouble())
                 "${taxPct.toLong()}%"
             else
-                "${String.format("%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
+                "${String.format(java.util.Locale.US, "%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
             "Tax ($formatted)"
         } else "Tax"
         return """
@@ -404,7 +404,7 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:12px;text-align:
             val formatted = if (taxPct == taxPct.toLong().toDouble())
                 "${taxPct.toLong()}%"
             else
-                "${String.format("%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
+                "${String.format(java.util.Locale.US, "%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
             "Tax ($formatted)"
         } else "Tax"
         return """
