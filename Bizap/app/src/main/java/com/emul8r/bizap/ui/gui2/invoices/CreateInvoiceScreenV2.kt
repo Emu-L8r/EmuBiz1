@@ -3,6 +3,8 @@ package com.emul8r.bizap.ui.gui2.invoices
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -12,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.ui.components.LineItemsEditor
@@ -33,6 +37,7 @@ fun CreateInvoiceScreenV2(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showPrefilledItemsDialog by remember { mutableStateOf(false) }
 
     Timber.d("🔷 CreateInvoiceScreenV2: Composing - businessId=$businessId, saveSuccess=${uiState.saveSuccess}")
 
@@ -178,7 +183,8 @@ fun CreateInvoiceScreenV2(
                         // This prevents index-based mismatch when items are deleted or reordered
                         viewModel.updateLineItemsFromEditor(updatedItems, uiState.items)
                     },
-                    isDarkMode = isSystemInDarkTheme()
+                    isDarkMode = isSystemInDarkTheme(),
+                    onAddPrefilledClick = { showPrefilledItemsDialog = true }
                 )
             }
 
@@ -200,5 +206,100 @@ fun CreateInvoiceScreenV2(
             // They're pre-populated when creating invoice from saved defaults
         }
     }
+
+    // Pre-filled Items Dialog
+    if (showPrefilledItemsDialog) {
+        PrefilledItemsSelectionDialog(
+            onItemSelected = { prefilledItem ->
+                // Convert PrefilledItem to LineItem and add to invoice
+                viewModel.addLineItemFromPrefilledItem(prefilledItem)
+                showPrefilledItemsDialog = false
+                // Show success message
+                Timber.d("✅ Added pre-filled item: ${prefilledItem.description}")
+            },
+            onDismiss = { showPrefilledItemsDialog = false }
+        )
+    }
 }
 
+@Composable
+private fun PrefilledItemsSelectionDialog(
+    onItemSelected: (com.emul8r.bizap.domain.model.PrefilledItem) -> Unit,
+    onDismiss: () -> Unit,
+    viewModel: com.emul8r.bizap.ui.settings.PrefilledItemsViewModel = hiltViewModel()
+) {
+    val prefilledItems by viewModel.items.collectAsStateWithLifecycle()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Add Item from Templates")
+        },
+        text = {
+            if (prefilledItems.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "No pre-filled items yet.\nCreate them in Settings > Pre-filled Items",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(prefilledItems, key = { it.id }) { item ->
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onItemSelected(item)
+                                },
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        item.description,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        "$${item.unitPrice / 100.0}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = "Add",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Done")
+            }
+        },
+        modifier = Modifier.fillMaxWidth(0.9f)
+    )
+}

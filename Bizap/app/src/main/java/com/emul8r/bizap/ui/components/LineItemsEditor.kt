@@ -27,14 +27,15 @@ fun LineItemsEditor(
     items: List<LineItem>,
     onItemsChange: (List<LineItem>) -> Unit,
     isDarkMode: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAddPrefilledClick: (() -> Unit)? = null
 ) {
     // Determine which UI to show based on isDarkMode parameter
     // This is completely stateless - no injection, no global state access
     val isModernUi = isDarkMode  // Or use theme preference; adjust as needed
 
     if (isModernUi) {
-        ModernLineItemsEditor(items, onItemsChange, modifier)
+        ModernLineItemsEditor(items, onItemsChange, modifier, onAddPrefilledClick)
     } else {
         ClassicLineItemsEditor(items, onItemsChange, modifier)
     }

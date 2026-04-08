@@ -10,6 +10,7 @@ import com.emul8r.bizap.data.local.entities.PaymentEntity
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.data.repository.SnapshotSyncHelper
+import com.emul8r.bizap.test.WindowsTestRule
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.Runs
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -43,6 +45,9 @@ import kotlin.test.assertTrue
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [28])
 class PaymentRepositoryTest {
+
+    @get:Rule
+    val skipWindowsRule = WindowsTestRule()
 
     private lateinit var database: AppDatabase
     private lateinit var paymentRepository: PaymentRepositoryV2

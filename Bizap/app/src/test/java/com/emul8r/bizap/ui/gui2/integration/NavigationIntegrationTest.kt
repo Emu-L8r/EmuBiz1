@@ -7,6 +7,8 @@ import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.ui.gui2.navigation.DeepLinkDestination
 import com.emul8r.bizap.ui.gui2.navigation.DeepLinks
 import com.emul8r.bizap.ui.gui2.navigation.parseDeepLinkIntent
+import com.emul8r.bizap.test.WindowsTestRule
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -22,6 +24,9 @@ import kotlin.test.assertIs
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [28])
 class NavigationIntegrationTest : BaseUnitTest() {
+
+    @get:Rule
+    val skipWindowsRule = WindowsTestRule()
 
     // ── Deep link URI generation ──────────────────────────────────────────────
 

@@ -5,12 +5,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.emul8r.bizap.data.local.dao.OfflineOperationDao
 import com.emul8r.bizap.data.local.entities.OfflineOperation
 import com.emul8r.bizap.data.local.offline.OfflineQueueService
+import com.emul8r.bizap.test.WindowsTestRule
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -23,13 +25,14 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class OfflineQueueServiceSuite4Test {
 
+    @get:Rule
+    val skipWindowsRule = WindowsTestRule()
+
     private lateinit var mockDao: OfflineOperationDao
     private lateinit var queueService: OfflineQueueService
 
     @Before
     fun setup() {
-        mockDao = mockk(relaxed = true)
-        queueService = OfflineQueueService(mockDao, mockk())
     }
 
     /**

@@ -81,11 +81,11 @@ class InvoicePdfService @Inject constructor(
                     val currentUserId = userIdProvider.getCurrentUserId()
                     Timber.d("🔍 Step 1: Get current user ID")
                     Timber.d("   User ID: $currentUserId")
-                    
+
                     val settings = try {
                         Timber.d("🔍 Step 2: Load settings from repository")
                         val loadedSettings = invoiceSettingsRepository.getSettings(currentUserId)
-                        
+
                         // FIX #1: Validate settings are not NULL
                         if (loadedSettings == null) {
                             throw IllegalStateException(
@@ -93,7 +93,7 @@ class InvoicePdfService @Inject constructor(
                                 "Settings must be initialized before generating PDF with HTML theme."
                             )
                         }
-                        
+
                         Timber.d("   ✅ Settings loaded successfully")
                         Timber.d("   Selected Theme: ${loadedSettings.selectedTheme.name}")
                         Timber.d("   Selected HTML Style: ${loadedSettings.selectedHtmlStyle.displayName}")
@@ -106,7 +106,7 @@ class InvoicePdfService @Inject constructor(
                         Timber.e("   This means the selected HTML style CANNOT be applied")
                         throw e  // FIX #1: Don't silently fail - propagate error
                     }
-                    
+
                     // FIX #1: Additional validation
                     Timber.d("🔍 Step 3: Validate settings object")
                     if (settings.selectedHtmlStyle == null) {
@@ -117,15 +117,15 @@ class InvoicePdfService @Inject constructor(
                         )
                     }
                     Timber.d("   ✅ Validation passed - selectedHtmlStyle is NOT NULL")
-                    
+
                     // Create service with validated settings
                     Timber.d("🔄 Step 4: Create HtmlPdfInvoiceService instance")
                     Timber.d("   Passing settings with HTML style: ${settings.selectedHtmlStyle.displayName}")
                     val htmlPdfService = HtmlPdfInvoiceService(context, settings)
-                    
+
                     Timber.d("🔄 Step 5: Call htmlPdfService.generatePdf()")
                     val result = htmlPdfService.generatePdf(snapshot, isQuote, overwriteExisting, theme)
-                    
+
                     Timber.d("✅ PDF generation complete")
                     Timber.d("   File: ${result.name}")
                     Timber.d("   Size: ${result.length()} bytes")
@@ -277,7 +277,7 @@ class InvoicePdfService @Inject constructor(
         canvas.drawText(
             snapshot.businessName.uppercase(),
             layoutManager.getX(14),  // 14 grid units from left margin
-            headerY + 20f,           // 20px down from header top
+            headerY + 18f,           // Top-aligned text
             artisticHeaderPaint
         )
 
@@ -289,14 +289,20 @@ class InvoicePdfService @Inject constructor(
             isAntiAlias = true
             textAlign = Paint.Align.RIGHT
         }
-        canvas.drawText("INVOICE", layoutManager.getContentRight() - 10f, headerY + 8f, invoiceLabelPaint)
-        canvas.drawText(snapshot.invoiceNumber, layoutManager.getContentRight() - 10f, headerY + 20f, invoiceLabelPaint)
+        canvas.drawText("INVOICE", layoutManager.getContentRight() - 10f, headerY + 12f, invoiceLabelPaint)
+        canvas.drawText(snapshot.invoiceNumber, layoutManager.getContentRight() - 10f, headerY + 24f, invoiceLabelPaint)
 
         // Business info (right-aligned, clean) - Grid-based
-        artisticSubheaderPaint.textAlign = Paint.Align.RIGHT
-        canvas.drawText("ABN: ${snapshot.businessAbn}", layoutManager.getContentRight() - 10f, headerY + 35f, artisticSubheaderPaint)
-        canvas.drawText(snapshot.businessPhone, layoutManager.getContentRight() - 10f, headerY + 45f, artisticSubheaderPaint)
-        canvas.drawText(snapshot.businessEmail, layoutManager.getContentRight() - 10f, headerY + 55f, artisticSubheaderPaint)
+        // ✅ FIX: Moved to compact 2-line format to fit within header bounds (60px height)
+        val compactBusinessPaint = Paint().apply {
+            typeface = regularTypeface
+            textSize = 8f  // Smaller font to fit
+            color = Color.parseColor("#E8E8E8")
+            isAntiAlias = true
+            textAlign = Paint.Align.RIGHT
+        }
+        canvas.drawText("ABN: ${snapshot.businessAbn} | ${snapshot.businessPhone}", layoutManager.getContentRight() - 10f, headerY + 36f, compactBusinessPaint)
+        canvas.drawText(snapshot.businessEmail, layoutManager.getContentRight() - 10f, headerY + 46f, compactBusinessPaint)
 
         // ===== PHASE 2: TWO-COLUMN LAYOUT (Bill To | Invoice Details - Side-by-Side) =====
         // Using grid manager for systematic positioning
@@ -441,17 +447,30 @@ class InvoicePdfService @Inject constructor(
         if (snapshot.headerText.isNotBlank() || snapshot.subheaderText.isNotBlank()) {
             canvas = pageManager.ensureSpace(50f)
 
+            // ✅ FIX: Header/Subheader rendering with proper spacing to prevent overlap
             if (snapshot.headerText.isNotBlank()) {
-                canvas.drawText(snapshot.headerText, 40f, pageManager.currentY, headerPaint)
-                pageManager.advanceY(16f)
+                val headerTextPaint = Paint().apply {
+                    typeface = boldTypeface
+                    textSize = 14f  // Prominent header
+                    color = colors.primary
+                    isAntiAlias = true
+                }
+                canvas.drawText(snapshot.headerText, 40f, pageManager.currentY + 12f, headerTextPaint)
+                pageManager.advanceY(20f)  // Increased spacing for large header
             }
 
             if (snapshot.subheaderText.isNotBlank()) {
-                canvas.drawText(snapshot.subheaderText, 40f, pageManager.currentY, bodyPaint)
-                pageManager.advanceY(12f)
+                val subheaderPaint = Paint().apply {
+                    typeface = regularTypeface
+                    textSize = 11f  // Slightly smaller
+                    color = colors.textLight
+                    isAntiAlias = true
+                }
+                canvas.drawText(snapshot.subheaderText, 40f, pageManager.currentY + 10f, subheaderPaint)
+                pageManager.advanceY(16f)  // Good spacing after subheader
             }
 
-            pageManager.advanceY(8f)  // Extra spacing after header/subheader
+            pageManager.advanceY(12f)  // Extra spacing before items table
         }
 
         if (!hideLineItems) {

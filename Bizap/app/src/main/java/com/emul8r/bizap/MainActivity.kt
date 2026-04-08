@@ -492,38 +492,8 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
             }
 
             // 🔴 DEBUG ONLY: Force Crash Button for Crashlytics Testing
-            // This button only appears in DEBUG builds
-            // Tap it to trigger a test crash that will be reported to Firebase Crashlytics
-            if (BuildConfig.DEBUG) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.BottomEnd
-                ) {
-                    FloatingActionButton(
-                        onClick = {
-                            // Log to Timber (which forwards to Crashlytics)
-                            Timber.w("🔴 TEST CRASH: User pressed Force Crash button")
-
-                            // Set custom key in Crashlytics for debugging
-                            FirebaseCrashlytics.getInstance().setCustomKey("test_crash_triggered", true)
-                            FirebaseCrashlytics.getInstance().setCustomKey("crash_reason", "Manual test via Force Crash button")
-
-                            // Throw exception to trigger crash
-                            throw RuntimeException("🔴 INTENTIONAL TEST CRASH - Testing Crashlytics reporting")
-                        },
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            "🔴",
-                            style = MaterialTheme.typography.headlineSmall
-                        )
-                    }
-                }
-            }
+            // ✅ MOVED TO: Settings → Debug → Test Crash (proper location, doesn't block UI)
+            // See SettingsHubScreen.kt for implementation
         }
     }
 }

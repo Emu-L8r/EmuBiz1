@@ -21,6 +21,7 @@ espresso = "3.6.1"
 mockk = "1.13.10"
 coroutines-test = "1.7.3"
 coroutines-play-services = "1.7.3"
+turbine = "1.1.0"
 arch-core-test = "2.2.0"
 robolectric = "4.11.1"
 google-services = "4.4.4"
@@ -110,6 +111,7 @@ mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mo
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockito-kotlin" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines-test" }
 coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines-play-services" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 arch-core-test = { group = "androidx.arch.core", name = "core-testing", version.ref = "arch-core-test" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 

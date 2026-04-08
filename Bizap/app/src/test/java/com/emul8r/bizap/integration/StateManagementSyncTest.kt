@@ -2,6 +2,7 @@
 package com.emul8r.bizap.integration
 
 import androidx.lifecycle.SavedStateHandle
+import app.cash.turbine.test
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
@@ -10,17 +11,17 @@ import com.emul8r.bizap.ui.invoices.InvoiceDetailViewModel
 import com.emul8r.bizap.ui.invoices.InvoiceDetailUiState
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Integration tests for state management synchronization.
+ * Integration tests for state management synchronization using Turbine.
  *
  * **Purpose:** Verify that ViewModel state and UI state stay in sync, preventing
  * "Ghost Data" bugs where the UI displays stale or inconsistent data.
@@ -32,15 +33,16 @@ import kotlin.test.assertTrue
  * 4. Error states → UI displays error, not previous success state
  * 5. Loading states → UI shows loading spinner, not old data
  *
- * **Ghost Data Bug Example:**
- * ```
- * User opens invoice → UI shows old data
- * ViewModel loads new data → emits new state
- * But UI still shows old data (Ghost Data!)
- * ```
+ * **Turbine Usage:**
+ * Turbine is a testing library for Kotlin Flow. It allows us to:
+ * - Collect Flow emissions in a scoped way
+ * - Assert on each emission individually
+ * - Automatically cancel collection when done
+ * - Timeout if emissions don't arrive
  *
- * This test suite prevents that.
+ * This eliminates the complexity of manually managing coroutine collection.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class StateManagementSyncTest : BaseUnitTest() {
 
     private val invoiceRepository: InvoiceRepository = mockk(relaxed = true)
@@ -87,7 +89,6 @@ class StateManagementSyncTest : BaseUnitTest() {
             generateAndSaveInvoiceUseCase = mockk(relaxed = true),
             savedStateHandle = savedStateHandle
         )
-        // Note: advanceUntilIdle() will be called inside each test's runTest block
     }
 
     // ── TEST 1: Initial State is Loading ──────────────────────────────────────
@@ -110,36 +111,26 @@ class StateManagementSyncTest : BaseUnitTest() {
         // Arrange: ViewModel is created with mocked invoice repo
         advanceUntilIdle()  // Let ViewModel initialization coroutines complete
 
-        // Act: Wait for ViewModel to emit success state
-        val states = mutableListOf<InvoiceDetailUiState>()
-        viewModel.uiState.collect { state ->
-            states.add(state)
-            if (state is InvoiceDetailUiState.Success) {
-                // Stop collecting after first success
-                return@collect
-            }
-        }
+        // Act & Assert: Use Turbine to test Flow emissions
+        viewModel.uiState.test {
+            // First emission: Loading state
+            assertEquals(
+                InvoiceDetailUiState.Loading,
+                awaitItem(),
+                "First emission should be Loading"
+            )
 
-        // Assert: ViewModel emitted Loading then Success
-        assertEquals(
-            2,
-            states.size,
-            "ViewModel should emit Loading, then Success state"
-        )
-        assertEquals(
-            InvoiceDetailUiState.Loading,
-            states[0],
-            "First emission should be Loading"
-        )
-        assertTrue(
-            states[1] is InvoiceDetailUiState.Success,
-            "Second emission should be Success"
-        )
-        assertEquals(
-            testInvoice.id,
-            (states[1] as InvoiceDetailUiState.Success).data.id,
-            "Success state should contain loaded invoice"
-        )
+            // Second emission: Success state
+            val successState = awaitItem() as InvoiceDetailUiState.Success
+            assertEquals(
+                testInvoice.id,
+                successState.data.id,
+                "Success state should contain loaded invoice"
+            )
+
+            // Cancel collection
+            cancelAndConsumeRemainingEvents()
+        }
     }
 
     // ── TEST 3: No Ghost Data After State Change ──────────────────────────────
@@ -149,36 +140,34 @@ class StateManagementSyncTest : BaseUnitTest() {
         // Arrange: ViewModel is loaded
         advanceUntilIdle()
 
-        // Act: Collect all states emitted with timeout
-        val states = mutableListOf<InvoiceDetailUiState>()
-        viewModel.uiState.collect { state ->
-            states.add(state)
-            if (state is InvoiceDetailUiState.Success || states.size > 10) {
-                return@collect  // Stop after success or max states
-            }
-        }
+        // Act & Assert: Use Turbine to test all emissions
+        viewModel.uiState.test {
+            // Collect states
+            val states = mutableListOf<InvoiceDetailUiState>()
 
-        // Assert: States are in correct order, no duplicates
-        assertTrue(
-            states.size >= 2,
-            "ViewModel should emit at least Loading and Success"
-        )
-        assertTrue(
-            states.first() == InvoiceDetailUiState.Loading,
-            "First state must be Loading"
-        )
-        assertTrue(
-            states.last() is InvoiceDetailUiState.Success,
-            "Last state should be Success, not old data"
-        )
+            states.add(awaitItem())  // Loading
+            states.add(awaitItem())  // Success
 
-        // Verify no ghost data: each success state has correct invoice
-        states.filterIsInstance<InvoiceDetailUiState.Success>().forEach { successState ->
+            // Assert: States are in correct order
+            assertEquals(
+                InvoiceDetailUiState.Loading,
+                states[0],
+                "First state must be Loading"
+            )
+            assertTrue(
+                states[1] is InvoiceDetailUiState.Success,
+                "Last state should be Success, not old data"
+            )
+
+            // Verify no ghost data: success state has correct invoice
+            val successState = states[1] as InvoiceDetailUiState.Success
             assertEquals(
                 testInvoice.id,
                 successState.data.id,
-                "All Success states should have correct invoice ID"
+                "Success state should have correct invoice ID"
             )
+
+            cancelAndConsumeRemainingEvents()
         }
     }
 
@@ -212,88 +201,93 @@ class StateManagementSyncTest : BaseUnitTest() {
         )
         advanceUntilIdle()  // Let error initialization complete
 
-        // Act: Collect states
-        val states = mutableListOf<InvoiceDetailUiState>()
-        errorViewModel.uiState.collect { state ->
-            states.add(state)
-            if (state is InvoiceDetailUiState.Error || states.size > 5) {
-                return@collect  // Stop after error or timeout
-            }
-        }
+        // Act & Assert: Use Turbine to collect error state
+        errorViewModel.uiState.test {
+            awaitItem()  // Loading state
 
-        // Assert: Last state is Error, not old Success
-        assertTrue(
-            states.last() is InvoiceDetailUiState.Error,
-            "Final state should be Error, not old data"
-        )
-        val errorState = states.last() as InvoiceDetailUiState.Error
-        assertTrue(
-            errorState.message.isNotEmpty(),
-            "Error state should have meaningful message"
-        )
+            val finalState = awaitItem()
+            assertTrue(
+                finalState is InvoiceDetailUiState.Error,
+                "Final state should be Error, not old data"
+            )
+
+            val errorState = finalState as InvoiceDetailUiState.Error
+            assertTrue(
+                errorState.message.isNotEmpty(),
+                "Error state should have meaningful message"
+            )
+
+            cancelAndConsumeRemainingEvents()
+        }
     }
 
     // ── TEST 5: Multiple State Emissions Are Processed In Order ───────────────
 
     @Test
     fun `test_all_state_emissions_are_processed_in_order`() = runTest {
-        // Arrange: Collect all emissions without early exit
+        // Arrange: Use Turbine to capture exact emission sequence
         advanceUntilIdle()
 
-        // Act
-        val states = mutableListOf<InvoiceDetailUiState>()
-        viewModel.uiState.collect { state ->
-            states.add(state)
-            if (states.size >= 2) return@collect  // Wait for at least 2 states
-        }
+        // Act & Assert
+        viewModel.uiState.test {
+            // Collect exact sequence
+            val state1 = awaitItem()
+            val state2 = awaitItem()
 
-        // Assert: Correct sequence
-        assertEquals(
-            InvoiceDetailUiState.Loading,
-            states[0],
-            "State 1: Loading"
-        )
-        assertTrue(
-            states[1] is InvoiceDetailUiState.Success,
-            "State 2: Success"
-        )
-        assertEquals(
-            testInvoice.id,
-            (states[1] as InvoiceDetailUiState.Success).data.id,
-            "Success should have correct data"
-        )
+            // Assert: Correct sequence
+            assertEquals(
+                InvoiceDetailUiState.Loading,
+                state1,
+                "State 1: Loading"
+            )
+            assertTrue(
+                state2 is InvoiceDetailUiState.Success,
+                "State 2: Success"
+            )
+            assertEquals(
+                testInvoice.id,
+                (state2 as InvoiceDetailUiState.Success).data.id,
+                "Success should have correct data"
+            )
+
+            cancelAndConsumeRemainingEvents()
+        }
     }
 
     // ── TEST 6: UI Observing ViewModel State Updates Synchronously ────────────
 
     @Test
     fun `test_ui_observes_viewmodel_state_without_delay`() = runTest {
-        // This test verifies that collectAsStateWithLifecycle() properly observes
-        // ViewModel emissions without losing any state changes.
+        // This test verifies that Flow properly emits all state changes
+        // without losing any emissions.
 
         advanceUntilIdle()
 
-        // Arrange: Collect state changes with timestamps
-        val stateChanges = mutableListOf<Pair<Long, InvoiceDetailUiState>>()
+        // Act & Assert: Use Turbine to verify emissions arrive in order
+        viewModel.uiState.test {
+            val timestamp1 = System.currentTimeMillis()
+            val state1 = awaitItem()
 
-        // Act: Emit states and record timing
-        viewModel.uiState.collect { state ->
-            stateChanges.add(System.currentTimeMillis() to state)
-            if (stateChanges.size >= 2) return@collect
+            val timestamp2 = System.currentTimeMillis()
+            val state2 = awaitItem()
+
+            // Assert: Emissions were captured in order
+            assertEquals(
+                InvoiceDetailUiState.Loading,
+                state1,
+                "First emission should be Loading"
+            )
+            assertTrue(
+                state2 is InvoiceDetailUiState.Success,
+                "Second emission should be Success"
+            )
+            assertTrue(
+                timestamp1 <= timestamp2,
+                "State emissions should be in chronological order"
+            )
+
+            cancelAndConsumeRemainingEvents()
         }
-
-        // Assert: All state changes were captured
-        assertEquals(
-            2,
-            stateChanges.size,
-            "Should capture all state emissions"
-        )
-
-        // Verify no state skipped
-        assertTrue(
-            stateChanges[0].first <= stateChanges[1].first,
-            "State emissions should be in chronological order"
-        )
     }
 
     // ── TEST 7: Loading State Is Visible During Data Load ────────────────────
@@ -301,31 +295,27 @@ class StateManagementSyncTest : BaseUnitTest() {
     @Test
     fun `test_loading_state_is_emitted_during_fetch`() = runTest {
         // Act: Observe ViewModel startup
-
-        // Arrange
-        val states = mutableListOf<InvoiceDetailUiState>()
         advanceUntilIdle()
 
-        // Act
-        viewModel.uiState.collect { state ->
-            states.add(state)
-            if (state is InvoiceDetailUiState.Success) {
-                return@collect
-            }
+        // Assert: Use Turbine to verify Loading is emitted
+        viewModel.uiState.test {
+            // First emission must be Loading
+            val firstState = awaitItem()
+            assertEquals(
+                InvoiceDetailUiState.Loading,
+                firstState,
+                "ViewModel must emit Loading state so UI can show loading spinner"
+            )
+
+            // Second emission is Success
+            val secondState = awaitItem()
+            assertTrue(
+                secondState is InvoiceDetailUiState.Success,
+                "Loading should not be the final state (should be Success or Error)"
+            )
+
+            cancelAndConsumeRemainingEvents()
         }
-
-        // Assert: Loading state exists between start and success
-        val hasLoadingState = states.contains(InvoiceDetailUiState.Loading)
-        assertTrue(
-            hasLoadingState,
-            "ViewModel must emit Loading state so UI can show loading spinner"
-        )
-
-        // Verify loading is NOT the final state
-        assertFalse(
-            states.last() == InvoiceDetailUiState.Loading,
-            "Loading should not be the final state (should be Success or Error)"
-        )
     }
 }
 

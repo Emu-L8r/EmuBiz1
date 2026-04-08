@@ -35,9 +35,12 @@ fun PrefilledItemsScreen(viewModel: PrefilledItemsViewModel = hiltViewModel()) {
         }
     ) { padding ->
         if (items.isEmpty()) {
-            EmptyPrefilledItemsState(modifier = Modifier
-                .fillMaxSize()
-                .padding(padding))
+            EmptyPrefilledItemsState(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                onAddClick = { showDialog = true }  // ✅ FIXED: Wire to open dialog
+            )
         } else {
             LazyColumn(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = padding.calculateBottomPadding() + 80.dp),
@@ -147,7 +150,10 @@ private fun PrefilledItemCard(
 }
 
 @Composable
-private fun EmptyPrefilledItemsState(modifier: Modifier = Modifier) {
+private fun EmptyPrefilledItemsState(
+    modifier: Modifier = Modifier,
+    onAddClick: () -> Unit = {}
+) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -193,7 +199,8 @@ private fun EmptyPrefilledItemsState(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(onClick = {}) {
+        // ✅ FIXED: Button now opens add item dialog
+        Button(onClick = onAddClick) {
             Icon(
                 imageVector = Icons.Outlined.Add,
                 contentDescription = null,

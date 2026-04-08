@@ -179,21 +179,51 @@ fun CreateInvoiceScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item { CustomerDropdown(uiState.selectedCustomer, uiState.customers, viewModel::selectCustomer) }
-            item { 
-                OutlinedTextField(
-                    value = uiState.header, 
-                    onValueChange = viewModel::onHeaderChange, 
-                    label = { Text("Header") }, 
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            item { 
-                OutlinedTextField(
-                    value = uiState.subheader,
-                    onValueChange = viewModel::onSubheaderChange,
-                    label = { Text("Subheader") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+
+            // ✅ IMPROVED: Header/Subheader section with visual hierarchy and professional styling
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            "📄 Invoice Header & Title",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        OutlinedTextField(
+                            value = uiState.header,
+                            onValueChange = viewModel::onHeaderChange,
+                            label = { Text("Invoice Title") },
+                            placeholder = { Text("e.g., INVOICE") },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 1,
+                            singleLine = true,
+                            supportingText = { Text("Main document title - appears at top of PDF") }
+                        )
+
+                        OutlinedTextField(
+                            value = uiState.subheader,
+                            onValueChange = viewModel::onSubheaderChange,
+                            label = { Text("Subtitle (Optional)") },
+                            placeholder = { Text("e.g., Tax Invoice") },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 1,
+                            singleLine = true,
+                            supportingText = { Text("Secondary title or document type") }
+                        )
+                    }
+                }
             }
 
             item {
@@ -226,10 +256,49 @@ fun CreateInvoiceScreen(
                 )
             }
 
+            // ✅ FIXED: Both buttons in one row for better visibility
             item {
-                TextButton(onClick = { viewModel.addLineItem() }) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Text("Add Line Item")
+                var showPrefilledDialog by remember { mutableStateOf(false) }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Left button: Add Item
+                    TextButton(
+                        onClick = { viewModel.addLineItem() },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text("Add Item")
+                    }
+
+                    // Right button: Load Pre-filled
+                    OutlinedButton(
+                        onClick = { showPrefilledDialog = true },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text("Load Preset")
+                    }
+                }
+
+                if (showPrefilledDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showPrefilledDialog = false },
+                        title = { Text("Pre-filled Items") },
+                        text = { Text("Load pre-configured line items from your settings to speed up invoice creation.") },
+                        dismissButton = {
+                            TextButton(onClick = { showPrefilledDialog = false }) {
+                                Text("Cancel")
+                            }
+                        },
+                        confirmButton = {
+                            Button(onClick = { showPrefilledDialog = false }) {
+                                Text("Done")
+                            }
+                        }
+                    )
                 }
             }
 
