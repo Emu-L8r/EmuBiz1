@@ -154,7 +154,7 @@ private fun DashboardGui2Content(
             TopAppBar(
                 title = { Text("Dashboard") },
                 actions = {
-                    IconButton(onClick = { navController.navigate(ScreenV2.SettingsHub(businessId)) }) {
+                    IconButton(onClick = { navController.navigate(ScreenV2.Settings(businessId)) }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 }

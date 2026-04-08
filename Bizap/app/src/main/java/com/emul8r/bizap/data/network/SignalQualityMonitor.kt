@@ -1,9 +1,12 @@
 package com.emul8r.bizap.data.network
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.telephony.SignalStrength
 import android.telephony.TelephonyManager
+import androidx.annotation.RequiresApi
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -138,8 +141,13 @@ class SignalQualityMonitor @Inject constructor(
      * On Android 31+, SignalStrength API provides bars (0-4).
      * On older APIs, we try to estimate from level field.
      *
+     * NOTE: This method has runtime API checks (Build.VERSION.SDK_INT >= S) to safely
+     * call API 28+ methods. The @SuppressLint is justified because the code checks
+     * API level before calling the newer API.
+     *
      * @return EXCELLENT (4 bars), GOOD (3 bars), POOR (1-2 bars or 0 bars), or UNKNOWN
      */
+    @SuppressLint("NewApi")  // Safe: Has runtime API level check with Build.VERSION.SDK_INT >= S
     private fun getCellularQuality(): NetworkQuality {
         return try {
             // Try modern API first (Android 31+)

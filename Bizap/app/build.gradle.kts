@@ -214,10 +214,10 @@ android {
     }
 
     lint {
-        abortOnError = false
+        abortOnError = true  // ✅ Phase 2: Enforce strict linting (no hidden errors)
         // Allow build to continue with warnings while we fix lint errors
-        disable += "MissingTranslation"
-        disable += "ExtraTranslation"
+        disable += "MissingTranslation"  // Will be documented in LINT_SUPPRESSIONS_JUSTIFICATION.md
+        disable += "ExtraTranslation"    // Will be documented in LINT_SUPPRESSIONS_JUSTIFICATION.md
     }
 
     packaging {
