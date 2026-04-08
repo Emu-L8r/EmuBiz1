@@ -275,7 +275,7 @@ dependencies {
     implementation(libs.androidx.coordinatorlayout)
 
     // Material Design components (AppBarLayout, BottomNavigationView, Toolbar, etc.)
-    implementation("com.google.android.material:material:1.11.0")
+    implementation(libs.google.android.material)
 
     // Logging & Monitoring
     implementation(libs.timber)
@@ -305,36 +305,36 @@ dependencies {
     implementation(libs.androidx.paging.runtime.ktx)
 
     // SQLCipher - encrypted database (passphrase stored in Android Keystore)
-    implementation("net.zetetic:sqlcipher-android:4.14.0@aar")
-    implementation("androidx.sqlite:sqlite-ktx:2.4.0")
+    implementation(libs.sqlcipher.android)
+    implementation(libs.androidx.sqlite.ktx)
 
     // WorkManager
     implementation(libs.androidx.work.ktx)
-    implementation("androidx.startup:startup-runtime:1.1.1")
+    implementation(libs.androidx.startup.runtime)
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.datastore.core)
 
     // Networking (Retrofit)
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
 
     // Template Engine (Freemarker) - HTML to PDF theme
-    implementation("org.freemarker:freemarker:2.3.32")
+    implementation(libs.freemarker)
 
     // PDF Generation (iText 7) - HTML to PDF conversion
-    implementation("com.itextpdf:itext-core:8.0.3")
-    implementation("com.itextpdf:html2pdf:5.0.3")
+    implementation(libs.itext.core)
+    implementation(libs.itext.html2pdf)
 
     // Other
     implementation(libs.coil.compose)
-    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    implementation(libs.androidx.exifinterface)
 
     // Charts
     implementation(libs.vico.compose.m3)

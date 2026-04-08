@@ -34,6 +34,18 @@ mockito-kotlin = "5.1.0"
 paging = "3.3.0"
 vico = "1.14.0"
 leakcanary = "2.14"
+# Phase 3: Consolidated from build.gradle.kts
+material = "1.11.0"
+sqlcipher = "4.14.0"
+sqlite-ktx = "2.4.0"
+retrofit = "2.9.0"
+okhttp = "4.11.0"
+freemarker = "2.3.32"
+itext-core = "8.0.3"
+itext-html2pdf = "5.0.3"
+exifinterface = "1.3.7"
+startup-runtime = "1.1.1"
+zxing = "3.5.3"
 
 [libraries]
 # Core AndroidX
@@ -88,10 +100,34 @@ firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-config = { group = "com.google.firebase", name = "firebase-config" }
 
 # QR Code
-zxing-core = { group = "com.google.zxing", name = "core", version = "3.5.3" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 
 # Logging
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+# Material Design
+google-android-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+# Database - SQLCipher
+sqlcipher-android = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "sqlcipher" }
+androidx-sqlite-ktx = { group = "androidx.sqlite", name = "sqlite-ktx", version.ref = "sqlite-ktx" }
+
+# Networking
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+
+# Template Engine
+freemarker = { group = "org.freemarker", name = "freemarker", version.ref = "freemarker" }
+
+# PDF Generation
+itext-core = { group = "com.itextpdf", name = "itext-core", version.ref = "itext-core" }
+itext-html2pdf = { group = "com.itextpdf", name = "html2pdf", version.ref = "itext-html2pdf" }
+
+# Other AndroidX
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
+androidx-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "startup-runtime" }
 
 # Charts
 vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }

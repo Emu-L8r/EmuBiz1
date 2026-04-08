@@ -257,12 +257,12 @@ class HtmlPdfInvoiceService(
             "JPY" -> "¥"
             else  -> "$"
         }
-        return "$symbol${String.format("%.2f", cents / 100.0)} $currencyCode"
+        return "$symbol${String.format(java.util.Locale.US, "%.2f", cents / 100.0)} $currencyCode"
     }
 
     private fun formatQty(qty: Double): String =
         if (qty == qty.toLong().toDouble()) qty.toLong().toString()
-        else String.format("%.2f", qty)
+        else String.format(java.util.Locale.US, "%.2f", qty)
 
     private fun escapeHtml(text: String): String = text
         .replace("&", "&amp;")
@@ -292,7 +292,7 @@ class HtmlPdfInvoiceService(
             val formatted = if (taxPct == taxPct.toLong().toDouble())
                 "${taxPct.toLong()}%"
             else
-                "${String.format("%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
+                "${String.format(java.util.Locale.US, "%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
             "Tax ($formatted)"
         } else "Tax"
         return """
@@ -859,7 +859,7 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:20px;text-align:
         val taxPct = snapshot.taxRate * 100
         val taxLabel = if (snapshot.taxRate > 0) {
             val formatted = if (taxPct == taxPct.toLong().toDouble())
-                "${taxPct.toLong()}%" else "${String.format("%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
+                "${taxPct.toLong()}%" else "${String.format(java.util.Locale.US, "%.2f", taxPct).trimEnd('0').trimEnd('.')}%"
             "Tax ($formatted)"
         } else "Tax"
         val subtotalRows = """
