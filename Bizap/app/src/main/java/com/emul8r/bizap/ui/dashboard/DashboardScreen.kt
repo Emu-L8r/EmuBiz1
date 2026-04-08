@@ -44,14 +44,13 @@ import com.emul8r.bizap.ui.invoices.InvoiceList
 import com.emul8r.bizap.ui.invoices.InvoiceListUiState
 import com.emul8r.bizap.ui.invoices.InvoiceListViewModel
 import com.emul8r.bizap.ui.landing.GuiMode
-import com.emul8r.bizap.ui.navigation.Screen
+import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import com.emul8r.bizap.ui.notes.NotesViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
 import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
 import com.emul8r.bizap.ui.theme.DashboardTheme
 import com.emul8r.bizap.ui.designsystem.BizapColors
 import com.emul8r.bizap.utils.CentsFormatter
-import com.emul8r.bizap.utils.FirebaseEventTracker
 import timber.log.Timber
 
 
@@ -129,6 +128,7 @@ fun DashboardScreen(
 
 
 
+
 /**
  * **GUI2 Layout:** Modern dashboard with Scaffold-based design and advanced components.
  *
@@ -138,6 +138,7 @@ fun DashboardScreen(
  * - Search bar and advanced analytics widgets
  * - Compact and modern metric displays
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DashboardGui2Content(
     businessId: Long,
@@ -148,19 +149,12 @@ private fun DashboardGui2Content(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(Unit) {
-        dashboardViewModel.eventTracker.trackScreenView(
-            screenName = "DashboardScreen (GUI2)",
-            screenClass = "com.emul8r.bizap.ui.dashboard.DashboardScreen"
-        )
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Dashboard") },
                 actions = {
-                    IconButton(onClick = { navController.navigate(Screen.SettingsHub) }) {
+                    IconButton(onClick = { navController.navigate(ScreenV2.SettingsHub(businessId)) }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 }
@@ -239,7 +233,7 @@ private fun DashboardGui2Content(
                     InvoiceList(
                         modifier = Modifier.fillMaxWidth(),
                         onInvoiceClick = { invoiceId ->
-                            navController.navigate(Screen.InvoiceDetail(invoiceId))
+                            navController.navigate(ScreenV2.InvoiceDetail(businessId, invoiceId))
                         }
                     )
                 }
@@ -247,5 +241,3 @@ private fun DashboardGui2Content(
         }
     }
 }
-
-

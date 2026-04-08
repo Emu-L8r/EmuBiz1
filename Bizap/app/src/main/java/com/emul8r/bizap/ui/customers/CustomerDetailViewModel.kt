@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.repository.CustomerRepository
-import com.emul8r.bizap.ui.navigation.Screen
+import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -155,10 +155,10 @@ class CustomerDetailViewModel @Inject constructor(
      * Extracted from SavedStateHandle route.
      * If invalid (0 or missing), loadCustomer() emits error state.
      *
-     * @see Screen.CustomerDetail
+     * @see ScreenV2.CustomerDetail
      */
     val customerId: Long = try {
-        val route: Screen.CustomerDetail = savedStateHandle.toRoute()
+        val route: ScreenV2.CustomerDetail = savedStateHandle.toRoute()
         route.customerId
     } catch (e: Exception) {
         Timber.w(e, "CustomerDetailViewModel: Failed to extract customerId from route")

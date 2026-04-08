@@ -1,4 +1,4 @@
-﻿﻿<?xml version="1.0" encoding="utf-8"?>
+﻿﻿﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     >
@@ -38,12 +38,12 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="bizap" android:host="dashboard" />
             </intent-filter>
-            <!-- Deep link: bizap://gui2/customer/{id} and bizap://gui2/invoice/{id} -->
+            <!-- Deep link: bizap://invoice/{id} -->
             <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="bizap" android:host="gui2" />
+                <data android:scheme="bizap" android:host="invoice" />
             </intent-filter>
         </activity>
 

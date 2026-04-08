@@ -60,7 +60,6 @@ import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.settings.SettingsHubViewModelV2
 import com.emul8r.bizap.ui.gui2.settings.SettingsUiStateV2
 import com.emul8r.bizap.ui.landing.GuiMode
-import com.emul8r.bizap.ui.navigation.Screen
 
 /**
  * Settings hub screen Composable for GUI2.
@@ -141,15 +140,18 @@ import com.emul8r.bizap.ui.navigation.Screen
 @Composable
 fun SettingsHubScreen(
     onBack: () -> Unit = {},
-    onNavigateTo: (Screen) -> Unit = {},
+    onNavigateToBusinessProfile: () -> Unit = {},
+    onNavigateToThemeSettings: () -> Unit = {},
+    onNavigateToAppSettings: () -> Unit = {},
+    onNavigateToHelp: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // GUI2 only - GUI1 legacy code removed
     SettingsHubScreenV2Content(
-        onBusinessProfileClick = { onNavigateTo(Screen.BusinessProfile) },
-        onThemeSettingsClick = { onNavigateTo(Screen.ThemeSettings) },
-        onAppSettingsClick = { onNavigateTo(Screen.AppSettings) },
-        onHelpClick = { onNavigateTo(Screen.Help) },
+        onBusinessProfileClick = onNavigateToBusinessProfile,
+        onThemeSettingsClick = onNavigateToThemeSettings,
+        onAppSettingsClick = onNavigateToAppSettings,
+        onHelpClick = onNavigateToHelp,
         onBack = onBack,
     )
 }
