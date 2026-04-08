@@ -54,8 +54,6 @@ fun GuiV2NavGraph(
             Column {
                 SyncStatusIndicator()
                 DashboardScreen(
-                    businessId = route.businessId,
-                    guiMode = GuiMode.GUI2,
                     navController = navController
                 )
             }
