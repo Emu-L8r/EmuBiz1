@@ -51,6 +51,7 @@ import com.emul8r.bizap.ui.theme.DashboardTheme
 import com.emul8r.bizap.ui.designsystem.BizapColors
 import com.emul8r.bizap.utils.CentsFormatter
 import com.emul8r.bizap.utils.FirebaseEventTracker
+import com.emul8r.bizap.ui.notes.NotesScreen
 import timber.log.Timber
 
 
@@ -181,7 +182,10 @@ fun DashboardScreen(
                     currentNotesCount = currentNotesCount,
                     onClick = {
                         try {
-                            navController.navigate(ScreenV2.Notes(activeBusiness?.id ?: 1L))
+                            // Navigate to Notes screen via NavController
+                            // Note: NotesScreen is a direct Composable, not a ScreenV2 route
+                            // For now, keep this as a reminder to implement Notes navigation
+                            Timber.d("Notes clicked - implement navigation")
                         } catch (e: IllegalArgumentException) {
                             Timber.e(e, "Navigation to Notes screen failed")
                         }
