@@ -19,7 +19,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.emul8r.bizap.domain.config.BizapConfig
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
-import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.presentation.viewmodel.AnalyticsViewModel
 import com.emul8r.bizap.presentation.viewmodel.AnalyticsUiState
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
@@ -51,192 +50,330 @@ import com.emul8r.bizap.ui.settings.components.BusinessSwitcherDialog
 import com.emul8r.bizap.ui.theme.DashboardTheme
 import com.emul8r.bizap.ui.designsystem.BizapColors
 import com.emul8r.bizap.utils.CentsFormatter
+import com.emul8r.bizap.utils.FirebaseEventTracker
 import timber.log.Timber
 
 
 /**
- * **PHASE 1 CONSOLIDATED:** Unified Dashboard Screen supporting both GUI1 and GUI2 modes.
+ * Main dashboard screen Composable - RESTORED WITH FULL ANALYTICS.
  *
  * **Purpose:**
  * Landing screen after login showing business overview with key metrics, analytics,
  * recent invoices, and quick action buttons. Central hub for all app navigation.
  *
- * **Consolidation Notes (Phase 1):**
- * - Single screen with `guiMode` parameter to support both GUI1 and GUI2 rendering
- * - Shares DashboardViewModelV2 as base implementation
- * - Renders different layouts based on GuiMode using conditional composables
- * - GUI1 uses traditional card-based layout
- * - GUI2 uses modern Scaffold-based layout
- * - Both versions share the same business logic and state management
+ * **Features:**
+ * - Business switcher button (tap to change active business)
+ * - Key metrics at top (8 cards: Clients, Invoices, Paid, Pending, Expected, Actual, Outstanding, Overdue)
+ * - Cash flow trend chart (last 30 days)
+ * - Invoice status pie chart (breakdown by status)
+ * - Recent invoices list (latest 5-10)
+ * - Notes section
+ * - Analytics cards:
+ *   - Average Days to Pay
+ *   - Revenue Concentration
+ *   - Invoicing Velocity
+ * - Real-time updates when business data changes
  *
- * @param businessId Required business identifier (from navigation route)
- * @param guiMode Which UI style to render (GUI1 or GUI2, defaults to GUI2)
  * @param navController Navigation controller for routing
- * @param onNavigateToRevenue Callback for analytics navigation
+ * @param customerViewModel Provides customer list and count
+ * @param businessViewModel Provides active business context
+ * @param dashboardViewModel Provides revenue metrics and status counts
+ * @param invoiceViewModel Provides invoice list
+ * @param notesViewModel Provides notes count
+ * @param analyticsViewModel Provides analytics data (charts, trends, DSO)
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    businessId: Long,
-    guiMode: GuiMode = GuiMode.GUI2,
     navController: NavController,
     customerViewModel: CustomerViewModel = hiltViewModel(),
     businessViewModel: BusinessProfileViewModel = hiltViewModel(),
+    dashboardViewModel: DashboardViewModel = hiltViewModel(),
     invoiceViewModel: InvoiceListViewModel = hiltViewModel(),
     notesViewModel: NotesViewModel = hiltViewModel(),
-    analyticsViewModel: AnalyticsViewModel = hiltViewModel(),
-    dashboardViewModel: DashboardViewModelV2 = hiltViewModel()
+    analyticsViewModel: AnalyticsViewModel = hiltViewModel()
 ) {
-    // ── Collect state based on GUI mode ────────────────────────────────────
-
-    // For both modes: use DashboardViewModelV2 as the primary source
-    val dashboardUiState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
-    val statusCounts by dashboardViewModel.statusCounts.collectAsStateWithLifecycle()
-    val currentNotesCount by dashboardViewModel.currentNotesCount.collectAsStateWithLifecycle()
-
-    // GUI1 specific: legacy state management
     val customers by customerViewModel.uiState.collectAsStateWithLifecycle()
     val activeBusiness by businessViewModel.profileState.collectAsStateWithLifecycle()
+    val revenueState by dashboardViewModel.revenueState.collectAsStateWithLifecycle()
     val invoiceState by invoiceViewModel.uiState.collectAsStateWithLifecycle()
+    val currentNotesCount by notesViewModel.currentNotesCount.collectAsStateWithLifecycle()
     val analyticsState by analyticsViewModel.analyticsState.collectAsStateWithLifecycle()
+    val statusCounts by dashboardViewModel.statusCounts.collectAsStateWithLifecycle()
     val invoicingVelocity by analyticsViewModel.invoicingVelocity.collectAsStateWithLifecycle()
+    var showSwitcher by remember { mutableStateOf(false) }
 
-    // ── Render based on UI mode ────────────────────────────────────────────
-    // For now, GUI1 routes to the original DashboardScreen (kept as backup)
-    // GUI2 routes through GuiV2NavGraph to consolidated screen
+    // CRITICAL: Check if profile is loaded before rendering
+    if (activeBusiness == null) {
+        LoadingScreen(message = "Loading business profile...")
+        return
+    }
 
-    if (guiMode == GuiMode.GUI1) {
-        // GUI1 Legacy: Display simple placeholder or original layout
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Dashboard (GUI1 Mode)")
-        }
-    } else {
-        // GUI2 Modern: Full featured dashboard
-        DashboardGui2Content(
-            businessId = businessId,
-            dashboardUiState = dashboardUiState,
-            statusCounts = statusCounts,
-            currentNotesCount = currentNotesCount,
-            dashboardViewModel = dashboardViewModel,
-            navController = navController
+    // CRITICAL: Check if customers data is loaded
+    if (customers == null) {
+        LoadingScreen(message = "Loading customers...")
+        return
+    }
+
+    if (showSwitcher) {
+        BusinessSwitcherDialog(onDismiss = { showSwitcher = false })
+    }
+
+    // 📊 Track screen view when dashboard loads
+    LaunchedEffect(Unit) {
+        dashboardViewModel.eventTracker.trackScreenView(
+            screenName = "DashboardScreen",
+            screenClass = "com.emul8r.bizap.ui.dashboard.DashboardScreen"
         )
     }
-}
 
-
-
-
-/**
- * **GUI2 Layout:** Modern dashboard with Scaffold-based design and advanced components.
- *
- * Uses:
- * - Scaffold with TopAppBar
- * - Modern Material 3 components
- * - Search bar and advanced analytics widgets
- * - Compact and modern metric displays
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DashboardGui2Content(
-    businessId: Long,
-    dashboardUiState: DashboardUiStateV2,
-    statusCounts: Map<String, Int>,
-    currentNotesCount: Int,
-    dashboardViewModel: DashboardViewModelV2,
-    navController: NavController,
-    modifier: Modifier = Modifier
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Dashboard") },
-                actions = {
-                    IconButton(onClick = { navController.navigate(ScreenV2.Settings(businessId)) }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
-                    }
+    // 📊 Track revenue metrics when they load
+    LaunchedEffect(revenueState, activeBusiness) {
+        when (val s = revenueState) {
+            is DashboardRevenueState.Success -> {
+                val businessId = activeBusiness?.id ?: 1L
+                val totalInvoiceCount = statusCounts.values.sum()
+                val paidInvoiceCount = statusCounts["PAID"] ?: 0
+                val paymentPercent = if (totalInvoiceCount > 0) {
+                    ((paidInvoiceCount.toDouble() / totalInvoiceCount.toDouble()) * 100).toInt()
+                } else {
+                    0
                 }
-            )
-        }
-    ) { paddingValues ->
-        when (val state = dashboardUiState) {
-            is DashboardUiStateV2.Loading -> DashboardSkeletonV2(
-                modifier = Modifier.padding(paddingValues)
-            )
-            is DashboardUiStateV2.Error -> Box(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Error: ${state.message}",
-                    color = MaterialTheme.colorScheme.error
+                dashboardViewModel.eventTracker.trackRevenueMetrics(
+                    businessId = businessId,
+                    mtdRevenue = s.metrics.totalPaidRevenue,
+                    outstandingAmount = s.metrics.outstandingAmount,
+                    overdueAmount = s.metrics.overdueAmount,
+                    paymentCompletionPercent = paymentPercent
                 )
             }
-            is DashboardUiStateV2.Success -> Box(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize()
-                    .subtleVerticalGradient()
-            ) {
-                ImagePlaceholderBackground(alpha = 0.08f)
+            else -> {} // Skip tracking for loading/error states
+        }
+    }
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = state.state.businessContext.businessName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+    Box(modifier = Modifier.fillMaxSize().subtleVerticalGradient()) {
+        ImagePlaceholderBackground(alpha = 0.08f)
 
-                    HorizontalDivider()
+        LazyColumn(
+            modifier = Modifier
+                .padding(DashboardTheme.screenPadding)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(DashboardTheme.sectionSpacing)
+        ) {
+            // ── Business header ────────────────────────────────────────────
+            item {
+                HeaderCardBase(
+                    title = activeBusiness?.businessName?.ifEmpty { "Default Business" } ?: "Default Business",
+                    subtitle = "ABN: ${activeBusiness?.abn?.ifEmpty { "Not Set" } ?: "Not Set"}",
+                    accentColor = MaterialTheme.colorScheme.primary,
+                    trailingIcon = Icons.Default.SwapHoriz,
+                    onTrailingClick = { showSwitcher = true }
+                )
+            }
 
-                    // ── Quick metrics ──────────────────────────────────────
-                    Text(
-                        text = "Overview",
-                        style = MaterialTheme.typography.titleSmall
-                    )
+            // ── Invoice status pie chart ───────────────────────────────────
+            item {
+                InvoiceStatusPieChart(statusCounts = statusCounts)
+            }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        MetricCardBase(
-                            title = "Status: Paid",
-                            value = "${statusCounts["PAID"] ?: 0}",
-                            icon = Icons.Default.CheckCircle,
-                            accentColor = BizapColors.StatusPaid,
-                            modifier = Modifier.weight(1f)
-                        )
-                        MetricCardBase(
-                            title = "Status: Pending",
-                            value = "${(statusCounts["SENT"] ?: 0)}",
-                            icon = Icons.Default.Schedule,
-                            accentColor = BizapColors.StatusOutstanding,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Text(
-                        text = "Recent Invoices",
-                        style = MaterialTheme.typography.titleSmall
-                    )
-
-                    InvoiceList(
-                        modifier = Modifier.fillMaxWidth(),
-                        onInvoiceClick = { invoiceId ->
-                            navController.navigate(ScreenV2.InvoiceDetail(businessId, invoiceId))
+            // ── Notes card ────────────────────────────────────────────────
+            item {
+                NotesCard(
+                    currentNotesCount = currentNotesCount,
+                    onClick = {
+                        try {
+                            navController.navigate(ScreenV2.Notes(activeBusiness?.id ?: 1L))
+                        } catch (e: IllegalArgumentException) {
+                            Timber.e(e, "Navigation to Notes screen failed")
                         }
+                    }
+                )
+            }
+
+            // ── Row 1: Total Clients | Total Invoices ──────────────────────
+            item {
+                val totalInvoices = when (val s = invoiceState) {
+                    is InvoiceListUiState.Success -> s.invoices.size
+                    else -> 0
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(DashboardTheme.cardSpacing)
+                ) {
+                    MetricCardBase(
+                        title = "Total Clients",
+                        value = "${customers.size}",
+                        icon = Icons.Default.People,
+                        accentColor = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCardBase(
+                        title = "Total Invoices",
+                        value = "$totalInvoices",
+                        icon = Icons.Default.Receipt,
+                        accentColor = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                try {
+                                    navController.navigate(ScreenV2.RevenueAnalytics(activeBusiness?.id ?: 1L))
+                                } catch (e: IllegalArgumentException) {
+                                    Timber.e(e, "Navigation to RevenueAnalytics screen failed")
+                                }
+                            }
                     )
                 }
+            }
+
+            // ── Row 2: Invoices Paid | Invoices Pending ────────────────────
+            item {
+                val paidCount = statusCounts["PAID"] ?: 0
+                val pendingCount = (statusCounts["SENT"] ?: 0) + (statusCounts["DRAFT"] ?: 0)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(DashboardTheme.cardSpacing)
+                ) {
+                    MetricCardBase(
+                        title = "Invoices Paid",
+                        value = "$paidCount",
+                        icon = Icons.Default.CheckCircle,
+                        accentColor = BizapColors.StatusPaid,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCardBase(
+                        title = "Invoices Pending",
+                        value = "$pendingCount",
+                        icon = Icons.Default.Schedule,
+                        accentColor = BizapColors.StatusOutstanding,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // ── Row 3: Expected Revenue | Actual Revenue ───────────────────
+            item {
+                val expectedRevenue: Long
+                val actualRevenue: Long
+                when (val s = revenueState) {
+                    is DashboardRevenueState.Success -> {
+                        expectedRevenue = s.metrics.outstandingAmount + s.metrics.totalPaidRevenue
+                        actualRevenue = s.metrics.totalPaidRevenue
+                    }
+                    else -> {
+                        expectedRevenue = 0L
+                        actualRevenue = 0L
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(DashboardTheme.cardSpacing)
+                ) {
+                    MetricCardBase(
+                        title = "Expected Revenue",
+                        value = CentsFormatter.formatCents(expectedRevenue),
+                        icon = Icons.Default.TrendingUp,
+                        accentColor = BizapColors.StatusPaid,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCardBase(
+                        title = "Actual Revenue",
+                        value = CentsFormatter.formatCents(actualRevenue),
+                        icon = Icons.Default.CheckCircle,
+                        accentColor = BizapColors.StatusSent,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // ── Row 4: Outstanding | Overdue ───────────────────────────────
+            item {
+                val outstandingAmount: Long
+                val overdueAmount: Long
+                when (val s = revenueState) {
+                    is DashboardRevenueState.Success -> {
+                        outstandingAmount = s.metrics.outstandingAmount
+                        overdueAmount = s.metrics.overdueAmount
+                    }
+                    else -> {
+                        outstandingAmount = 0L
+                        overdueAmount = 0L
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(DashboardTheme.cardSpacing)
+                ) {
+                    MetricCardBase(
+                        title = "Outstanding",
+                        value = CentsFormatter.formatCents(outstandingAmount),
+                        icon = Icons.Default.Schedule,
+                        accentColor = BizapColors.StatusOutstanding,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCardBase(
+                        title = "Overdue",
+                        value = CentsFormatter.formatCents(overdueAmount),
+                        icon = Icons.Default.Error,
+                        accentColor = BizapColors.StatusOverdue,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // ── Analytics section ──────────────────────────────────────────
+            item {
+                when (val s = analyticsState) {
+                    is AnalyticsUiState.Loading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                    is AnalyticsUiState.Success -> {
+                        val data = s.data
+                        AnalyticsSectionCard(
+                            title = "💡 Business Analytics",
+                            accentColor = MaterialTheme.colorScheme.primary
+                        ) {
+                            CashFlowTrendChart(data.cashFlowTrend)
+                            AverageDaysToPayMetric(
+                                currentDaysToPayment = data.currentAverageDaysToPayment,
+                                trendHistory = data.averageDaysToPayTrend,
+                                config = BizapConfig()
+                            )
+                            RevenueConcentrationChart(
+                                topCustomers = data.topCustomerMetrics
+                            )
+                            InvoicingVelocityCard(
+                                velocityData = invoicingVelocity
+                            )
+                        }
+                    }
+                    is AnalyticsUiState.Error -> {
+                        Text(
+                            text = "Error loading analytics: ${s.message}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+
+            // ── Recent Invoices ────────────────────────────────────────────
+            item {
+                Text("Recent Invoices", style = MaterialTheme.typography.titleMedium)
+            }
+
+            item {
+                InvoiceList(
+                    modifier = Modifier.fillMaxWidth(),
+                    onInvoiceClick = { invoiceId ->
+                        navController.navigate(ScreenV2.InvoiceDetail(activeBusiness?.id ?: 1L, invoiceId))
+                    }
+                )
             }
         }
     }
