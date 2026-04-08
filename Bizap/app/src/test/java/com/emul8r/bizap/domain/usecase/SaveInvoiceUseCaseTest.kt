@@ -7,9 +7,11 @@ import com.emul8r.bizap.domain.repository.OfflineQueueRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.util.TestDataFactory
 import com.emul8r.bizap.utils.ConnectivityHelper
+import com.emul8r.bizap.test.WindowsTestRule
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertTrue
@@ -23,11 +25,14 @@ import kotlin.test.assertTrue
 @RunWith(AndroidJUnit4::class)
 class SaveInvoiceUseCaseTest {
 
+    @get:Rule
+    val skipWindowsRule = WindowsTestRule()
+
     private val repository: InvoiceRepository = mockk()
     private val offlineQueueRepository: OfflineQueueRepository = mockk()
     private val context: Context = mockk()
     private lateinit var useCase: SaveInvoiceUseCase
-    
+
     @Before
     fun setup() {
         // Mock ConnectivityHelper to be online by default
@@ -40,20 +45,20 @@ class SaveInvoiceUseCaseTest {
             context = context
         )
     }
-    
+
     @Test
     fun `test create invoice with empty items fails`() = runTest {
         // Arrange
         val invoice = TestDataFactory.createTestInvoice().copy(items = emptyList())
-        
+
         // Act
         val result = useCase(invoice)
-        
+
         // Assert
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull() is IllegalArgumentException)
     }
-    
+
     @Test
     fun `test create invoice with valid data succeeds`() = runTest {
         // Arrange
@@ -64,7 +69,7 @@ class SaveInvoiceUseCaseTest {
 
         // Act
         val result = useCase(invoice)
-        
+
         // Assert
         assertTrue(result.isSuccess)
         coVerify { repository.saveInvoice(any()) }

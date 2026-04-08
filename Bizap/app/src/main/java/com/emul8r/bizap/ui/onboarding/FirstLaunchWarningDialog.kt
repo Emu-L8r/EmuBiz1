@@ -25,13 +25,13 @@ fun FirstLaunchWarningDialog(onDismiss: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.Warning,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(40.dp)
             )
         },
         title = {
             Text(
-                text = "Important: Data Storage Warning",
+                text = "Welcome to Bizap! 👋",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -39,23 +39,88 @@ fun FirstLaunchWarningDialog(onDismiss: () -> Unit) {
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "⚠️ All your data is stored locally on this device only.",
+                    text = "✅ You're in control. Here's what that means:",
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
                 )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                // Data Privacy
+                Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "🔒",
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "Complete Privacy",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "All invoices stay on YOUR device—never uploaded anywhere. Only you see your data.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Your Responsibility
+                Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "📱",
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "You're Responsible",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "If you lose your phone or delete the app, your data is gone. No cloud backup = no recovery.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Solution
+                Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "💡",
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "Keep Your Data Safe",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Regularly export invoices to CSV from the invoice detail screen. Store backups in a safe place.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 Text(
-                    text = "There is NO cloud backup. If you lose your phone, delete the app, or factory-reset your device, your data will be gone forever and cannot be recovered.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                HorizontalDivider()
-                Text(
-                    text = "📤 We strongly recommend exporting your data as CSV regularly via the invoice detail screen.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "You are responsible for maintaining your own backups.",
+                    text = "I accept these terms and will manage my data responsibly.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         },
@@ -64,7 +129,7 @@ fun FirstLaunchWarningDialog(onDismiss: () -> Unit) {
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("I Understand", modifier = Modifier.padding(vertical = 4.dp))
+                Text("Got It! Let's Go 🚀", modifier = Modifier.padding(vertical = 4.dp))
             }
         }
     )

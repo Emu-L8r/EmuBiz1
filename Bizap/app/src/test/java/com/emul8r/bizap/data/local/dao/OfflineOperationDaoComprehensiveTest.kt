@@ -5,11 +5,13 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.emul8r.bizap.data.local.AppDatabase
 import com.emul8r.bizap.data.local.entities.OfflineOperation
+import com.emul8r.bizap.test.WindowsTestRule
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -23,6 +25,9 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class OfflineOperationDaoComprehensiveTest {
+
+    @get:Rule
+    val skipWindowsRule = WindowsTestRule()
 
     private lateinit var db: AppDatabase
     private lateinit var dao: OfflineOperationDao

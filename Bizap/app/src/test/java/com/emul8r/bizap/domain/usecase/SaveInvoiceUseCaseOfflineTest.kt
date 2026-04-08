@@ -9,9 +9,11 @@ import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.utils.ConnectivityHelper
+import com.emul8r.bizap.test.WindowsTestRule
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertTrue
@@ -22,12 +24,15 @@ import kotlin.test.assertEquals
  */
 @RunWith(AndroidJUnit4::class)
 class SaveInvoiceUseCaseOfflineTest {
-    
+
+    @get:Rule
+    val skipWindowsRule = WindowsTestRule()
+
     private lateinit var context: Context
     private lateinit var mockRepository: InvoiceRepository
     private lateinit var mockOfflineQueue: OfflineQueueRepository
     private lateinit var useCase: SaveInvoiceUseCase
-    
+
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
@@ -40,7 +45,7 @@ class SaveInvoiceUseCaseOfflineTest {
             context
         )
     }
-    
+
     @Test
     fun testSaveInvoiceOnline() = runBlocking {
         // GIVEN: Online state
@@ -53,7 +58,7 @@ class SaveInvoiceUseCaseOfflineTest {
 
         // WHEN
         val result = useCase(invoice)
-        
+
         // THEN
         assertTrue(result.isSuccess)
         assertEquals(1L, result.getOrNull())
@@ -61,7 +66,7 @@ class SaveInvoiceUseCaseOfflineTest {
 
         unmockkObject(ConnectivityHelper)
     }
-    
+
     @Test
     fun testSaveInvoiceOffline() = runBlocking {
         // GIVEN: Offline state
@@ -74,7 +79,7 @@ class SaveInvoiceUseCaseOfflineTest {
 
         // WHEN
         val result = useCase(invoice)
-        
+
         // THEN
         assertTrue(result.isSuccess)
         assertEquals(-1L, result.getOrNull())  // Placeholder for queued operation

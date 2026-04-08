@@ -445,7 +445,7 @@ td, th { word-wrap: break-word; }
 </head><body>
 
 <!-- HEADER -->
-<table width="100%" style="background-color:$primary;color:#ffffff;margin-bottom:20px;">
+<table width="100%" style="background-color:$primary;color:#ffffff;margin-bottom:30px;min-height:120px;">
 <tr>
   <td style="padding:24px 24px;vertical-align:top;">
     $logoHtml
@@ -466,33 +466,33 @@ td, th { word-wrap: break-word; }
 </table>
 
 <!-- INVOICE META + BILL TO -->
-<table width="100%" style="margin-bottom:20px;">
+<table width="100%" style="margin-bottom:30px;page-break-inside:avoid;">
 <tr>
   <td width="50%" style="vertical-align:top;padding-right:12px;">
-    <table width="100%" style="background-color:$lightPurple;border-left:4px solid $primary;">
-      <tr><td colspan="2" style="padding:10px 14px;font-weight:bold;font-size:11pt;color:$primary;">INVOICE DETAILS</td></tr>
-      <tr><td style="padding:8px 14px;font-weight:bold;width:45%;line-height:1.8;">Invoice #</td><td style="padding:8px 14px;line-height:1.8;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
-      <tr><td style="padding:8px 14px;font-weight:bold;line-height:1.8;">Date</td><td style="padding:8px 14px;line-height:1.8;">${formatDate(snapshot.date)}</td></tr>
-      <tr><td style="padding:8px 14px;font-weight:bold;line-height:1.8;">Due Date</td><td style="padding:8px 14px;line-height:1.8;">${formatDate(snapshot.dueDate)}</td></tr>
-      <tr><td style="padding:8px 14px;font-weight:bold;line-height:1.8;">Currency</td><td style="padding:8px 14px;line-height:1.8;">${escapeHtml(snapshot.currencyCode)}</td></tr>
-      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:8px 14px;font-weight:bold;line-height:1.8;">Status</td><td style="padding:8px 14px;line-height:1.8;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
+    <table width="100%" style="background-color:$lightPurple;border-left:4px solid $primary;min-height:100px;">
+      <tr><td colspan="2" style="padding:12px 14px;font-weight:bold;font-size:11pt;color:$primary;">INVOICE DETAILS</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:bold;width:45%;line-height:1.8;">Invoice #</td><td style="padding:10px 14px;line-height:1.8;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">Date</td><td style="padding:10px 14px;line-height:1.8;">${formatDate(snapshot.date)}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">Due Date</td><td style="padding:10px 14px;line-height:1.8;">${formatDate(snapshot.dueDate)}</td></tr>
+      <tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">Currency</td><td style="padding:10px 14px;line-height:1.8;">${escapeHtml(snapshot.currencyCode)}</td></tr>
+      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">Status</td><td style="padding:10px 14px;line-height:1.8;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
     </table>
   </td>
   <td width="50%" style="vertical-align:top;padding-left:12px;">
-    <table width="100%" style="background-color:#fafafa;border-left:4px solid #aaaaaa;">
-      <tr><td style="padding:10px 14px;font-weight:bold;font-size:11pt;color:$primary;">BILL TO</td></tr>
-      ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:8px 14px;font-weight:bold;font-size:11pt;line-height:1.8;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
-      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:8px 14px;font-size:9pt;line-height:1.8;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
-      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:8px 14px;font-size:9pt;line-height:1.8;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
+    <table width="100%" style="background-color:#fafafa;border-left:4px solid #aaaaaa;min-height:100px;">
+      <tr><td style="padding:12px 14px;font-weight:bold;font-size:11pt;color:$primary;">BILL TO</td></tr>
+      ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:10px 14px;font-weight:bold;font-size:11pt;line-height:1.8;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
+      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
+      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
     </table>
   </td>
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:16px;font-style:italic;color:#555555;line-height:1.8;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:24px;margin-top:10px;font-style:italic;color:#555555;line-height:1.8;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
 
 <!-- LINE ITEMS TABLE -->
-<table width="100%" style="border-collapse:collapse;margin-bottom:4px;">
+<table width="100%" style="border-collapse:collapse;margin-bottom:24px;page-break-inside:avoid;">
   <tr style="background-color:$primary;color:#ffffff;">
     <th style="padding:12px 14px;text-align:left;font-size:10pt;">Description</th>
     <th style="padding:12px 14px;text-align:center;font-size:10pt;width:10%;">Qty</th>
@@ -507,7 +507,7 @@ ${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:16px;font-sty
 $paymentSection
 $notesSection
 
-${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:20px;text-align:center;font-size:9pt;color:#888888;border-top:1px solid #dddddd;padding-top:12px;line-height:1.8;">${escapeHtml(snapshot.footerText)}</p>""" else ""}
+${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:30px;text-align:center;font-size:9pt;color:#888888;border-top:1px solid #dddddd;padding-top:16px;line-height:1.8;">${escapeHtml(snapshot.footerText)}</p>""" else ""}
 
 </body></html>"""
     }
@@ -539,9 +539,9 @@ td, th { word-wrap: break-word; }
 </head><body>
 
 <!-- HEADER -->
-<table width="100%" style="border-bottom:2px solid #1a1a1a;margin-bottom:20px;">
+<table width="100%" style="border-bottom:2px solid #1a1a1a;margin-bottom:30px;">
 <tr>
-  <td style="padding:0 0 14px 0;vertical-align:top;">
+  <td style="padding:0 0 20px 0;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:19pt;font-weight:bold;color:#1a1a1a;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
     ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#666666;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
@@ -552,7 +552,7 @@ td, th { word-wrap: break-word; }
     ${if (snapshot.businessAbn.isNotBlank()) """<div style="font-size:9pt;color:#555555;margin-top:4px;">ABN: ${escapeHtml(snapshot.businessAbn)}</div>""" else ""}
     </div>
   </td>
-  <td style="text-align:right;vertical-align:top;padding-bottom:14px;">
+  <td style="text-align:right;vertical-align:top;padding-bottom:20px;">
     <div style="font-size:24pt;font-weight:bold;letter-spacing:2px;color:#1a1a1a;">$docType</div>
     $watermark
   </td>
@@ -560,20 +560,20 @@ td, th { word-wrap: break-word; }
 </table>
 
 <!-- INVOICE META + BILL TO -->
-<table width="100%" style="margin-bottom:20px;">
+<table width="100%" style="margin-bottom:30px;page-break-inside:avoid;">
 <tr>
   <td width="50%" style="vertical-align:top;padding-right:16px;">
-    <div style="font-weight:bold;font-size:10pt;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1a1a1a;padding-bottom:5px;">Invoice Details</div>
+    <div style="font-weight:bold;font-size:10pt;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1a1a1a;padding-bottom:8px;">Invoice Details</div>
     <table width="100%">
-      <tr><td style="padding:7px 0;font-weight:bold;width:45%;line-height:1.8;">Invoice #</td><td style="padding:7px 0;line-height:1.8;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
-      <tr><td style="padding:7px 0;font-weight:bold;line-height:1.8;">Date</td><td style="padding:7px 0;line-height:1.8;">${formatDate(snapshot.date)}</td></tr>
-      <tr><td style="padding:7px 0;font-weight:bold;line-height:1.8;">Due Date</td><td style="padding:7px 0;line-height:1.8;">${formatDate(snapshot.dueDate)}</td></tr>
-      <tr><td style="padding:7px 0;font-weight:bold;line-height:1.8;">Currency</td><td style="padding:7px 0;line-height:1.8;">${escapeHtml(snapshot.currencyCode)}</td></tr>
-      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:7px 0;font-weight:bold;line-height:1.8;">Status</td><td style="padding:7px 0;line-height:1.8;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
+      <tr><td style="padding:10px 0;font-weight:bold;width:45%;line-height:1.8;">Invoice #</td><td style="padding:10px 0;line-height:1.8;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
+      <tr><td style="padding:10px 0;font-weight:bold;line-height:1.8;">Date</td><td style="padding:10px 0;line-height:1.8;">${formatDate(snapshot.date)}</td></tr>
+      <tr><td style="padding:10px 0;font-weight:bold;line-height:1.8;">Due Date</td><td style="padding:10px 0;line-height:1.8;">${formatDate(snapshot.dueDate)}</td></tr>
+      <tr><td style="padding:10px 0;font-weight:bold;line-height:1.8;">Currency</td><td style="padding:10px 0;line-height:1.8;">${escapeHtml(snapshot.currencyCode)}</td></tr>
+      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:10px 0;font-weight:bold;line-height:1.8;">Status</td><td style="padding:10px 0;line-height:1.8;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
     </table>
   </td>
   <td width="50%" style="vertical-align:top;padding-left:16px;">
-    <div style="font-weight:bold;font-size:10pt;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1a1a1a;padding-bottom:5px;">Bill To</div>
+    <div style="font-weight:bold;font-size:10pt;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1a1a1a;padding-bottom:8px;">Bill To</div>
     ${if (snapshot.customerName.isNotBlank()) """<div style="font-weight:bold;font-size:11pt;line-height:1.8;">${escapeHtml(snapshot.customerName)}</div>""" else ""}
     ${if (snapshot.customerAddress.isNotBlank()) """<div style="font-size:9pt;color:#555555;margin-top:6px;line-height:1.8;">${addressLines(snapshot.customerAddress)}</div>""" else ""}
     ${if (!snapshot.customerEmail.isNullOrBlank()) """<div style="font-size:9pt;color:#555555;margin-top:4px;line-height:1.8;">${escapeHtml(snapshot.customerEmail)}</div>""" else ""}
@@ -581,10 +581,10 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:16px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:24px;margin-top:10px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
 
 <!-- LINE ITEMS TABLE -->
-<table width="100%" style="margin-bottom:4px;">
+<table width="100%" style="margin-bottom:24px;page-break-inside:avoid;">
   <tr style="background-color:#1a1a1a;color:#ffffff;">
     <th style="padding:12px 14px;text-align:left;">Description</th>
     <th style="padding:12px 14px;text-align:center;width:10%;">Qty</th>
@@ -599,7 +599,7 @@ ${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:16px;font-siz
 $paymentSection
 $notesSection
 
-${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:20px;text-align:center;font-size:9pt;color:#888888;border-top:1px solid #cccccc;padding-top:12px;line-height:1.8;">${escapeHtml(snapshot.footerText)}</p>""" else ""}
+${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:30px;text-align:center;font-size:9pt;color:#888888;border-top:1px solid #cccccc;padding-top:16px;line-height:1.8;">${escapeHtml(snapshot.footerText)}</p>""" else ""}
 
 </body></html>"""
     }

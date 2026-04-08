@@ -243,13 +243,17 @@ android {
     testOptions {
         unitTests {
             isReturnDefaultValues = true
-            all {
-                it.systemProperty("robolectric.offline", "true")
-                it.systemProperty("robolectric.dependency.repo.id", "central")
-                it.systemProperty("robolectric.useSystemProperties", "true")
-                it.systemProperty("robolectric.mode", "legacy")
-                // Use Java's temp directory which handles POSIX better
-                it.systemProperty("java.io.tmpdir", System.getProperty("java.io.tmpdir"))
+            all { test ->
+                test.systemProperty("robolectric.offline", "true")
+                test.systemProperty("robolectric.dependency.repo.id", "central")
+                test.systemProperty("robolectric.useSystemProperties", "true")
+                test.systemProperty("robolectric.logging.enabled", "false")
+                // Critical: Use system temp directory to avoid POSIX issues on Windows
+                test.systemProperty("java.io.tmpdir", System.getProperty("java.io.tmpdir"))
+                // Disable ResourceFS which causes POSIX permission errors
+                test.systemProperty("robolectric.resourcesMode", "legacy")
+                // Disable strict mode to allow database access
+                test.systemProperty("android.os.Build.VERSION.SDK_INT", "28")
             }
         }
     }
@@ -344,6 +348,7 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.turbine)
     testImplementation(libs.arch.core.test)
     testImplementation(libs.androidx.paging.common.ktx)
     testImplementation(libs.robolectric)
@@ -357,6 +362,10 @@ dependencies {
     testImplementation("com.google.truth:truth:1.1.4")
     testImplementation("androidx.room:room-testing:2.6.1")
     testImplementation("androidx.test.ext:junit-ktx:1.1.5")
+
+    // Hilt testing dependencies
+    testImplementation("com.google.dagger:hilt-android-testing:2.51.1")
+    kspTest("com.google.dagger:hilt-compiler:2.51.1")
 
     // Android Test Dependencies
     androidTestImplementation(libs.androidx.junit)

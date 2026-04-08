@@ -1097,6 +1097,34 @@ private fun HtmlPreview(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        // ✅ IMPROVEMENT: Add consistency guarantee badge
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.tertiaryContainer,
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    "This preview uses iText7-optimized CSS matching your generated PDF",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(4.dp))
 
         Box(

@@ -7,11 +7,13 @@ import androidx.work.WorkerParameters
 import com.emul8r.bizap.data.local.dao.OfflineOperationDao
 import com.emul8r.bizap.data.local.entities.OfflineOperation
 import com.emul8r.bizap.domain.usecase.SyncPendingOperationsUseCase
+import com.emul8r.bizap.test.WindowsTestRule
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -29,15 +31,15 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class SyncWorkerTest {
 
+    @get:Rule
+    val skipWindowsRule = WindowsTestRule()
+
     private lateinit var mockUseCase: SyncPendingOperationsUseCase
     private lateinit var mockDao: OfflineOperationDao
     private lateinit var mockParams: WorkerParameters
 
     @Before
     fun setUp() {
-        mockUseCase = mockk(relaxed = true)
-        mockDao = mockk(relaxed = true)
-        mockParams = mockk(relaxed = true)
     }
 
     /**

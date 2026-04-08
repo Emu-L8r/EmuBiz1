@@ -20,7 +20,8 @@ import timber.log.Timber
 fun ModernLineItemsEditor(
     items: List<LineItem>,
     onItemsChange: (List<LineItem>) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAddPrefilledClick: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier
@@ -141,28 +142,48 @@ fun ModernLineItemsEditor(
             }
         }
 
-        // Add Item button
-        Button(
-            onClick = {
-                Timber.d("🎬 ADD ITEM BUTTON CLICKED!")
-                Timber.d("   Current items: ${items.size}")
-                Timber.d("   Creating new item with ID=${(items.maxOfOrNull { it.id } ?: 0) + 1}")
-                val newItem = LineItem(
-                    id = (items.maxOfOrNull { it.id } ?: 0) + 1,
-                    description = "",
-                    quantity = 1.0,
-                    unitPrice = 0L
-                )
-                Timber.d("   Calling onItemsChange with ${items.size + 1} items")
-                onItemsChange(items + newItem)
-                Timber.d("   ✅ onItemsChange callback executed")
-            },
+        // Add buttons row - Manual item AND Pre-filled items
+        Row(
             modifier = Modifier
-                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth()
                 .padding(top = 24.dp),
-            shape = RoundedCornerShape(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
         ) {
-            Text("+ Add Item")
+            // Add Item button
+            Button(
+                onClick = {
+                    Timber.d("🎬 ADD ITEM BUTTON CLICKED!")
+                    Timber.d("   Current items: ${items.size}")
+                    Timber.d("   Creating new item with ID=${(items.maxOfOrNull { it.id } ?: 0) + 1}")
+                    val newItem = LineItem(
+                        id = (items.maxOfOrNull { it.id } ?: 0) + 1,
+                        description = "",
+                        quantity = 1.0,
+                        unitPrice = 0L
+                    )
+                    Timber.d("   Calling onItemsChange with ${items.size + 1} items")
+                    onItemsChange(items + newItem)
+                    Timber.d("   ✅ onItemsChange callback executed")
+                },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("+ Add Item")
+            }
+
+            // Add Pre-filled Item button
+            if (onAddPrefilledClick != null) {
+                OutlinedButton(
+                    onClick = {
+                        Timber.d("🎯 ADD PRE-FILLED ITEM BUTTON CLICKED!")
+                        onAddPrefilledClick()
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("+ From Templates")
+                }
+            }
         }
     }
 }

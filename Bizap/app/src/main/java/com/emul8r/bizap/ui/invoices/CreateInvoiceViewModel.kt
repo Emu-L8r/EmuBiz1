@@ -9,6 +9,7 @@ import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceMetrics
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.model.PrefilledItem
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
@@ -162,7 +163,7 @@ class CreateInvoiceViewModel @Inject constructor(
         if (!BuildConfig.DEBUG) return
 
         Timber.d("🐛 DEBUG BUTTON CLICKED: Loading test data...")
-        
+
         viewModelScope.launch {
             try {
                 val customers = customerRepository.getAllCustomers().first()
@@ -203,9 +204,64 @@ class CreateInvoiceViewModel @Inject constructor(
     }
 
     fun addLineItem() {
-        _uiState.update { 
+        _uiState.update {
             it.copy(items = it.items + LineItemForm())
         }
+    }
+
+    /**
+     * ✅ NEW: Load pre-filled items from settings/templates and add to invoice
+     *
+     * This allows users to quickly add pre-configured line items that were saved
+     * in the invoice settings, speeding up invoice creation.
+     */
+    fun loadPrefilledItems(prefilledItems: List<com.emul8r.bizap.domain.model.LineItem>) {
+        if (prefilledItems.isEmpty()) {
+            Timber.d("No pre-filled items to load")
+            return
+        }
+
+        Timber.d("📋 Loading ${prefilledItems.size} pre-filled items")
+
+        val newItems = prefilledItems.map { item ->
+            LineItemForm(
+                transientId = java.util.UUID.randomUUID(),
+                description = item.description,
+                quantity = item.quantity,
+                unitPrice = item.unitPrice
+            )
+        }
+
+        _uiState.update { state ->
+            state.copy(items = state.items + newItems)
+        }
+
+        Timber.d("✅ Pre-filled items loaded. Total items: ${_uiState.value.items.size}")
+    }
+
+    /**
+     * ✅ Add a single pre-filled item to the invoice
+     *
+     * This is called when the user selects a pre-filled item from the dialog
+     * in the Create Invoice screen.
+     *
+     * @param prefilledItem The pre-filled item to add
+     */
+    fun addLineItemFromPrefilledItem(prefilledItem: PrefilledItem) {
+        Timber.d("➕ Adding pre-filled item: ${prefilledItem.description} ($${prefilledItem.unitPrice / 100.0})")
+
+        val newItem = LineItemForm(
+            transientId = java.util.UUID.randomUUID(),
+            description = prefilledItem.description,
+            quantity = 1.0,  // Default quantity to 1
+            unitPrice = prefilledItem.unitPrice
+        )
+
+        _uiState.update { state ->
+            state.copy(items = state.items + newItem)
+        }
+
+        Timber.d("✅ Pre-filled item added. Total items: ${_uiState.value.items.size}")
     }
 
     fun removeLineItem(transientId: java.util.UUID) {
