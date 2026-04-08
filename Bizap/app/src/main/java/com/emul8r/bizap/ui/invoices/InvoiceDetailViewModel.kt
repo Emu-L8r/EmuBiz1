@@ -140,15 +140,15 @@ class InvoiceDetailViewModel @Inject constructor(
             }
             return
         }
-        
+
         viewModelScope.launch {
             try {
                 val newAmountPaid = invoice.amountPaid + amount
                 val newStatus = if (newAmountPaid >= invoice.totalAmount) InvoiceStatus.PAID else InvoiceStatus.PARTIALLY_PAID
-                
+
                 invoiceRepo.updateAmountPaid(invoice.id, newAmountPaid).getOrThrow()
                 invoiceRepo.updateInvoiceStatus(invoice.id, newStatus).getOrThrow()
-                
+
                 _uiEvent.emit(UiEvent.ShowSnackbar("Payment of ${CentsFormatter.formatCents(amount)} recorded."))
             } catch (e: Exception) {
                 _uiEvent.emit(UiEvent.ShowSnackbar("Failed to record payment: ${e.message}"))
@@ -162,7 +162,7 @@ class InvoiceDetailViewModel @Inject constructor(
     fun createCorrection() {
         val currentState = uiState.value as? InvoiceDetailUiState.Success ?: return
         val original = currentState.data
-        
+
         viewModelScope.launch {
             invoiceRepo.createCorrection(original.id)
                 .onSuccess { newId ->
@@ -249,21 +249,10 @@ class InvoiceDetailViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val result = pdfService.checkIfPdfExists(invoiceData.id, "Invoice")
-                val invoiceExists = result.first
-                val invoiceFileName = result.second
-
-                if (invoiceExists && invoiceFileName != null) {
-                    _showOverwriteDialog.value = PdfOverwriteState(
-                        fileName = invoiceFileName,
-                        isQuote = false,
-                        share = share
-                    )
-                } else {
-                    generateAndExportPdf(share = share, overwriteExisting = true)
-                }
+                // Generate PDF directly - overwrite existing
+                generateAndExportPdf(share = share, overwriteExisting = true)
             } catch (e: Exception) {
-                _uiEvent.emit(UiEvent.ShowSnackbar("Error checking PDF: ${e.message}"))
+                _uiEvent.emit(UiEvent.ShowSnackbar("Error generating PDF: ${e.message}"))
             }
         }
     }
@@ -439,7 +428,7 @@ class InvoiceDetailViewModel @Inject constructor(
             try {
                 val businessProfile = businessProfileRepository.activeProfile.first()
                 val snapshot = buildSnapshot(invoiceData, businessProfile)
-                
+
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceData,
                     snapshot = snapshot,

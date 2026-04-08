@@ -270,8 +270,9 @@ private fun SettingsV2Content(
             onClick = onAppSettingsClick
         )
 
+        @Suppress("DEPRECATION")
         SettingsCardV2(
-            icon = Icons.Default.Help,
+            icon = Icons.Filled.Help,
             title = "Help & About",
             description = "App information, version, and support",
             onClick = onHelpClick

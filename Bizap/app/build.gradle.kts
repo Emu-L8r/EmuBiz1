@@ -40,7 +40,7 @@ android {
         versionCode = 2
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "dagger.hilt.android.testing.HiltTestRunner"
 
         /*
          * Exchange Rate API Key Configuration
@@ -374,6 +374,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     androidTestImplementation(libs.androidx.room.testing)
 
+    // Hilt Testing Dependencies
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.51.1")
+    androidTestUtil("com.google.dagger:hilt-android-testing:2.51.1")
+
     // Kotlin Test Library
     androidTestImplementation(kotlin("test"))
 
@@ -508,3 +512,51 @@ tasks.withType<Test> {
         }
     }
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Automated Testing Tasks
+// ──────────────────────────────────────────────────────────────────────────────
+
+tasks.register("runAllTests") {
+    description = "Run all unit tests and generate reports"
+    dependsOn("testDebugUnitTest", "jacocoTestReport")
+
+    doLast {
+        println("\n✅ ALL TESTS COMPLETED")
+        println("📊 Test Report: app/build/reports/tests/testDebugUnitTest/index.html")
+        println("📈 Coverage Report: app/build/reports/jacoco/jacocoTestReport/html/index.html")
+    }
+}
+
+tasks.register("runCriticalTests") {
+    description = "Run only critical path tests (Data Integrity, Offline, Edge Cases)"
+
+    doLast {
+        exec {
+            commandLine = listOf(
+                "./gradlew",
+                "testDebugUnitTest",
+                "--tests=*InvoiceDataIntegrityTest",
+                "--tests=*OfflineModeTest",
+                "--tests=*EdgeCaseTest",
+                "-i"
+            )
+        }
+    }
+}
+
+tasks.register("testReport") {
+    description = "Generate test report after running tests"
+    dependsOn("jacocoTestReport")
+
+    doLast {
+        val reportFile = file("app/build/reports/jacoco/jacocoTestReport/html/index.html")
+        if (reportFile.exists()) {
+            println("\n✅ Coverage Report Generated")
+            println("📊 Open: ${reportFile.absolutePath}")
+        } else {
+            println("⚠️  Report file not found")
+        }
+    }
+}
+

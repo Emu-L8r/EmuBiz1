@@ -7,6 +7,9 @@ import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.model.InvoiceSettings
 import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
 import com.emul8r.bizap.domain.service.PdfGenerationService
+import com.emul8r.bizap.domain.pdf.HeaderSection
+import com.emul8r.bizap.domain.pdf.SubheaderSection
+import com.emul8r.bizap.domain.pdf.PdfColorScheme
 import com.emul8r.bizap.data.service.sass.SassStyleEngine
 import com.emul8r.bizap.data.service.sass.SassTokens
 import com.emul8r.bizap.data.service.PaymentMethodIconProvider
@@ -34,6 +37,32 @@ class HtmlPdfInvoiceService(
 
     private val dateFormatter = ThreadLocal.withInitial {
         SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    }
+
+    /**
+     * Generate both Invoice and Quote PDFs from the same snapshot
+     * Implements the unified dual-PDF generation interface
+     */
+    override suspend fun generateDualPdf(
+        snapshot: InvoiceSnapshot,
+        header: HeaderSection?,
+        subheader: SubheaderSection,
+        overwriteExisting: Boolean,
+        theme: com.emul8r.bizap.domain.model.InvoiceTheme?,
+        colorScheme: PdfColorScheme?
+    ): Pair<File, File> {
+        Timber.d("📝 HtmlPdfInvoiceService.generateDualPdf() - Generating Invoice + Quote PDFs")
+
+        return try {
+            val invoicePdf = generatePdf(snapshot, false, overwriteExisting, theme)
+            val quotePdf = generatePdf(snapshot, true, overwriteExisting, theme)
+
+            Timber.d("✅ Dual PDFs generated: Invoice=${invoicePdf.name}, Quote=${quotePdf.name}")
+            Pair(invoicePdf, quotePdf)
+        } catch (e: Exception) {
+            Timber.e(e, "❌ generateDualPdf failed")
+            throw e
+        }
     }
 
     override suspend fun generatePdf(
@@ -1322,6 +1351,7 @@ $footer
         return file
     }
 }
+
 
 
 

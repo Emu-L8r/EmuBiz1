@@ -9,12 +9,14 @@ import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.utils.ConnectivityHelper
-import com.emul8r.bizap.test.WindowsTestRule
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 import kotlin.test.assertTrue
 import kotlin.test.assertEquals
@@ -22,11 +24,11 @@ import kotlin.test.assertEquals
 /**
  * SPRINT 3: Simplified to match new SaveInvoiceUseCase architecture
  */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class SaveInvoiceUseCaseOfflineTest {
-
     @get:Rule
-    val skipWindowsRule = WindowsTestRule()
+    val hiltRule = HiltAndroidRule(this)
 
     private lateinit var context: Context
     private lateinit var mockRepository: InvoiceRepository
@@ -35,6 +37,7 @@ class SaveInvoiceUseCaseOfflineTest {
 
     @Before
     fun setUp() {
+        hiltRule.inject()
         context = ApplicationProvider.getApplicationContext()
         mockRepository = mockk()
         mockOfflineQueue = mockk(relaxed = true)

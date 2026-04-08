@@ -9,14 +9,16 @@ import android.text.StaticLayout
 import android.text.TextPaint
 import androidx.annotation.RequiresApi
 import com.emul8r.bizap.domain.model.InvoiceSnapshot
-import com.emul8r.bizap.domain.repository.DocumentRepository
+import com.emul8r.bizap.domain.service.PdfGenerationService
+import com.emul8r.bizap.domain.pdf.HeaderSection
+import com.emul8r.bizap.domain.pdf.SubheaderSection
+import com.emul8r.bizap.domain.pdf.PdfColorScheme
 import com.emul8r.bizap.data.service.pdf.PdfTableRenderer
 import com.emul8r.bizap.data.service.pdf.PdfBrandingRenderer
 import com.emul8r.bizap.data.service.pdf.PdfPageManager
 import com.emul8r.bizap.data.service.pdf.PdfWatermarkRenderer
 import com.emul8r.bizap.domain.pdf.GridLayoutManager
 import com.emul8r.bizap.domain.pdf.InvoiceSpacingConfig
-import com.emul8r.bizap.domain.service.PdfGenerationService
 import com.emul8r.bizap.data.service.templates.TemplateSnapshotManager
 import com.emul8r.bizap.utils.DocumentNamingUtils
 import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
@@ -46,7 +48,6 @@ import javax.inject.Singleton
 @Singleton
 class InvoicePdfService @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val documentRepository: DocumentRepository,
     private val invoiceSettingsRepository: InvoiceSettingsRepository,
     private val userIdProvider: UserIdProvider
 ) : PdfGenerationService {
@@ -159,9 +160,73 @@ class InvoicePdfService @Inject constructor(
         }
     }
 
-    suspend fun checkIfPdfExists(invoiceId: Long, fileType: String): Pair<Boolean, String?> {
-        val existingDoc = documentRepository.getDocumentByInvoiceAndType(invoiceId, fileType)
-        return if (existingDoc != null) Pair(true, existingDoc.fileName) else Pair(false, null)
+    /**
+     * New unified method: Generate BOTH Invoice and Quote PDFs
+     *
+     * This is the new unified API used by both Modern (GUI2) and Classic (GUI1) interfaces.
+     * Generates two PDFs simultaneously from the same data:
+     * - invoice_XXXX.pdf (labeled "INVOICE")
+     * - quote_XXXX.pdf (labeled "QUOTE")
+     *
+     * Benefits:
+     * - Single method for both interfaces
+     * - No code duplication
+     * - Consistent styling and layout
+     * - Professional PDF output with proper header/subheader positioning
+     */
+    override suspend fun generateDualPdf(
+        snapshot: InvoiceSnapshot,
+        header: HeaderSection?,
+        subheader: SubheaderSection,
+        overwriteExisting: Boolean,
+        theme: com.emul8r.bizap.domain.model.InvoiceTheme?,
+        colorScheme: PdfColorScheme?
+    ): Pair<java.io.File, java.io.File> {
+        Timber.d("""
+            ═══════════════════════════════════════════════════════════════════════════
+            🎯 UNIFIED PDF GENERATION: Generating Invoice + Quote
+            ═══════════════════════════════════════════════════════════════════════════
+            Header: ${header?.text ?: "None"}
+            Subheader lines: ${subheader.lines.size}
+            Theme: ${theme?.name ?: "CANVAS"}
+            ═══════════════════════════════════════════════════════════════════════════
+        """.trimIndent())
+
+        return try {
+            // Generate INVOICE PDF
+            Timber.d("📄 Generating INVOICE PDF...")
+            val invoicePdf = generatePdf(
+                snapshot = snapshot,
+                isQuote = false,
+                overwriteExisting = overwriteExisting,
+                theme = theme
+            )
+            Timber.d("✅ INVOICE PDF generated: ${invoicePdf.name}")
+
+            // Generate QUOTE PDF
+            Timber.d("📄 Generating QUOTE PDF...")
+            val quotePdf = generatePdf(
+                snapshot = snapshot,
+                isQuote = true,
+                overwriteExisting = overwriteExisting,
+                theme = theme
+            )
+            Timber.d("✅ QUOTE PDF generated: ${quotePdf.name}")
+
+            // Return both
+            Timber.d("""
+                ═══════════════════════════════════════════════════════════════════════════
+                ✅ DUAL PDF GENERATION COMPLETE
+                Invoice: ${invoicePdf.absolutePath}
+                Quote: ${quotePdf.absolutePath}
+                ═══════════════════════════════════════════════════════════════════════════
+            """.trimIndent())
+
+            Pair(invoicePdf, quotePdf)
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Dual PDF generation failed")
+            throw e
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
@@ -178,16 +243,16 @@ class InvoicePdfService @Inject constructor(
             snapshot.customerName, snapshot.date, snapshot.invoiceId.toInt(), fileType
         )
 
-        val existingDoc = documentRepository.getDocumentByInvoiceAndType(snapshot.invoiceId, fileType)
-        val fileName = if (!overwriteExisting && existingDoc != null) {
+        val file = File(context.filesDir, "documents/$baseFileName")
+        val fileName = if (!overwriteExisting && file.exists()) {
             generateVersionedFileName(baseFileName)
         } else {
-            if (existingDoc != null) File(existingDoc.absolutePath).let { if (it.exists()) it.delete() }
+            if (file.exists()) file.delete()
             baseFileName
         }
 
-        val file = File(context.filesDir, "documents/$fileName")
-        file.parentFile?.mkdirs()
+        val finalFile = File(context.filesDir, "documents/$fileName")
+        finalFile.parentFile?.mkdirs()
 
         val templateSnapshot = snapshotManager.restoreSnapshot(templateSnapshotJson)
         val customFieldValues = snapshotManager.restoreCustomFieldValues(customFieldValuesJson)

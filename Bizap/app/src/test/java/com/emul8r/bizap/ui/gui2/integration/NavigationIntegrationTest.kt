@@ -7,7 +7,8 @@ import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.ui.gui2.navigation.DeepLinkDestination
 import com.emul8r.bizap.ui.gui2.navigation.DeepLinks
 import com.emul8r.bizap.ui.gui2.navigation.parseDeepLinkIntent
-import com.emul8r.bizap.test.WindowsTestRule
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,12 +22,12 @@ import kotlin.test.assertIs
  * - Deep links parse correctly to their destinations
  * - Navigation extensions produce the correct route objects
  */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [28])
 class NavigationIntegrationTest : BaseUnitTest() {
-
     @get:Rule
-    val skipWindowsRule = WindowsTestRule()
+    val hiltRule = HiltAndroidRule(this)
 
     // ── Deep link URI generation ──────────────────────────────────────────────
 

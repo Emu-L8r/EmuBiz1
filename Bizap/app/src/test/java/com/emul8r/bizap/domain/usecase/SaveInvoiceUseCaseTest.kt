@@ -7,7 +7,8 @@ import com.emul8r.bizap.domain.repository.OfflineQueueRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.util.TestDataFactory
 import com.emul8r.bizap.utils.ConnectivityHelper
-import com.emul8r.bizap.test.WindowsTestRule
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -22,11 +23,11 @@ import kotlin.test.assertTrue
  *
  * SPRINT 3: Simplified - uses only domain repository interfaces
  */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class SaveInvoiceUseCaseTest {
-
     @get:Rule
-    val skipWindowsRule = WindowsTestRule()
+    val hiltRule = HiltAndroidRule(this)
 
     private val repository: InvoiceRepository = mockk()
     private val offlineQueueRepository: OfflineQueueRepository = mockk()
@@ -35,6 +36,7 @@ class SaveInvoiceUseCaseTest {
 
     @Before
     fun setup() {
+        hiltRule.inject()
         // Mock ConnectivityHelper to be online by default
         mockkObject(ConnectivityHelper)
         every { ConnectivityHelper.isNetworkAvailable(any()) } returns true

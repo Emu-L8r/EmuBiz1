@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.emul8r.bizap.data.repository
 
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
@@ -7,6 +9,7 @@ import com.emul8r.bizap.data.repository.analytics.AnalyticsValidator
 import com.emul8r.bizap.data.repository.analytics.CalendarUtils
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch

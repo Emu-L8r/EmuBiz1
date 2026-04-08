@@ -149,7 +149,10 @@ fun CreateCustomerScreenV2(
                 value = uiState.notes,
                 onValueChange = { viewModel.updateNotes(it) },
                 label = { Text("Notes") },
-                leadingIcon = { Icon(Icons.Default.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)) },
+                leadingIcon = {
+                    @Suppress("DEPRECATION")
+                    Icon(Icons.Filled.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
+                },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 shape = RoundedCornerShape(12.dp)

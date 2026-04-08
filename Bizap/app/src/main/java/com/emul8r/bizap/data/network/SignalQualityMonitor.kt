@@ -110,8 +110,10 @@ class SignalQualityMonitor @Inject constructor(
      *
      * @return EXCELLENT (-30 to -50), GOOD (-50 to -70), POOR (< -70), or UNKNOWN
      */
+    @Suppress("DEPRECATION")
     private fun getWiFiQuality(): NetworkQuality {
         return try {
+            @Suppress("DEPRECATION")
             val connectionInfo = wifiManager.connectionInfo ?: return NetworkQuality.UNKNOWN
             val rssi = connectionInfo.rssi
 

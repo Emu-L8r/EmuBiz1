@@ -84,15 +84,20 @@ class CustomerListViewModel @Inject constructor(
      *
      * @see ScreenV2.Customers
      */
-    private val route: ScreenV2.Customers = savedStateHandle.toRoute()
+    private val route: ScreenV2.Customers? = try {
+        savedStateHandle.toRoute()
+    } catch (e: Exception) {
+        Timber.w(e, "CustomerListViewModel: Failed to extract route from SavedStateHandle. Using default businessId.")
+        null
+    }
 
     /**
      * Active business ID from navigation.
      *
      * Used to filter/scope customer queries to the active business context.
-     * Never null - validated at navigation layer.
+     * Defaults to 1L if route extraction fails (safety fallback for GUI1 navigation).
      */
-    val businessId: Long = route.businessId
+    val businessId: Long = route?.businessId ?: 1L
 
     /**
      * Current UI state as reactive stream.
