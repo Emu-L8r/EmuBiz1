@@ -112,20 +112,20 @@ sealed class BizapException(
      *
      * @param operation What operation failed (e.g., "INSERT", "SELECT")
      * @param table Which table (e.g., "invoices")
-     * @param message Error details
+     * @param details Error details
      *
      * EXAMPLE:
      *   throw DatabaseError(
      *     operation = "INSERT",
      *     table = "invoices",
-     *     message = "Constraint violation: foreign key"
+     *     details = "Constraint violation: foreign key"
      *   )
      */
     data class DatabaseError(
         val operation: String,
         val table: String,
-        override val message: String
-    ) : BizapException("Database $operation on $table failed: $message")
+        val details: String
+    ) : BizapException("Database $operation on $table failed: $details")
 
     /**
      * MigrationError - Database schema migration failed
