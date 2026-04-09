@@ -44,7 +44,7 @@ class CustomerAnalyticsTabViewModel @Inject constructor(
     private val _dateRange = MutableStateFlow(AnalyticsDateRange.THIRTY_DAYS)
 
     val state: StateFlow<CustomerAnalyticsTabUiState> = _dateRange
-        .flatMapLatest { _ ->
+        .flatMapLatest {
             businessProfileRepository.activeProfile
                 .flatMapLatest { profile ->
                     Timber.d("CustomerTab: Loading analytics for business ${profile.id}")
