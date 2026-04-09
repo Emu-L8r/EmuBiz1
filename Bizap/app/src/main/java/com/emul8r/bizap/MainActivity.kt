@@ -386,6 +386,7 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                         onCustomerClick = { customerId ->
                             navController.navigate(Screen.CustomerDetail(customerId))
                         },
+                        onCreateCustomer = { showBottomSheet = true },
                         onViewSegments = { navController.navigate(Screen.CustomerSegments) },
                         onViewAnalytics = { navController.navigate(Screen.CustomerAnalytics) }
                     )
