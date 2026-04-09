@@ -373,6 +373,9 @@ class CreateInvoiceViewModel @Inject constructor(
      * Uses [CalculateInvoiceMetricsUseCase] as single source of truth for all calculations.
      *
      * ✅ NULL SAFETY: Returns safe defaults if state is incomplete
+     *
+     * NOTE: Silent default when customer not selected (normal during user input).
+     * Debug logging only to reduce logcat spam during keystroke/item additions.
      */
     fun getInvoiceMetrics(): InvoiceMetrics {
         val state = _uiState.value
@@ -380,7 +383,9 @@ class CreateInvoiceViewModel @Inject constructor(
         // ✅ NULL SAFETY: Validate required fields exist
         val customerId = state.selectedCustomer?.id
             ?: run {
-                Timber.w("⚠️ getInvoiceMetrics called without customer selection")
+                if (BuildConfig.DEBUG) {
+                    Timber.d("getInvoiceMetrics: Returning safe defaults (customer not selected yet)")
+                }
                 return InvoiceMetrics(subtotal = 0, taxAmount = 0, totalAmount = 0)  // Safe default
             }
 

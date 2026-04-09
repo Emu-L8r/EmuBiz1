@@ -94,11 +94,11 @@ object DatabaseModule {
                     """.trimIndent())
                 }
 
-                override fun onDestructiveMigration(db: SupportSQLiteDatabase, fromVersion: Int, toVersion: Int) {
-                    super.onDestructiveMigration(db, fromVersion, toVersion)
+                override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
+                    super.onDestructiveMigration(db)
                     Timber.e("""
                         🚨 DESTRUCTIVE MIGRATION TRIGGERED! 🚨
-                        Version: $fromVersion → $toVersion
+                        Database Version: ${db.version}
 
                         All tables were DROPPED. This happens when:
                         - A migration file is missing in the chain
@@ -106,9 +106,9 @@ object DatabaseModule {
                         - Database schema changed without migration
 
                         ACTION: Check app/src/main/java/com/emul8r/bizap/data/local/
-                        - Is Migration_${toVersion-1}_${toVersion}.kt present?
-                        - Is it in DatabaseModule.kt addMigrations() list?
-                        - Run with fresh install to restore data.
+                        - Check Migration_XX_${db.version}.kt files
+                        - Verify all migrations registered in DatabaseModule addMigrations()
+                        - Run with fresh install to restore data
                     """.trimIndent())
                 }
             })
