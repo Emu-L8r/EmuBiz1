@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.emul8r.bizap.ui.designsystem.BizapMetricCard
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.domain.invoice.model.InvoicePaymentStatus
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
@@ -114,13 +115,10 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Total at risk card with red/orange accent
-        MetricCard(
+        BizapMetricCard(
             title = "Total at Risk",
             value = "$${String.format(Locale.getDefault(), "%.2f", totalAtRisk)}",
             icon = Icons.Default.Error,
-            backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
-            borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
-            accentColor = BizapColors.StatusOverdue,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -129,22 +127,16 @@ fun RiskSummaryCard(riskInvoices: List<InvoicePaymentStatus>) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            MetricCard(
+            BizapMetricCard(
                 title = "Critical (60+ days)",
                 value = "$criticalCount",
                 icon = Icons.Default.Error,
-                backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.12f),
-                borderColor = BizapColors.StatusOverdue.copy(alpha = 0.4f),
-                accentColor = BizapColors.StatusOverdue,
                 modifier = Modifier.weight(1f)
             )
-            MetricCard(
+            BizapMetricCard(
                 title = "At Risk (30-59 days)",
                 value = "$mediumCount",
                 icon = Icons.Default.Warning,
-                backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.12f),
-                borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.4f),
-                accentColor = BizapColors.StatusOutstanding,
                 modifier = Modifier.weight(1f)
             )
         }

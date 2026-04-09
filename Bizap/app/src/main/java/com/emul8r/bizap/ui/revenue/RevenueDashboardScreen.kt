@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.emul8r.bizap.ui.designsystem.BizapMetricCard
 import com.emul8r.bizap.domain.model.gui2.RevenueMetricsV2
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.common.MetricCard
@@ -172,49 +173,37 @@ private fun RevenueDashboardContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            MetricCard(
+            BizapMetricCard(
                 modifier = Modifier.weight(1f),
                 title = "MTD Collected",
                 value = CentsFormatter.formatCents(metrics.mtdRevenue),
                 icon = Icons.Default.CheckCircle,
-                backgroundColor = BizapColors.StatusPaid.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusPaid.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusPaid,
             )
-            MetricCard(
+            BizapMetricCard(
                 modifier = Modifier.weight(1f),
                 title = "YTD Collected",
                 value = CentsFormatter.formatCents(metrics.ytdRevenue),
                 icon = Icons.Default.AttachMoney,
-                backgroundColor = BizapColors.StatusSent.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusSent.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusSent,
             )
         }
 
         // Outstanding amount with orange accent
         if (metrics.outstandingAmount > 0L) {
-            MetricCard(
+            BizapMetricCard(
                 modifier = Modifier.fillMaxWidth(),
                 title = "Outstanding (Expected)",
                 value = CentsFormatter.formatCents(metrics.outstandingAmount),
                 icon = Icons.Default.Schedule,
-                backgroundColor = BizapColors.StatusOutstanding.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusOutstanding.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusOutstanding,
             )
         }
 
         // Overdue amount with warning color accent
         if (metrics.overdueAmount > 0L) {
-            MetricCard(
+            BizapMetricCard(
                 modifier = Modifier.fillMaxWidth(),
                 title = "Overdue",
                 value = CentsFormatter.formatCents(metrics.overdueAmount),
                 icon = Icons.Default.Warning,
-                backgroundColor = BizapColors.StatusOverdue.copy(alpha = 0.08f),
-                borderColor = BizapColors.StatusOverdue.copy(alpha = 0.3f),
-                accentColor = BizapColors.StatusOverdue,
             )
         }
 
