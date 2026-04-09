@@ -1,17 +1,15 @@
+# Detekt Configuration - Cleaned for Detekt 1.23.x
+# See: https://detekt.dev/configurations.html
+
 detekt:
-  # Build upon the official detekt defaults
   buildUponDefaultConfig: true
-  # Treat detekt warnings as build failures
   allRules: false
 
-config:
-  excludes:
-    - '**/test/**'
-    - '**/androidTest/**'
-    - '**/debug/**'
-
-output-reports:
-  active: true
+exclude:
+  - '**/test/**'
+  - '**/androidTest/**'
+  - '**/debug/**'
+  - '**/build/**'
 
 complexity:
   MethodLength:
@@ -37,10 +35,8 @@ naming:
     excludes:
       - '**/test/**'
       - '**/androidTest/**'
-    functionPattern: '[a-z][a-zA-Z0-9]*'
   VariableNaming:
     active: true
-    variablePattern: '[a-z][A-Za-z0-9]*'
 
 style:
   UnusedPrivateMember:
@@ -69,6 +65,6 @@ performance:
 
 potential-bugs:
   LateinitUsage:
-    active: false   # Hilt @Inject lateinit is acceptable
+    active: false
   NullableToStringCall:
     active: true

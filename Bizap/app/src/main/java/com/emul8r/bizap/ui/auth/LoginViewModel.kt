@@ -1,12 +1,15 @@
 package com.emul8r.bizap.ui.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.model.AuthState
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.service.AuthenticationManager
+import com.emul8r.bizap.security.BruteForceProtection
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,6 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -119,9 +123,12 @@ data class LoginUiState(
  */
 @HiltViewModel
 class LoginViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val authManager: AuthenticationManager,
     private val businessProfileRepository: BusinessProfileRepository
 ) : ViewModel() {
+
+    private val bruteForceProtection = BruteForceProtection(context)
 
     /**
      * Active business profile for the current user.
@@ -157,32 +164,88 @@ class LoginViewModel @Inject constructor(
 
     fun onPINChanged(newPin: String) {
         if (_uiState.value.lockoutSecondsRemaining > 0) return
-        _uiState.update { it.copy(pin = newPin.filter { c -> c.isDigit() }, errorMessage = null) }
+
+        // Only allow digits
+        val filteredPin = newPin.filter { c -> c.isDigit() }
+
+        // Enforce maximum 4 digits (exactly 4 required)
+        val validPin = if (filteredPin.length > AuthenticationManager.MIN_PIN_LENGTH) {
+            filteredPin.take(AuthenticationManager.MIN_PIN_LENGTH)
+        } else {
+            filteredPin
+        }
+
+        _uiState.update {
+            it.copy(
+                pin = validPin,
+                errorMessage = null
+            )
+        }
+
+        // Log if user tries to enter more than 4 digits
+        if (filteredPin.length > AuthenticationManager.MIN_PIN_LENGTH) {
+            Timber.d("LoginViewModel: User attempted to enter PIN longer than 4 digits")
+        }
     }
 
     fun onLoginClicked() {
         val state = _uiState.value
-        if (state.pin.isEmpty() || state.isLoading || state.lockoutSecondsRemaining > 0) return
+
+        // Check if PIN is exactly 4 digits
+        if (state.pin.length != AuthenticationManager.MIN_PIN_LENGTH) {
+            _uiState.update {
+                it.copy(
+                    errorMessage = "PIN must be exactly ${AuthenticationManager.MIN_PIN_LENGTH} digits"
+                )
+            }
+            Timber.w("LoginViewModel: Login attempted with invalid PIN length: ${state.pin.length}")
+            return
+        }
+
+        if (state.isLoading || state.lockoutSecondsRemaining > 0) return
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
+            // Check if locked due to brute force
+            if (bruteForceProtection.isLocked()) {
+                val remainingSeconds = bruteForceProtection.getRemainingLockTimeSeconds()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        pin = "",
+                        errorMessage = "Too many failed attempts. Try again in ${remainingSeconds}s"
+                    )
+                }
+                Timber.w("LoginViewModel: Brute force lock active. Remaining: ${remainingSeconds}s")
+                return@launch
+            }
+
             val result = authManager.authenticate(state.pin)
             result.fold(
                 onSuccess = { authState ->
                     when (authState) {
                         is AuthState.Authenticated -> {
+                            bruteForceProtection.resetAttempts()
                             _uiState.update { it.copy(isLoading = false, isAuthenticated = true) }
+                            Timber.i("LoginViewModel: Authentication successful. Brute force attempts reset.")
                         }
                         is AuthState.InvalidPIN -> {
+                            bruteForceProtection.recordFailedAttempt()
+                            val remaining = bruteForceProtection.getRemainingAttempts()
                             val newCount = state.attemptCount + 1
+
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
                                     pin = "",
                                     attemptCount = newCount,
-                                    errorMessage = "Incorrect PIN, try again (attempt $newCount of ${AuthenticationManager.MAX_FAILED_ATTEMPTS})"
+                                    errorMessage = if (remaining > 0)
+                                        "Incorrect PIN. $remaining attempts remaining."
+                                    else
+                                        "Too many failed attempts. Locked for 30 seconds."
                                 )
                             }
+                            Timber.w("LoginViewModel: Invalid PIN. Attempts remaining: $remaining")
                         }
                         is AuthState.LockedOut -> {
                             _uiState.update {
@@ -193,6 +256,7 @@ class LoginViewModel @Inject constructor(
                                     errorMessage = "Too many attempts. Try again in ${authState.remainingSeconds}s"
                                 )
                             }
+                            Timber.w("LoginViewModel: Locked out. Remaining: ${authState.remainingSeconds}s")
                         }
                         else -> {
                             _uiState.update { it.copy(isLoading = false) }
@@ -201,6 +265,7 @@ class LoginViewModel @Inject constructor(
                 },
                 onFailure = { e ->
                     _uiState.update { it.copy(isLoading = false, errorMessage = "Authentication error: ${e.message}") }
+                    Timber.e(e, "LoginViewModel: Authentication error")
                 }
             )
         }
