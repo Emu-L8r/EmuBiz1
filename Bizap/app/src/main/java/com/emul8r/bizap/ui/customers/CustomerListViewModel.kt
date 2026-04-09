@@ -82,17 +82,26 @@ class CustomerListViewModel @Inject constructor(
     /**
      * Navigation route containing businessId for context.
      *
+     * Safely extracts businessId from route if available (GUI2),
+     * otherwise falls back to active business profile (GUI1).
+     *
      * @see ScreenV2.Customers
      */
-    private val route: ScreenV2.Customers = savedStateHandle.toRoute()
+    private val route: ScreenV2.Customers? = try {
+        savedStateHandle.toRoute<ScreenV2.Customers>()
+    } catch (e: Exception) {
+        null // Route doesn't have businessId (e.g., GUI1 Screen.Customers)
+    }
 
     /**
-     * Active business ID from navigation.
+     * Active business ID from navigation or profile.
      *
      * Used to filter/scope customer queries to the active business context.
-     * Never null - validated at navigation layer.
+     * - From route if GUI2 (ScreenV2.Customers with businessId)
+     * - From active business profile if GUI1 (Screen.Customers without businessId)
+     * Never null - defaults to 1L
      */
-    val businessId: Long = route.businessId
+    val businessId: Long = route?.businessId ?: activeBusinessProfile.value?.id ?: 1L
 
     /**
      * Current UI state as reactive stream.

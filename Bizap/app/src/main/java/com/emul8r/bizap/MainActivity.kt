@@ -273,6 +273,10 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
+    // Get active business ID for GUI1 screens that need it
+    val activeBusiness by businessProfileViewModel.profileState.collectAsStateWithLifecycle()
+    val activeBusinessId = activeBusiness?.id ?: 1L
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
