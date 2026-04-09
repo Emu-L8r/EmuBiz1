@@ -37,8 +37,8 @@ android {
         applicationId = "com.emul8r.bizap"
         minSdk = 26  // Android 8.0+ (required for SQLCipher hardware-backed keystore)
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.0-stable-golden"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
