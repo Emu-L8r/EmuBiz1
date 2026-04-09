@@ -34,6 +34,17 @@ local.properties
 !BEAUTIFUL_DASHBOARD_COMPLETE.md
 !PHASE_4_FINAL_STATUS.md
 !IMPLEMENTATION_DELIVERY_SUMMARY.md
+# Recent critical documentation (status reports, session summaries, guides)
+!FINAL_STATUS_ALL_CRASHES_FIXED.md
+!FINAL_STATUS_READY.md
+!FINAL_STATUS_READY_TO_SHIP.md
+!SESSION_SUMMARY_FINAL.md
+!SESSION_SUMMARY_APRIL8.md
+!QUICK_TEST_GUIDE.md
+!AUDIT_EXECUTION_GUIDE.md
+!DEPLOYMENT_STATUS.md
+!FIXES_NOTES_COUNTER_UI.md
+!NOTES_FIX_FINAL.md
 
 # Build and log files (use /docs directory)
 *.log
