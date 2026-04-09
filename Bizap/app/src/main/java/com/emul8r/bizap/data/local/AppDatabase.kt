@@ -3,8 +3,6 @@ package com.emul8r.bizap.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.emul8r.bizap.data.local.entities.*
 import com.emul8r.bizap.data.local.entity.NoteEntity
 import com.emul8r.bizap.data.local.dao.*
@@ -16,12 +14,52 @@ import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTimeTypeConverter
 import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
 
+/**
+ * # Database Schema & Migration Architecture
+ *
+ * **Current Version:** 42
+ * **Location:** data/local/migrations/ (standardized)
+ *
+ * ## Migration History (Version Chain)
+ *
+ * | From | To | Description | Location |
+ * |------|----|----|----------|
+ * | 21 | 22 | (legacy) | migrations/Migration_21_22.kt |
+ * | ... | ... | (v22-36 chain) | migrations/Migration_*_*.kt |
+ * | 36 | 37 | (legacy) | migrations/Migration_36_37.kt |
+ * | 37 | 38 | Add invoice_settings table | migration/MIGRATION_AddInvoiceSettings.kt ⚠️ |
+ * | 38 | 39 | (intermediate) | migrations/Migration_38_39.kt |
+ * | 39 | 40 | Add PDF engine & layout | migration/MIGRATION_AddPdfEngineAndLayout.kt ⚠️ |
+ * | 40 | 41 | Add signature field | migration/MIGRATION_AddSignatureField.kt ⚠️ |
+ * | 41 | 42 | Add discount + FTS4 | migration/Migration_41_42.kt ⚠️ |
+ *
+ * **⚠️ Future Action:** Rename the `migration/` folder to `migrations/` and rename
+ * MIGRATION_* classes to Migration_*_* for consistency (post-launch cleanup).
+ *
+ * ## Naming Convention
+ * - **Standardized (New):** `Migration_XX_YY.kt` (file) + `Migration(XX, YY)` (class)
+ * - **Legacy (Old):** `Migration_XX_YY.kt` (file) + `Migration(XX, YY)` (class)
+ * - **Transitional (Mixed):** Some descriptive names remain (will be renamed)
+ *
+ * For new migrations:
+ * ```kotlin
+ * object Migration_42_43 : Migration(42, 43) {
+ *     override fun migrate(database: SupportSQLiteDatabase) { ... }
+ * }
+ * ```
+ *
+ * ## Rollback Support
+ * Room does NOT support downgrading versions. If you need to test a migration:
+ * 1. Uninstall the app completely
+ * 2. Verify on a fresh install
+ * 3. Or test on separate emulator instance
+ */
 @Database(
     entities = [
-        CustomerEntity::class, 
-        InvoiceEntity::class, 
-        LineItemEntity::class, 
-        PrefilledItemEntity::class, 
+        CustomerEntity::class,
+        InvoiceEntity::class,
+        LineItemEntity::class,
+        PrefilledItemEntity::class,
         GeneratedDocumentEntity::class,
         BusinessProfileEntity::class,
         CurrencyEntity::class,

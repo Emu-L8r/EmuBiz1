@@ -336,10 +336,6 @@ dependencies {
     implementation(libs.coil.compose)
     implementation("androidx.exifinterface:exifinterface:1.3.7")
 
-    // Charts
-    implementation(libs.vico.compose.m3)
-    implementation(libs.vico.compose)
-
     // QR Codes
     implementation(libs.zxing.core)
 
