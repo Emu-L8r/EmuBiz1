@@ -5,6 +5,7 @@ import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Arrangement
@@ -93,6 +94,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var themeRepository: ThemeRepository
 
+    // Modern Activity Result API (initialized in onCreate)
+    private lateinit var requestPermissionLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>
+
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
         // Guard against calls before Hilt injection completes
         if (::authManager.isInitialized) {
@@ -114,27 +118,22 @@ class MainActivity : ComponentActivity() {
      * This ensures features don't crash due to missing permissions.
      */
     private fun requestCriticalPermissions() {
+        val requiredPermissions = mutableListOf<String>()
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            // Check if POST_NOTIFICATIONS permission is granted
-            if (androidx.core.content.ContextCompat.checkSelfPermission(
+            // Check if POST_NOTIFICATIONS permission is granted (API 33+)
+            if (ContextCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.POST_NOTIFICATIONS
             ) != android.content.pm.PackageManager.PERMISSION_GRANTED
             ) {
-                // Request the permission
-                androidx.core.app.ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
-                    PERMISSION_REQUEST_CODE
-                )
-                Timber.d("Requesting POST_NOTIFICATIONS permission (API 33+)")
+                requiredPermissions.add(android.Manifest.permission.POST_NOTIFICATIONS)
+                Timber.d("POST_NOTIFICATIONS required for API 33+")
             }
         }
 
-        // Request other important permissions
-        val requiredPermissions = mutableListOf<String>()
-
-        if (androidx.core.content.ContextCompat.checkSelfPermission(
+        // Check CAMERA permission
+        if (ContextCompat.checkSelfPermission(
             this,
             android.Manifest.permission.CAMERA
         ) != android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -142,31 +141,10 @@ class MainActivity : ComponentActivity() {
             requiredPermissions.add(android.Manifest.permission.CAMERA)
         }
 
+        // Request all required permissions at once using modern API
         if (requiredPermissions.isNotEmpty()) {
-            androidx.core.app.ActivityCompat.requestPermissions(
-                this,
-                requiredPermissions.toTypedArray(),
-                PERMISSION_REQUEST_CODE
-            )
-            Timber.d("Requesting additional permissions: ${requiredPermissions.joinToString()}")
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            for (i in permissions.indices) {
-                if (grantResults[i] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                    Timber.d("✅ Permission granted: ${permissions[i]}")
-                } else {
-                    Timber.w("❌ Permission denied: ${permissions[i]}")
-                }
-            }
+            requestPermissionLauncher.launch(requiredPermissions.toTypedArray())
+            Timber.d("Requesting permissions: ${requiredPermissions.joinToString()}")
         }
     }
 
@@ -177,6 +155,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Initialize requestPermissionLauncher
+        requestPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            permissions.forEach { (permission, isGranted) ->
+                if (isGranted) {
+                    Timber.d("✅ Permission granted: $permission")
+                } else {
+                    Timber.w("❌ Permission denied: $permission")
+                }
+            }
+        }
 
         // 🔐 REQUEST CRITICAL PERMISSIONS
         requestCriticalPermissions()

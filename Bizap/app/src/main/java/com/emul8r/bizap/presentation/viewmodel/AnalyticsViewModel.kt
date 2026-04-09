@@ -287,11 +287,17 @@ class AnalyticsViewModel @Inject constructor(
     ) { values ->
         @Suppress("UNCHECKED_CAST")
         val trend = values[0] as List<CashFlowTrendPoint>
+        @Suppress("UNCHECKED_CAST")
         val customers = values[1] as List<TopCustomerMetric>
+        @Suppress("UNCHECKED_CAST")
         val dsoValue = values[2] as Double
+        @Suppress("UNCHECKED_CAST")
         val velocity = values[3] as List<InvoiceVelocity>
+        @Suppress("UNCHECKED_CAST")
         val revenue = values[4] as Long
+        @Suppress("UNCHECKED_CAST")
         val outstanding = values[5] as Long
+        @Suppress("UNCHECKED_CAST")
         val dsoTrend = values[6] as List<DaysToPayMetric>
 
         Timber.d("AnalyticsViewModel: State updated")
