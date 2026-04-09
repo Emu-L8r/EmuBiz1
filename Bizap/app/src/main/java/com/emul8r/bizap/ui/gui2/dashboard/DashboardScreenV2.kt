@@ -286,7 +286,7 @@ private fun DashboardContentV2(
                 ) {
                     Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Customers", fontSize = 12.sp)
+                    Text("Customers", fontSize = 12.sp, maxLines = 1)
                 }
                 OutlinedButton(
                     onClick = onNavigateToInvoices,
@@ -294,7 +294,7 @@ private fun DashboardContentV2(
                 ) {
                     Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Invoices", fontSize = 12.sp)
+                    Text("Invoices", fontSize = 12.sp, maxLines = 1)
                 }
                 OutlinedButton(
                     onClick = onNavigateToVault,
@@ -302,7 +302,7 @@ private fun DashboardContentV2(
                 ) {
                     Icon(Icons.Default.Storage, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Vault", fontSize = 12.sp)
+                    Text("Vault", fontSize = 12.sp, maxLines = 1)
                 }
             }
 

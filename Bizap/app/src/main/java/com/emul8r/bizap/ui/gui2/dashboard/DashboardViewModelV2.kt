@@ -49,6 +49,21 @@ class DashboardViewModelV2 @Inject constructor(
     private val route: ScreenV2.Dashboard = savedStateHandle.toRoute()
     val businessId: Long = route.businessId
 
+    // ===== ACTIVE BUSINESS ID FOR NOTES (Dynamic) =====
+    // Use activeBusinessId to ensure Notes counter updates when notes are created
+    // This matches the businessId used in NotesViewModel
+    private val activeBusinessId: StateFlow<Long> = businessContextRepository.activeContext
+        .map { it.businessId }
+        .catch { e ->
+            Timber.e(e, "Error observing active business context")
+            emit(businessId)  // Fall back to route businessId
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = businessId
+        )
+
     init {
         // Log dashboard view event
         viewModelScope.launch {
@@ -143,8 +158,15 @@ class DashboardViewModelV2 @Inject constructor(
     )
 
     // ===== NOTES COUNT FOR NOTES CARD =====
-    val currentNotesCount: StateFlow<Int> = noteRepository
-        .getCurrentNotesCount(businessId)
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val currentNotesCount: StateFlow<Int> = activeBusinessId
+        .flatMapLatest { businessId ->
+            noteRepository.getCurrentNotesCount(businessId)
+                .catch { e ->
+                    Timber.e(e, "Error observing notes count for business $businessId")
+                    emit(0)
+                }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
