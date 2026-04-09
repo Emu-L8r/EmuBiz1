@@ -97,4 +97,7 @@ sealed interface ScreenV2 {
 
     @Serializable
     data class BusinessInsights(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class Notes(val businessId: Long) : ScreenV2
 }

@@ -10,6 +10,7 @@ import androidx.navigation.toRoute
 import com.emul8r.bizap.ui.components.SyncStatusIndicator
 import com.emul8r.bizap.ui.documents.DocumentVaultScreen
 import com.emul8r.bizap.ui.dunning.DunningNoticesScreen
+import com.emul8r.bizap.ui.notes.NotesScreen
 import com.emul8r.bizap.ui.gui2.analytics.InvoiceAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.PaymentAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.RevenueAnalyticsScreenV2
@@ -317,6 +318,13 @@ fun GuiV2NavGraph(
             val route: ScreenV2.BackupRestore = backStackEntry.toRoute()
             BackupRestoreScreen(
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.Notes> { backStackEntry ->
+            val route: ScreenV2.Notes = backStackEntry.toRoute()
+            NotesScreen(
+                navController = navController
             )
         }
     }

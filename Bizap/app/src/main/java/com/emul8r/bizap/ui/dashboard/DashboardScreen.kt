@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.emul8r.bizap.domain.config.BizapConfig
+import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
 import com.emul8r.bizap.presentation.viewmodel.AnalyticsViewModel
 import com.emul8r.bizap.presentation.viewmodel.AnalyticsUiState
@@ -237,9 +238,9 @@ fun DashboardScreen(
                 NotesCard(
                     currentNotesCount = currentNotesCount,
                     onClick = {
-                        // Fix #4: safe navigation with error logging
+                        // Navigate to Notes screen via ScreenV2.Notes route
                         try {
-                            navController.navigate(Screen.Notes)
+                            navController.navigate(ScreenV2.Notes(businessId = activeBusiness?.id ?: 1L))
                         } catch (e: IllegalArgumentException) {
                             Timber.e(e, "Navigation to Notes screen failed")
                         }
