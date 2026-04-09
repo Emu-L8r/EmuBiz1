@@ -98,10 +98,10 @@ class CustomerListViewModel @Inject constructor(
      *
      * Used to filter/scope customer queries to the active business context.
      * - From route if GUI2 (ScreenV2.Customers with businessId)
-     * - From active business profile if GUI1 (Screen.Customers without businessId)
+     * - Defaults to 1L if GUI1 (Screen.Customers without businessId)
      * Never null - defaults to 1L
      */
-    val businessId: Long = route?.businessId ?: activeBusinessProfile.value?.id ?: 1L
+    val businessId: Long = route?.businessId ?: 1L
 
     /**
      * Current UI state as reactive stream.
