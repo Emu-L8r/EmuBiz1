@@ -31,18 +31,7 @@ class InvoiceThemeManager @Inject constructor(
      */
     fun getTheme(themeType: InvoiceTheme): InvoiceTheme {
         Timber.d("Getting theme: $themeType")
-        return when (themeType) {
-            InvoiceTheme.HTML_PDF -> {
-                // Phase 6 Step 2: Implement HTML-to-PDF theme
-                Timber.w("HTML-to-PDF theme not yet implemented")
-                throw NotImplementedError("HTML-to-PDF theme will be implemented in Phase 6 Step 2")
-            }
-            InvoiceTheme.CANVAS -> {
-                // Canvas theme is the current implementation
-                Timber.d("Using Canvas theme")
-                throw NotImplementedError("Canvas theme implementation in progress")
-            }
-        }
+        return themeType
     }
 
     /**

@@ -11,8 +11,9 @@ import javax.inject.Inject
  *
  * CALCULATION FORMULA:
  * 1. subtotal = sum(lineItem.unitPrice * lineItem.quantity) for all items
- * 2. taxAmount = subtotal * taxRate (if taxRate > 0)
- * 3. totalAmount = subtotal + taxAmount - discountAmount
+ * 2. discountAmount = invoice.discountAmount (in cents, clamped to ≥ 0)
+ * 3. taxAmount = (subtotal - discountAmount) * taxRate (if taxRate > 0)
+ * 4. totalAmount = (subtotal - discountAmount) + taxAmount
  */
 class CalculateInvoiceMetricsUseCase @Inject constructor() {
 
@@ -20,18 +21,19 @@ class CalculateInvoiceMetricsUseCase @Inject constructor() {
         // 1. Calculate subtotal
         val subtotal = invoice.items.sumOf { it.calculateTotal() }
 
-        // 2. Calculate tax (taxRate > 0 indicates a tax-registered business)
+        // 2. Calculate discount
+        val discountAmount = invoice.discountAmount.coerceAtLeast(0L)
+
+        // 3. Calculate tax on discounted subtotal (discount is applied before tax)
+        val discountedSubtotal = (subtotal - discountAmount).coerceAtLeast(0L)
         val taxAmount = if (invoice.taxRate > 0) {
-            (subtotal.toDouble() * invoice.taxRate).toLong()
+            (discountedSubtotal.toDouble() * invoice.taxRate).toLong()
         } else {
             0L
         }
 
-        // TODO: Implement discount calculation when Invoice model is extended with a discountAmount field
-        val discountAmount = 0L
-
-        // 3. Calculate total
-        val totalAmount = subtotal + taxAmount - discountAmount
+        // 4. Calculate total
+        val totalAmount = discountedSubtotal + taxAmount
 
         return InvoiceMetrics(
             subtotal = subtotal,

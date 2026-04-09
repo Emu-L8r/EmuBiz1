@@ -42,9 +42,10 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
         PaymentEntity::class,
         NoteEntity::class,
         AnalyticsEventEntity::class,  // Event tracking
-        com.emul8r.bizap.domain.model.InvoiceSettings::class  // Invoice settings
+        com.emul8r.bizap.domain.model.InvoiceSettings::class,  // Invoice settings
+        com.emul8r.bizap.data.local.entities.InvoiceFTS::class  // Full-text search
     ],
-    version = 41,  // v40→41: Add show_signature_field column for Phase 2 PDF visual enhancements
+    version = 42,  // v41→42: Add discount_amount column; create InvoiceFTS virtual table
     exportSchema = true
 )
 @TypeConverters(

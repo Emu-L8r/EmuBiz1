@@ -64,7 +64,8 @@ data class InvoiceEntity(
     val createdAt: Long = 0,                    // Creation timestamp (ms)
     // v1.0.1 display name fields
     val dailyCounter: Int = 0,                  // Daily reset counter (1, 2, 3…)
-    val displayName: String = ""                // Computed display name: customername-ddMMyyyy-01
+    val displayName: String = "",                // Computed display name: customername-ddMMyyyy-01
+    val discountAmount: Long = 0L               // Discount in cents; default 0 (no discount)
 ) {
     init {
         // Validate that dueDate is not before invoice date (WIN #8: Validate dates)
