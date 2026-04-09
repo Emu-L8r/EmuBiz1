@@ -573,13 +573,33 @@ interface InvoiceDaoV2 {
     fun observeInvoiceCount(businessId: Long): Flow<Int>
 
     // ==================== FULL-TEXT SEARCH (FTS4) ====================
-    // TODO: PR 171 - Implement FTS4 after Room migration
-    // InvoiceFTS entity created (data/local/entities/InvoiceFTS.kt)
-    // Requires database migration to create FTS virtual table
-    // Methods below will be implemented once:
-    // 1. Migration adds InvoiceFTS virtual table
-    // 2. Triggers maintain InvoiceFTS on invoice updates
-    // Performance gain: O(log n) indexed search vs O(n) LIKE scans
+
+    /**
+     * Full-text search on invoices using the InvoiceFTS virtual table.
+     *
+     * Searches across invoiceNumber, customerName, and notes fields.
+     * Performance: O(log n) indexed lookup vs the previous O(n) LIKE scan.
+     *
+     * Requires: InvoiceFTS virtual table created by Migration_41_42.
+     *
+     * @param businessId Business context (scoped search)
+     * @param query FTS query string (e.g. "smith", "INV-2025", "consulting")
+     * @param limit Maximum number of results
+     */
+    @Query("""
+        SELECT i.* FROM invoices i
+        INNER JOIN InvoiceFTS fts ON i.id = fts.rowid
+        WHERE i.businessProfileId = :businessId
+          AND i.isActive = 1
+          AND InvoiceFTS MATCH :query
+        ORDER BY i.date DESC
+        LIMIT :limit
+    """)
+    suspend fun searchInvoicesFTS(
+        businessId: Long,
+        query: String,
+        limit: Int = 50
+    ): List<InvoiceEntity>
 }
 
 /** Aggregated invoice stats for one time period (week or month). */

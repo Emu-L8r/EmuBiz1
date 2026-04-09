@@ -132,6 +132,55 @@ class CalculateInvoiceMetricsUseCaseTest {
         assertEquals(0L, metrics.discountAmount)
     }
 
+    @Test
+    fun `calculate_discountAmount - discount reduces total when no tax`() {
+        val invoice = buildInvoice(
+            items = listOf(
+                LineItem(description = "Item", quantity = 1.0, unitPrice = 10000)
+            )
+        ).copy(discountAmount = 2000L)  // $20 discount on $100 item
+
+        val metrics = useCase(invoice)
+
+        assertEquals(10000L, metrics.subtotal)
+        assertEquals(2000L, metrics.discountAmount)
+        assertEquals(8000L, metrics.totalAmount)   // 10000 - 2000
+    }
+
+    @Test
+    fun `calculate_discountAmount - tax applies to discounted subtotal`() {
+        val invoice = buildInvoice(
+            items = listOf(
+                LineItem(description = "Service", quantity = 1.0, unitPrice = 10000)
+            ),
+            taxRate = 0.10
+        ).copy(discountAmount = 2000L)  // $20 discount
+
+        val metrics = useCase(invoice)
+
+        // discountedSubtotal = 10000 - 2000 = 8000
+        // taxAmount = 8000 * 0.10 = 800
+        // totalAmount = 8000 + 800 = 8800
+        assertEquals(10000L, metrics.subtotal)
+        assertEquals(2000L, metrics.discountAmount)
+        assertEquals(800L, metrics.taxAmount)
+        assertEquals(8800L, metrics.totalAmount)
+    }
+
+    @Test
+    fun `calculate_discountAmount - discount exceeding subtotal is clamped to zero total`() {
+        val invoice = buildInvoice(
+            items = listOf(
+                LineItem(description = "Item", quantity = 1.0, unitPrice = 5000)
+            )
+        ).copy(discountAmount = 9999L)  // Discount larger than subtotal
+
+        val metrics = useCase(invoice)
+
+        // discountedSubtotal = max(5000 - 9999, 0) = 0
+        assertEquals(0L, metrics.totalAmount)
+    }
+
     // ── calculate_singleItem ──────────────────────────────────────────────────
 
     @Test

@@ -37,7 +37,8 @@ fun Invoice.toEntity(): InvoiceEntity {
         invoiceYear = this.invoiceYear,
         invoiceSequence = this.invoiceSequence,
         dailyCounter = this.dailyCounter,
-        displayName = this.displayName
+        displayName = this.displayName,
+        discountAmount = this.discountAmount
     )
 }
 
@@ -76,7 +77,8 @@ fun InvoiceWithItems.toDomain(): Invoice {
         invoiceYear = this.invoice.invoiceYear,
         invoiceSequence = this.invoice.invoiceSequence,
         dailyCounter = this.invoice.dailyCounter,
-        displayName = this.invoice.displayName
+        displayName = this.invoice.displayName,
+        discountAmount = this.invoice.discountAmount
     )
 }
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.analytics.AnalyticsDateRange
 import com.emul8r.bizap.domain.invoice.usecase.GetPaymentAnalyticsUseCase
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.revenue.repository.RevenueRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -19,8 +20,8 @@ import javax.inject.Inject
  */
 data class QuickReportsUiState(
     // Revenue & Invoice Metrics (Row 1)
-    val totalRevenue: Double = 45000.0,
-    val revenueGrowth: Double = 12.5,
+    val totalRevenue: Double = 0.0,
+    val revenueGrowth: Double = 0.0,
     val invoiceCount: Int = 0,
 
     // Payment Health Metrics (Row 2)
@@ -41,14 +42,14 @@ data class QuickReportsUiState(
  * ViewModel for Quick Reports Tab.
  *
  * Aggregates data from Revenue, Payment, and Risk sources.
- * Uses REAL data from GetPaymentAnalyticsUseCase.
- * Uses mock data for Revenue and Risk (ready to wire real data).
+ * Uses REAL data from GetPaymentAnalyticsUseCase and RevenueRepository.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class QuickReportsTabViewModel @Inject constructor(
     private val businessProfileRepository: BusinessProfileRepository,
-    private val getPaymentAnalyticsUseCase: GetPaymentAnalyticsUseCase
+    private val getPaymentAnalyticsUseCase: GetPaymentAnalyticsUseCase,
+    private val revenueRepository: RevenueRepository
 ) : ViewModel() {
 
     private val _dateRange = MutableStateFlow(AnalyticsDateRange.THIRTY_DAYS)
@@ -56,34 +57,36 @@ class QuickReportsTabViewModel @Inject constructor(
     val state: StateFlow<QuickReportsUiState> = businessProfileRepository.activeProfile
         .flatMapLatest { profile ->
             Timber.d("QuickReports: Loading analytics for business ${profile.id}")
-            flow {
-                try {
-                    val paymentAnalytics = getPaymentAnalyticsUseCase(profile.id).first()
+            combine(
+                getPaymentAnalyticsUseCase(profile.id),
+                revenueRepository.observeRevenueMetrics(profile.id)
+            ) { paymentAnalytics, revenueResult ->
+                val revenue = revenueResult.getOrNull()
 
-                    emit(
-                        QuickReportsUiState(
-                            // Revenue metrics (mock - ready for RevenueRepository)
-                            totalRevenue = 45000.0,
-                            revenueGrowth = 12.5,
-                            invoiceCount = paymentAnalytics.totalInvoices,
+                QuickReportsUiState(
+                    // Revenue metrics (REAL DATA ✅)
+                    totalRevenue = (revenue?.ytdRevenue ?: 0L) / 100.0,
+                    revenueGrowth = computeRevenueGrowth(
+                        mtd = revenue?.mtdRevenue ?: 0L,
+                        ytd = revenue?.ytdRevenue ?: 0L
+                    ),
+                    invoiceCount = paymentAnalytics.totalInvoices,
 
-                            // Payment metrics (REAL DATA ✅)
-                            outstandingAmount = paymentAnalytics.totalOutstandingAmount,
-                            collectionRate = paymentAnalytics.collectionRate * 100,
-                            averageDaysToPayment = paymentAnalytics.averagePaymentTime,
+                    // Payment metrics (REAL DATA ✅)
+                    outstandingAmount = paymentAnalytics.totalOutstandingAmount,
+                    collectionRate = paymentAnalytics.collectionRate * 100,
+                    averageDaysToPayment = paymentAnalytics.averagePaymentTime,
 
-                            // Risk metrics (mock - ready for RiskRepository)
-                            atRiskCount = paymentAnalytics.riskInvoices.size,
-                            overdueTotalAmount = 8500.0,
-                            riskScore = (paymentAnalytics.overdueInvoices.toDouble() / maxOf(paymentAnalytics.totalInvoices, 1)) * 100,
+                    // Risk metrics (REAL DATA ✅)
+                    atRiskCount = paymentAnalytics.riskInvoices.size,
+                    overdueTotalAmount = (revenue?.overdueAmount ?: 0L) / 100.0,
+                    riskScore = (paymentAnalytics.overdueInvoices.toDouble() / maxOf(paymentAnalytics.totalInvoices, 1)) * 100,
 
-                            isLoading = false
-                        )
-                    )
-                } catch (error: Exception) {
-                    Timber.e(error, "QuickReports: Error loading analytics")
-                    emit(QuickReportsUiState(error = error.message ?: "Unknown error"))
-                }
+                    isLoading = false
+                )
+            }.catch { error ->
+                Timber.e(error, "QuickReports: Error loading analytics")
+                emit(QuickReportsUiState(error = error.message ?: "Unknown error"))
             }
         }
         .stateIn(
@@ -95,5 +98,20 @@ class QuickReportsTabViewModel @Inject constructor(
     fun setDateRange(range: AnalyticsDateRange) {
         _dateRange.value = range
         Timber.d("QuickReports: Date range changed to ${range.label}")
+    }
+
+    /**
+     * Estimate month-over-month revenue growth from YTD and MTD figures.
+     *
+     * Uses a simple heuristic: compare MTD revenue to the average monthly
+     * revenue for the year so far. Returns 0 when there is insufficient data.
+     */
+    private fun computeRevenueGrowth(mtd: Long, ytd: Long): Double {
+        if (ytd <= 0L) return 0.0
+        val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
+        if (currentMonth <= 1) return 0.0
+        val avgMonthlyRevenue = ytd.toDouble() / currentMonth
+        if (avgMonthlyRevenue <= 0.0) return 0.0
+        return ((mtd - avgMonthlyRevenue) / avgMonthlyRevenue) * 100.0
     }
 }

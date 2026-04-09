@@ -35,7 +35,6 @@ import androidx.room.Fts4
 data class InvoiceFTS(
     val invoiceNumber: String,
     val customerName: String,
-    val description: String,
     val notes: String?
 )
 

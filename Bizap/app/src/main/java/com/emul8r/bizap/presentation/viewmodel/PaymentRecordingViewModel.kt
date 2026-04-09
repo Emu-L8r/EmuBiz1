@@ -3,15 +3,19 @@ package com.emul8r.bizap.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.local.entities.PaymentMethod
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.model.Money
 import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.domain.usecase.RecordPaymentUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.Calendar
 import javax.inject.Inject
 
 /**
@@ -32,7 +36,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class PaymentRecordingViewModel @Inject constructor(
-    private val invoiceRepository: InvoiceRepository
+    private val invoiceRepository: InvoiceRepository,
+    private val recordPaymentUseCase: RecordPaymentUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PaymentRecordingUiState())
@@ -106,10 +111,30 @@ class PaymentRecordingViewModel @Inject constructor(
                     "notes='${currentState.notesInput}'"
                 )
 
-                // TODO: Wire to RecordPaymentUseCase with proper signature
-                // For now, using repository directly
-                // Simulate network call
-                kotlinx.coroutines.delay(500)
+                // Fetch invoice to get business ID, outstanding balance, dates, and status
+                val invoice = invoiceRepository.getInvoiceWithItemsById(invoiceId).first()
+                    ?: throw DatabaseException("Invoice $invoiceId not found")
+
+                val trueOutstanding = invoice.totalAmount - invoice.amountPaid
+                val paymentDate = todayMidnightMs()
+
+                val result = recordPaymentUseCase(
+                    invoiceId = invoiceId,
+                    businessId = invoice.businessProfileId,
+                    amount = amount.amountCents,
+                    trueOutstanding = trueOutstanding,
+                    paymentDate = paymentDate,
+                    invoiceDate = invoice.date,
+                    invoiceStatus = invoice.status,
+                    notes = currentState.notesInput.takeIf { it.isNotBlank() }
+                )
+
+                if (result.isFailure) {
+                    val error = result.exceptionOrNull()
+                    throw ValidationException(
+                        error?.message ?: "Payment validation failed", error
+                    )
+                }
 
                 _uiState.update {
                     it.copy(
@@ -120,6 +145,14 @@ class PaymentRecordingViewModel @Inject constructor(
                     )
                 }
                 Timber.i("✅ Payment recorded successfully for invoice $invoiceId: ${amount.toDollars()}")
+            } catch (e: ValidationException) {
+                Timber.w(e, "Validation error recording payment for invoice $invoiceId")
+                _uiState.update {
+                    it.copy(
+                        isSubmitting = false,
+                        errorMessage = e.message ?: "Payment validation failed."
+                    )
+                }
             } catch (e: DatabaseException) {
                 Timber.e(e, "Database error recording payment for invoice $invoiceId")
                 _uiState.update {
@@ -170,6 +203,15 @@ class PaymentRecordingViewModel @Inject constructor(
         } catch (e: IllegalArgumentException) {
             ParseResult.Error("Invalid amount: ${e.message}")
         }
+    }
+
+    private fun todayMidnightMs(): Long {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
     }
 
     /**

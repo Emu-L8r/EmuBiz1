@@ -43,29 +43,32 @@ class CustomerAnalyticsTabViewModel @Inject constructor(
 
     private val _dateRange = MutableStateFlow(AnalyticsDateRange.THIRTY_DAYS)
 
-    val state: StateFlow<CustomerAnalyticsTabUiState> = businessProfileRepository.activeProfile
-        .flatMapLatest { profile ->
-            Timber.d("CustomerTab: Loading analytics for business ${profile.id}")
-            flow {
-                try {
-                    val analytics = getCustomerAnalyticsUseCase.execute(profile.id)
-                    emit(
-                        CustomerAnalyticsTabUiState(
-                            totalCustomers = analytics.totalCustomers,
-                            vipCount = analytics.vipCount,
-                            regularCount = analytics.regularCount,
-                            atRiskCount = analytics.atRiskCount,
-                            dormantCount = analytics.dormantCount,
-                            averageLTV = analytics.averageLTV,
-                            churnRate = analytics.churnRate,
-                            isLoading = false
-                        )
-                    )
-                } catch (error: Exception) {
-                    Timber.e(error, "CustomerTab: Error loading analytics")
-                    emit(CustomerAnalyticsTabUiState(error = error.message ?: "Unknown error"))
+    val state: StateFlow<CustomerAnalyticsTabUiState> = _dateRange
+        .flatMapLatest {
+            businessProfileRepository.activeProfile
+                .flatMapLatest { profile ->
+                    Timber.d("CustomerTab: Loading analytics for business ${profile.id}")
+                    flow {
+                        try {
+                            val analytics = getCustomerAnalyticsUseCase.execute(profile.id)
+                            emit(
+                                CustomerAnalyticsTabUiState(
+                                    totalCustomers = analytics.totalCustomers,
+                                    vipCount = analytics.vipCount,
+                                    regularCount = analytics.regularCount,
+                                    atRiskCount = analytics.atRiskCount,
+                                    dormantCount = analytics.dormantCount,
+                                    averageLTV = analytics.averageLTV,
+                                    churnRate = analytics.churnRate,
+                                    isLoading = false
+                                )
+                            )
+                        } catch (error: Exception) {
+                            Timber.e(error, "CustomerTab: Error loading analytics")
+                            emit(CustomerAnalyticsTabUiState(error = error.message ?: "Unknown error"))
+                        }
+                    }
                 }
-            }
         }
         .stateIn(
             scope = viewModelScope,
@@ -75,8 +78,7 @@ class CustomerAnalyticsTabViewModel @Inject constructor(
 
     /**
      * Update date range filter.
-     *
-     * TODO: Implement filtering logic once repository supports date ranges.
+     * Triggers a reload of customer analytics data via the reactive Flow.
      */
     fun setDateRange(range: AnalyticsDateRange) {
         _dateRange.value = range

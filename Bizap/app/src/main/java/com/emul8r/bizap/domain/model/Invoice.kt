@@ -38,7 +38,8 @@ data class Invoice(
     val dailyCounter: Int = 0,
     val displayName: String = "",
     // Phase 2: Customization fields
-    val customization: InvoiceCustomization = InvoiceCustomization()
+    val customization: InvoiceCustomization = InvoiceCustomization(),
+    val discountAmount: Long = 0L               // Cents (e.g., 500 = $5.00 discount)
 ) {
     val invoiceId: Long get() = id
     val total: Long get() = totalAmount
