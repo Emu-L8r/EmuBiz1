@@ -77,13 +77,46 @@ object DatabaseModule {
         // ✅ PRODUCTION SAFE: Only allow destructive fallback in DEBUG builds
         // In RELEASE: fail loudly if migration missing (don't silently delete user data)
         if (com.emul8r.bizap.BuildConfig.DEBUG) {
+            // ENHANCED: Make destructive migrations LOUD for visibility during testing
             builder.fallbackToDestructiveMigration()
-            Timber.w("⚠️ DESTRUCTIVE MIGRATION ENABLED - Development only!")
+
+            // Add callback to log when migrations are applied or database opens
+            builder.addCallback(object : RoomDatabase.Callback() {
+                override fun onOpen(db: SupportSQLiteDatabase) {
+                    super.onOpen(db)
+                    val currentVersion = db.version
+                    Timber.w("""
+                        ⚠️ DATABASE OPENED (v$currentVersion)
+                        If you see this AND previous data is missing,
+                        check: 1) New Migration_XX_YY.kt file created?
+                               2) Migration added to DatabaseModule addMigrations()?
+                               3) Fresh install or data cleared?
+                    """.trimIndent())
+                }
+
+                override fun onDestructiveMigration(db: SupportSQLiteDatabase, fromVersion: Int, toVersion: Int) {
+                    super.onDestructiveMigration(db, fromVersion, toVersion)
+                    Timber.e("""
+                        🚨 DESTRUCTIVE MIGRATION TRIGGERED! 🚨
+                        Version: $fromVersion → $toVersion
+
+                        All tables were DROPPED. This happens when:
+                        - A migration file is missing in the chain
+                        - Migration not registered in addMigrations()
+                        - Database schema changed without migration
+
+                        ACTION: Check app/src/main/java/com/emul8r/bizap/data/local/
+                        - Is Migration_${toVersion-1}_${toVersion}.kt present?
+                        - Is it in DatabaseModule.kt addMigrations() list?
+                        - Run with fresh install to restore data.
+                    """.trimIndent())
+                }
+            })
         } else {
             // In production: log success after migration to confirm user data is intact
             builder.addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
-                    Timber.i("✅ Database migration successful - user data intact")
+                    Timber.i("✅ Database migration successful - user data intact (v${db.version})")
                 }
             })
         }

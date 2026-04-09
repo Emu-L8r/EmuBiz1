@@ -15,8 +15,8 @@ import timber.log.Timber
 /**
  * Line chart card - Simple placeholder UI.
  *
- * TODO: Integrate Vico CartesianChartHost when dependency is verified.
- * Currently displays a gradient bar visualization as placeholder.
+ * Note: Vico chart library was removed (unused dependency optimization).
+ * Currently displays a custom gradient bar visualization.
  *
  * @param data List of chart data points
  * @param title Display title for the chart
