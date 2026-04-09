@@ -2,6 +2,8 @@ package com.emul8r.bizap.ui.gui2.dashboard
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -10,6 +12,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -275,34 +280,94 @@ private fun DashboardContentV2(
 
             HorizontalDivider()
 
-            // ── Management Action Buttons ──────────────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onNavigateToCustomers,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Customers", fontSize = 12.sp, maxLines = 1)
+            // ── Management Action Buttons (Adaptive Layout) ──────────────
+            // Phone: Single row, Tablet: 3-column grid
+            val context = LocalContext.current
+            val activity = context as? android.app.Activity
+            @OptIn(androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi::class)
+            val windowSizeClass = activity?.let {
+                calculateWindowSizeClass(it)
+            } ?: run {
+                WindowWidthSizeClass.Compact
+            }
+
+            when (windowSizeClass) {
+                WindowWidthSizeClass.Compact -> {
+                    // Phone: Keep as single row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onNavigateToCustomers,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Customers", fontSize = 12.sp, maxLines = 1)
+                        }
+                        OutlinedButton(
+                            onClick = onNavigateToInvoices,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Invoices", fontSize = 12.sp, maxLines = 1)
+                        }
+                        OutlinedButton(
+                            onClick = onNavigateToVault,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Storage, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Vault", fontSize = 12.sp, maxLines = 1)
+                        }
+                    }
                 }
-                OutlinedButton(
-                    onClick = onNavigateToInvoices,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Invoices", fontSize = 12.sp, maxLines = 1)
-                }
-                OutlinedButton(
-                    onClick = onNavigateToVault,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Storage, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Vault", fontSize = 12.sp, maxLines = 1)
+                else -> {
+                    // Tablet: 3-column grid for better space utilization
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp)
+                            .heightIn(max = 180.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item {
+                            OutlinedButton(
+                                onClick = onNavigateToCustomers,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Customers", maxLines = 1)
+                            }
+                        }
+                        item {
+                            OutlinedButton(
+                                onClick = onNavigateToInvoices,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Invoices", maxLines = 1)
+                            }
+                        }
+                        item {
+                            OutlinedButton(
+                                onClick = onNavigateToVault,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Storage, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Vault", maxLines = 1)
+                            }
+                        }
+                    }
                 }
             }
 

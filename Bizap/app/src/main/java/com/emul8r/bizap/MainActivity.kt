@@ -141,6 +141,18 @@ class MainActivity : ComponentActivity() {
             requiredPermissions.add(android.Manifest.permission.CAMERA)
         }
 
+        // Check ACCESS_WIFI_STATE permission (Android 31+) for signal monitoring
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_WIFI_STATE
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                requiredPermissions.add(android.Manifest.permission.ACCESS_WIFI_STATE)
+                Timber.d("ACCESS_WIFI_STATE required for signal monitoring")
+            }
+        }
+
         // Request all required permissions at once using modern API
         if (requiredPermissions.isNotEmpty()) {
             requestPermissionLauncher.launch(requiredPermissions.toTypedArray())

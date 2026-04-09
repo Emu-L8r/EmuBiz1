@@ -271,6 +271,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
+    implementation("androidx.compose.material3:material3-window-size-class:1.2.1")
     implementation(libs.androidx.coordinatorlayout)
 
     // Material Design components (AppBarLayout, BottomNavigationView, Toolbar, etc.)

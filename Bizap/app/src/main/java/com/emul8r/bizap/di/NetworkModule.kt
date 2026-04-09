@@ -5,6 +5,7 @@ import com.emul8r.bizap.data.network.ConnectivityNetworkMonitor
 import com.emul8r.bizap.data.network.ErrorInterceptor
 import com.emul8r.bizap.data.network.HttpClientConfiguration
 import com.emul8r.bizap.data.network.NetworkMonitor
+import com.emul8r.bizap.data.network.RateLimitInterceptor
 import com.emul8r.bizap.data.network.RetryInterceptor
 import com.emul8r.bizap.data.remote.ExchangeRateService
 import com.emul8r.bizap.data.remote.api.CustomerApi
@@ -177,10 +178,17 @@ interface NetworkModule {
                 // 1. Logging (first to log all calls)
                 .addNetworkInterceptor(loggingInterceptor)
 
-                // 2. Error handling (converts HTTP errors to BizapExceptions)
+                // 2. Rate limiting (prevents DOS to backend)
+                .addInterceptor(RateLimitInterceptor(
+                    requestsPerSecond = 10,
+                    globalRequestsPerSecond = 50,
+                    maxRetries = 3
+                ))
+
+                // 3. Error handling (converts HTTP errors to BizapExceptions)
                 .addInterceptor(ErrorInterceptor())
 
-                // 3. Retry (handles transient failures)
+                // 4. Retry (handles transient failures)
                 .addInterceptor(RetryInterceptor(
                     maxRetries = RETRY_MAX_ATTEMPTS,
                     baseDelayMs = RETRY_BASE_DELAY_MS
