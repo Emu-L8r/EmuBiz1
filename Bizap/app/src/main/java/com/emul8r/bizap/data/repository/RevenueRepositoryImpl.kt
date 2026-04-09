@@ -57,7 +57,7 @@ class RevenueRepositoryImpl @Inject constructor(
                 invoiceDaoV2.observeYTDRevenue(businessId, yearStartMs, now),
                 invoiceDaoV2.observeWeeklyRevenue(businessId, weekStartMs, now),
                 invoiceDaoV2.observeTotalPaidRevenue(businessId),
-                invoiceDaoV2.observeLast30DaysRevenueTrend(businessId),
+                invoiceDaoV2.observeLast30DaysRevenueTrend(businessId, now - CalendarUtils.THIRTY_DAYS_MS, now),
                 invoiceDaoV2.observeOverdueAmount(businessId)
             ) { values ->
                 @Suppress("UNCHECKED_CAST")

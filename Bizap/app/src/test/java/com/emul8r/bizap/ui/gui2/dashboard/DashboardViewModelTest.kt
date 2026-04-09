@@ -53,7 +53,7 @@ class DashboardViewModelTest : BaseUnitTest() {
         every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(500000L)
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(50000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(450000L)
-        every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeLast30DaysRevenueTrend(businessId, any(), any()) } returns flowOf(emptyList())
         every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
@@ -70,7 +70,7 @@ class DashboardViewModelTest : BaseUnitTest() {
         every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
-        every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeLast30DaysRevenueTrend(businessId, any(), any()) } returns flowOf(emptyList())
         every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()
@@ -120,7 +120,7 @@ class DashboardViewModelTest : BaseUnitTest() {
         every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(800000L)
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(25000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(700000L)
-        every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeLast30DaysRevenueTrend(businessId, any(), any()) } returns flowOf(emptyList())
         every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val metrics = revenueRepository.observeRevenueMetrics(businessId).first().getOrThrow()

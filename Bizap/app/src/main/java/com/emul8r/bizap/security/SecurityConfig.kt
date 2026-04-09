@@ -31,23 +31,27 @@ object SecurityConfig {
      * - Test pin rotation before deploying
      */
     fun createSecureOkHttpClient(context: Context): OkHttpClient {
-        val certificatePinner = CertificatePinner.Builder()
-            // Example: Google API domain (replace with actual Firebase domain)
-            .add(
-                "*.googleapis.com",
-                "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",  // Placeholder
-                "sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="   // Backup cert
-            )
-            // Example: Exchange Rate API
-            .add(
-                "api.exchangerate-api.com",
-                "sha256/CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=",   // Placeholder
-                "sha256/DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD="    // Backup cert
-            )
-            .build()
+        // ⚠️ Certificate Pinning disabled for MVP (v1.0.0)
+        //
+        // REASON: Production API certificate hashes not yet finalized.
+        // Pinning with incorrect hashes breaks all network requests.
+        //
+        // TODO (Phase 2):
+        // 1. Get production certificate hashes from infrastructure/DevOps
+        // 2. Request 2-3 backup pins for certificate rotation
+        // 3. Implement pinning with real hashes in SecurityConfig
+        // 4. Test pin rotation before deploying to production
+        // 5. Document pin rotation policy in docs/CERTIFICATE_PINNING.md
+        //
+        // Phase 2 Pin Implementation:
+        // val certificatePinner = CertificatePinner.Builder()
+        //     .add("api.googleapis.com", "sha256/REAL_PROD_HASH_HERE=")
+        //     .add("api.googleapis.com", "sha256/BACKUP_HASH_1_HERE=")
+        //     .add("api.exchangerate-api.com", "sha256/REAL_API_HASH=")
+        //     .build()
 
         return OkHttpClient.Builder()
-            .certificatePinner(certificatePinner)
+            // Certificate pinning disabled until real hashes available
             .addNetworkInterceptor { chain ->
                 val request = chain.request()
                 Timber.d("🔒 [SSL] Requesting: ${request.url}")

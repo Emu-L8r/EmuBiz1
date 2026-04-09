@@ -214,7 +214,7 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(ytd)
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(weekly)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(totalPaid)
-        every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(trend)
+        every { dao.observeLast30DaysRevenueTrend(businessId, any(), any()) } returns flowOf(trend)
         every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
     }
 

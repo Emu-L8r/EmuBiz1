@@ -13,6 +13,9 @@ object CalendarUtils {
     /** Milliseconds in 7 days — used for the rolling weekly window. */
     const val SEVEN_DAYS_MS = 7L * 24 * 60 * 60 * 1000
 
+    /** Milliseconds in 30 days — used for 30-day trend analysis. */
+    const val THIRTY_DAYS_MS = 30L * 24 * 60 * 60 * 1000
+
     /** Returns epoch-millis for midnight on the 1st of the current local month. */
     fun startOfCurrentMonth(nowMs: Long): Long = Calendar.getInstance().apply {
         timeInMillis = nowMs

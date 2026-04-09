@@ -46,7 +46,7 @@ class DashboardIntegrationTest : BaseUnitTest() {
         every { dao.observeYTDRevenue(businessId, any(), any()) } returns flowOf(200000L)
         every { dao.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(200000L)
         every { dao.observeTotalPaidRevenue(businessId) } returns flowOf(200000L)
-        every { dao.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { dao.observeLast30DaysRevenueTrend(businessId, any(), any()) } returns flowOf(emptyList())
         every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         val metrics = revenueRepo.observeRevenueMetrics(businessId).first().getOrThrow()

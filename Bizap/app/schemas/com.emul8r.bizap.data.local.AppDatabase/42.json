@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 42,
-    "identityHash": "a0ffd320f3d2b312348133c80250cd64",
+    "identityHash": "f970751a43ea12b3514f8f1eb036c13c",
     "entities": [
       {
         "tableName": "customers",
@@ -406,6 +406,16 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `idx_invoices_business_status` ON `${TABLE_NAME}` (`businessProfileId`, `status`)"
+          },
+          {
+            "name": "idx_invoices_business_date",
+            "unique": false,
+            "columnNames": [
+              "businessProfileId",
+              "date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_invoices_business_date` ON `${TABLE_NAME}` (`businessProfileId`, `date`)"
           },
           {
             "name": "idx_invoices_year_sequence",
@@ -3037,7 +3047,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a0ffd320f3d2b312348133c80250cd64')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f970751a43ea12b3514f8f1eb036c13c')"
     ]
   }
 }

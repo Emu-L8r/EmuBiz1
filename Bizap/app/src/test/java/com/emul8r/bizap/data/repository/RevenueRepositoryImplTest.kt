@@ -95,7 +95,7 @@ class RevenueRepositoryImplTest : BaseUnitTest() {
         every { invoiceDaoV2.observeYTDRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { invoiceDaoV2.observeWeeklyRevenue(businessId, any(), any()) } returns flowOf(0L)
         every { invoiceDaoV2.observeTotalPaidRevenue(businessId) } returns flowOf(0L)
-        every { invoiceDaoV2.observeLast30DaysRevenueTrend(businessId) } returns flowOf(emptyList())
+        every { invoiceDaoV2.observeLast30DaysRevenueTrend(businessId, any(), any()) } returns flowOf(emptyList())
         every { invoiceDaoV2.observeOverdueAmount(businessId) } returns flowOf(0L)
 
         // Act
