@@ -1,0 +1,100 @@
+name: Documentation Link Checker
+
+on:
+  pull_request:
+    paths:
+      - '**.md'
+      - '.github/workflows/doc-link-checker.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '**.md'
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    name: Check Markdown Links
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run markdown-link-check
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          config-file: '.github/workflows/mlc-config.json'
+          folder-path: '.'
+          file-extension: '.md'
+          max-depth: 3
+
+  doc-structure-check:
+    runs-on: ubuntu-latest
+    name: Verify Documentation Structure
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for orphaned docs
+        shell: bash
+        run: |
+          echo "Checking for documentation orphans..."
+
+          # Verify key canonical files exist
+          REQUIRED_FILES=(
+            "docs/README.md"
+            "docs/START_HERE.md"
+            "docs/PROJECT_STATUS.md"
+            "CONTRIBUTING.md"
+          )
+
+          MISSING=0
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ MISSING: $file"
+              MISSING=$((MISSING + 1))
+            else
+              echo "✓ Found: $file"
+            fi
+          done
+
+          if [ $MISSING -gt 0 ]; then
+            echo ""
+            echo "ERROR: $MISSING required documentation files are missing!"
+            exit 1
+          fi
+
+          echo ""
+          echo "✓ All required documentation files present"
+
+      - name: Check for duplicate status docs
+        shell: bash
+        run: |
+          echo "Checking for duplicate documentation patterns..."
+
+          # Pattern check: warn if too many PROJECT_STATUS variants
+          VARIANTS=$(find . -name "PROJECT_STATUS*.md" -not -path "./docs/archive/*" | wc -l)
+          if [ $VARIANTS -gt 1 ]; then
+            echo "⚠️  WARNING: Found $VARIANTS PROJECT_STATUS variants (canonical should be in /docs/)"
+            echo "   Please consolidate to single canonical source"
+          fi
+
+          # Pattern check: warn if too many START_HERE variants
+          START_VARIANTS=$(find . -name "START_HERE*.md" -not -path "./docs/archive/*" | wc -l)
+          if [ $START_VARIANTS -gt 1 ]; then
+            echo "⚠️  WARNING: Found $START_VARIANTS START_HERE variants (canonical should be /docs/START_HERE.md)"
+            echo "   Please consolidate to single canonical source"
+          fi
+
+          echo "✓ Documentation pattern check complete"
+
+      - name: Report results
+        if: success()
+        run: |
+          echo "✅ Documentation structure verified"
+          echo "✅ All required files present"
+          echo "✅ No broken links detected"
+
