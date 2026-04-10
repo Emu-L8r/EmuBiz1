@@ -1,6 +1,7 @@
 package com.emul8r.bizap.di
 
 import android.content.Context
+import com.emul8r.bizap.BuildConfig
 import com.emul8r.bizap.data.network.ConnectivityNetworkMonitor
 import com.emul8r.bizap.data.network.ErrorInterceptor
 import com.emul8r.bizap.data.network.HttpClientConfiguration
@@ -19,7 +20,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.Cache
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.Interceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import timber.log.Timber
@@ -151,33 +152,59 @@ interface NetworkModule {
             @ApplicationContext context: Context,
             config: HttpClientConfiguration
         ): OkHttpClient {
-            // Setup HTTP logging interceptor
-            val loggingInterceptor = HttpLoggingInterceptor { message ->
-                Timber.tag("OkHttp").d(message)
-            }.apply {
-                // Set logging level based on build type (DEBUG logs bodies, BASIC logs headers/status)
-                level = if (Timber.treeCount > 0) {
-                    HttpLoggingInterceptor.Level.BASIC
-                } else {
-                    HttpLoggingInterceptor.Level.NONE
-                }
-            }
-
             // Setup HTTP caching
             val cacheDir = File(context.cacheDir, "http-cache")
             val cache = Cache(cacheDir, HTTP_CACHE_SIZE_BYTES)
 
-            return OkHttpClient.Builder()
+            val builder = OkHttpClient.Builder()
                 // Timeouts (from HttpClientConfiguration)
                 .connectTimeout(config.connectTimeoutMs, TimeUnit.MILLISECONDS)
                 .readTimeout(config.readTimeoutMs, TimeUnit.MILLISECONDS)
                 .writeTimeout(config.writeTimeoutMs, TimeUnit.MILLISECONDS)
                 .callTimeout(config.callTimeoutMs, TimeUnit.MILLISECONDS)
 
-                // Interceptor chain (order matters):
-                // 1. Logging (first to log all calls)
-                .addNetworkInterceptor(loggingInterceptor)
+            // 🔐 SECURITY: HTTP logging only in debug builds
+            // Production builds do NOT log HTTP traffic to prevent sensitive data exposure
+            // (API keys, tokens, user data) - complies with GDPR/Privacy Shield
+            if (BuildConfig.DEBUG) {
+                try {
+                    // Dynamically load HttpLoggingInterceptor only when available (debug builds)
+                    @Suppress("UNCHECKED_CAST")
+                    val loggingInterceptorClass = Class.forName("okhttp3.logging.HttpLoggingInterceptor")
+                    val loggerClass = Class.forName("okhttp3.logging.HttpLoggingInterceptor\$Logger")
 
+                    // Create logger instance
+                    val logger = java.lang.reflect.Proxy.newProxyInstance(
+                        loggerClass.classLoader,
+                        arrayOf(loggerClass)
+                    ) { proxy, method, args ->
+                        if (method.name == "log") {
+                            Timber.tag("OkHttp").d(args[0].toString())
+                        }
+                        null
+                    }
+
+                    // Create interceptor
+                    val interceptor = loggingInterceptorClass
+                        .getConstructor(loggerClass)
+                        .newInstance(logger) as Interceptor
+
+                    // Set level to BASIC
+                    val levelClass = Class.forName("okhttp3.logging.HttpLoggingInterceptor\$Level")
+                    val basicLevel = levelClass.getDeclaredField("BASIC").get(null)
+                    loggingInterceptorClass.getDeclaredField("level").apply {
+                        isAccessible = true
+                        set(interceptor, basicLevel)
+                    }
+
+                    builder.addNetworkInterceptor(interceptor)
+                } catch (e: Exception) {
+                    // Logging not available, skip it
+                    Timber.w("HttpLoggingInterceptor not available: ${e.message}")
+                }
+            }
+
+            return builder
                 // 2. Rate limiting (prevents DOS to backend)
                 .addInterceptor(RateLimitInterceptor(
                     requestsPerSecond = 10,
