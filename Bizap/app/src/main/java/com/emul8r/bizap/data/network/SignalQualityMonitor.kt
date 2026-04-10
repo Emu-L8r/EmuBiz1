@@ -112,7 +112,7 @@ class SignalQualityMonitor @Inject constructor(
      */
     private fun getWiFiQuality(): NetworkQuality {
         return try {
-            @Suppress("NewApi")  // Safe on Android 31+; ConnectivityManager APIs used above
+            @Suppress("NewApi", "DEPRECATION")  // Safe on Android 31+; connectionInfo deprecated but needed for RSSI
             val connectionInfo = wifiManager.connectionInfo ?: return NetworkQuality.UNKNOWN
             val rssi = connectionInfo.rssi
 

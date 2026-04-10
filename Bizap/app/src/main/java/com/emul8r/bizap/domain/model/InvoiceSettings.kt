@@ -111,6 +111,7 @@ data class InvoiceSettings(
      * Business information validation happens in BusinessProfile, not here.
      */
     fun isValid(): Boolean {
+        @Suppress("ConstantConditionIf")  // selectedTheme has default value, always true
         return selectedTheme != null
     }
 

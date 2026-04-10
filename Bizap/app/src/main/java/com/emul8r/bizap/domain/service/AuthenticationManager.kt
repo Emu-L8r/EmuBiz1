@@ -100,12 +100,21 @@ class AuthenticationManager @Inject constructor(
      * - [AuthState.Authenticated] — valid session
      * - [AuthState.SessionExpired] — session timed out, re-login required
      * - [AuthState.LockedOut] — still in lockout window
+     *
+     * **Note:** Now includes error handling for DataStore operations.
      */
     fun checkSessionValidity(): AuthState {
-        if (!authRepository.isPINSet()) return AuthState.NotInitialized
-        if (isLockedOut()) return AuthState.LockedOut(getLockoutRemainingSeconds())
-        return if (authRepository.isSessionValid()) AuthState.Authenticated
-        else AuthState.SessionExpired
+        return try {
+            when {
+                !authRepository.isPINSet() -> AuthState.NotInitialized
+                isLockedOut() -> AuthState.LockedOut(getLockoutRemainingSeconds())
+                authRepository.isSessionValid() -> AuthState.Authenticated
+                else -> AuthState.SessionExpired
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Error checking session validity, defaulting to SessionExpired")
+            AuthState.SessionExpired
+        }
     }
 
     /** Delegates touch events to the session manager to reset the idle timer. */

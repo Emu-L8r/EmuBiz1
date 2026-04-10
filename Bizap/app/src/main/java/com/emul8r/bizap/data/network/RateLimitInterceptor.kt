@@ -2,7 +2,9 @@ package com.emul8r.bizap.data.network
 
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
@@ -51,7 +53,7 @@ class RateLimitInterceptor(
                 .protocol(okhttp3.Protocol.HTTP_1_1)
                 .code(429) // Too Many Requests
                 .message("Global rate limit exceeded")
-                .body(okhttp3.ResponseBody.create(null, "Rate limited"))
+                .body("Rate limited".toResponseBody("text/plain".toMediaType()))
                 .build()
         }
 
@@ -63,7 +65,7 @@ class RateLimitInterceptor(
                 .protocol(okhttp3.Protocol.HTTP_1_1)
                 .code(429)
                 .message("Endpoint rate limit exceeded")
-                .body(okhttp3.ResponseBody.create(null, "Rate limited"))
+                .body("Rate limited".toResponseBody("text/plain".toMediaType()))
                 .build()
         }
 

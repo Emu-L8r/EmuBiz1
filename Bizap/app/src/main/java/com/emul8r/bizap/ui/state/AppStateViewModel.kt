@@ -51,7 +51,7 @@ class AppStateViewModel @Inject constructor(
 ) : ViewModel() {
 
     /** Mutable auth state, updated synchronously on construction and on demand. */
-    private val authStateFlow = MutableStateFlow<AuthState>(authManager.checkSessionValidity())
+    private val authStateFlow = MutableStateFlow<AuthState>(AuthState.SessionExpired)
 
     /** DataStore-backed first-launch warning flag. */
     private val warningShownFlow = dataStore.data
@@ -103,6 +103,21 @@ class AppStateViewModel @Inject constructor(
         }
     }
 
+    init {
+        // Refresh auth state asynchronously after initialization
+        // This prevents blocking on DataStore read during ViewModel creation
+        viewModelScope.launch {
+            try {
+                val state = authManager.checkSessionValidity()
+                authStateFlow.value = state
+                Timber.d("✅ Initial auth state loaded: $state")
+            } catch (e: Exception) {
+                Timber.e(e, "❌ Error checking session validity during init")
+                authStateFlow.value = AuthState.SessionExpired
+            }
+        }
+    }
+
     // -------------------------------------------------------------------------
     // State computation
     // -------------------------------------------------------------------------
@@ -129,9 +144,20 @@ class AppStateViewModel @Inject constructor(
     /**
      * Re-evaluates auth state after PIN setup or successful login.
      * Triggers recomposition of any collector of [appState].
+     *
+     * Now runs asynchronously to avoid blocking on DataStore operations.
      */
     fun refreshAuth() {
-        authStateFlow.value = authManager.checkSessionValidity()
+        viewModelScope.launch {
+            try {
+                val newState = authManager.checkSessionValidity()
+                authStateFlow.value = newState
+                Timber.d("✅ Auth state refreshed after PIN setup/login: $newState")
+            } catch (e: Exception) {
+                Timber.e(e, "❌ Failed to refresh auth state")
+                authStateFlow.value = AuthState.SessionExpired
+            }
+        }
     }
 
     /** Persists acknowledgement of the first-launch data-loss warning. */

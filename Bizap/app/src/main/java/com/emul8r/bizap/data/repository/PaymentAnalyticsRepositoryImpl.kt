@@ -92,6 +92,7 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
             val calculated = invoiceDao.calculatePaymentMetrics(businessId)
             val metricsRow = paymentDao.getPaymentMetrics(businessId)
 
+            @Suppress("ConstantConditionIf")  // Intentional: ensures both metrics are available for comparison
             if (calculated != null && metricsRow != null) {
                 val snapshotCollectionRate = if (metricsRow.totalAmount > 0.0) {
                     ((metricsRow.paidAmount / metricsRow.totalAmount) * 100.0).coerceIn(0.0, 100.0)

@@ -4,6 +4,7 @@ import com.emul8r.bizap.data.local.PINStorageV2
 import com.emul8r.bizap.data.local.SessionManager
 import com.emul8r.bizap.domain.repository.AuthenticationRepository
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,11 +32,19 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     override fun isPINSet(): Boolean {
-        // For synchronous compatibility, we check the old implementation as fallback
-        // In practice, all callers should use Flow-based API or suspend functions
-        Timber.w("⚠️ isPINSet() is blocking - consider using isPINSetFlow for reactive updates")
-        // This is a compatibility shim - real implementations should use reactive APIs
-        return false // Safe fallback
+        // Use blocking approach to check if PIN is set from DataStore
+        // This is needed because checkSessionValidity() is called synchronously
+        // but DataStore is async. For production, consider making checkSessionValidity suspend.
+        return try {
+            Timber.d("⚠️ isPINSet() called synchronously - consider refactoring")
+            // Call the suspend function via runBlocking
+            runBlocking {
+                pinStorageV2.isPINSet()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Error checking if PIN is set, returning false")
+            false
+        }
     }
 
     override suspend fun setupPIN(pin: String): Result<Unit> = pinStorageV2.setupPIN(pin)

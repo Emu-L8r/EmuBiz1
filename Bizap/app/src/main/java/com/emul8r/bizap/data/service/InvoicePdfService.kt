@@ -109,6 +109,7 @@ class InvoicePdfService @Inject constructor(
 
                     // FIX #1: Additional validation
                     Timber.d("🔍 Step 3: Validate settings object")
+                    @Suppress("ConstantConditionIf")  // Redundant check: selectedHtmlStyle is guaranteed non-null from Step 2
                     if (settings.selectedHtmlStyle == null) {
                         Timber.e("❌ VALIDATION FAILED: selectedHtmlStyle is NULL")
                         throw IllegalStateException(

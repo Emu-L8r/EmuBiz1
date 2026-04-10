@@ -162,12 +162,14 @@ fun DashboardScreen(
     var showSwitcher by remember { mutableStateOf(false) }
 
     // CRITICAL FIX: Check if profile is loaded before rendering
+    @Suppress("ConstantConditionIf")  // Defensive check: activeBusiness collected from ViewModel state
     if (activeBusiness == null) {
         LoadingScreen(message = "Loading business profile...")
         return
     }
 
     // CRITICAL FIX: Check if customers data is loaded
+    @Suppress("ConstantConditionIf")  // Defensive check: customers collected from ViewModel state
     if (customers == null) {
         LoadingScreen(message = "Loading customers...")
         return

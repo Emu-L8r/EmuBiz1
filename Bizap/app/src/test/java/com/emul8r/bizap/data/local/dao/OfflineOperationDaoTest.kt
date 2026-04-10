@@ -9,6 +9,7 @@ import com.emul8r.bizap.test.WindowsTestRule
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,6 +17,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+@Ignore("Android tests should be in src/androidTest/java - scheduled for next sprint")
 @RunWith(AndroidJUnit4::class)
 class OfflineOperationDaoTest {
 

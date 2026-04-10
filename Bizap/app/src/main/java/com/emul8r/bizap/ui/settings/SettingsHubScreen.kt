@@ -14,12 +14,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AutoAwesomeMotion
 import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ChevronRight
@@ -271,7 +271,7 @@ private fun SettingsV2Content(
         )
 
         SettingsCardV2(
-            icon = Icons.Default.Help,
+            icon = Icons.AutoMirrored.Filled.Help,
             title = "Help & About",
             description = "App information, version, and support",
             onClick = onHelpClick
