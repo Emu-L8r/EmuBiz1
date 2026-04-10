@@ -22,10 +22,8 @@ import kotlin.test.assertIs
  * - Deep links parse correctly to their destinations
  * - Navigation extensions produce the correct route objects
  *
- * ⚠️ TEMPORARILY SKIPPED - Android-dependent test
- * Should be in src/androidTest/java, not src/test/java
+ * ✅ NOW IN androidTest - enabled for Android instrumentation tests
  */
-@Ignore("Android tests should be in src/androidTest/java - scheduled for next sprint")
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [28])
 class NavigationIntegrationTest : BaseUnitTest() {
@@ -124,3 +122,4 @@ class NavigationIntegrationTest : BaseUnitTest() {
         assertIs<DeepLinkDestination.Unknown>(result)
     }
 }
+

@@ -23,9 +23,8 @@ import kotlin.test.assertEquals
 /**
  * SPRINT 3: Simplified to match new SaveInvoiceUseCase architecture
  *
- * ⚠️ TEMPORARILY SKIPPED - Android-dependent test
+ * ✅ NOW IN androidTest - enabled for Android instrumentation tests
  */
-@Ignore("Android tests should be in src/androidTest/java - scheduled for next sprint")
 @RunWith(AndroidJUnit4::class)
 class SaveInvoiceUseCaseOfflineTest {
 
@@ -118,3 +117,4 @@ class SaveInvoiceUseCaseOfflineTest {
         )
     }
 }
+

@@ -64,7 +64,6 @@ class BizapExceptionTest {
 
     // ─── DatabaseError ───────────────────────────────────────────────────────────
 
-    @Ignore("Message formatting edge case - non-blocking, fix in next sprint")
     @Test
     fun `DatabaseError message includes operation and table`() {
         val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", message = "Constraint")

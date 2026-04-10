@@ -25,9 +25,11 @@ import kotlin.test.assertEquals
  * These tests ensure no discrepancy between the two UI layers when reading
  * the same business metrics from the shared Room database.
  *
- * ⚠️ TEMPORARILY SKIPPED - MockK setup issues, needs proper configuration
+ * ⚠️ DEFERRED - MockK setup requires deeper investigation
+ * Issue: Repository methods return unexpected types for current mock setup
+ * TODO: Align mocks with actual repository return types
  */
-@Ignore("MockK setup needs configuration - scheduled for next sprint")
+@Ignore("MockK setup requires investigation - deferred to future sprint")
 class CrossGUISyncTest : BaseUnitTest() {
 
     private val dao: InvoiceDaoV2 = mockk()
