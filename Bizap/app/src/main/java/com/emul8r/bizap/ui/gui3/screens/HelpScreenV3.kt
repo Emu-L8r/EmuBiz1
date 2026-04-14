@@ -2,14 +2,17 @@ package com.emul8r.bizap.ui.gui3.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.emul8r.bizap.ui.gui3.components.*
@@ -18,7 +21,7 @@ import com.emul8r.bizap.ui.theme.Spacing
 
 /**
  * Help Screen V3 (Matrix Edition)
- * FAQ, getting started, and support
+ * FAQ, getting started guide, and support information with Matrix styling
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,13 +29,13 @@ fun HelpScreenV3(
     businessId: Long,
     navController: NavHostController
 ) {
-    MatrixBackground(intensity = 1.0f) {
+    MatrixBackground(intensity = 1.2f) {
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = {
                         Text(
-                            "BIZAP > HELP",
+                            ">> HELP & SUPPORT",
                             style = MaterialTheme.typography.headlineSmall.copy(
                                 fontFamily = FontFamily.Monospace,
                                 color = MatrixGreenBright,
@@ -47,38 +50,148 @@ fun HelpScreenV3(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = MatrixGreen)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MatrixSurface)
+                    colors = matrixTopAppBarColors()
                 )
-            }
+            },
+            containerColor = MatrixBlack.copy(alpha = 0.8f)
         ) { paddingValues ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MatrixBlack)
+                    .verticalScroll(rememberScrollState())
                     .padding(paddingValues)
                     .padding(Spacing.lg),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
             ) {
-                MatrixCardPremium(title = ">> HELP & SUPPORT") {
+                // Getting Started Section
+                SectionCardMatrix(title = "GETTING STARTED") {
                     Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+                        HelpItemMatrix(
+                            title = "Creating Your First Invoice",
+                            content = "Navigate to Invoices > Create Invoice, select a customer, add line items, and click Save."
+                        )
+                        HelpItemMatrix(
+                            title = "Managing Customers",
+                            content = "Go to Customers section to add new customers, update contact info, and track payment history."
+                        )
+                        HelpItemMatrix(
+                            title = "Recording Payments",
+                            content = "Use Payment Tracking to record customer payments against invoices automatically."
+                        )
+                    }
+                }
+
+                // FAQ Section
+                SectionCardMatrix(title = "FREQUENTLY ASKED QUESTIONS") {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+                        FAQItemMatrix(
+                            question = "How do I export invoices as PDF?",
+                            answer = "Open any invoice and use the Export button to download as PDF."
+                        )
+                        FAQItemMatrix(
+                            question = "Can I customize invoice templates?",
+                            answer = "Yes, go to Settings > Invoice Templates to customize headers, footers, and branding."
+                        )
+                        FAQItemMatrix(
+                            question = "How are payments recorded?",
+                            answer = "Navigate to Payment Tracking, click Record Payment, select invoice, and enter payment amount."
+                        )
+                        FAQItemMatrix(
+                            question = "What payment methods are supported?",
+                            answer = "Bizap tracks payment records for all methods: Cash, Check, Bank Transfer, Credit Card, etc."
+                        )
+                        FAQItemMatrix(
+                            question = "How do I generate reports?",
+                            answer = "Go to Reports section to view revenue, outstanding, and customer metrics reports."
+                        )
+                    }
+                }
+
+                // Contact Support Section
+                SectionCardMatrix(title = "CONTACT SUPPORT") {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                         Text(
-                            "FAQ",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                color = MatrixGreenBright,
-                                fontFamily = FontFamily.Monospace
+                            "Email: support@bizap.com",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontFamily = FontFamily.Monospace,
+                                color = MatrixGreen.copy(alpha = 0.8f)
                             )
                         )
                         Text(
-                            "Getting started guide and frequently asked questions coming in next update",
+                            "Phone: 1-800-BIZAP-1",
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = MatrixGreen.copy(alpha = 0.7f)
+                                fontFamily = FontFamily.Monospace,
+                                color = MatrixGreen.copy(alpha = 0.8f)
+                            )
+                        )
+                        Text(
+                            "Web: www.bizap.com/support",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontFamily = FontFamily.Monospace,
+                                color = MatrixGreen.copy(alpha = 0.8f)
                             )
                         )
                     }
                 }
+
+                // Version Info
+                SectionCardMatrix(title = "ABOUT BIZAP") {
+                    DetailRowMatrix(label = "App Version", value = "2.0.0")
+                    Spacer(modifier = Modifier.height(Spacing.sm))
+                    DetailRowMatrix(label = "Build", value = "April 2026")
+                    Spacer(modifier = Modifier.height(Spacing.sm))
+                    DetailRowMatrix(label = "Matrix Edition", value = "Premium UI")
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.xl))
             }
         }
     }
 }
+
+@Composable
+fun HelpItemMatrix(title: String, content: String) {
+    Column {
+        Text(
+            title,
+            style = MaterialTheme.typography.labelMedium.copy(
+                color = MatrixGreenBright,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.SemiBold
+            )
+        )
+        Spacer(modifier = Modifier.height(Spacing.xs))
+        Text(
+            content,
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = MatrixGreen.copy(alpha = 0.7f),
+                fontFamily = FontFamily.SansSerif
+            )
+        )
+    }
+}
+
+@Composable
+fun FAQItemMatrix(question: String, answer: String) {
+    Column {
+        Text(
+            "Q: $question",
+            style = MaterialTheme.typography.labelSmall.copy(
+                color = MatrixGreenBright,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.SemiBold
+            )
+        )
+        Spacer(modifier = Modifier.height(Spacing.xs))
+        Text(
+            "A: $answer",
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = MatrixGreen.copy(alpha = 0.8f),
+                fontFamily = FontFamily.SansSerif
+            )
+        )
+    }
+}
+
 

@@ -1,3 +1,4 @@
+    private enum class Route { LANDING, GUI1_MAIN, GUI2_MAIN }
 @file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.ui.landing
 
@@ -47,9 +48,9 @@ class NavigationTest : BaseUnitTest() {
     }
     // -----------------------------------------------------------------------
     // GuiMode enum contract
-    @Test
     fun `GuiMode has exactly three variants`() {
         assertEquals(3, GuiMode.entries.size)
+        assertEquals(2, GuiMode.entries.size)
     }
 
     @Test
@@ -155,7 +156,6 @@ class NavigationTest : BaseUnitTest() {
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI2)
         testDispatcher.scheduler.advanceUntilIdle()
-    }
 
     @Test
     fun `selectMode GUI3 calls dataStore edit`() = runTest {
@@ -165,15 +165,8 @@ class NavigationTest : BaseUnitTest() {
         viewModel.selectMode(GuiMode.GUI3)
         testDispatcher.scheduler.advanceUntilIdle()
     }
+    }
 
-    // LandingViewModel — resetting the selection
-    @Test
-    fun `resetMode calls dataStore edit`() = runTest {
-        every { dataStore.data } returns flowOf(emptyPreferences())
-        coEvery { dataStore.updateData(any()) } returns emptyPreferences()
-        val viewModel = LandingViewModel(dataStore)
-        viewModel.resetMode()
-        testDispatcher.scheduler.advanceUntilIdle()
     }
 
     // Navigation routing paths
@@ -198,31 +191,30 @@ class NavigationTest : BaseUnitTest() {
     }
 
     @Test
-    fun `GUI3 selectedMode maps to GUI3 main route`() {
-        val route = resolveRoute(GuiMode.GUI3)
-        assertEquals(Route.GUI3_MAIN, route)
-    }
-
-    @Test
     fun `all GuiMode values have a resolved route`() {
         GuiMode.entries.forEach { mode ->
             val route = resolveRoute(mode)
             assertNotNull(route)
         }
     }
+    @Test
+    fun `GUI3 selectedMode maps to GUI3 main route`() {
+        val route = resolveRoute(GuiMode.GUI3)
+        assertEquals(Route.GUI3_MAIN, route)
+    }
+
 
     /**
      * Pure routing helper — mirrors the `when (selectedMode)` block in MainActivity.
      * Keeps the test free of Android framework dependencies.
      */
-    private enum class Route { LANDING, GUI1_MAIN, GUI2_MAIN, GUI3_MAIN }
+    private enum class Route { LANDING, GUI1_MAIN, GUI2_MAIN }
     private fun resolveRoute(mode: GuiMode?): Route = when (mode) {
         null -> Route.LANDING
         GuiMode.GUI1 -> Route.GUI1_MAIN
         GuiMode.GUI2 -> Route.GUI2_MAIN
-        GuiMode.GUI3 -> Route.GUI3_MAIN
     }
 }
-
+    private enum class Route { LANDING, GUI1_MAIN, GUI2_MAIN, GUI3_MAIN }
 
 

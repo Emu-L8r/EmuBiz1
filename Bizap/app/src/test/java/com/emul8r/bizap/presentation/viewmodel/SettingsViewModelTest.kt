@@ -15,7 +15,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -23,10 +22,9 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest : BaseUnitTest() {
+@OptIn(ExperimentalCoroutinesApi::class)
 
-    private val settingsFlow = MutableStateFlow(Settings())
     private val repository: SettingsRepository = mockk(relaxed = true) {
         coEvery { settings } returns settingsFlow
     }

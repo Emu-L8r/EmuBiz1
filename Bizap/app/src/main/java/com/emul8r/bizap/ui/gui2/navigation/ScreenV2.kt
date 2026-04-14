@@ -111,3 +111,4 @@ sealed interface ScreenV2 {
     @Serializable
     data class Paywall(val businessId: Long) : ScreenV2
 }
+

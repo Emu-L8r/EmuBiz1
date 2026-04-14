@@ -1,4 +1,4 @@
-package com.emul8r.bizap.ui.gui3.screens
+﻿package com.emul8r.bizap.ui.gui3.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,6 +25,160 @@ import com.emul8r.bizap.ui.gui3.theme.*
 import com.emul8r.bizap.ui.theme.Spacing
 
 /**
+ * Collection Efficiency Card
+ * Shows a metric with trend indicator
+ */
+@Composable
+internal fun CollectionEfficiencyCard(
+    label: String,
+    value: String,
+    trend: String,
+    isTrendingUp: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = MatrixGreen.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(Spacing.md),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = MatrixGreen.copy(alpha = 0.7f),
+                    fontFamily = FontFamily.Monospace
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    color = MatrixGreenBright,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
+
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = if (isTrendingUp) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
+                contentDescription = "Trend",
+                tint = if (isTrendingUp) MatrixGreen else MatrixError,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = trend,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = if (isTrendingUp) MatrixGreen else MatrixError,
+                    fontFamily = FontFamily.Monospace
+                )
+            )
+        }
+    }
+}
+
+/**
+ * Payment Timeline Item
+ * Shows individual payment with date, customer, amount, and status
+ */
+@Composable
+internal fun PaymentTimelineItemV3(
+    date: String,
+    customer: String,
+    amount: String,
+    invoiceId: String,
+    status: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth(),
+        color = MatrixSurface,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = MatrixGreen.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(Spacing.md),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+        ) {
+            // Date and Status Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = date,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = MatrixGreen.copy(alpha = 0.7f),
+                        fontFamily = FontFamily.Monospace
+                    )
+                )
+
+                // Status Badge
+                MatrixStatusBadge(
+                    status = status,
+                    style = when (status) {
+                        "COMPLETED" -> MatrixStatusStyle.SUCCESS
+                        "PENDING" -> MatrixStatusStyle.WARNING
+                        "FAILED" -> MatrixStatusStyle.ERROR
+                        else -> MatrixStatusStyle.NEUTRAL
+                    }
+                )
+            }
+
+            // Customer and Amount
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = customer,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MatrixGreenBright,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Invoice $invoiceId",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = MatrixGreen.copy(alpha = 0.6f),
+                            fontFamily = FontFamily.Monospace
+                        )
+                    )
+                }
+
+                FormattedAmountMatrix(
+                    amount = amount,
+                    isPositive = true
+                )
+            }
+        }
+    }
+}
+
+/**
  * Payment Analytics Screen V3 (Matrix Edition)
  *
  * Displays payment metrics and analytics with Matrix styling:
@@ -46,58 +200,75 @@ fun PaymentAnalyticsScreenV3(
     businessId: Long,
     navController: NavHostController
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "BIZAP > PAYMENTS",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontFamily = FontFamily.Monospace,
-                            color = MatrixGreenBright,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            letterSpacing = 1.sp
+    MatrixBackground(intensity = 1.2f) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            ">> PAYMENT ANALYTICS",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontFamily = FontFamily.Monospace,
+                                color = MatrixGreenBright,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                letterSpacing = 1.sp
+                            )
                         )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MatrixGreen
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MatrixSurface,
-                    navigationIconContentColor = MatrixGreen,
-                    titleContentColor = MatrixGreen
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MatrixGreen
+                            )
+                        }
+                    },
+                    colors = matrixTopAppBarColors()
                 )
-            )
-        },
-        containerColor = MatrixBlack
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MatrixBlack)
-                .padding(paddingValues)
-                .padding(Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-        ) {
+            },
+            containerColor = MatrixBlack.copy(alpha = 0.8f)
+        ) { paddingValues ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MatrixBlack)
+                    .padding(paddingValues)
+                    .padding(Spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+            ) {
             // ============= HEADER STATS =============
             item {
-                MatrixCardPremium(title = ">> PAYMENT METRICS", isPulsing = true) {
-                    TerminalDataDisplay(
-                        rows = listOf(
-                            "Total Payments (This Month)" to "$45,234.50",
-                            "Average Payment" to "$3,452.65",
-                            "Success Rate" to "98.5%",
-                            "Days Sales Outstanding (DSO)" to "12.3 days"
+                SectionCardMatrix(title = ">> PAYMENT METRICS") {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Total Payments This Month
+                        DetailRowMatrix(
+                            label = "Total Payments (This Month)",
+                            value = "$45,234.50"
                         )
-                    )
+
+                        // Payment Success Rate
+                        DetailRowMatrix(
+                            label = "Success Rate",
+                            value = "96.5%"
+                        )
+
+                        // Days Sales Outstanding
+                        DetailRowMatrix(
+                            label = "Days Sales Outstanding (DSO)",
+                            value = "12.3 days"
+                        )
+
+                        // Average Payment Amount
+                        DetailRowMatrix(
+                            label = "Average Payment",
+                            value = "$3,452.65"
+                        )
+                    }
                 }
             }
 
@@ -198,161 +369,9 @@ fun PaymentAnalyticsScreenV3(
             item {
                 Spacer(modifier = Modifier.height(Spacing.xxl))
             }
-        }
-    }
-}
+        }  // LazyColumn closes
+    }  // Scaffold lambda closes
+}  // MatrixBackground closes
+}  // PaymentAnalyticsScreenV3 closes
 
-/**
- * Collection Efficiency Card
- * Shows a metric with trend indicator
- */
-@Composable
-private fun CollectionEfficiencyCard(
-    label: String,
-    value: String,
-    trend: String,
-    isTrendingUp: Boolean,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = MatrixGreen.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(Spacing.md),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = MatrixGreen.copy(alpha = 0.7f),
-                    fontFamily = FontFamily.Monospace
-                )
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    color = MatrixGreenBright,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-        }
-
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = if (isTrendingUp) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
-                contentDescription = "Trend",
-                tint = if (isTrendingUp) MatrixGreen else MatrixError,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = trend,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = if (isTrendingUp) MatrixGreen else MatrixError,
-                    fontFamily = FontFamily.Monospace
-                )
-            )
-        }
-    }
-}
-
-/**
- * Payment Timeline Item
- * Shows individual payment with date, customer, amount, and status
- */
-@Composable
-private fun PaymentTimelineItemV3(
-    date: String,
-    customer: String,
-    amount: String,
-    invoiceId: String,
-    status: String,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth(),
-        color = MatrixSurface,
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = MatrixGreen.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(Spacing.md),
-            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
-        ) {
-            // Date and Status Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = date,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = MatrixGreen.copy(alpha = 0.7f),
-                        fontFamily = FontFamily.Monospace
-                    )
-                )
-
-                // Status Badge
-                MatrixStatusBadge(
-                    status = status,
-                    style = when (status) {
-                        "COMPLETED" -> MatrixStatusStyle.SUCCESS
-                        "PENDING" -> MatrixStatusStyle.WARNING
-                        "FAILED" -> MatrixStatusStyle.ERROR
-                        else -> MatrixStatusStyle.NEUTRAL
-                    }
-                )
-            }
-
-            // Customer and Amount
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = customer,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MatrixGreenBright,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Invoice $invoiceId",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = MatrixGreen.copy(alpha = 0.6f),
-                            fontFamily = FontFamily.Monospace
-                        )
-                    )
-                }
-
-                FormattedAmountMatrix(
-                    amount = amount,
-                    isPositive = true
-                )
-            }
-        }
-    }
-}
 

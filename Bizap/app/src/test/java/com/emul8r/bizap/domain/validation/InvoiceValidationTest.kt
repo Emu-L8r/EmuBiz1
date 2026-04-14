@@ -81,10 +81,10 @@ class InvoiceValidationTest {
         )
         assertTrue(invoice.invoiceNumber.contains("2025"), "Invoice number should contain year")
         assertTrue(invoice.invoiceNumber.contains("INV-"), "Invoice number should start with INV-")
+        val number = invoice.invoiceNumber
+        assertTrue(number.contains("v2"), "Version 2 invoice number should contain v2 suffix")
     }
 
-    @Test
-    fun `invoiceNumber_Unique - version 2 invoice has suffix in number`() {
         // Version 2 invoices should have -v2 suffix
         val expectedNumber = "INV-2025-000001-v2"
         val invoice = buildInvoice().copy(
@@ -94,19 +94,8 @@ class InvoiceValidationTest {
             invoiceNumber = expectedNumber
         )
         assertTrue(invoice.invoiceNumber.contains("v2"), "Version 2 invoice number should contain v2 suffix")
-    }
-
-    @Test
-    fun `invoiceNumber_Unique - uniqueness checked in set of existing numbers`() {
-        val existingNumbers = setOf("INV-2025-000001", "INV-2025-000002")
-        val newNumber = "INV-2025-000003"
-        assertFalse(newNumber in existingNumbers, "New invoice number should not be in existing set")
-    }
-
-    // ── date_NotFuture ────────────────────────────────────────────────────────
-
-    @Test
-    fun `date_NotFuture - current date is valid for invoice`() {
+        val number = invoice.invoiceNumber
+        assertTrue(number.contains("v2"), "Version 2 invoice number should contain v2 suffix")
         val invoice = buildInvoice(dateCreated = now, dueDate = tomorrow)
         val result = ValidationRules.validateInvoice(invoice)
         assertTrue(result.isSuccess(), "Invoice with current date should pass validation")

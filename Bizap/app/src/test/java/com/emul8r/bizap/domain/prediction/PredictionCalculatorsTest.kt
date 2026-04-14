@@ -1,3 +1,4 @@
+            dueDate = dueDate,
 package com.emul8r.bizap.domain.prediction
 
 import com.emul8r.bizap.BaseUnitTest
@@ -274,24 +275,18 @@ class PredictionCalculatorsTest : BaseUnitTest() {
         id: Long = 1L,
         totalAmount: Long = 10000L,
         amountPaid: Long = 0L,
-        status: InvoiceStatus = InvoiceStatus.SENT,
         dueDate: String? = null
-    ): Invoice {
+        dueDate: String = Instant.now().toString()
         // Use provided dueDate or default to today + 30 days
         val actualDueDate = dueDate ?: Instant.now().plusSeconds(86_400L * 30).toString()
 
-        return Invoice(
-            id = id,
-            customerId = 1L,
-            customerName = "Test Customer",
-            totalAmount = totalAmount,
             amountPaid = amountPaid,
             status = status,
-            dueDate = actualDueDate,
+            dueDate = dueDate,
             dateCreated = Instant.now().toString(),
             isQuote = false,
             items = emptyList()
         )
-    }
+            dueDate = actualDueDate,
 }
 

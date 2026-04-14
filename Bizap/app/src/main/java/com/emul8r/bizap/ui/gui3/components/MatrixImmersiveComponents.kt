@@ -3,6 +3,9 @@ package com.emul8r.bizap.ui.gui3.components
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -10,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
@@ -19,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.ui.gui3.theme.*
 import com.emul8r.bizap.ui.theme.Spacing
+import kotlinx.coroutines.flow.collect
 
 /**
  * PHASE 4: IMMERSIVE MATRIX COMPONENTS
@@ -27,8 +32,8 @@ import com.emul8r.bizap.ui.theme.Spacing
  */
 
 /**
- * GLOWING BUTTON - Interactive with pulsing glow
- * Perfect for CTAs in Matrix UI
+ * GLOWING BUTTON - Pure Cyberpunk Matrix Button (No Material3 dependency)
+ * Interactive with pulsing glow and full click handling
  */
 @Composable
 fun GlowingMatrixButton(
@@ -38,6 +43,8 @@ fun GlowingMatrixButton(
     enabled: Boolean = true,
     isHighlight: Boolean = false
 ) {
+    var isPressed by remember { mutableStateOf(false) }
+
     val infiniteTransition = rememberInfiniteTransition(label = "glowPulse")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -49,41 +56,60 @@ fun GlowingMatrixButton(
         label = "glowAlpha"
     )
 
-    val borderColor = if (isHighlight) MatrixGreenBright else MatrixGreen
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(100, easing = EaseInOutQuad),
+        label = "buttonScale"
+    )
 
-    Button(
-        onClick = onClick,
+    val borderColor = if (isHighlight) MatrixGreenBright else MatrixGreen
+    val backgroundColor = if (isPressed) MatrixGreen.copy(alpha = 0.15f) else Color.Transparent
+
+    val interactionSource = remember { MutableInteractionSource() }
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is PressInteraction.Press -> isPressed = true
+                is PressInteraction.Release -> {
+                    isPressed = false
+                    onClick()
+                }
+                is PressInteraction.Cancel -> isPressed = false
+                else -> {}
+            }
+        }
+    }
+
+    Box(
         modifier = modifier
-            .height(52.dp)
+            .heightIn(min = 48.dp)
             .border(
                 width = 2.dp,
-                color = borderColor.copy(alpha = glowAlpha),
-                shape = RoundedCornerShape(6.dp)
+                color = borderColor.copy(alpha = glowAlpha)
             )
-            .shadow(
-                elevation = if (enabled) 8.dp else 0.dp,
-                shape = RoundedCornerShape(6.dp),
-                ambientColor = borderColor.copy(alpha = glowAlpha)
-            ),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = borderColor,
-            disabledContainerColor = Color.Transparent,
-            disabledContentColor = MatrixGreen.copy(alpha = 0.5f)
-        ),
-        enabled = enabled,
-        shape = RoundedCornerShape(6.dp)
+            .background(backgroundColor)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = enabled,
+                onClick = {}
+            )
+            .scale(scale),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge.copy(
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp,
-                fontFamily = FontFamily.Monospace
+                letterSpacing = 1.5.sp,
+                fontFamily = FontFamily.Monospace,
+                color = borderColor
             ),
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         )
     }
 }
@@ -129,7 +155,8 @@ fun MatrixCardPremium(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.lg)
+                .padding(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md)  // CONSISTENT SPACING between elements
         ) {
             // Header with Matrix styling
             Text(
@@ -140,18 +167,22 @@ fun MatrixCardPremium(
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 18.sp,
                     letterSpacing = 2.sp
-                ),
-                modifier = Modifier.padding(bottom = Spacing.md)
+                )
             )
 
             HorizontalDivider(
                 color = MatrixGreen.copy(alpha = 0.4f),
-                thickness = 1.5.dp,
-                modifier = Modifier.padding(bottom = Spacing.md)
+                thickness = 1.5.dp
             )
 
-            // Content
-            content()
+            // Content - wrapped in a Column for automatic spacing
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(Spacing.md)  // Elements inside content also spaced
+            ) {
+                content()
+            }
         }
     }
 }
@@ -333,6 +364,9 @@ fun GlowingStatusBadge(
         )
     }
 }
+
+
+
 
 
 

@@ -1,3 +1,6 @@
+        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", message = "Error")
+        val ex = BizapException.DatabaseError(operation = "DELETE", table = "invoices", message = "Error")
+        val ex = BizapException.DatabaseError(operation = "SELECT", table = "customers", message = "Timeout")
 package com.emul8r.bizap.domain.exception
 
 import com.emul8r.bizap.domain.error.BizapException
@@ -63,30 +66,30 @@ class BizapExceptionTest {
     }
 
     // ─── DatabaseError ───────────────────────────────────────────────────────────
-
+        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", details = "Constraint")
     @Test
     fun `DatabaseError message includes operation and table`() {
-        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", details = "Constraint")
+        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", message = "Constraint")
         assertNotNull(ex.message, "Message should not be null")
         assertTrue(ex.message!!.contains("INSERT"), "Message should contain operation: ${ex.message}")
         assertTrue(ex.message!!.contains("invoices"), "Message should contain table: ${ex.message}")
     }
-
+        val ex = BizapException.DatabaseError(operation = "SELECT", table = "customers", details = "Timeout")
     @Test
     fun `DatabaseError SELECT operation is retryable`() {
-        val ex = BizapException.DatabaseError(operation = "SELECT", table = "customers", details = "Timeout")
+        val ex = BizapException.DatabaseError(operation = "SELECT", table = "customers", message = "Timeout")
         assertTrue(ex.isRetryable())
     }
-
+        val ex = BizapException.DatabaseError(operation = "DELETE", table = "invoices", details = "Error")
     @Test
     fun `DatabaseError DELETE operation is NOT retryable`() {
-        val ex = BizapException.DatabaseError(operation = "DELETE", table = "invoices", details = "Error")
+        val ex = BizapException.DatabaseError(operation = "DELETE", table = "invoices", message = "Error")
         assertFalse(ex.isRetryable())
     }
-
+        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", details = "Error")
     @Test
     fun `DatabaseError has CRITICAL severity`() {
-        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", details = "Error")
+        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", message = "Error")
         assertEquals(ErrorSeverity.CRITICAL, ex.severity())
     }
 

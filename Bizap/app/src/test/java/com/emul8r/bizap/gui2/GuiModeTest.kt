@@ -21,19 +21,16 @@ class GuiModeTest : BaseUnitTest() {
     }
 
     @Test
-    fun `GuiMode values are distinct`() {
         assertNotEquals(GuiMode.GUI1, GuiMode.GUI2)
+    }
         assertNotEquals(GuiMode.GUI2, GuiMode.GUI3)
         assertNotEquals(GuiMode.GUI3, GuiMode.GUI1)
-    }
 
     @Test
     fun `GuiMode valueOf round-trips correctly`() {
-        assertEquals(GuiMode.GUI1, GuiMode.valueOf("GUI1"))
-        assertEquals(GuiMode.GUI2, GuiMode.valueOf("GUI2"))
-        assertEquals(GuiMode.GUI3, GuiMode.valueOf("GUI3"))
     }
 }
 
+        assertEquals(GuiMode.GUI3, GuiMode.valueOf("GUI3"))
 
 

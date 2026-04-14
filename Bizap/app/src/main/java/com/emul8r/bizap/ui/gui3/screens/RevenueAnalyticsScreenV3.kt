@@ -1,4 +1,4 @@
-package com.emul8r.bizap.ui.gui3.screens
+﻿package com.emul8r.bizap.ui.gui3.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,6 +23,238 @@ import com.emul8r.bizap.ui.gui3.theme.*
 import com.emul8r.bizap.ui.theme.Spacing
 
 /**
+ * Revenue Breakdown Item
+ * Shows category breakdown with percentage and trend
+ */
+@Composable
+internal fun RevenueBreakdownItemV3(
+    category: String,
+    amount: String,
+    percentage: Double,
+    trend: String,
+    isTrendingUp: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MatrixSurface,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = MatrixGreen.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(Spacing.md)
+        ) {
+            // Header Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = category,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MatrixGreenBright,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "$percentage%",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = MatrixGreen.copy(alpha = 0.7f),
+                            fontFamily = FontFamily.Monospace
+                        )
+                    )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = amount,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MatrixGreen,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (isTrendingUp) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
+                            contentDescription = "Trend",
+                            tint = if (isTrendingUp) MatrixGreen else MatrixError,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = trend,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = if (isTrendingUp) MatrixGreen else MatrixError,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Top Customer V3
+ * Shows rank, customer name, revenue, and percentage
+ */
+@Composable
+fun TopCustomerV3(
+    rank: String,
+    customer: String,
+    revenue: String,
+    invoiceCount: String,
+    percentOfTotal: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MatrixSurface,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = MatrixGreen.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(Spacing.md),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Rank
+            Text(
+                text = rank,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    color = MatrixGreen,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+
+            // Customer Details
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = customer,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MatrixGreenBright,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "$invoiceCount invoices • $percentOfTotal of total",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = MatrixGreen.copy(alpha = 0.6f),
+                        fontFamily = FontFamily.Monospace
+                    )
+                )
+            }
+
+            // Revenue Amount
+            Text(
+                text = revenue,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MatrixGreen,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
+    }
+}
+
+/**
+ * Monthly Revenue Item
+ * Shows month, revenue, and comparison to previous month
+ */
+@Composable
+fun MonthlyRevenueItemV3(
+    month: String,
+    revenue: String,
+    previousMonth: String,
+    isGrowth: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MatrixSurface,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = MatrixGreen.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(Spacing.md),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = month,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MatrixGreenBright,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "vs $previousMonth",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = MatrixGreen.copy(alpha = 0.6f),
+                        fontFamily = FontFamily.Monospace
+                    )
+                )
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (isGrowth) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
+                    contentDescription = "Trend",
+                    tint = if (isGrowth) MatrixGreen else MatrixError,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = revenue,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MatrixGreen,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        }
+    }
+}
+
+/**
  * Revenue Analytics Screen V3 (Matrix Edition)
  *
  * Displays revenue metrics and analytics with Matrix styling:
@@ -44,40 +276,37 @@ fun RevenueAnalyticsScreenV3(
     businessId: Long,
     navController: NavHostController
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "BIZAP > REVENUE",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontFamily = FontFamily.Monospace,
-                            color = MatrixGreenBright,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            letterSpacing = 1.sp
+    MatrixBackground(intensity = 1.2f) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            ">> REVENUE ANALYTICS",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontFamily = FontFamily.Monospace,
+                                color = MatrixGreenBright,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                letterSpacing = 1.sp
+                            )
                         )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MatrixGreen
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MatrixSurface,
-                    navigationIconContentColor = MatrixGreen,
-                    titleContentColor = MatrixGreen
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MatrixGreen
+                            )
+                        }
+                    },
+                    colors = matrixTopAppBarColors()
                 )
-            )
-        },
-        containerColor = MatrixBlack
-    ) { paddingValues ->
-        LazyColumn(
+            },
+            containerColor = MatrixBlack.copy(alpha = 0.8f)
+        ) { paddingValues ->
+            LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MatrixBlack)
@@ -87,15 +316,35 @@ fun RevenueAnalyticsScreenV3(
         ) {
             // ============= REVENUE METRICS =============
             item {
-                MatrixCardPremium(title = ">> REVENUE METRICS", isPulsing = true) {
-                    TerminalDataDisplay(
-                        rows = listOf(
-                            "Total Revenue (YTD)" to "$487,534.80",
-                            "Average Invoice Value" to "$4,234.65",
-                            "Growth Rate (YoY)" to "+23.4%",
-                            "Projected Revenue (EOY)" to "$892,450.00"
+                SectionCardMatrix(title = ">> REVENUE METRICS") {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Total Revenue (YTD)
+                        DetailRowMatrix(
+                            label = "Total Revenue (YTD)",
+                            value = "$487,534.80"
                         )
-                    )
+
+                        // Growth Rate (YoY)
+                        DetailRowMatrix(
+                            label = "Growth Rate (YoY)",
+                            value = "18.4%"
+                        )
+
+                        // Revenue Projection (EOY)
+                        DetailRowMatrix(
+                            label = "Projected Revenue (EOY)",
+                            value = "$892,450.00"
+                        )
+
+                        // Average Invoice Value
+                        DetailRowMatrix(
+                            label = "Average Invoice Value",
+                            value = "$4,234.65"
+                        )
+                    }
                 }
             }
 
@@ -239,11 +488,11 @@ fun RevenueAnalyticsScreenV3(
 }
 
 /**
- * Revenue Breakdown Item
+
  * Shows category breakdown with percentage and trend
  */
 @Composable
-private fun RevenueBreakdownItemV3(
+fun RevenueBreakdownItemV3(
     category: String,
     amount: String,
     percentage: Double,
@@ -317,7 +566,8 @@ private fun RevenueBreakdownItemV3(
                             text = trend,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = if (isTrendingUp) MatrixGreen else MatrixError,
-                                fontFamily = FontFamily.Monospace
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold
                             )
                         )
                     }
@@ -332,7 +582,7 @@ private fun RevenueBreakdownItemV3(
  * Shows rank, customer name, revenue, and percentage
  */
 @Composable
-private fun TopCustomerV3(
+fun TopCustomerV3(
     rank: String,
     customer: String,
     revenue: String,
@@ -404,7 +654,7 @@ private fun TopCustomerV3(
  * Shows month, revenue, and comparison to previous month
  */
 @Composable
-private fun MonthlyRevenueItemV3(
+fun MonthlyRevenueItemV3(
     month: String,
     revenue: String,
     previousMonth: String,
@@ -464,8 +714,8 @@ private fun MonthlyRevenueItemV3(
                         fontWeight = FontWeight.Bold
                     )
                 )
-            }
+             }
         }
     }
+    }
 }
-

@@ -449,11 +449,11 @@ detekt {
     toolVersion = "1.23.0"
     config.setFrom("${rootProject.projectDir}/.detekt.yml")
     baseline = file("$projectDir/detekt-baseline.xml")
-    reports {
-        html.required.set(true)
-        xml.required.set(true)
-        sarif.required.set(true)
-    }
+}
+
+// Configure detekt task to use JVM 19 (highest version supported by detekt 1.23.0)
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    jvmTarget = "19"
 }
 
 // Code Coverage Configuration

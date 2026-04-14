@@ -54,4 +54,13 @@ sealed class ScreenV3 {
      */
     @Serializable
     data class Paywall(val businessId: Long = 1L) : ScreenV3()
+
+    /**
+     * Matrix Debug Panel — Live effect tuning and profiling UI.
+     * Only visible in:
+     * - Debug builds (always)
+     * - Production Beta builds (if MATRIX_DEBUG_PANEL enabled)
+     */
+    @Serializable
+    data class MatrixDebugPanel(val businessId: Long = 1L) : ScreenV3()
 }

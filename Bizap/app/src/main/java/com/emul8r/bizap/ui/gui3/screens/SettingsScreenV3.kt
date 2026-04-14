@@ -20,10 +20,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.emul8r.bizap.data.config.FeatureFlag
+import com.emul8r.bizap.data.config.FeatureFlagManager
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.theme.Spacing
+import kotlinx.coroutines.launch
 
 /**
  * Settings Screen V3 (Matrix Edition)
@@ -48,12 +54,19 @@ fun SettingsScreenV3(
     var invoiceRemindersEnabled by remember { mutableStateOf(true) }
     var overdueAlertsEnabled by remember { mutableStateOf(true) }
 
+    val flagManager: FeatureFlagManager = hiltViewModel()
+    val scope = rememberCoroutineScope()
+
+    val canvasEnabled by flagManager
+        .observeFlag(FeatureFlag.MATRIX_CANVAS_RENDERER)
+        .collectAsStateWithLifecycle(false)
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "BIZAP > SETTINGS",
+                        ">> SETTINGS",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontFamily = FontFamily.Monospace,
                             color = MatrixGreenBright,
@@ -72,14 +85,10 @@ fun SettingsScreenV3(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MatrixSurface,
-                    navigationIconContentColor = MatrixGreen,
-                    titleContentColor = MatrixGreen
-                )
+                colors = matrixTopAppBarColors()
             )
         },
-        containerColor = MatrixBlack
+        containerColor = MatrixBlack.copy(alpha = 0.8f)
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -410,6 +419,64 @@ fun SettingsScreenV3(
                         onClick = { /* Open help */ },
                         modifier = Modifier.weight(1f)
                     )
+                }
+            }
+
+            // ============= VISUAL EFFECTS SECTION =============
+            SectionCardMatrix(title = ">> VISUAL EFFECTS") {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(Spacing.md),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "Enhanced Background (GPU-Accelerated)",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MatrixGreen.copy(alpha = 0.8f),
+                            fontFamily = FontFamily.Monospace
+                        )
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.md),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Canvas Renderer",
+                            color = MatrixGreen,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Switch(
+                            checked = canvasEnabled,
+                            onCheckedChange = { enabled ->
+                                scope.launch {
+                                    flagManager.setEnabled(FeatureFlag.MATRIX_CANVAS_RENDERER, enabled)
+                                }
+                            }
+                        )
+                    }
+
+                    // Debug Panel Link (Debug builds only)
+                    val context = LocalContext.current
+                    val isDebugBuild = remember {
+                        try {
+                            context.packageManager.getApplicationInfo(context.packageName, 0).flags and 2 != 0
+                        } catch (e: Exception) {
+                            false
+                        }
+                    }
+
+                    if (isDebugBuild) {
+                        GlowingMatrixButton(
+                            text = "[DEBUG] OPEN EFFECTS PANEL",
+                            onClick = {
+                                navController.navigate(ScreenV3.MatrixDebugPanel(businessId))
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
 

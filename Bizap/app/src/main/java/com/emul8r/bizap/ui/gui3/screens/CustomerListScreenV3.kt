@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -66,7 +67,7 @@ fun CustomerListScreenV3(
             TopAppBar(
                 title = {
                     Text(
-                        "BIZAP > CUSTOMERS",
+                        ">> CUSTOMERS",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontFamily = FontFamily.Monospace,
                             color = MatrixGreenBright,
@@ -90,12 +91,7 @@ fun CustomerListScreenV3(
                         Icon(Icons.Default.Search, contentDescription = "Search", tint = MatrixGreen)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MatrixSurface,
-                    navigationIconContentColor = MatrixGreen,
-                    titleContentColor = MatrixGreen,
-                    actionIconContentColor = MatrixGreen
-                )
+                colors = matrixTopAppBarColors()
             )
         },
         floatingActionButton = {
@@ -104,11 +100,16 @@ fun CustomerListScreenV3(
                     Timber.d("GUI3: Navigate to create customer")
                     navController.navigate(ScreenV3.CreateCustomer(businessId))
                 },
-                containerColor = MatrixGreen,
-                contentColor = MatrixBlack,
-                shape = RoundedCornerShape(12.dp)
+                containerColor = MatrixBlack.copy(alpha = 0.9f),
+                contentColor = MatrixGreenBright,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.border(
+                    width = 2.dp,
+                    color = MatrixGreen,
+                    shape = RoundedCornerShape(12.dp)
+                )
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Customer")
+                Icon(Icons.Default.Add, contentDescription = "Add Customer", tint = MatrixGreenBright)
             }
         },
         containerColor = MatrixBlack
@@ -295,13 +296,32 @@ private fun CustomerCardV3(
                     .background(MatrixGreen.copy(alpha = 0.3f))
             )
 
-            // Contact Info Row with Terminal Display
-            TerminalDataDisplay(
-                rows = listOf(
-                    "PHONE" to (customer.phone ?: "No phone"),
-                    "BUSINESS" to (customer.businessName ?: "N/A")
-                )
-            )
+            // Contact Info Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = customer.phone ?: "No phone",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MatrixGreen.copy(alpha = 0.8f)
+                        )
+                    )
+                }
+
+                // Business Name if available
+                if (!customer.businessName.isNullOrEmpty()) {
+                    Text(
+                        text = customer.businessName,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MatrixGreen.copy(alpha = 0.7f),
+                            fontFamily = FontFamily.Monospace
+                        )
+                    )
+                }
+            }
         }
     }
 }

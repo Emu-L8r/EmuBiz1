@@ -52,9 +52,9 @@
         <!-- Matrix GUI Main Activity (GUI3) -->
         <activity
             android:name="com.emul8r.bizap.ui.activities.MatrixGUIMainActivity"
-            android:exported="false"
+            android:exported="true"
             android:parentActivityName="com.emul8r.bizap.MainActivity"
-            android:theme="@style/Theme.Bizap" />
+            android:theme="@style/Theme.Bizap.Matrix" />
 
         <!-- Modern GUI Main Activity (GUI2) -->
         <activity

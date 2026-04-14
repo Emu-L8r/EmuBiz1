@@ -2,6 +2,7 @@ package com.emul8r.bizap.ui.gui3.screens
 
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,6 +19,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
@@ -26,6 +28,7 @@ import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.shared.GuiModeSwitcher
 import com.emul8r.bizap.ui.theme.Spacing
 import timber.log.Timber
+import androidx.compose.material3.TopAppBarDefaults as MaterialTopAppBarDefaults
 
 /**
  * Dashboard Screen V3 (Matrix Edition)
@@ -44,80 +47,139 @@ fun DashboardScreenV3(
     onSwitchToGui1: () -> Unit = {},
     onSwitchToGui2: () -> Unit = {}
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
+    println("🟤A DashboardScreenV3 @Composable function body START - businessId=$businessId")
+    Timber.d("🟤 DashboardScreenV3 @Composable function body START - businessId=$businessId")
+
+    DashboardScreenV3Content(
+        businessId = businessId,
+        navController = navController,
+        onSwitchToGui1 = onSwitchToGui1,
+        onSwitchToGui2 = onSwitchToGui2
+    )
+
+    println("🟤 DashboardScreenV3 COMPOSABLE FUNCTION ENDING")
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DashboardScreenV3Content(
+    businessId: Long,
+    navController: NavHostController,
+    onSwitchToGui1: () -> Unit,
+    onSwitchToGui2: () -> Unit
+) {
+    println("🟤B DashboardScreenV3Content START")
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background animation layer - FIRST layer, at z=0
+        MatrixBackground(
+            intensity = 1.2f,
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(0f)
+        ) {
+            println("🟤C MatrixBackground rendering")
+        }
+
+        // CONTENT LAYER: Pure Box-based layout (NO Material3 Scaffold)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(1f)
+        ) {
+            // ===== IMMERSIVE GUI3 TOP BAR (Cyberpunk Style) =====
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .background(MatrixBlack)
+                    .border(
+                        width = 2.dp,
+                        color = MatrixGreen.copy(alpha = 0.7f)
+                    )
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        "BIZAP > MATRIX",
+                        "▓▓ MATRIX DASHBOARD ▓▓",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontFamily = FontFamily.Monospace,
                             color = MatrixGreenBright,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
-                            letterSpacing = 1.sp
+                            letterSpacing = 2.sp
                         )
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MatrixSurface,
-                    navigationIconContentColor = MatrixGreen,
-                    titleContentColor = MatrixGreen,
-                    actionIconContentColor = MatrixGreen
-                ),
-                actions = {
-                    // GUI Mode Switcher (1, 2, 3 buttons)
-                    GuiModeSwitcher(
-                        currentMode = GuiMode.GUI3,
-                        onGui1Click = onSwitchToGui1,
-                        onGui2Click = onSwitchToGui2,
-                        onGui3Click = {} // Already on GUI3
-                    )
 
-                    // Settings icon
-                    IconButton(
-                        onClick = { navController.navigate(ScreenV3.Settings(businessId)) }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
-                    }
+                        GuiModeSwitcher(
+                            currentMode = GuiMode.GUI3,
+                            onGui1Click = onSwitchToGui1,
+                            onGui2Click = onSwitchToGui2,
+                            onGui3Click = {}
+                        )
 
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                        IconButton(
+                            onClick = { navController.navigate(ScreenV3.Settings(businessId)) }
+                        ) {
+                            Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MatrixGreen)
+                        }
+
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More", tint = MatrixGreen)
+                        }
                     }
                 }
-            )
+            }
+
+            // ===== SCROLLABLE CONTENT AREA (Pure Box/Column, NO Scaffold) =====
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(Spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+            ) {
+                // Welcome Section
+                WelcomeMatrixBanner()
+
+                // Key Metrics
+                KeyMetricsMatrix()
+
+                // Quick Actions
+                QuickActionsMatrix(navController, businessId)
+
+                // Recent Activity
+                RecentActivityMatrix()
+
+                // GUI Switcher (for testing)
+                Spacer(modifier = Modifier.height(Spacing.lg))
+                GuiSwitcherMatrix(
+                    onSwitchToGui1 = onSwitchToGui1,
+                    onSwitchToGui2 = onSwitchToGui2
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.xxl))
+            }
         }
-    ) { paddingValues ->
-        Column(
+
+        // DEBUG: Visible text to confirm execution
+        Text(
+            "🟡 GUI3 ACTIVE 🟡",
             modifier = Modifier
-                .fillMaxSize()
-                .background(MatrixBlack)
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-        ) {
-            // Welcome Section
-            WelcomeMatrixBanner()
-
-            // Key Metrics
-            KeyMetricsMatrix()
-
-            // Quick Actions
-            QuickActionsMatrix(navController, businessId)
-
-            // Recent Activity
-            RecentActivityMatrix()
-
-            // GUI Switcher (for testing)
-            Spacer(modifier = Modifier.height(Spacing.lg))
-            GuiSwitcherMatrix(
-                onSwitchToGui1 = onSwitchToGui1,
-                onSwitchToGui2 = onSwitchToGui2
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.xxl))
-        }
+                .zIndex(3f)
+                .padding(16.dp),
+            color = MatrixGreenBright,
+            fontSize = 12.sp
+        )
     }
 }
 
@@ -171,10 +233,12 @@ fun QuickActionsMatrix(
     val context = LocalContext.current
 
     MatrixCardPremium(title = ">> ACTIONS", isPulsing = false) {
+        // Row 1: NEW INVOICE | CUSTOMERS (2 buttons, equal width)
+        // ✅ Automatic spacing from parent Column handles vertical spacing
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp),
+                .wrapContentHeight(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -182,7 +246,8 @@ fun QuickActionsMatrix(
                 text = "NEW INVOICE",
                 onClick = { navController.navigate(ScreenV3.CreateInvoice(businessId)) },
                 modifier = Modifier
-                    .weight(1f),
+                    .weight(1f)
+                    .wrapContentHeight(),
                 isHighlight = true
             )
 
@@ -191,13 +256,16 @@ fun QuickActionsMatrix(
                 onClick = { navController.navigate(ScreenV3.Customers(businessId)) },
                 modifier = Modifier
                     .weight(1f)
+                    .wrapContentHeight()
             )
         }
 
+        // Row 2: NEW CUSTOMER | INVOICES | PAYMENTS (3 buttons, equal width)
+        // ✅ Automatic spacing from parent Column (no manual Spacer needed)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp),
+                .wrapContentHeight(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -208,7 +276,8 @@ fun QuickActionsMatrix(
                     navController.navigate(ScreenV3.CreateCustomer(businessId))
                 },
                 modifier = Modifier
-                    .weight(1f),
+                    .weight(1f)
+                    .wrapContentHeight(),
                 isHighlight = true
             )
 
@@ -217,6 +286,7 @@ fun QuickActionsMatrix(
                 onClick = { navController.navigate(ScreenV3.Invoices(businessId)) },
                 modifier = Modifier
                     .weight(1f)
+                    .wrapContentHeight()
             )
 
             GlowingMatrixButton(
@@ -224,15 +294,17 @@ fun QuickActionsMatrix(
                 onClick = { navController.navigate(ScreenV3.PaymentTracking(businessId)) },
                 modifier = Modifier
                     .weight(1f)
+                    .wrapContentHeight()
             )
         }
 
-        // New Row: Vault Access (Coming Soon)
+        // Row 3: Vault Access (Coming Soon) - single button, left-aligned
+        // ✅ Automatic spacing from parent Column
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                .wrapContentHeight(),
+            horizontalArrangement = Arrangement.Start,  // ✅ CHANGED: Left-aligned for vault
             verticalAlignment = Alignment.CenterVertically
         ) {
             GlowingMatrixButton(
@@ -242,12 +314,11 @@ fun QuickActionsMatrix(
                     // TODO: Integrate vault access in next phase
                 },
                 modifier = Modifier
-                    .weight(1f),
+                    .fillMaxWidth(0.4f)  // ✅ CHANGED: 40% width instead of weight(1f)
+                    .wrapContentHeight(),
                 isHighlight = true,
                 enabled = false  // Disabled for now - vault integration coming
             )
-
-            Spacer(modifier = Modifier.weight(2f))  // Spacing for visual balance
         }
     }
 }
@@ -276,9 +347,7 @@ fun RecentActivityMatrix() {
             )
         }
 
-        Spacer(modifier = Modifier.height(Spacing.md))
-
-        // Activity item 2
+        // Activity item 2 - spacing handled by parent Column
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -296,9 +365,7 @@ fun RecentActivityMatrix() {
             )
         }
 
-        Spacer(modifier = Modifier.height(Spacing.md))
-
-        // Activity item 3
+        // Activity item 3 - spacing handled by parent Column
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -327,14 +394,15 @@ fun GuiSwitcherMatrix(
     onSwitchToGui2: () -> Unit
 ) {
     MatrixCardPremium(title = ">> EXPERIENCE SWITCH", isPulsing = false) {
+        // Text label with automatic spacing from MatrixCardPremium's Column
         Text(
             "Choose your user experience:",
             style = MaterialTheme.typography.bodySmall.copy(
                 color = MatrixGreen.copy(alpha = 0.7f)
-            ),
-            modifier = Modifier.padding(bottom = Spacing.md)
+            )
         )
 
+        // Buttons automatically spaced by parent Column (Spacing.md)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
@@ -384,9 +452,7 @@ fun ComingSoonScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MatrixSurface
-                )
+                colors = matrixTopAppBarColors()
             )
         }
     ) { paddingValues ->

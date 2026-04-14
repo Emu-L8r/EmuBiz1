@@ -1,3 +1,8 @@
+            currencyCode = "US"  // ❌ Only 2 letters!
+            dateCreated = java.time.Instant.now().toString(),
+            dueDate = java.time.Instant.now().toString() + 86400000,
+            totalAmount = 10000,
+        // ARRANGE: Currency code must be exactly 3 letters
 package com.emul8r.bizap.domain.validation
 
 import com.emul8r.bizap.domain.model.Customer
@@ -96,12 +101,12 @@ class ValidationRulesTest {
             dateCreated = java.time.Instant.now().toString(),
             dueDate = java.time.Instant.now().toString() + 86400000,
             totalAmount = 0,  // ❌ ZERO!
-            items = listOf(
+            currency = "AUD"
                 InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 0)
             ),
             isQuote = false,
             status = InvoiceStatus.DRAFT,
-            currency = "AUD"
+            currencyCode = "AUD"
         )
 
         // ACT
@@ -173,25 +178,25 @@ class ValidationRulesTest {
         assertTrue(
             "Error should mention customer name",
             result.getErrorOrNull()?.contains("Customer") ?: false
-        )
+        // ARRANGE: Invoice with invalid currency (must be 3 letters)
     }
 
     @Test
     fun validateInvoice_invalidCurrencyCode_returnsFailure() {
-        // ARRANGE: Invoice with invalid currency (must be 3 letters)
-        val invoice = Invoice(
-            businessProfileId = 1,
-            customerId = 1,
-            customerName = "John Doe",
             dateCreated = Instant.now().toString(),
             dueDate = Instant.now().plusSeconds(86_400L).toString(),
             totalAmount = 10_000,
-            items = listOf(
+            customerId = 1,
+            customerName = "John Doe",
+            dateCreated = java.time.Instant.now().toString(),
+            dueDate = java.time.Instant.now().toString() + 86400000,
+            totalAmount = 10000,
+            currency = "US"  // ❌ Only 2 letters!
                 InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 10000)
             ),
             isQuote = false,
             status = InvoiceStatus.DRAFT,
-            currency = "US"  // ❌ Only 2 letters!
+            currencyCode = "US"  // ❌ Only 2 letters!
         )
 
         // ACT

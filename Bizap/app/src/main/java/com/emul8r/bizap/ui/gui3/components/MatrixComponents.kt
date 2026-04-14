@@ -1,20 +1,21 @@
 package com.emul8r.bizap.ui.gui3.components
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.emul8r.bizap.ui.gui3.theme.*
 import com.emul8r.bizap.ui.theme.Spacing
 
@@ -168,8 +169,8 @@ fun MatrixButton(
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.5.sp
             ),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            maxLines = 2,
+            overflow = TextOverflow.Visible
         )
     }
 }
@@ -177,10 +178,7 @@ fun MatrixButton(
 /**
  * Matrix FormattedAmount Component
  *
- * Displays monetary amounts with Matrix styling:
- * - Monospace font for precision
- * - Green color with semantic variations
- * - Professional financial appearance
+ * Displays monetary values with semantic coloring
  */
 @Composable
 fun FormattedAmountMatrix(
@@ -264,6 +262,78 @@ fun MatrixStatusBadge(
             ),
             modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm)
         )
+    }
+}
+
+/**
+ * Matrix OutlinedTextField Component
+ *
+ * Text input field with Matrix styling:
+ * - Green border
+ * - Green text and icons
+ * - Monospace font option
+ * - Error state with red border
+ */
+@Composable
+fun MatrixOutlinedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    leadingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    minLines: Int = 1,
+    maxLines: Int = if (minLines > 1) Int.MAX_VALUE else 1
+) {
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = {
+                if (leadingIcon != null) {
+                    Icon(
+                        imageVector = leadingIcon,
+                        contentDescription = null,
+                        tint = if (isError) MatrixError else MatrixGreen,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            },
+            isError = isError,
+            minLines = minLines,
+            maxLines = maxLines,
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = MatrixGreen,
+                focusedBorderColor = MatrixGreenBright,
+                errorBorderColor = MatrixError,
+                unfocusedLabelColor = MatrixGreen.copy(alpha = 0.7f),
+                focusedLabelColor = MatrixGreenBright,
+                errorLabelColor = MatrixError,
+                cursorColor = MatrixGreen,
+                unfocusedTextColor = MatrixGreen,
+                focusedTextColor = MatrixGreenBright,
+                errorTextColor = MatrixError
+            ),
+            shape = RoundedCornerShape(4.dp),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                fontFamily = FontFamily.Monospace,
+                color = MatrixGreen
+            )
+        )
+
+        // Error message
+        if (isError && errorMessage != null) {
+            Text(
+                text = errorMessage,
+                color = MatrixError,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+                fontFamily = FontFamily.Monospace
+            )
+        }
     }
 }
 

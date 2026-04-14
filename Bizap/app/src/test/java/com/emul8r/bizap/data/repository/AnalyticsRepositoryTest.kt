@@ -1,3 +1,4 @@
+    fun `taxCalculation_Correct - 0% tax results in zero tax amount`() {
 @file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.data.repository
 
@@ -37,16 +38,16 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
 
     // ── taxCalculation_Correct ────────────────────────────────────────────────
 
-    @Test
     fun `taxCalculation_Correct - 10percent tax on 100000 cents equals 10000 cents`() {
+    fun `taxCalculation_Correct - 10% tax on 100000 cents equals 10000 cents`() {
         val subtotal = 100000L  // $1000
         val taxRate = 0.10
         val taxAmount = (subtotal * taxRate).toLong()
         assertEquals(10000L, taxAmount, "10% tax on $1000 should be $100")
     }
 
-    @Test
     fun `taxCalculation_Correct - 0percent tax results in zero tax amount`() {
+    fun `taxCalculation_Correct - 0% tax results in zero tax amount`() {
         val subtotal = 100000L
         val taxRate = 0.0
         val taxAmount = (subtotal * taxRate).toLong()

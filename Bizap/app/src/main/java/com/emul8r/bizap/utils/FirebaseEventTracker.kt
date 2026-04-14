@@ -267,6 +267,109 @@ class FirebaseEventTracker(private val analytics: FirebaseAnalytics?) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════════════════
+    // MATRIX BACKGROUND ENGINE EVENTS (GUI3 Immersiveness — April 2026)
+    // ═══════════════════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Track when Matrix Canvas renderer is toggled in settings.
+     *
+     * @param canvasEnabled true if Canvas renderer enabled; false if text fallback
+     * @param device Device model (e.g., "Pixel 6a")
+     * @param deviceMemoryMb Available device memory in MB
+     */
+    fun trackMatrixBackgroundToggled(
+        canvasEnabled: Boolean,
+        device: String = android.os.Build.MODEL,
+        deviceMemoryMb: Int
+    ) {
+        val bundle = Bundle().apply {
+            putBoolean("canvas_enabled", canvasEnabled)
+            putString("device_model", device)
+            putInt("device_memory_mb", deviceMemoryMb)
+        }
+        logEvent("matrix_background_toggled", bundle)
+    }
+
+    /**
+     * Track frame time metrics for performance monitoring.
+     *
+     * Called periodically by PerformanceProfiler.
+     *
+     * @param avgFrameTimeMs Average frame time (milliseconds)
+     * @param device Device model
+     * @param dropFrameCount Number of frames > 16.67ms (jank frames)
+     */
+    fun trackFrameTimeMetric(
+        avgFrameTimeMs: Double,
+        device: String = android.os.Build.MODEL,
+        dropFrameCount: Int = 0
+    ) {
+        val bundle = Bundle().apply {
+            putDouble("avg_frame_time_ms", avgFrameTimeMs)
+            putString("device_model", device)
+            putInt("drop_frame_count", dropFrameCount)
+        }
+        logEvent("matrix_frame_time_metric", bundle)
+    }
+
+    /**
+     * Track when a Matrix effect rendering fails.
+     *
+     * Used to monitor effect stability in production.
+     *
+     * @param effectName Name of effect that failed (e.g., "glitch", "scanlines")
+     * @param exception Exception thrown during render
+     */
+    fun trackMatrixEffectError(
+        effectName: String,
+        exception: Throwable
+    ) {
+        val bundle = Bundle().apply {
+            putString("effect_name", effectName)
+            putString("error_type", exception::class.simpleName)
+            putString("error_message", exception.message?.take(100))  // Truncate to 100 chars
+        }
+        logEvent("matrix_effect_error", bundle)
+    }
+
+    /**
+     * Track when adaptive performance mode kicks in (reduces density on jank).
+     *
+     * @param oldDensity Previous rain density (0.3–1.5)
+     * @param newDensity Updated rain density after adaptation
+     * @param oldGlitch Previous glitch intensity
+     * @param newGlitch Updated glitch intensity after adaptation
+     */
+    fun trackMatrixAdaptationTriggered(
+        oldDensity: Float,
+        newDensity: Float,
+        oldGlitch: Float,
+        newGlitch: Float
+    ) {
+        val bundle = Bundle().apply {
+            putFloat("old_density", oldDensity)
+            putFloat("new_density", newDensity)
+            putFloat("old_glitch", oldGlitch)
+            putFloat("new_glitch", newGlitch)
+            putFloat("density_reduction", ((oldDensity - newDensity) / oldDensity) * 100)
+        }
+        logEvent("matrix_adaptation_triggered", bundle)
+    }
+
+    /**
+     * Track frame jank detection (frame time > 16.67ms = 60 FPS drop).
+     *
+     * @param frameTimeMs Actual frame time that exceeded threshold
+     */
+    fun trackMatrixFrameJank(frameTimeMs: Double) {
+        val bundle = Bundle().apply {
+            putDouble("frame_time_ms", frameTimeMs)
+            putDouble("overage_ms", frameTimeMs - 16.67)  // How much over 60 FPS target
+        }
+        logEvent("matrix_frame_jank", bundle)
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════════════════
     // INTERNAL
     // ═══════════════════════════════════════════════════════════════════════════════════════════
 

@@ -8,4 +8,12 @@
         <!-- Splash screen with company logo -->
         <item name="android:windowBackground">@drawable/splash_screen</item>
     </style>
+
+    <!-- Matrix GUI Theme (GUI3) - No Action Bar -->
+    <style name="Theme.Bizap.Matrix" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/material_blue_700</item>
+        <item name="colorPrimaryDark">@color/material_blue_900</item>
+        <item name="colorAccent">@color/material_blue_500</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
 </resources>

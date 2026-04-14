@@ -1,10 +1,14 @@
 package com.emul8r.bizap.ui.gui3.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -31,32 +35,21 @@ fun MatrixTheme(
     isDarkMode: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (isDarkMode) {
-        MatrixColorScheme.darkColorScheme()
-    } else {
-        MatrixColorScheme.lightColorScheme()
-    }
-
-    val shapes = Shapes(
-        extraSmall = RoundedCornerShape(4.dp),
-        small = RoundedCornerShape(8.dp),
-        medium = RoundedCornerShape(12.dp),
-        large = RoundedCornerShape(16.dp),
-        extraLarge = RoundedCornerShape(20.dp)
-    )
+    println("🎨 MatrixTheme: Applying Matrix typography (bypassing Material3 theme constraints)")
 
     val typography = MatrixTypography()
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        shapes = shapes,
-        typography = typography,
-        content = { MatrixBackground { content() } }
-    )
+    // Apply typography without MaterialTheme wrapper that would enforce Material3 colors
+    // This lets GUI3 render with full custom control over backgrounds and colors
+    CompositionLocalProvider(
+        LocalTextStyle provides typography.bodyMedium
+    ) {
+        content()
+    }
 }
 
 /**
- * Matrix Typography System
+        content = content
  *
  * Combines monospace fonts for code/numbers with clean sans-serif for body text.
  * Creates visual hierarchy while maintaining the Matrix aesthetic.
@@ -158,3 +151,20 @@ fun MatrixTypography(): Typography {
     )
 }
 
+
+
+/**
+ * Matrix TopAppBar Colors
+ *
+ * Returns TopAppBar colors styled for the Matrix theme (dark green, no Material3 blue).
+ * Use in TopAppBar: colors = matrixTopAppBarColors()
+ */
+@Composable
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+fun matrixTopAppBarColors() = TopAppBarDefaults.topAppBarColors(
+    containerColor = MatrixBlack,
+    navigationIconContentColor = MatrixGreen,
+    titleContentColor = MatrixGreenBright,
+    actionIconContentColor = MatrixGreen,
+    scrolledContainerColor = MatrixSurface
+)

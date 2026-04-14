@@ -7,34 +7,26 @@ import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
+import org.junit.Ignore
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
-
 /**
  * Unit tests for CreateInvoiceViewModelV2
+
  * Tests customer loading and selection functionality
+ */
+    private lateinit var viewModel: CreateInvoiceViewModelV2
  *
  * NOTE: These tests are currently @Ignored due to Hilt dependency resolution issues.
  * The business logic is sound; the test infrastructure needs refactoring.
  * TODO: Fix Hilt test setup (estimated 2-3 hours after Play Store launch)
- */
+    private val invoiceRepository = mockk<InvoiceRepository>()
 @OptIn(ExperimentalCoroutinesApi::class)
 @Ignore("Hilt dependency resolver misconfiguration - fix after Play Store launch")
-class CreateInvoiceViewModelV2Test : BaseUnitTest() {
-    private lateinit var viewModel: CreateInvoiceViewModelV2
-    private val invoiceRepository = mockk<InvoiceRepository>()
-    private val customerRepository = mockk<CustomerRepository>()
-    @Before
-    fun setup() {
-        every { customerRepository.getAllCustomers() } returns flowOf(emptyList())
-        viewModel = CreateInvoiceViewModelV2(
             invoiceRepository = invoiceRepository,
             customerRepository = customerRepository
         )
@@ -42,8 +34,6 @@ class CreateInvoiceViewModelV2Test : BaseUnitTest() {
     // ========================================
     // Customer Loading Tests
     @Test
-    fun `loadCustomers - should load customers from repository`() = runTest {
-        // Given
         val mockCustomers = listOf(
             Customer(
                 id = 1L,

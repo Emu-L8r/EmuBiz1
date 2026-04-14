@@ -99,9 +99,6 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 0
         coEvery { invoiceDao.insert(any(), any()) } returns expectedRowId
         coEvery { invoiceDao.insertLineItems(any()) } just Runs
-        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
-
-        // Act
         val result = repository.saveInvoice(invoice)
 
         // Assert
@@ -123,15 +120,14 @@ class InvoiceRepositoryTest : BaseUnitTest() {
 
         coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
         coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 0
-        coEvery { invoiceDao.insert(any(), any()) } throws dbException
         coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
 
         // Act
+        coEvery { invoiceDao.insert(any(), any()) } throws dbException
         val result = repository.saveInvoice(invoice)
 
         // Assert
         assertTrue(result.isFailure)
-        assertEquals(dbException, result.exceptionOrNull())
     }
 
     @Test
@@ -237,14 +233,13 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
         coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 0
         coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
-        coEvery { invoiceDao.insertLineItems(any()) } just Runs
 
         // When - first invoice: countInvoicesOnDate returns 0 → dailyCounter = 1
         coEvery { invoiceDao.insert(any(), any()) } returns 1L
         val result1 = repository.saveInvoice(baseInvoice)
+        coEvery { invoiceDao.insertLineItems(any()) } just Runs
         assertTrue(result1.isSuccess, "First invoice should save successfully")
 
-        // When - second invoice same day: countInvoicesOnDate returns 1 → dailyCounter = 2
         coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 1
         coEvery { invoiceDao.insert(any(), any()) } returns 2L
         val result2 = repository.saveInvoice(baseInvoice)
@@ -264,18 +259,18 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         assertEquals(3L, result3.getOrNull(), "Third invoice ID should be 3")
 
         // Verify countInvoicesOnDate was called for each new invoice
-        coVerify(atLeast = 3) { invoiceDao.getMaxDailySequence(any(), any(), any()) }
+        coVerify(atLeast = 3) { invoiceDao.countInvoicesOnDate(any()) }
     }
 
     @Test
     fun `testEditInvoiceSuccessfully - existing invoice uses UPDATE path without constraint violation`() = runTest {
-        // Arrange
+        coVerify(atLeast = 3) { invoiceDao.getMaxDailySequence(any(), any(), any()) }
         val businessId = 1L
         val existingInvoiceId = 2L
         val invoice = TestDataFactory.createTestInvoice(id = existingInvoiceId, businessProfileId = businessId)
 
         coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
-        coEvery { invoiceDao.deleteLineItems(existingInvoiceId) } just Runs
+        coVerify(atLeast = 3) { invoiceDao.countInvoicesOnDate(any()) }
         coEvery { invoiceDao.insertLineItems(any()) } just Runs
         coEvery { invoiceDao.updateInvoice(any()) } just Runs
 

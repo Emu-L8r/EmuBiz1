@@ -1,6 +1,6 @@
-@file:Suppress("UNCHECKED_CAST")
-package com.emul8r.bizap.ui.gui2.invoices
 
+    @Test
+    @Ignore("Hilt setup broken - see class comment")
 import org.junit.Ignore
 import org.junit.Test
 
@@ -8,17 +8,17 @@ import org.junit.Test
  * Unit tests for [CreateInvoiceViewModelV2].
  *
  * Verifies invoice creation logic including validation of line items and totals.
- *
- * NOTE: These tests are currently @Ignored due to Hilt dependency resolution issues
- * in the unit test environment. The test infrastructure needs refactoring to use
- * @HiltAndroidTest or move to androidTest/. The business logic they test is sound;
- * the infrastructure is the blocker. See: HEALTH_ASSESSMENT_APRIL_13_2026.md
- *
- * TODO: Fix Hilt test setup (estimated 2-3 hours after Play Store launch)
- *
- * TEMPORARY SOLUTION: All test methods are marked @Ignore individually to prevent
- * JUnit from attempting to run them while Hilt initialization is broken.
- */
+
+
+
+
+    fun `createInvoice_InvalidDate - due date before invoice date fails validation`() {
+        val invoice = buildInvoice(dueDate = Instant.now().minusSeconds(86_400L).toString())
+    fun `createInvoice_InvalidDate - same day due date passes validation`() {
+        val invoice = buildInvoice(dueDate = now)
+    fun `addLineItem_Success - adding item increases list size`() {
+        val items = mutableListOf(
+            InvoiceItem(description = "Item 1", quantity = 1.0, unitPrice = 10000L)
 @Ignore("Hilt dependency resolver misconfiguration - fix after Play Store launch")
 class CreateInvoiceViewModelTest {
 
@@ -36,42 +36,42 @@ class CreateInvoiceViewModelTest {
 
     @Test
     @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_NoLineItems - invoice with empty items fails validation`() {
-        // TODO: Fix Hilt test setup
-    }
 
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_NoLineItems - validation error message is descriptive`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_NoItems - error callback invoked`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_NegativeAmount - rejected by validation`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_ZeroAmount - rejected by validation`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_DueDateBeforeInvoiceDate - rejected by validation`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
+import com.emul8r.bizap.BaseUnitTest
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import java.time.Instant
+import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.model.InvoiceStatus
+ *
+ * NOTE: These tests are currently @Ignored due to Hilt dependency resolution issues
+ * in the unit test environment. The test infrastructure needs refactoring to use
+ * @HiltAndroidTest or move to androidTest/. The business logic they test is sound;
+ * the infrastructure is the blocker. See: HEALTH_ASSESSMENT_APRIL_13_2026.md
+ *
+ * TODO: Fix Hilt test setup (estimated 2-3 hours after Play Store launch)
+ *
+ * TEMPORARY SOLUTION: All test methods are marked @Ignore individually to prevent
+class CreateInvoiceViewModelTest : BaseUnitTest() {
+    private lateinit var invoiceRepository: InvoiceRepository
+    fun `createInvoice_Success - valid invoice with items triggers repository save`() = runTest {
+        val invoice = buildInvoice()
+        coEvery { invoiceRepository.saveInvoice(invoice) } returns Result.success(1L)
+    fun `createInvoice_Success - success callback invoked on creation`() = runTest {
+        val invoice = buildInvoice()
+        var successInvoked = false
+        viewModel.createInvoice(invoice, onSuccess = { successInvoked = true }, onError = {})
+        advanceUntilIdle()
+        assertTrue(successInvoked)
+        val invoice = buildInvoice(items = emptyList())
+        assertTrue(result.isFailure(), "Invoice with no line items should fail validation")
+        assertTrue(successCalled)
+        val invoice = buildInvoice(items = emptyList())
+        val result = ValidationRules.validateInvoice(invoice)
+        assertTrue(result.isFailure())
+        val error = result.getErrorOrNull()
+        assertTrue(error?.contains("line item", ignoreCase = true) == true, "Error should mention line item")
+        viewModel.createInvoice(invoice, onSuccess = { successInvoked = true }, onError = {})
     fun `createInvoice_RepositoryError - error callback invoked`() {
         // TODO: Fix Hilt test setup
     }
@@ -85,17 +85,17 @@ class CreateInvoiceViewModelTest {
     @Test
     @Ignore("Hilt setup broken - see class comment")
     fun `lineItem_Quantity - zero quantity rejected`() {
+        assertTrue(successInvoked)
+        val invoice = buildInvoice(items = emptyList())
+        assertTrue(result.isFailure(), "Invoice with no line items should fail validation")
+        assertTrue(successCalled)
+        val invoice = buildInvoice(items = emptyList())
+        val result = ValidationRules.validateInvoice(invoice)
+        assertTrue(result.isFailure())
+    // ── createInvoice_InvalidDate ─────────────────────────────────────────────
         // TODO: Fix Hilt test setup
     }
 
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItem_Quantity - positive quantity accepted`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
     fun `lineItem_UnitPrice - negative price rejected`() {
         // TODO: Fix Hilt test setup
     }
@@ -229,6 +229,44 @@ class CreateInvoiceViewModelTest {
     @Test
     @Ignore("Hilt setup broken - see class comment")
     fun `save_success - invoice saved to repository`() {
+    @Test
+    @Ignore("Hilt setup broken - see class comment")
+    // ── createInvoice_InvalidDate ─────────────────────────────────────────────
+        // TODO: Fix Hilt test setup
+    }
+
+    @Test
+    @Ignore("Hilt setup broken - see class comment")
+    fun `lineItem_Quantity - positive quantity accepted`() {
+        // TODO: Fix Hilt test setup
+    }
+
+    @Test
+    @Ignore("Hilt setup broken - see class comment")
+    fun `createInvoice_InvalidDate - due date before invoice date fails validation`() {
+        val invoice = buildInvoice(dueDate = Instant.now().minusSeconds(86_400L).toString())
+    fun `createInvoice_InvalidDate - same day due date passes validation`() {
+        val invoice = buildInvoice(dueDate = now)
+    fun `addLineItem_Success - adding item increases list size`() {
+        val items = mutableListOf(
+            InvoiceItem(description = "Item 1", quantity = 1.0, unitPrice = 10000L)
+        )
+    fun `addLineItem_Success - total recalculated after adding item`() {
+        val items = listOf(
+    fun `removeLineItem_Success - removing item decreases list size`() {
+        val items = mutableListOf(
+            InvoiceItem(description = "Item 1", quantity = 1.0, unitPrice = 10000L),
+    fun `removeLineItem_Success - total updated after removing item`() {
+        val items = listOf(
+            InvoiceItem(description = "Item 1", quantity = 1.0, unitPrice = 10000L)
+        )
+    fun `totalCalculation_Correct - subtotal is sum of all line item totals`() {
+        val items = listOf(
+    fun `totalCalculation_Correct - tax added to subtotal equals total`() {
+        val subtotal = 100000L
+        val taxRate = 0.10
+        val taxAmount = (subtotal * taxRate).toLong()
+}
         // TODO: Fix Hilt test setup
     }
 
@@ -259,18 +297,7 @@ class CreateInvoiceViewModelTest {
     @Test
     @Ignore("Hilt setup broken - see class comment")
     fun `extra_test_2`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `extra_test_3`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `extra_test_4`() {
+}
         // TODO: Fix Hilt test setup
     }
 
@@ -297,4 +324,14 @@ class CreateInvoiceViewModelTest {
     fun `extra_test_8`() {
         // TODO: Fix Hilt test setup
     }
-}
+
+    @Test
+    @Ignore("Hilt setup broken - see class comment")
+     fun `extra_test_9`() {
+         // TODO: Fix Hilt test setup
+     }
+ }
+
+
+
+

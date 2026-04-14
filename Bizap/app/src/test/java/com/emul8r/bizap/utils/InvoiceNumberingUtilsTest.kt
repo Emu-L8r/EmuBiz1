@@ -1,3 +1,5 @@
+        assertEquals("26-0410-05-Corp-v2", number)
+            customerName = "Acme Corp",
 package com.emul8r.bizap.utils
 
 import org.junit.Test
@@ -17,10 +19,11 @@ class InvoiceNumberingUtilsTest {
         assertEquals("John", InvoiceNumberingUtils.generateCustomerCode("John"))
     }
 
-    @Test
-    fun `generateCustomerCode removes corporate suffixes`() {
         val result = InvoiceNumberingUtils.generateCustomerCode("Acme Corp")
         assertEquals("Acme", result)
+        val result = InvoiceNumberingUtils.generateCustomerCode("Acme Corp Inc.")
+        assertEquals("Corp", result)
+        assertEquals("Corp", result)
     }
 
     @Test
@@ -45,14 +48,14 @@ class InvoiceNumberingUtilsTest {
             set(2026, Calendar.APRIL, 10, 0, 0, 0)
         }.timeInMillis
 
-        val number = InvoiceNumberingUtils.generateInvoiceNumber(
+            customerName = "Acme Company",
             date = april10_2026,
             dailySequence = 5,
-            customerName = "Acme Company",
-            version = 2
+            customerName = "Acme Corp",
+        assertEquals("26-0410-05-Company-v2", number)
         )
 
-        assertEquals("26-0410-05-Company-v2", number)
+        assertEquals("26-0410-05-Corp-v2", number)
     }
 
     @Test
