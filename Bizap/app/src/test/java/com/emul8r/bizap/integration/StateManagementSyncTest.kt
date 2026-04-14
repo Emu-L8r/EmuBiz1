@@ -52,7 +52,7 @@ class StateManagementSyncTest : BaseUnitTest() {
         id = 1L,
         customerId = 100L,
         customerName = "Test Customer",
-        date = System.currentTimeMillis(),
+        dateCreated = java.time.Instant.now().toString(),
         totalAmount = 100_000L,
         items = emptyList(),
         isQuote = false,
@@ -66,9 +66,6 @@ class StateManagementSyncTest : BaseUnitTest() {
             invoiceRepository.getInvoiceWithItemsById(any())
         } returns flowOf(testInvoice)
 
-        coEvery {
-            invoiceRepository.getInvoiceGroupWithVersions(any(), any())
-        } returns flowOf(listOf(testInvoice))
 
         // Create proper SavedStateHandle with invoiceId parameter
         val savedStateHandle = SavedStateHandle().apply {
@@ -318,4 +315,8 @@ class StateManagementSyncTest : BaseUnitTest() {
         }
     }
 }
+
+
+
+
 

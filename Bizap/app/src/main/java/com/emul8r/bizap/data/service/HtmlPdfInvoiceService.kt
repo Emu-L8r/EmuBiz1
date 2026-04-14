@@ -91,8 +91,8 @@ class HtmlPdfInvoiceService(
             businessPhone   = validatePhone(snapshot.businessPhone),
             customerName    = validateCustomerName(snapshot.customerName),
             customerAddress = validateAddress(snapshot.customerAddress),
-            headerText      = validateHeaderText(snapshot.headerText),
-            subheaderText   = validateHeaderText(snapshot.subheaderText),
+            header          = validateheader(snapshot.header),
+            subheader       = validateheader(snapshot.subheader),
             notes           = validateNotes(snapshot.notes),
             footerText      = validateFooterText(snapshot.footerText)
         )
@@ -147,7 +147,7 @@ class HtmlPdfInvoiceService(
         else -> address.trim()
     }
 
-    private fun validateHeaderText(text: String): String =
+    private fun validateheader(text: String): String =
         if (text.isEmpty() || text.contains(GARBAGE_PATTERN, ignoreCase = true)) "" else text.trim()
 
     private fun validateNotes(text: String): String =
@@ -450,7 +450,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:24px 24px;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:20pt;font-weight:bold;color:#ffffff;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#d4c5e8;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#d4c5e8;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:10px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#e0d8f0;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#e0d8f0;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -489,7 +489,7 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:24px;margin-top:10px;font-style:italic;color:#555555;line-height:1.8;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:24px;margin-top:10px;font-style:italic;color:#555555;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
 <!-- LINE ITEMS TABLE -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:24px;page-break-inside:avoid;">
@@ -544,7 +544,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:0 0 20px 0;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:19pt;font-weight:bold;color:#1a1a1a;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#666666;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#666666;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:8px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#555555;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#555555;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -581,7 +581,7 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:24px;margin-top:10px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:24px;margin-top:10px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
 <!-- LINE ITEMS TABLE -->
 <table width="100%" style="margin-bottom:24px;page-break-inside:avoid;">
@@ -637,7 +637,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:22px 24px;vertical-align:middle;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:19pt;font-weight:bold;color:#ffffff;margin-top:4px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#c5d9ed;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#c5d9ed;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
   </td>
   <td style="padding:22px 24px;text-align:right;vertical-align:middle;">
     <div style="font-size:20pt;font-weight:bold;letter-spacing:4px;color:#ffffff;">$docType</div>
@@ -680,7 +680,7 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:16px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:16px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
 <!-- LINE ITEMS TABLE -->
 <table width="100%" style="border:1px solid #dddddd;margin-bottom:4px;">
@@ -736,7 +736,7 @@ td, th { word-wrap: break-word; }
   <td width="55%" style="background-color:$deepBlue;padding:24px 24px;vertical-align:middle;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:19pt;font-weight:bold;color:#ffffff;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#a8c9e8;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#a8c9e8;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:8px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#b0c8e0;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#b0c8e0;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -776,7 +776,7 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:16px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:16px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
 <!-- LINE ITEMS TABLE -->
 <table width="100%" style="margin-bottom:4px;">
@@ -875,7 +875,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:18px 20px;vertical-align:middle;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:18pt;font-weight:700;color:#FFFFFF;line-height:1.2;margin-bottom:6px;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:11pt;color:#94A3B8;margin-top:4px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:11pt;color:#94A3B8;margin-top:4px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
   </td>
   <td style="padding:18px 20px;text-align:right;vertical-align:middle;">
     <div style="font-size:26pt;font-weight:700;letter-spacing:3px;color:#FFFFFF;">$docType</div>
@@ -912,7 +912,7 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:10px;font-style:italic;color:#64748B;font-size:9.5pt;line-height:1.6;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:10px;font-style:italic;color:#64748B;font-size:9.5pt;line-height:1.6;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
 <!-- LINE ITEMS TABLE (tight rows) -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:0;">
@@ -1029,7 +1029,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:20px 20px 16px 20px;vertical-align:top;border-left:6px solid $amber;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:20pt;font-weight:bold;color:$darkBrown;line-height:1.2;margin-bottom:6px;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:12pt;color:#92400E;margin-bottom:8px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:12pt;color:#92400E;margin-bottom:8px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:8px;font-size:9pt;color:#78716C;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div>${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div>${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -1072,7 +1072,7 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:10px;font-style:italic;color:#78716C;font-size:9.5pt;line-height:1.6;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:10px;font-style:italic;color:#78716C;font-size:9.5pt;line-height:1.6;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
 <!-- LINE ITEMS TABLE -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:0;">
@@ -1199,7 +1199,7 @@ $compiledCss
   <td style="padding:22px 24px;vertical-align:middle;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:18pt;font-weight:700;color:#FFFFFF;margin-top:${if (logoHtml.isNotBlank()) "8px" else "0"};line-height:1.2;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:10pt;color:#94A3B8;margin-top:4px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:10pt;color:#94A3B8;margin-top:4px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:8px;font-size:8.5pt;color:#CBD5E1;line-height:1.6;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div>${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div>${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -1242,7 +1242,7 @@ $compiledCss
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:12px;font-style:italic;color:#78716C;font-size:9.5pt;line-height:1.6;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:12px;font-style:italic;color:#78716C;font-size:9.5pt;line-height:1.6;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
 <!-- LINE ITEMS TABLE (Phase 2: refined column widths and spacing) -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:0;">

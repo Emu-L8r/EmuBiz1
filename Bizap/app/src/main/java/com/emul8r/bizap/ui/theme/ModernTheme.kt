@@ -13,7 +13,7 @@ import timber.log.Timber
 
 /**
  * Modern theme using Material Design 3 style aesthetics.
- * 
+ *
  * Features:
  * - Dynamically generated color palette from user's seed color
  * - Larger corner radiuses (8-24dp) for a modern, rounded look
@@ -53,15 +53,15 @@ fun ModernTheme(
         onError = Color.White,
         errorContainer = Color(0xFFFFEBEE),
         onErrorContainer = Color(0xFF8C0009),
-        
+
         background = Color(0xFFFFFBFE),
         onBackground = Color(0xFF1C1B1F),
-        
+
         surface = Color(0xFFFFFBFE),
         onSurface = Color(0xFF1C1B1F),
         surfaceVariant = seedColor.lighten(0.9f),
         onSurfaceVariant = Color(0xFF49454F),
-        
+
         outline = Color(0xFF79747E),
         outlineVariant = Color(0xFFCAC4D0)
     )
@@ -86,15 +86,15 @@ fun ModernTheme(
         onError = Color(0xFF5F000B),
         errorContainer = Color(0xFF93000A),
         onErrorContainer = Color(0xFFFDE7E9),
-        
+
         background = Color(0xFF1C1B1F),
         onBackground = Color(0xFFE6E1E5),
-        
+
         surface = Color(0xFF1C1B1F),
         onSurface = Color(0xFFE6E1E5),
         surfaceVariant = seedColor.darken(0.3f),
         onSurfaceVariant = Color(0xFFCAC4D0),
-        
+
         outline = Color(0xFF938F99),
         outlineVariant = Color(0xFF49454F)
     )
@@ -108,8 +108,16 @@ fun ModernTheme(
         extraLarge = RoundedCornerShape(28.dp)
     )
 
+    // Animate color scheme transitions
+    val animatedColorScheme = animateColorSchemeColors(
+        lightColors = lightColors,
+        darkColors = darkColors,
+        isDarkMode = themeConfig.isDarkMode,
+        useOLEDOptimization = false  // Can be toggled via settings
+    )
+
     MaterialTheme(
-        colorScheme = if (themeConfig.isDarkMode) darkColors else lightColors,
+        colorScheme = animatedColorScheme,
         shapes = shapes,
         typography = MaterialTheme.typography,
         content = content

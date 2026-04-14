@@ -35,7 +35,8 @@ import com.emul8r.bizap.R
 @Composable
 fun LandingScreen(
     onSelectGui1: () -> Unit,
-    onSelectGui2: () -> Unit
+    onSelectGui2: () -> Unit,
+    onSelectGui3: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier
@@ -103,6 +104,9 @@ fun LandingScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(
+                        color = MaterialTheme.colorScheme.surface
+                    )
                     .padding(32.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -111,16 +115,22 @@ fun LandingScreen(
 
                 Text(
                     text = "Choose Your Experience",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
 
                 Text(
                     text = "Select the interface that works best for you",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 18.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -135,15 +145,17 @@ fun LandingScreen(
                         containerColor = MaterialTheme.colorScheme.primaryContainer
                     )
                 ) {
-                    Column(modifier = Modifier.padding(24.dp)) {
+                    Column(modifier = Modifier.padding(28.dp)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
                                 text = "✨ Modern Experience",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.weight(1f)
                             )
@@ -151,53 +163,159 @@ fun LandingScreen(
                                 modifier = Modifier.padding(start = 8.dp),
                                 containerColor = MaterialTheme.colorScheme.tertiary
                             ) {
-                                Text("Recommended")
+                                Text(
+                                    "Recommended",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
                             }
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = "Latest features · Better performance · Intuitive interface",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = 16.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
+                            lineHeight = 24.sp
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
                         Button(
                             onClick = onSelectGui2,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )
                         ) {
-                            Text(stringResource(R.string.button_get_started), modifier = Modifier.padding(vertical = 8.dp))
+                            Text(
+                                stringResource(R.string.button_get_started),
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // GUI3 — Matrix Experience (NEW!)
+                ElevatedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(elevation = 4.dp),
+                    onClick = onSelectGui3,
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = Color(0xFF111111)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(28.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "🟢 Matrix Experience",
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = Color(0xFF00DD00),
+                                modifier = Modifier.weight(1f)
+                            )
+                            Badge(
+                                modifier = Modifier.padding(start = 8.dp),
+                                containerColor = Color(0xFF00FF00)
+                            ) {
+                                Text(
+                                    "NEW",
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black
+                                    )
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Cyberpunk elegance · Immersive UI · Premium feel",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = 16.sp
+                            ),
+                            color = Color(0xFF00DD00).copy(alpha = 0.85f),
+                            lineHeight = 24.sp
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Button(
+                            onClick = onSelectGui3,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF00DD00),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text(
+                                "Enter The Matrix",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // GUI1 — legacy option
                 OutlinedCard(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = onSelectGui1
+                    onClick = onSelectGui1,
+                    colors = CardDefaults.outlinedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    )
                 ) {
-                    Column(modifier = Modifier.padding(24.dp)) {
+                    Column(modifier = Modifier.padding(28.dp)) {
                         Text(
                             text = stringResource(R.string.text_modern_interface_description),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = stringResource(R.string.text_classic_experience_description),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.text_classic_experience_description),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = 16.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            lineHeight = 24.sp
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
                         OutlinedButton(
                             onClick = onSelectGui1,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
                         ) {
-                            Text("Use Classic", modifier = Modifier.padding(vertical = 8.dp))
+                            Text(
+                                "Use Classic",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
                         }
                     }
                 }

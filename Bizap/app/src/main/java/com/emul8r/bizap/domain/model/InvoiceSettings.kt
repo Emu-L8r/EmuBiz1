@@ -50,6 +50,146 @@ data class InvoiceSettings(
     @ColumnInfo(name = "selected_canvas_template")
     val selectedCanvasTemplate: CanvasInvoiceTemplate = CanvasInvoiceTemplate.MODERN,
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // NEW CUSTOMIZATION LAYERS (Phase 3 Enhancement)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // COLOR SCHEME SELECTION
+    @ColumnInfo(name = "selected_color_scheme")
+    val selectedColorScheme: ColorScheme = ColorScheme.PROFESSIONAL,
+
+    // SPACING PROFILE SELECTION
+    @ColumnInfo(name = "selected_spacing_profile")
+    val selectedSpacingProfile: SpacingProfile = SpacingProfile.NORMAL,
+
+    // VISUAL ACCENTS (JSON-serialized)
+    @ColumnInfo(name = "visual_accents_json")
+    val visualAccentsJson: String = VisualAccents.default().toJsonString(),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PHASE 2: COMPREHENSIVE VISUAL CUSTOMIZATION
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // GRADIENT & ACCENT OPTIONS
+    @ColumnInfo(name = "enable_gradient_header")
+    val enableGradientHeader: Boolean = true,
+    @ColumnInfo(name = "header_gradient_end_color")
+    val headerGradientEndColor: String = "#FF9F43",
+
+    // SHAPE & SHADOW OPTIONS
+    @ColumnInfo(name = "enable_rounded_corners")
+    val enableRoundedCorners: Boolean = true,
+    @ColumnInfo(name = "corner_radius_dp")
+    val cornerRadiusDp: Float = 8f,
+    @ColumnInfo(name = "enable_shadows")
+    val enableShadows: Boolean = true,
+    @ColumnInfo(name = "shadow_intensity")
+    val shadowIntensity: Float = 0.15f,
+
+    // ROW STYLING OPTIONS
+    @ColumnInfo(name = "enable_alternating_row_colors")
+    val enableAlternatingRowColors: Boolean = true,
+    @ColumnInfo(name = "alternate_row_color")
+    val alternateRowColor: String = "#F5F5F5",
+
+    // DIVIDER OPTIONS
+    @ColumnInfo(name = "enable_dividers")
+    val enableDividers: Boolean = true,
+    @ColumnInfo(name = "divider_style")
+    val dividerStyle: DividerStyle = DividerStyle.SOLID,
+    @ColumnInfo(name = "divider_color")
+    val dividerColor: String = "#CCCCCC",
+    @ColumnInfo(name = "divider_thickness_px")
+    val dividerThicknessPx: Float = 1f,
+
+    // HIGHLIGHT OPTIONS
+    @ColumnInfo(name = "highlight_totals")
+    val highlightTotals: Boolean = true,
+    @ColumnInfo(name = "total_box_style")
+    val totalBoxStyle: TotalBoxStyle = TotalBoxStyle.SUBTLE_BACKGROUND,
+    @ColumnInfo(name = "enable_status_badges")
+    val enableStatusBadges: Boolean = true,
+    @ColumnInfo(name = "badge_style")
+    val badgeStyle: BadgeStyle = BadgeStyle.ROUNDED_FILLED,
+
+    // BACKGROUND PATTERN OPTIONS
+    @ColumnInfo(name = "enable_background_pattern")
+    val enableBackgroundPattern: Boolean = false,
+    @ColumnInfo(name = "background_pattern_type")
+    val backgroundPatternType: BackgroundPattern = BackgroundPattern.WAVES,
+    @ColumnInfo(name = "pattern_opacity")
+    val patternOpacity: Float = 0.08f,
+
+    // WATERMARK OPTIONS
+    @ColumnInfo(name = "enable_watermark_text")
+    val enableWatermarkText: Boolean = false,
+    @ColumnInfo(name = "watermark_text")
+    val watermarkText: String = "",
+    @ColumnInfo(name = "watermark_opacity")
+    val watermarkOpacity: Float = 0.1f,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ✨ PHASE 3: BRANDING LAYER (Logo, Motto, Payment Icons, Signatures, QR)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // LOGO OPTIONS
+    @ColumnInfo(name = "enable_logo")
+    val enableLogo: Boolean = false,
+    @ColumnInfo(name = "logo_uri")
+    val logoUri: String = "",
+    @ColumnInfo(name = "logo_width_mm")
+    val logoWidthMm: Float = 30f,
+    @ColumnInfo(name = "logo_height_mm")
+    val logoHeightMm: Float = 30f,
+    @ColumnInfo(name = "logo_position")
+    val logoPosition: LogoPosition = LogoPosition.TOP_LEFT,
+
+    // MOTTO / SLOGAN OPTIONS
+    @ColumnInfo(name = "enable_motto")
+    val enableMotto: Boolean = false,
+    @ColumnInfo(name = "motto_text")
+    val mottoText: String = "",
+    @ColumnInfo(name = "motto_font_size")
+    val mottoFontSize: Float = 10f,
+    @ColumnInfo(name = "motto_color")
+    val mottoColor: String = "#666666",
+
+    // PAYMENT METHOD ICONS OPTIONS
+    @ColumnInfo(name = "enable_payment_icons")
+    val enablePaymentIcons: Boolean = false,
+    @ColumnInfo(name = "accepted_payment_methods_json")
+    val acceptedPaymentMethodsJson: String = "[]",
+    @ColumnInfo(name = "payment_icons_size")
+    val paymentIconsSize: Float = 16f,
+
+    // SIGNATURE OPTIONS
+    @ColumnInfo(name = "enable_signature_area")
+    val enableSignatureArea: Boolean = false,
+    @ColumnInfo(name = "signature_label")
+    val signatureLabel: String = "Authorized By:",
+    @ColumnInfo(name = "signature_line_length_mm")
+    val signatureLineLengthMm: Float = 40f,
+
+    // QR CODE OPTIONS
+    @ColumnInfo(name = "enable_qr_code")
+    val enableQrCode: Boolean = false,
+    @ColumnInfo(name = "qr_code_content")
+    val qrCodeContent: String = "",
+    @ColumnInfo(name = "qr_code_size_mm")
+    val qrCodeSizeMm: Float = 20f,
+    @ColumnInfo(name = "qr_code_position")
+    val qrCodePosition: QrCodePosition = QrCodePosition.BOTTOM_RIGHT,
+
+    // COMPANY BRANDING
+    @ColumnInfo(name = "company_motto")
+    val companyMotto: String = "",
+    @ColumnInfo(name = "company_website")
+    val companyWebsite: String = "",
+    @ColumnInfo(name = "company_social_media_json")
+    val companySocialMediaJson: String = "{}",
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     // PREVIEW MODE
     @ColumnInfo(name = "preview_with_placeholder")
     val previewWithPlaceholder: Boolean = false,
@@ -109,10 +249,28 @@ data class InvoiceSettings(
     /**
      * Validate settings for PDF-specific fields only.
      * Business information validation happens in BusinessProfile, not here.
+     *
+     * Note: selectedTheme always has a default value (InvoiceTheme.CANVAS),
+     * so this validation always passes. Kept for API stability.
      */
-    fun isValid(): Boolean {
-        @Suppress("ConstantConditionIf")  // selectedTheme has default value, always true
-        return selectedTheme != null
+    fun isValid(): Boolean = true
+
+    /**
+     * Parse visual accents from JSON string.
+     * Falls back to default if parsing fails.
+     */
+    fun getVisualAccents(): VisualAccents {
+        return try {
+            val json = visualAccentsJson
+            val showBorders = json.contains("\"showBorders\":true", ignoreCase = true)
+            val showShadows = json.contains("\"showShadows\":true", ignoreCase = true)
+            val showDividers = json.contains("\"showDividers\":true", ignoreCase = true)
+            val highlightTotals = json.contains("\"highlightTotals\":true", ignoreCase = true)
+            val useGradients = json.contains("\"useGradients\":true", ignoreCase = true)
+            VisualAccents(showBorders, showShadows, showDividers, highlightTotals, useGradients)
+        } catch (e: Exception) {
+            VisualAccents.default()
+        }
     }
 
     /**
@@ -128,25 +286,38 @@ data class InvoiceSettings(
  *
  * CANVAS: Android's PdfDocument API - direct coordinate control, artistic designs
  * HTML_CSS: HTML-to-PDF conversion - professional layouts, CSS styling
+ * SASS_PROFESSIONAL: Premium two-column layout with professional branding, icons, QR codes
  */
 enum class PdfEngine {
-    CANVAS,      // Canvas-based rendering with coordinate control
-    HTML_CSS     // HTML-to-PDF rendering with CSS styling
+    CANVAS,              // Canvas-based rendering with coordinate control
+    HTML_CSS,            // HTML-to-PDF rendering with CSS styling
+    SASS_PROFESSIONAL    // Professional SASS/HTML template - two-column, modern branding
 }
 
 /**
- * Enum for page layout organization.
+ * Enum for page layout organization - 8 different layout options.
  *
- * CLASSIC: Original layout - Header | Bill To + Invoice Details | Items | Totals | Footer
- * MODERN: Compact side-by-side layout with grid organization
- * SPACIOUS: Generous spacing and larger fonts for premium feel
- * COMPACT: Executive compact layout - minimal margins, many items per page
+ * **Standard Layouts:**
+ * - CLASSIC: Traditional layout - Header | Bill To + Invoice Details | Items | Totals | Footer
+ * - MODERN: Compact side-by-side layout with grid organization
+ * - SPACIOUS: Generous spacing and larger fonts for premium feel
+ * - COMPACT: Executive compact layout - minimal margins, many items per page
+ *
+ * **Advanced Layouts:**
+ * - SIDEBAR: Business info/branding in left sidebar, items and totals on right
+ * - CARDS: Each line item displayed as a card instead of table rows
+ * - MINIMAL_TABLES: Ultra-clean table layout with minimal borders and lines
+ * - FOCUSED: Single-column layout with emphasis on totals and key metrics
  */
-enum class PageLayout {
-    CLASSIC,     // Traditional invoice layout
-    MODERN,      // Compact modern grid-based layout
-    SPACIOUS,    // Premium spacious layout with generous spacing
-    COMPACT      // Executive compact layout - fits many items
+enum class PageLayout(val emoji: String, val displayName: String, val description: String) {
+    CLASSIC("📋", "Classic", "Traditional invoice layout - header, details, items, totals, footer"),
+    MODERN("🎯", "Modern", "Compact side-by-side grid layout - efficient and professional"),
+    SPACIOUS("✨", "Spacious", "Premium layout with generous spacing - elegant and luxurious"),
+    COMPACT("📊", "Compact", "Executive tight layout - fits many items per page"),
+    SIDEBAR("📑", "Sidebar", "Business branding on left panel - modern and distinctive"),
+    CARDS("🎨", "Cards", "Line items as cards - visually engaging and interactive-feel"),
+    MINIMAL_TABLES("⚪", "Minimal", "Ultra-clean tables with minimal borders - minimalist elegance"),
+    FOCUSED("🎯", "Focused", "Single column with emphasis on totals - financial clarity")
 }
 
 /**
@@ -367,9 +538,113 @@ enum class InvoiceLocale(
 }
 
 /**
+ * Enum for color scheme selection - 6 professional palettes for invoice design.
+ *
+ * Each color scheme defines primary colors, accents, and styling guidelines
+ * that are applied via CSS variable overrides to match the selected palette.
+ */
+enum class ColorScheme(val emoji: String, val displayName: String, val description: String, val primaryHex: String, val accentHex: String) {
+    PROFESSIONAL("💼", "Professional", "Navy & gold formal business palette - corporate and trustworthy", "#003366", "#FFC107"),
+    VIBRANT("🎨", "Vibrant", "Purple & orange dynamic palette - creative and energetic", "#6B4C9A", "#FF9F43"),
+    MINIMAL("⚪", "Minimal", "Grayscale clean palette - modern and sophisticated", "#1a1a1a", "#666666"),
+    WARM("🌅", "Warm", "Amber & brown friendly palette - approachable and welcoming", "#D97706", "#78350F"),
+    TECH("💻", "Tech", "Deep blue & cyan modern palette - innovative and forward-thinking", "#0F172A", "#06B6D4"),
+    NATURE("🌿", "Nature", "Green & earth-tone palette - sustainable and natural feeling", "#15803D", "#92400E")
+}
+
+/**
+ * Enum for spacing profile - controls whitespace and padding ratios throughout invoice.
+ *
+ * Each profile defines standard padding, line-height, and gap ratios
+ * applied consistently across all layout elements.
+ */
+enum class SpacingProfile(val emoji: String, val displayName: String, val description: String) {
+    TIGHT("📍", "Tight", "Compact spacing - fits maximum items per page"),
+    NORMAL("📄", "Normal", "Standard spacing - balanced and readable"),
+    GENEROUS("📐", "Generous", "Extra spacing - spacious and premium feel"),
+    PREMIUM("👑", "Premium", "Luxury spacing - large gaps between sections")
+}
+
+/**
+ * Data class for visual accents - boolean toggles for PDF styling enhancements.
+ *
+ * These modifiers are applied as CSS classes/overrides to customize
+ * borders, shadows, dividers, highlights, and gradients across the invoice.
+ */
+data class VisualAccents(
+    val showBorders: Boolean = true,           // Show/hide borders around sections
+    val showShadows: Boolean = true,           // Show/hide drop shadows on cards
+    val showDividers: Boolean = true,          // Show/hide horizontal divider lines
+    val highlightTotals: Boolean = true,       // Highlight totals section with accent color
+    val useGradients: Boolean = false          // Use gradient backgrounds on headers
+) {
+    companion object {
+        fun default() = VisualAccents()
+    }
+
+    fun toJsonString(): String {
+        return """{"showBorders":$showBorders,"showShadows":$showShadows,"showDividers":$showDividers,"highlightTotals":$highlightTotals,"useGradients":$useGradients}"""
+    }
+
+    fun toMap(): Map<String, Boolean> {
+        return mapOf(
+            "showBorders" to showBorders,
+            "showShadows" to showShadows,
+            "showDividers" to showDividers,
+            "highlightTotals" to highlightTotals,
+            "useGradients" to useGradients
+        )
+    }
+}
+
+/**
  * Currency symbol position (before or after amount).
  */
 enum class CurrencyPosition {
     BEFORE,  // $ 1,234.56
     AFTER    // 1.234,56 €
+}
+
+/**
+ * Divider style options for section separators.
+ * SOLID: Solid line
+ * DASHED: Dashed pattern
+ * DOTTED: Dotted pattern
+ */
+enum class DividerStyle {
+    SOLID, DASHED, DOTTED
+}
+
+/**
+ * Total box visual style options.
+ * SUBTLE_BACKGROUND: Light background color
+ * ACCENT_BORDER: Colored border with no fill
+ * BOLD_HIGHLIGHT: Strong colored background
+ * GRADIENT_BACKGROUND: Gradient fill matching primary/accent
+ */
+enum class TotalBoxStyle {
+    SUBTLE_BACKGROUND, ACCENT_BORDER, BOLD_HIGHLIGHT, GRADIENT_BACKGROUND
+}
+
+/**
+ * Badge style options for invoice status (PAID, DUE, OVERDUE, etc).
+ * ROUNDED_FILLED: Rounded rectangle with solid fill
+ * ROUNDED_OUTLINE: Rounded rectangle with border only
+ * CIRCULAR: Circular badge with centered text
+ * BADGE_WITH_ICON: Badge with icon and text side-by-side
+ */
+enum class BadgeStyle {
+    ROUNDED_FILLED, ROUNDED_OUTLINE, CIRCULAR, BADGE_WITH_ICON
+}
+
+/**
+ * Background pattern options for subtle visual texture.
+ * WAVES: Subtle wave pattern
+ * DOTS: Dot grid pattern
+ * GRID: Fine grid pattern
+ * STRIPES: Diagonal stripe pattern
+ * NONE: No pattern
+ */
+enum class BackgroundPattern {
+    WAVES, DOTS, GRID, STRIPES, NONE
 }

@@ -72,12 +72,15 @@ class CoreUnitTests {
     fun createInvoice_validData_savesSuccessfully() = runTest {
         // ARRANGE
         val customer = TestDataFactory.createValidCustomer()
-        val lineItem1 = TestDataFactory.createValidLineItem()
-        val lineItem2 = TestDataFactory.createValidLineItem()
+        val lineItem1 = TestDataFactory.createValidInvoiceItem()
+        val lineItem2 = TestDataFactory.createValidInvoiceItem()
         val items = listOf(lineItem1, lineItem2)
 
         // Calculate total correctly (sum of line item totals)
         val totalAmount = items.sumOf { (it.unitPrice * it.quantity).toLong() }
+
+        val now = java.time.Instant.now().toString()
+        val dueDate = java.time.Instant.now().plusSeconds(86400L).toString()
 
         val invoice = Invoice(
             businessProfileId = 1,
@@ -85,11 +88,11 @@ class CoreUnitTests {
             customerName = customer.name,
             items = items,
             totalAmount = totalAmount,
-            currencyCode = "AUD",
+            currency = "AUD",
             isQuote = false,
             status = InvoiceStatus.DRAFT,
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis() + 86400000  // 1 day later
+            dateCreated = now,
+            dueDate = dueDate
         )
 
         // Mock repository to return ID = 123
@@ -194,13 +197,13 @@ class CoreUnitTests {
     fun calculateInvoiceTotal_multipleItems_calculatesCorrect() {
         // ARRANGE
         // Item 1: 2 items × $50.00 = $100.00 (10000 cents)
-        val item1 = TestDataFactory.createValidLineItem().copy(
+        val item1 = TestDataFactory.createValidInvoiceItem().copy(
             quantity = 2.0,
             unitPrice = 5000  // $50 in cents
         )
 
         // Item 2: 1.5 items × $100.00 = $150.00 (15000 cents)
-        val item2 = TestDataFactory.createValidLineItem().copy(
+        val item2 = TestDataFactory.createValidInvoiceItem().copy(
             quantity = 1.5,
             unitPrice = 10000  // $100 in cents
         )
@@ -438,4 +441,8 @@ class CoreUnitTests {
  *   BUILD SUCCESSFUL
  *   10 passed in 1200ms
  */
+
+
+
+
 

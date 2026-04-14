@@ -2,11 +2,14 @@ package com.emul8r.bizap.data.calculation
 
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
+import com.emul8r.bizap.domain.model.balanceRemaining
+import com.emul8r.bizap.domain.model.isFullyPaid
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import java.time.Instant
 
 /**
  * Unit tests for outstanding balance calculations.
@@ -16,8 +19,8 @@ import kotlin.test.assertTrue
  */
 class OutstandingBalanceCalculationTest {
 
-    private val now = System.currentTimeMillis()
-    private val tomorrow = now + 86_400_000L
+    private val now = Instant.now().toString()
+    private val tomorrow = Instant.now().plusSeconds(86_400L).toString()
 
     private fun buildInvoice(
         totalAmount: Long,
@@ -28,14 +31,14 @@ class OutstandingBalanceCalculationTest {
         businessProfileId = 1L,
         customerId = 1L,
         customerName = "Test Customer",
-        date = now,
+        dateCreated = now,
         dueDate = tomorrow,
         totalAmount = totalAmount,
         amountPaid = amountPaid,
-        items = listOf(LineItem(description = "Service", quantity = 1.0, unitPrice = totalAmount)),
+        items = listOf(InvoiceItem(description = "Service", quantity = 1.0, unitPrice = totalAmount)),
         isQuote = false,
         status = status,
-        currencyCode = "AUD"
+        currency = "AUD"
     )
 
     // ── outstanding_PartialPayment ─────────────────────────────────────────────
@@ -43,7 +46,8 @@ class OutstandingBalanceCalculationTest {
     @Test
     fun `outstanding_PartialPayment - partial payment reduces balance correctly`() {
         val invoice = buildInvoice(totalAmount = 100000L, amountPaid = 40000L)
-        assertEquals(60000L, invoice.balanceRemaining, "Balance should be $600 after $400 payment")
+        val balance: Double = invoice.balanceRemaining
+        assertEquals(600.0, balance, "Balance should be $600 after $400 payment")
     }
 
     @Test
@@ -68,7 +72,8 @@ class OutstandingBalanceCalculationTest {
     @Test
     fun `outstanding_FullPayment - full payment results in zero balance`() {
         val invoice = buildInvoice(totalAmount = 100000L, amountPaid = 100000L)
-        assertEquals(0L, invoice.balanceRemaining, "Balance should be zero after full payment")
+        val balance: Double = invoice.balanceRemaining
+        assertEquals(0.0, balance, "Balance should be zero after full payment")
     }
 
     @Test
@@ -81,7 +86,8 @@ class OutstandingBalanceCalculationTest {
     fun `outstanding_FullPayment - zero amount paid with nonzero invoice is not fully paid`() {
         val invoice = buildInvoice(totalAmount = 100000L, amountPaid = 0L)
         assertFalse(invoice.isFullyPaid, "Invoice with no payment should not be fully paid")
-        assertEquals(100000L, invoice.balanceRemaining)
+        val balance: Double = invoice.balanceRemaining
+        assertEquals(1000.0, balance)
     }
 
     // ── outstanding_Overpayment_Prevented ─────────────────────────────────────
@@ -116,7 +122,7 @@ class OutstandingBalanceCalculationTest {
     @Test
     fun `invoiceTotal_SubtotalPlusTax - total equals subtotal when no tax`() {
         val items = listOf(
-            LineItem(description = "Service", quantity = 2.0, unitPrice = 10000L)
+            InvoiceItem(description = "Service", quantity = 2.0, unitPrice = 10000L)
         )
         val subtotal = items.sumOf { (it.unitPrice * it.quantity).toLong() }
         val tax = 0L
@@ -135,8 +141,8 @@ class OutstandingBalanceCalculationTest {
     @Test
     fun `invoiceTotal_SubtotalPlusTax - invoice total matches calculated total`() {
         val items = listOf(
-            LineItem(description = "Item A", quantity = 2.0, unitPrice = 5000L),
-            LineItem(description = "Item B", quantity = 1.0, unitPrice = 10000L)
+            InvoiceItem(description = "Item A", quantity = 2.0, unitPrice = 5000L),
+            InvoiceItem(description = "Item B", quantity = 1.0, unitPrice = 10000L)
         )
         val subtotal = items.sumOf { (it.unitPrice * it.quantity).toLong() }
         assertEquals(20000L, subtotal, "Subtotal should be $200")
@@ -146,14 +152,14 @@ class OutstandingBalanceCalculationTest {
 
     @Test
     fun `lineItemTotal_QtyTimesPrice - line item total is quantity times unit price`() {
-        val item = LineItem(description = "Service", quantity = 3.0, unitPrice = 10000L)
+        val item = InvoiceItem(description = "Service", quantity = 3.0, unitPrice = 10000L)
         val total = (item.unitPrice * item.quantity).toLong()
         assertEquals(30000L, total, "3 × $100 = $300")
     }
 
     @Test
     fun `lineItemTotal_QtyTimesPrice - fractional quantity calculates correctly`() {
-        val item = LineItem(description = "Half Hour", quantity = 0.5, unitPrice = 20000L)
+        val item = InvoiceItem(description = "Half Hour", quantity = 0.5, unitPrice = 20000L)
         val total = (item.unitPrice * item.quantity).toLong()
         assertEquals(10000L, total, "0.5 × $200 = $100")
     }
@@ -161,9 +167,9 @@ class OutstandingBalanceCalculationTest {
     @Test
     fun `lineItemTotal_QtyTimesPrice - multiple items summed correctly`() {
         val items = listOf(
-            LineItem(description = "Item 1", quantity = 2.0, unitPrice = 10000L),  // $200
-            LineItem(description = "Item 2", quantity = 3.0, unitPrice = 5000L),   // $150
-            LineItem(description = "Item 3", quantity = 1.0, unitPrice = 20000L)   // $200
+            InvoiceItem(description = "Item 1", quantity = 2.0, unitPrice = 10000L),  // $200
+            InvoiceItem(description = "Item 2", quantity = 3.0, unitPrice = 5000L),   // $150
+            InvoiceItem(description = "Item 3", quantity = 1.0, unitPrice = 20000L)   // $200
         )
         val total = items.sumOf { (it.unitPrice * it.quantity).toLong() }
         assertEquals(55000L, total, "Sum should be $550")
@@ -173,10 +179,11 @@ class OutstandingBalanceCalculationTest {
 
     @Test
     fun `ageingBuckets_Classification_Correct - invoice within 30 days is current`() {
-        val invoiceDate = now - 15 * 86_400_000L  // 15 days ago
-        val daysOverdue = (now - invoiceDate) / 86_400_000L
+        val invoiceDate = Instant.now().minusSeconds(15 * 86_400L)  // 15 days ago
+        val now_instant = Instant.now()
+        val daysOverdue = (now_instant.epochSecond - invoiceDate.epochSecond) / 86_400
         val bucket = classifyAgingBucket(daysOverdue.toInt())
-        assertEquals("Current", bucket, "15 days overdue should be Current")
+        assertEquals("Current", bucket, "15 days ago should be Current")
     }
 
     @Test
@@ -216,3 +223,6 @@ class OutstandingBalanceCalculationTest {
         }
     }
 }
+
+
+

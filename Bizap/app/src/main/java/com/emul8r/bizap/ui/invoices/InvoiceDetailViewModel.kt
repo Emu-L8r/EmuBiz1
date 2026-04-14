@@ -69,14 +69,12 @@ class InvoiceDetailViewModel @Inject constructor(
     val uiState: StateFlow<InvoiceDetailUiState> = _currentInvoiceId
         .flatMapLatest { id ->
             invoiceRepo.getInvoiceWithItemsById(id)
-                .flatMapLatest { invoice ->
+                .map { invoice ->
                     if (invoice == null) {
-                        flowOf(InvoiceDetailUiState.Error("Invoice not found"))
+                        InvoiceDetailUiState.Error("Invoice not found")
                     } else {
-                        invoiceRepo.getInvoiceGroupWithVersions(invoice.invoiceYear, invoice.invoiceSequence)
-                            .map { versions ->
-                                InvoiceDetailUiState.Success(invoice, versions)
-                            }
+                        // TODO: Re-enable version grouping after getInvoiceGroupWithVersions is implemented
+                        InvoiceDetailUiState.Success(invoice, emptyList())
                     }
                 }
         }
@@ -140,15 +138,15 @@ class InvoiceDetailViewModel @Inject constructor(
             }
             return
         }
-        
+
         viewModelScope.launch {
             try {
                 val newAmountPaid = invoice.amountPaid + amount
                 val newStatus = if (newAmountPaid >= invoice.totalAmount) InvoiceStatus.PAID else InvoiceStatus.PARTIALLY_PAID
-                
+
                 invoiceRepo.updateAmountPaid(invoice.id, newAmountPaid).getOrThrow()
                 invoiceRepo.updateInvoiceStatus(invoice.id, newStatus).getOrThrow()
-                
+
                 _uiEvent.emit(UiEvent.ShowSnackbar("Payment of ${CentsFormatter.formatCents(amount)} recorded."))
             } catch (e: Exception) {
                 _uiEvent.emit(UiEvent.ShowSnackbar("Failed to record payment: ${e.message}"))
@@ -162,7 +160,7 @@ class InvoiceDetailViewModel @Inject constructor(
     fun createCorrection() {
         val currentState = uiState.value as? InvoiceDetailUiState.Success ?: return
         val original = currentState.data
-        
+
         viewModelScope.launch {
             invoiceRepo.createCorrection(original.id)
                 .onSuccess { newId ->
@@ -397,16 +395,29 @@ class InvoiceDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Convert ISO-8601 date string to epoch milliseconds.
+     */
+    private fun String?.toEpochMillis(): Long {
+        return try {
+            if (this.isNullOrBlank()) 0L
+            else java.time.Instant.parse(this).toEpochMilli()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to parse date string: $this")
+            0L
+        }
+    }
+
     private fun buildSnapshot(invoice: Invoice, business: com.emul8r.bizap.domain.model.BusinessProfile): InvoiceSnapshot {
         return InvoiceSnapshot(
             invoiceId = invoice.id,
-            invoiceNumber = invoice.getFormattedInvoiceNumber(),
+            invoiceNumber = invoice.invoiceNumber,
             displayName = invoice.displayName,
             customerName = invoice.customerName,
             customerAddress = invoice.customerAddress,
-            customerEmail = invoice.customerEmail,
-            date = invoice.date,
-            dueDate = invoice.dueDate,
+            customerEmail = invoice.customerEmail ?: "",
+            date = invoice.dateCreated.toEpochMillis(),
+            dueDate = invoice.dueDate.toEpochMillis(),
             items = invoice.items.map {
                 val itemTotal = (it.unitPrice * it.quantity).toLong()
                 LineItemSnapshot(it.description, it.quantity, it.unitPrice, itemTotal)
@@ -421,8 +432,9 @@ class InvoiceDetailViewModel @Inject constructor(
             businessPhone = business.phone,
             businessAddress = business.address,
             logoBase64 = business.logoBase64,
-            headerText = invoice.header ?: "",
-            subheaderText = invoice.subheader ?: "",
+            // Standardized naming (Phase 2.0.3)
+            header = invoice.header ?: "",
+            subheader = invoice.subheader ?: "",
             notes = invoice.notes ?: "",
             footerText = invoice.footer ?: "",
             bankAccountName = business.accountName ?: "",
@@ -439,7 +451,7 @@ class InvoiceDetailViewModel @Inject constructor(
             try {
                 val businessProfile = businessProfileRepository.activeProfile.first()
                 val snapshot = buildSnapshot(invoiceData, businessProfile)
-                
+
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceData,
                     snapshot = snapshot,

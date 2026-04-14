@@ -102,9 +102,13 @@ private fun EditInvoiceForm(
 
         // Invoice Date (read-only)
         OutlinedTextField(
-            value = java.time.Instant.ofEpochMilli(initialInvoice.date)
-                .atZone(java.time.ZoneId.systemDefault())
-                .toLocalDate().toString(),
+            value = try {
+                java.time.Instant.parse(initialInvoice.dateCreated)
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDate().toString()
+            } catch (e: Exception) {
+                initialInvoice.dateCreated
+            },
             onValueChange = {},
             label = { Text("Invoice Date") },
             modifier = Modifier.fillMaxWidth(),
@@ -113,9 +117,13 @@ private fun EditInvoiceForm(
 
         // Due Date (read-only)
         OutlinedTextField(
-            value = java.time.Instant.ofEpochMilli(initialInvoice.dueDate)
-                .atZone(java.time.ZoneId.systemDefault())
-                .toLocalDate().toString(),
+            value = try {
+                java.time.Instant.parse(initialInvoice.dueDate)
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDate().toString()
+            } catch (e: Exception) {
+                initialInvoice.dueDate
+            },
             onValueChange = {},
             label = { Text("Due Date") },
             modifier = Modifier.fillMaxWidth(),

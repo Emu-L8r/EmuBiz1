@@ -30,8 +30,8 @@ class PaymentValidationTest : BaseUnitTest() {
             businessProfileId = 1L,
             customerId = 1L,
             customerName = "Test Customer",
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis() + 86400000L,
+            dateCreated = java.time.Instant.now().toString(),
+            dueDate = java.time.Instant.now().toString() + 86400000L,
             totalAmount = totalAmount,
             amountPaid = amountPaid,
             currencyCode = "AUD",
@@ -212,3 +212,7 @@ class PaymentValidationTest : BaseUnitTest() {
         return amount > 0 && amount <= remainingBalance
     }
 }
+
+
+
+

@@ -1,19 +1,9 @@
 package com.emul8r.bizap.ui.invoices
 
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.UUID
-
-/**
- * Test suite for line item data flow fixes (Issue #2).
- *
- * These tests verify that:
- * 1. UUID-based tracking is stable across recompositions
- * 2. Index-to-UUID mapping works correctly
- * 3. Updates apply to correct items even after deletions
- * 4. Data is not lost on recomposition
- */
 
 /**
  * Test suite for line item data flow fixes (Issue #2).
@@ -114,8 +104,8 @@ class LineItemDataFlowTest {
 
         // Simulate editor sending update for item C (quantity changed to 5.0)
         val updatedItems = listOf(
-            LineItem(id = uuidA.hashCode().toLong(), description = "Item A", quantity = 1.0, unitPrice = 1000L),
-            LineItem(id = uuidC.hashCode().toLong(), description = "Item C", quantity = 5.0, unitPrice = 3000L)  // ← Updated
+            InvoiceItem(id = uuidA.hashCode().toLong(), description = "Item A", quantity = 1.0, unitPrice = 1000L),
+            InvoiceItem(id = uuidC.hashCode().toLong(), description = "Item C", quantity = 5.0, unitPrice = 3000L)  // ← Updated
         )
 
         // Act - Apply updateLineItemsFromEditor logic
@@ -197,7 +187,7 @@ class LineItemDataFlowTest {
     fun emptyLineItemList_handledGracefully() {
         // Arrange
         val items: List<LineItemForm> = emptyList()
-        val updatedItems: List<LineItem> = emptyList()
+        val updatedItems: List<InvoiceItem> = emptyList()
 
         // Act
         val resultItems = items.map { currentItem ->
@@ -222,7 +212,7 @@ class LineItemDataFlowTest {
     /**
      * ✅ TEST 6: LineItemForm.toDomain() Preserves Data
      *
-     * Verifies that conversion from LineItemForm to domain LineItem preserves all values.
+     * Verifies that conversion from LineItemForm to domain InvoiceItem preserves all values.
      */
     @Test
     fun lineItemFormToDomain_preservesAllValues() {
@@ -244,6 +234,10 @@ class LineItemDataFlowTest {
         assertEquals("Unit price preserved", form.unitPrice, domain.unitPrice)
     }
 }
+
+
+
+
 
 
 

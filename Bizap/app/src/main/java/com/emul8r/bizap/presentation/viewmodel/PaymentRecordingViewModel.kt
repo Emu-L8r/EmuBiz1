@@ -124,7 +124,7 @@ class PaymentRecordingViewModel @Inject constructor(
                     amount = amount.amountCents,
                     trueOutstanding = trueOutstanding,
                     paymentDate = paymentDate,
-                    invoiceDate = invoice.date,
+                    invoiceDate = invoice.dateCreated.toEpochMillis(),
                     invoiceStatus = invoice.status,
                     notes = currentState.notesInput.takeIf { it.isNotBlank() }
                 )
@@ -212,6 +212,19 @@ class PaymentRecordingViewModel @Inject constructor(
         cal.set(Calendar.SECOND, 0)
         cal.set(Calendar.MILLISECOND, 0)
         return cal.timeInMillis
+    }
+
+    /**
+     * Convert ISO-8601 date string to epoch milliseconds.
+     */
+    private fun String?.toEpochMillis(): Long {
+        return try {
+            if (this.isNullOrBlank()) 0L
+            else java.time.Instant.parse(this).toEpochMilli()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to parse date string: $this")
+            0L
+        }
     }
 
     /**

@@ -2,10 +2,11 @@ package com.emul8r.bizap.domain.usecase
 
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import java.time.Instant
 
 /**
  * Integration tests for [CalculateInvoiceMetricsUseCase].
@@ -18,18 +19,19 @@ class CalculateInvoiceMetricsUseCaseTest {
     private lateinit var useCase: CalculateInvoiceMetricsUseCase
 
     private fun buildInvoice(
-        items: List<LineItem>,
+        items: List<InvoiceItem>,
         taxRate: Double = 0.0
     ) = Invoice(
         customerId = 1L,
         customerName = "Test Customer",
-        date = System.currentTimeMillis(),
+        dateCreated = Instant.now().toString(),
+        dueDate = Instant.now().plusSeconds(86_400L).toString(),
         totalAmount = 0L,  // Placeholder — calculated by the use case
         items = items,
         isQuote = false,
         status = InvoiceStatus.DRAFT,
         taxRate = taxRate,
-        currencyCode = "AUD"
+        currency = "AUD"
     )
 
     @Before
@@ -43,8 +45,8 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_simpleInvoice - calculates correct subtotal`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Item 1", quantity = 2.0, unitPrice = 5000),  // 10000 cents
-                LineItem(description = "Item 2", quantity = 1.0, unitPrice = 5000)   // 5000 cents
+                InvoiceItem(description = "Item 1", quantity = 2.0, unitPrice = 5000),  // 10000 cents
+                InvoiceItem(description = "Item 2", quantity = 1.0, unitPrice = 5000)   // 5000 cents
             ),
             taxRate = 0.10
         )
@@ -58,8 +60,8 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_simpleInvoice - calculates correct tax amount`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Item 1", quantity = 2.0, unitPrice = 5000),
-                LineItem(description = "Item 2", quantity = 1.0, unitPrice = 5000)
+                InvoiceItem(description = "Item 1", quantity = 2.0, unitPrice = 5000),
+                InvoiceItem(description = "Item 2", quantity = 1.0, unitPrice = 5000)
             ),
             taxRate = 0.10
         )
@@ -73,8 +75,8 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_simpleInvoice - calculates correct total`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Item 1", quantity = 2.0, unitPrice = 5000),
-                LineItem(description = "Item 2", quantity = 1.0, unitPrice = 5000)
+                InvoiceItem(description = "Item 1", quantity = 2.0, unitPrice = 5000),
+                InvoiceItem(description = "Item 2", quantity = 1.0, unitPrice = 5000)
             ),
             taxRate = 0.10
         )
@@ -90,7 +92,7 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_noTax - skips tax when taxRate is zero`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Item 1", quantity = 2.0, unitPrice = 5000)
+                InvoiceItem(description = "Item 1", quantity = 2.0, unitPrice = 5000)
             ),
             taxRate = 0.0
         )
@@ -106,7 +108,7 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_noTax - default taxRate of zero means no tax`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Service", quantity = 1.0, unitPrice = 20000)
+                InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 20000)
             )
             // taxRate defaults to 0.0
         )
@@ -123,7 +125,7 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_discountAmount - discount is zero by default`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Item", quantity = 1.0, unitPrice = 10000)
+                InvoiceItem(description = "Item", quantity = 1.0, unitPrice = 10000)
             )
         )
 
@@ -136,7 +138,7 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_discountAmount - discount reduces total when no tax`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Item", quantity = 1.0, unitPrice = 10000)
+                InvoiceItem(description = "Item", quantity = 1.0, unitPrice = 10000)
             )
         ).copy(discountAmount = 2000L)  // $20 discount on $100 item
 
@@ -151,7 +153,7 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_discountAmount - tax applies to discounted subtotal`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Service", quantity = 1.0, unitPrice = 10000)
+                InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 10000)
             ),
             taxRate = 0.10
         ).copy(discountAmount = 2000L)  // $20 discount
@@ -171,7 +173,7 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_discountAmount - discount exceeding subtotal is clamped to zero total`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Item", quantity = 1.0, unitPrice = 5000)
+                InvoiceItem(description = "Item", quantity = 1.0, unitPrice = 5000)
             )
         ).copy(discountAmount = 9999L)  // Discount larger than subtotal
 
@@ -187,7 +189,7 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_singleItem - single item invoice calculates correctly`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Consulting", quantity = 3.0, unitPrice = 10000) // 30000 cents
+                InvoiceItem(description = "Consulting", quantity = 3.0, unitPrice = 10000) // 30000 cents
             ),
             taxRate = 0.10
         )
@@ -205,7 +207,7 @@ class CalculateInvoiceMetricsUseCaseTest {
     fun `calculate_fractionalQuantity - handles fractional quantities correctly`() {
         val invoice = buildInvoice(
             items = listOf(
-                LineItem(description = "Half day", quantity = 0.5, unitPrice = 20000) // 10000 cents
+                InvoiceItem(description = "Half day", quantity = 0.5, unitPrice = 20000) // 10000 cents
             ),
             taxRate = 0.0
         )
@@ -216,3 +218,8 @@ class CalculateInvoiceMetricsUseCaseTest {
         assertEquals(10000L, metrics.totalAmount)
     }
 }
+
+
+
+
+

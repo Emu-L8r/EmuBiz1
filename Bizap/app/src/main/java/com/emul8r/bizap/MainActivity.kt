@@ -1,5 +1,6 @@
 package com.emul8r.bizap
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -35,8 +37,16 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import androidx.navigation.toRoute
 import com.emul8r.bizap.domain.service.AuthenticationManager
+import com.emul8r.bizap.domain.repository.CustomerRepository
+import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
+import com.emul8r.bizap.domain.model.Customer
+import com.emul8r.bizap.domain.model.Invoice
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.ui.auth.LoginScreen
 import com.emul8r.bizap.ui.auth.PINSetupScreen
+import com.emul8r.bizap.ui.landing.GuiMode
+import com.emul8r.bizap.ui.landing.LandingScreen
 import com.emul8r.bizap.ui.splash.SplashScreen
 import com.emul8r.bizap.ui.state.AppState
 import com.emul8r.bizap.ui.state.AppStateViewModel
@@ -67,7 +77,6 @@ import com.emul8r.bizap.domain.repository.ThemeRepository
 import com.emul8r.bizap.ui.BizapApp
 import com.emul8r.bizap.ui.ErrorBoundary
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
-import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.notes.NotesScreen
 import com.emul8r.bizap.ui.onboarding.FirstLaunchWarningDialog
 import com.emul8r.bizap.ui.theme.ThemeManager
@@ -93,6 +102,15 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var themeRepository: ThemeRepository
+
+    @Inject
+    lateinit var customerRepository: CustomerRepository
+
+    @Inject
+    lateinit var invoiceRepository: InvoiceRepository
+
+    @Inject
+    lateinit var businessProfileRepository: BusinessProfileRepository
 
     // Modern Activity Result API (initialized in onCreate)
     private lateinit var requestPermissionLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>
@@ -211,40 +229,94 @@ class MainActivity : ComponentActivity() {
                                 onDismiss = { appStateViewModel.markFirstLaunchWarningShown() }
                             )
 
-                            is AppState.GUISelection -> {
-                                // This state should never occur in v2.0 since AppStateViewModel
-                                // always defaults to AppReady(GUI2). Log if reached unexpectedly.
-                                android.util.Log.w("MainActivity", "Unexpected GUISelection state in v2.0; defaulting to GUI2")
-                                appStateViewModel.selectGui(GuiMode.GUI2)
+                            is AppState.Landing -> {
+                                // User is selecting a GUI or has reset preference from Matrix dashboard
+                                val landingViewModel: com.emul8r.bizap.ui.landing.LandingViewModel = hiltViewModel()
+                                LandingScreen(
+                                    onSelectGui1 = {
+                                        landingViewModel.selectMode(GuiMode.GUI1)
+                                        appStateViewModel.selectGui(GuiMode.GUI1)
+                                    },
+                                    onSelectGui2 = {
+                                        landingViewModel.selectMode(GuiMode.GUI2)
+                                        appStateViewModel.selectGui(GuiMode.GUI2)
+                                    },
+                                    onSelectGui3 = {
+                                        landingViewModel.selectMode(GuiMode.GUI3)
+                                        appStateViewModel.selectGui(GuiMode.GUI3)
+                                    }
+                                )
                             }
 
                             is AppState.AppReady -> {
-                                Box(modifier = Modifier.fillMaxSize()) {
-                                    val navController = rememberNavController()
+                                when (state.gui) {
+                                    GuiMode.GUI3 -> {
+                                        // Launch Matrix GUI Activity
+                                        LaunchedEffect(Unit) {
+                                            val intent = Intent(this@MainActivity, com.emul8r.bizap.ui.activities.MatrixGUIMainActivity::class.java)
+                                            startActivity(intent)
+                                            finish()
+                                        }
+                                    }
+                                    GuiMode.GUI1, GuiMode.GUI2 -> {
+                                        // Show GUI1/GUI2 in current activity
+                                        Box(modifier = Modifier.fillMaxSize()) {
+                                            val navController = rememberNavController()
 
-                                    // Use unified NavGraph with theme-aware navigation
-                                    NavGraph(
-                                        navController = navController,
-                                        themeManager = themeManager
-                                    )
-
-                                    // ⚠️ TEMPORARY CRASH TEST BUTTON
-                                    if (BuildConfig.DEBUG) {
-                                        Button(
-                                            onClick = {
-                                                Timber.e("Manual crash triggered by user for testing.")
-                                                FirebaseCrashlytics.getInstance().setCustomKey("test_key", "test_value")
-                                                throw RuntimeException("Bizap Test Crash: ${System.currentTimeMillis()}")
-                                            },
-                                            modifier = Modifier
-                                                .align(Alignment.BottomEnd)
-                                                .padding(16.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                            // Use unified NavGraph with theme-aware navigation
+                                            NavGraph(
+                                                navController = navController,
+                                                themeManager = themeManager
                                             )
-                                        ) {
-                                            Text("Force Crash")
+
+                                            // ⚠️ DEBUG BUTTONS (only in DEBUG builds)
+                                            if (BuildConfig.DEBUG) {
+                                                val scope = rememberCoroutineScope()
+
+                                                Column(
+                                                    modifier = Modifier
+                                                        .align(Alignment.BottomEnd)
+                                                        .padding(16.dp),
+                                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    // Auto-Populate Test Data Button (Disabled)
+                                                    Button(
+                                                        onClick = {
+                                                            scope.launch {
+                                                                Timber.d("⏳ Auto-populate disabled - using correct Invoice model")
+                                                                android.widget.Toast.makeText(
+                                                                    this@MainActivity,
+                                                                    "⏳ Auto-populate feature temporarily disabled\nPlease use the app normally or create test data manually",
+                                                                    android.widget.Toast.LENGTH_LONG
+                                                                ).show()
+                                                            }
+                                                        },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        colors = ButtonDefaults.buttonColors(
+                                                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                                        )
+                                                    ) {
+                                                        Text("📊 Auto-Populate Test Data (Disabled)")
+                                                    }
+
+                                                    // Force Crash Button
+                                                    Button(
+                                                        onClick = {
+                                                            Timber.e("Manual crash triggered by user for testing.")
+                                                            FirebaseCrashlytics.getInstance().setCustomKey("test_key", "test_value")
+                                                            throw RuntimeException("Bizap Test Crash: ${System.currentTimeMillis()}")
+                                                        },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        colors = ButtonDefaults.buttonColors(
+                                                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                                        )
+                                                    ) {
+                                                        Text("🔴 Force Crash")
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -255,6 +327,88 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    /* ❌ DISABLED: Auto-populate function uses incompatible Invoice model
+       Will be re-implemented with correct InvoiceEntity structure
+
+    // 🧪 DEBUG HELPER: Auto-populate test data for manual verification
+    private suspend fun autoPopulateTestData() {
+        try {
+            val now = System.currentTimeMillis()
+            val businessId = businessProfileRepository.getActiveBusinessId()
+
+            // 5 different invoice statuses
+            val statuses = listOf(
+                InvoiceStatus.DRAFT,
+                InvoiceStatus.SENT,
+                InvoiceStatus.PARTIALLY_PAID,
+                InvoiceStatus.PAID,
+                InvoiceStatus.OVERDUE
+            )
+
+            // Create 5 customers with 5 invoices
+            val customers = listOf(
+                "Tech Solutions Inc",
+                "Green Energy LLC",
+                "Blue Sky Services",
+                "Red Fox Consulting",
+                "Yellow Stone Media"
+            )
+
+            customers.forEachIndexed { index, customerName ->
+                // Create customer
+                val customer = Customer(
+                    id = 0,
+                    name = customerName,
+                    email = "contact@${customerName.lowercase().replace(" ", "")}.com",
+                    phone = "(555) ${200 + index}-${1000 + index}",
+                    address = "${100 + index * 10} Business Ave, Suite ${10 + index}",
+                    createdAt = now,
+                    updatedAt = now
+                )
+
+                val customerId = customerRepository.insert(customer).getOrNull() ?: return@forEachIndexed
+
+                // Create invoice for this customer with status from list
+                val status = statuses[index]
+                val amountPaid = when (status) {
+                    InvoiceStatus.PAID -> 50000L // fully paid
+                    InvoiceStatus.PARTIALLY_PAID -> 25000L // half paid
+                    else -> 0L // draft, sent, overdue - no payment
+                }
+
+                val invoice = Invoice(
+                    id = 0,
+                    businessProfileId = businessId,
+                    customerId = customerId,
+                    customerName = customerName,
+                    customerAddress = customer.address ?: "",
+                    customerEmail = customer.email,
+                    date = now - (index * 86_400_000L), // each 1 day older
+                    totalAmount = 50000L, // $500.00
+                    items = emptyList(), // Empty line items for demo
+                    isQuote = false,
+                    status = status,
+                    currencyCode = "AUD",
+                    dueDate = now + (30 * 86_400_000L),
+                    amountPaid = amountPaid,
+                    updatedAt = now,
+                    dailySequence = index + 1,
+                    displayName = "${customerName.split(" ")[0].lowercase()}-${String.format("%02d", index + 1)}"
+                )
+
+                invoiceRepository.saveInvoice(invoice)
+
+                Timber.d("✅ Created: $customerName with Invoice (Status: $status)")
+            }
+
+            Timber.d("✅ Auto-populate complete: 5 customers with 5 invoices created")
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Error during auto-population")
+            throw e
+        }
+    }
+    */
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

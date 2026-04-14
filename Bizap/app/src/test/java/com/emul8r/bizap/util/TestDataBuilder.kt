@@ -3,7 +3,8 @@ package com.emul8r.bizap.util
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
+import java.time.Instant
 
 /**
  * Builder utility for creating test data objects.
@@ -12,8 +13,6 @@ import com.emul8r.bizap.domain.model.LineItem
  * concise test setup while allowing individual field overrides as needed.
  */
 object TestDataBuilder {
-
-    private val now = System.currentTimeMillis()
 
     // ── Customer ──────────────────────────────────────────────────────────────
 
@@ -41,23 +40,23 @@ object TestDataBuilder {
         notes = notes
     )
 
-    // ── LineItem ──────────────────────────────────────────────────────────────
+    // ── InvoiceItem ───────────────────────────────────────────────────────────────
 
-    fun buildLineItem(
+    fun buildInvoiceItem(
         id: Long = 1L,
         description: String = "Consulting Services",
         quantity: Double = 1.0,
         unitPrice: Long = 10000L  // $100.00 in cents
-    ) = LineItem(
+    ) = InvoiceItem(
         id = id,
         description = description,
         quantity = quantity,
         unitPrice = unitPrice
     )
 
-    fun buildLineItems(count: Int = 2): List<LineItem> {
+    fun buildInvoiceItems(count: Int = 2): List<InvoiceItem> {
         return (1..count).map { index ->
-            buildLineItem(
+            buildInvoiceItem(
                 id = index.toLong(),
                 description = "Service Item $index",
                 quantity = index.toDouble(),
@@ -76,28 +75,28 @@ object TestDataBuilder {
         totalAmount: Long = 100000L,  // $1000 in cents
         amountPaid: Long = 0L,
         status: InvoiceStatus = InvoiceStatus.DRAFT,
-        currencyCode: String = "AUD",
+        currency: String = "AUD",
         taxRate: Double = 0.10,
         taxAmount: Long = 10000L,
-        date: Long = now,
-        dueDate: Long = now + 30 * 86_400_000L,
+        dateCreated: String = Instant.now().toString(),
+        dueDate: String = Instant.now().plusSeconds(30 * 86_400L).toString(),
         isQuote: Boolean = false,
-        items: List<LineItem> = listOf(
-            buildLineItem(unitPrice = 90000L)
+        items: List<InvoiceItem> = listOf(
+            buildInvoiceItem(unitPrice = 90000L)
         )
     ) = Invoice(
         id = id,
         businessProfileId = businessProfileId,
         customerId = customerId,
         customerName = customerName,
-        date = date,
+        dateCreated = dateCreated,
         dueDate = dueDate,
         totalAmount = totalAmount,
         amountPaid = amountPaid,
         items = items,
         isQuote = isQuote,
         status = status,
-        currencyCode = currencyCode,
+        currency = currency,
         taxRate = taxRate,
         taxAmount = taxAmount
     )
@@ -131,8 +130,8 @@ object TestDataBuilder {
         id = id,
         totalAmount = totalAmount,
         status = InvoiceStatus.OVERDUE,
-        date = now - (daysOverdue + 30) * 86_400_000L,
-        dueDate = now - daysOverdue * 86_400_000L
+        dateCreated = Instant.now().minusSeconds((daysOverdue + 30) * 86_400L).toString(),
+        dueDate = Instant.now().minusSeconds(daysOverdue * 86_400L).toString()
     )
 
     // ── Collections ───────────────────────────────────────────────────────────
@@ -167,4 +166,15 @@ object TestDataBuilder {
             )
         }
     }
+
+    // ── BACKWARD COMPATIBILITY ALIASES ─────────────────────────────────────────
+
+
+    /**
+     * Alias for buildLineItems for backward compatibility
+     */
+    fun buildLineItems(count: Int = 2): List<InvoiceItem> = buildInvoiceItems(count)
 }
+
+
+

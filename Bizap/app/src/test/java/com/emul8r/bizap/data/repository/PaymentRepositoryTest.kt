@@ -110,7 +110,8 @@ class PaymentRepositoryTest {
             status = status,
             amountPaid = amountPaid,
             isActive = true,
-            createdAt = System.currentTimeMillis()
+            createdAt = System.currentTimeMillis(),
+            dailySequence = 1
         )
     )
 
@@ -338,3 +339,6 @@ class PaymentRepositoryTest {
             "Invoice should be PAID when outstanding reaches zero")
     }
 }
+
+
+

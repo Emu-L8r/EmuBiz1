@@ -146,3 +146,6 @@ class CreateCustomerUseCaseTest : BaseUnitTest() {
         assertTrue(result.isSuccess(), "Two character name should pass minimum length validation")
     }
 }
+
+
+

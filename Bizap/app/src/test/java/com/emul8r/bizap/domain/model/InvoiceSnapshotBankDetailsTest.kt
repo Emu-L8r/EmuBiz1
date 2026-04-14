@@ -100,3 +100,6 @@ class InvoiceSnapshotBankDetailsTest {
         assertEquals("ANZ", snapshot.bankName)
     }
 }
+
+
+

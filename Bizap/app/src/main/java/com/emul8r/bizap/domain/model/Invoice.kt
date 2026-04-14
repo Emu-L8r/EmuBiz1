@@ -1,87 +1,74 @@
 package com.emul8r.bizap.domain.model
 
 import kotlinx.serialization.Serializable
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.LocalDateTime
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Serializable
 data class Invoice(
+    // Core Invoice Fields
     val id: Long = 0,
-    val businessProfileId: Long = 0,
-    val customerId: Long?,  // Nullable when customer is deleted
-    val customerName: String,
+    val businessProfileId: Long = 1,
+    val customerId: Long?,
+    val invoiceNumber: String = "",
+    val dateCreated: String = "", // ISO-8601
+    val dueDate: String = "",      // ISO-8601
+    val status: InvoiceStatus = InvoiceStatus.DRAFT,
+    val items: List<InvoiceItem> = emptyList(),
+
+    // Customer Information
+    val customerName: String = "",
     val customerAddress: String = "",
     val customerEmail: String? = null,
-    val date: Long,
-    val dueDate: Long = 0,
-    val totalAmount: Long,              // Cents (e.g., 14999 = $149.99)
-    val items: List<LineItem>,
-    val isQuote: Boolean,
-    val status: InvoiceStatus,
+
+    // Amount Fields (in cents)
+    val totalAmount: Long = 0L,
+    val taxRate: Double = 0.0,
+    val taxAmount: Long = 0L,
+    val amountPaid: Long = 0L,
+    val discount: Double = 0.0,
+    val discountAmount: Long = 0L,
+
+    // Template Fields
+    val notes: String? = null,
     val header: String? = null,
     val subheader: String? = null,
-    val notes: String? = null,
     val footer: String? = null,
     val photoUris: List<String> = emptyList(),
     val pdfUri: String? = null,
-    val taxRate: Double = 0.1,          // Rate only (e.g., 0.1 = 10%)
-    val taxAmount: Long = 0,            // Cents
     val companyLogoPath: String? = null,
-    val updatedAt: Long = 0,
-    val amountPaid: Long = 0,           // Cents
-    val parentInvoiceId: Long? = null,
+
+    // Versioning & Sequence Fields
     val version: Int = 1,
+    val dailySequence: Int = 0,
     val invoiceYear: Int = 0,
     val invoiceSequence: Int = 0,
-    val currencyCode: String = "AUD",
     val dailyCounter: Int = 0,
+    val parentInvoiceId: Long? = null,
+
+    // Display & Format Fields
+    val currency: String = "AUD",
+    val currencyCode: String? = null,  // Alias/override for currency (nullable for backward compatibility)
     val displayName: String = "",
-    // Phase 2: Customization fields
-    val customization: InvoiceCustomization = InvoiceCustomization(),
-    val discountAmount: Long = 0L               // Cents (e.g., 500 = $5.00 discount)
-) {
-    val invoiceId: Long get() = id
-    val total: Long get() = totalAmount
-    val balanceRemaining: Long get() = totalAmount - amountPaid
-    val isFullyPaid: Boolean get() = balanceRemaining <= 0
+    val isQuote: Boolean = false,
+    val isActive: Boolean = true,
 
-    val invoiceNumber: String
-        get() {
-            val base = "INV-$invoiceYear-${invoiceSequence.toString().padStart(6, '0')}"
-            return if (version > 1) "$base-v$version" else base
-        }
-
-    fun validate() {
-        require(businessProfileId > 0) { "Business ID is required" }
-        require(customerId == null || customerId > 0) { "Customer ID must be valid or null" }
-        require(totalAmount > 0) { "Total amount must be greater than zero" }
-        require(currencyCode.length == 3) { "Currency code must be 3 characters" }
-        require(items.isNotEmpty()) { "Invoice must have at least one line item" }
-        items.forEach { it.validate() }
-    }
-
-    fun getFormattedInvoiceNumber(): String {
-        return invoiceNumber
-    }
-}
+    // Timestamps
+    val datePaid: String? = null,
+    val updatedAt: Long = 0L,
+    val createdAt: Long = 0L
+)
 
 @Serializable
-data class LineItem(
+data class InvoiceItem(
     val id: Long = 0,
     val description: String,
     val quantity: Double,
-    val unitPrice: Long,                // Cents (e.g., 4999 = $49.99)
-    val transientId: String = java.util.UUID.randomUUID().toString()
-) {
-    val itemId: Long get() = id
-    
-    fun validate() {
-        require(description.isNotBlank()) { "Item description is required" }
-        require(quantity > 0) { "Quantity must be greater than zero" }
-        require(unitPrice >= 0) { "Unit price cannot be negative" }
-    }
-}
+    val unitPrice: Long, // Cents
+    val taxRate: Double = 0.0
+)
 
 @Serializable
 enum class InvoiceStatus {
@@ -89,5 +76,6 @@ enum class InvoiceStatus {
     SENT,
     PAID,
     OVERDUE,
-    PARTIALLY_PAID
+    PARTIALLY_PAID,
+    CANCELLED
 }

@@ -6,6 +6,7 @@ import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.usecase.RecordPaymentUseCase
 import com.emul8r.bizap.utils.FirebaseEventTracker
 import io.mockk.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -16,12 +17,14 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
+
 /**
  * Unit tests for [RecordPaymentViewModel].
  *
  * Verifies payment form state management, validation logic,
  * and delegation to [RecordPaymentUseCase].
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class RecordPaymentViewModelTest : BaseUnitTest() {
     private lateinit var recordPaymentUseCase: RecordPaymentUseCase
     private lateinit var eventTracker: FirebaseEventTracker
@@ -182,3 +185,6 @@ class RecordPaymentViewModelTest : BaseUnitTest() {
         assertEquals(500, viewModel.formState.value.notes.length)
     }
 }
+
+
+

@@ -1,11 +1,12 @@
 package com.emul8r.bizap.test
 
 import com.emul8r.bizap.domain.model.Invoice
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.invoice.model.PaymentRecord
 import com.emul8r.bizap.domain.invoice.model.PaymentMethod
 import java.time.LocalDate
+import java.time.Instant
 
 /**
  * Factory for building test data objects.
@@ -24,14 +25,13 @@ object TestDataBuilder {
         totalAmount: Long = 100000L,  // In cents (1000.00)
         amountPaid: Long = 0L,
         status: InvoiceStatus = InvoiceStatus.SENT,
-        dueDate: Long = System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000),
-        date: Long = System.currentTimeMillis(),
-        updatedAt: Long = System.currentTimeMillis(),
+        dueDate: String = Instant.now().plusSeconds(30L * 24 * 60 * 60).toString(),
+        dateCreated: String = Instant.now().toString(),
         invoiceYear: Int = 2026,
         invoiceSequence: Int = 1,
         isQuote: Boolean = false,
-        items: List<LineItem> = listOf(
-            buildLineItem(description = "Test Item", quantity = 1.0, unitPrice = 100000L)
+        items: List<InvoiceItem> = listOf(
+            buildInvoiceItem(description = "Test Item", quantity = 1.0, unitPrice = 100000L)
         )
     ) = Invoice(
         id = id,
@@ -42,8 +42,7 @@ object TestDataBuilder {
         amountPaid = amountPaid,
         status = status,
         dueDate = dueDate,
-        date = date,
-        updatedAt = updatedAt,
+        dateCreated = dateCreated,
         invoiceYear = invoiceYear,
         invoiceSequence = invoiceSequence,
         isQuote = isQuote,
@@ -51,14 +50,14 @@ object TestDataBuilder {
     )
 
     /**
-     * Builds a test LineItem with sensible defaults.
+     * Builds a test InvoiceItem with sensible defaults.
      */
-    fun buildLineItem(
+    fun buildInvoiceItem(
         id: Long = 1L,
         description: String = "Item",
         quantity: Double = 1.0,
         unitPrice: Long = 100000L  // In cents
-    ) = LineItem(
+    ) = InvoiceItem(
         id = id,
         description = description,
         quantity = quantity,
@@ -84,5 +83,9 @@ object TestDataBuilder {
         notes = notes
     )
 }
+
+
+
+
 
 

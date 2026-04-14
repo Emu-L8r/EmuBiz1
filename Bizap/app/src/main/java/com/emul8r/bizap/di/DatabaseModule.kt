@@ -16,7 +16,10 @@ import com.emul8r.bizap.data.local.migration.MIGRATION_AddInvoiceSettings
 import com.emul8r.bizap.data.local.migration.MIGRATION_AddPdfEngineAndLayout
 import com.emul8r.bizap.data.local.migration.MIGRATION_AddSignatureField
 import com.emul8r.bizap.data.local.migration.MIGRATION_41_42
+import com.emul8r.bizap.data.local.migration.MIGRATION_42_43
 import com.emul8r.bizap.data.local.migrations.MIGRATION_38_39
+import com.emul8r.bizap.data.local.migrations.MIGRATION_44_45
+import com.emul8r.bizap.data.local.migrations.Migration_45_46
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -71,7 +74,10 @@ object DatabaseModule {
             MIGRATION_38_39,   // Add selected_html_style and selected_canvas_template columns
             MIGRATION_AddPdfEngineAndLayout,  // Add PDF engine and page layout columns for three-tier architecture
             MIGRATION_AddSignatureField,        // Add show_signature_field column for Phase 2 PDF enhancements
-            MIGRATION_41_42                    // Add discount_amount column; create InvoiceFTS virtual table
+            MIGRATION_41_42,                   // Add discount_amount column; create InvoiceFTS virtual table
+            MIGRATION_42_43,                   // Add customization layers (color scheme, spacing, visual accents); delete old invoices
+            MIGRATION_44_45,                   // Add invoice numbering columns (dailySequence, invoiceYear, invoiceNumber)
+            Migration_45_46                    // Add payment media attachments for proof-of-payment feature
         )
 
         // ✅ PRODUCTION SAFE: Only allow destructive fallback in DEBUG builds
@@ -134,6 +140,7 @@ object DatabaseModule {
     @Provides fun provideAnalyticsDao(db: AppDatabase): AnalyticsDao = db.analyticsDao()
     @Provides fun provideCustomerAnalyticsDao(db: AppDatabase): CustomerAnalyticsDao = db.customerAnalyticsDao()
     @Provides fun provideInvoicePaymentDao(db: AppDatabase): InvoicePaymentDao = db.invoicePaymentDao()
+    @Provides fun providePaymentMediaAttachmentDao(db: AppDatabase): PaymentMediaAttachmentDao = db.paymentMediaAttachmentDao()
     @Provides fun provideInvoiceTemplateDao(db: AppDatabase): InvoiceTemplateDao = db.invoiceTemplateDao()
     @Provides fun provideInvoiceCustomFieldDao(db: AppDatabase): InvoiceCustomFieldDao = db.invoiceCustomFieldDao()
     @Provides fun providePendingOperationDao(db: AppDatabase): PendingOperationDao = db.pendingOperationDao()

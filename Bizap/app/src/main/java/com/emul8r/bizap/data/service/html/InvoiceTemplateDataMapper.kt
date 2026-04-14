@@ -61,13 +61,21 @@ class InvoiceTemplateDataMapper {
 
             // ===== INVOICE DETAILS =====
             mappedData["invoiceNumber"] = invoice.invoiceNumber
-            mappedData["invoiceDate"] = formatDate(invoice.date)
+            mappedData["invoiceDate"] = formatDate(invoice.dateCreated)
             mappedData["dueDate"] = formatDate(invoice.dueDate)
             mappedData["invoiceStatus"] = invoice.status.name
 
+            // ===== CUSTOM HEADER & SUBHEADER (Phase 2.0.3: Standardized Naming) =====
+            if (!invoice.header.isNullOrBlank()) {
+                mappedData["invoiceHeader"] = invoice.header
+            }
+            if (!invoice.subheader.isNullOrBlank()) {
+                mappedData["invoiceSubheader"] = invoice.subheader
+            }
+
             // ===== LINE ITEMS =====
             mappedData["items"] = invoice.items.mapIndexed { index, lineItem ->
-                mapLineItem(lineItem, invoice.currencyCode, index + 1)
+                mapLineItem(lineItem, invoice.currency, index + 1)
             }
 
             // ===== FINANCIAL CALCULATIONS =====
@@ -98,7 +106,7 @@ class InvoiceTemplateDataMapper {
 
             // ===== STYLING & BRANDING =====
             mappedData["primaryColor"] = settings.primaryColor
-            mappedData["currencyCode"] = invoice.currencyCode
+            mappedData["currencyCode"] = invoice.currency
 
             // ===== AMOUNT PAID (if applicable) =====
             if (invoice.amountPaid > 0) {
@@ -117,7 +125,7 @@ class InvoiceTemplateDataMapper {
      * Map a single line item to template format.
      */
     private fun mapLineItem(
-        lineItem: com.emul8r.bizap.domain.model.LineItem,
+        lineItem: com.emul8r.bizap.domain.model.InvoiceItem,
         currencyCode: String,
         itemNumber: Int
     ): Map<String, Any> {
@@ -136,14 +144,14 @@ class InvoiceTemplateDataMapper {
     /**
      * Calculate total from cents (Long).
      */
-    private fun com.emul8r.bizap.domain.model.LineItem.calculateTotal(): Long {
+    private fun com.emul8r.bizap.domain.model.InvoiceItem.calculateTotal(): Long {
         return (unitPrice.toDouble() * quantity).toLong()
     }
 
     /**
      * Calculate subtotal from all line items (in dollars).
      */
-    private fun calculateSubtotal(items: List<com.emul8r.bizap.domain.model.LineItem>): Double {
+    private fun calculateSubtotal(items: List<com.emul8r.bizap.domain.model.InvoiceItem>): Double {
         return items.sumOf { (it.unitPrice.toDouble() * it.quantity) / 100.0 }
     }
 
@@ -212,6 +220,21 @@ class InvoiceTemplateDataMapper {
             sdf.format(Date(timestamp))
         } catch (e: Exception) {
             Timber.e(e, "Error formatting date: $timestamp")
+            ""
+        }
+    }
+
+    /**
+     * Format date from ISO-8601 string to readable format.
+     */
+    private fun formatDate(isoDateString: String?): String {
+        return try {
+            if (isoDateString.isNullOrBlank()) return ""
+            val instant = java.time.Instant.parse(isoDateString)
+            val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.US)
+            sdf.format(Date(instant.toEpochMilli()))
+        } catch (e: Exception) {
+            Timber.e(e, "Error formatting ISO date: $isoDateString")
             ""
         }
     }

@@ -81,7 +81,7 @@ class ErrorLoggerTest : BaseUnitTest() {
         val ex = BizapException.DatabaseError(
             operation = "INSERT",
             table = "invoices",
-            message = "Constraint violation"
+            details = "Constraint violation"
         )
         logger.logError(ex)
         verify(exactly = 1) { crashlytics.recordException(ex) }
@@ -190,3 +190,6 @@ class ErrorLoggerTest : BaseUnitTest() {
         assertNotNull(logger)
     }
 }
+
+
+

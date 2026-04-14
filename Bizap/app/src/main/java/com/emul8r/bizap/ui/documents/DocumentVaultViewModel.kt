@@ -214,7 +214,7 @@ class DocumentVaultViewModel @Inject constructor(
                                 }
 
                                 val matchesSearch = invoice.customerName.contains(term, ignoreCase = true) ||
-                                                    invoice.invoiceId.toString().contains(term)
+                                                    invoice.id.toString().contains(term)
 
                                 if (!matchesSearch && term.isNotBlank()) {
                                     return@mapNotNull null
@@ -236,7 +236,7 @@ class DocumentVaultViewModel @Inject constructor(
                         }
 
                     Timber.d("📋 DocumentVault: Loaded ${items.size} valid documents")
-                    items.groupBy { monthYearFormat.format(Date(it.invoice.date)) }
+                    items.groupBy { monthYearFormat.format(Date(java.time.Instant.parse(it.invoice.dateCreated).toEpochMilli())) }
                 } catch (e: Exception) {
                     Timber.e(e, "❌ Error loading documents in Vault")
                     throw e

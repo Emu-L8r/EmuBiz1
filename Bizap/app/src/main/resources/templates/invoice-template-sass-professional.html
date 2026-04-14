@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice ${invoiceNumber}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .invoice-container {
+            max-width: 210mm;
+            height: 297mm;
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ═══════════════════ HEADER ═══════════════════ */
+        .header {
+            background: linear-gradient(135deg, #1c3f6b 0%, #2c5aa0 100%);
+            color: white;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-section img {
+            max-height: 48px;
+            width: auto;
+        }
+
+        .company-info h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .company-info p {
+            font-size: 12px;
+            opacity: 0.9;
+            margin: 4px 0 0 0;
+        }
+
+        .invoice-header {
+            text-align: right;
+        }
+
+        .invoice-number {
+            font-size: 28px;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .invoice-meta {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        /* ═══════════════════ MAIN CONTENT ═══════════════════ */
+        .content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .left-column {
+            flex: 0 0 45%;
+            padding: 24px 24px;
+            border-right: 1px solid #e0e0e0;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-column {
+            flex: 1;
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        /* ═══════════════════ LEFT COLUMN: DETAILS ═══════════════════ */
+        .detail-block {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-content {
+            font-size: 13px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .detail-content strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .contact-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin: 4px 0;
+            font-size: 12px;
+        }
+
+        .contact-icon {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+            display: inline-block;
+            margin-top: 2px;
+            color: #1c3f6b;
+        }
+
+        /* ═══════════════════ RIGHT COLUMN: INVOICE DATA ═══════════════════ */
+        .summary-block {
+            background: #f0f4f8;
+            border-radius: 8px;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .summary-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1c3f6b;
+        }
+
+        /* ═══════════════════ ITEMS TABLE ═══════════════════ */
+        .items-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .items-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1c3f6b;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .items-table {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex: 1;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #e8e8e8;
+            font-size: 12px;
+            align-items: center;
+        }
+
+        .item-row:nth-child(odd) {
+            background: #fafafa;
+        }
+
+        .item-description {
+            color: #333;
+        }
+
+        .item-qty,
+        .item-price,
+        .item-total {
+            text-align: right;
+            color: #555;
+        }
+
+        /* ═══════════════════ TOTALS SECTION ═══════════════════ */
+        .totals-section {
+            border-top: 2px solid #1c3f6b;
+            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 32px;
+            font-size: 12px;
+        }
+
+        .total-label {
+            font-weight: 600;
+            color: #666;
+            min-width: 100px;
+        }
+
+        .total-value {
+            font-weight: 600;
+            color: #333;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .grand-total-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 32px;
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            background: #1c3f6b;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+
+        .grand-total-label {
+            min-width: 100px;
+        }
+
+        .grand-total-value {
+            min-width: 80px;
+            text-align: right;
+        }
+
+        /* ═══════════════════ FOOTER ═══════════════════ */
+        .footer {
+            background: #1c3f6b;
+            color: white;
+            padding: 16px 32px;
+            font-size: 11px;
+            line-height: 1.6;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 24px;
+        }
+
+        .footer-section h4 {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .footer-content {
+            font-size: 10px;
+            opacity: 0.85;
+        }
+
+        .footer-content p {
+            margin: 4px 0;
+        }
+
+        .signature-area {
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+
+        /* ═══════════════════ QR CODE ═══════════════════ */
+        .qr-code {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+        }
+
+        /* ═══════════════════ PRINT STYLES ═══════════════════ */
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            .invoice-container {
+                margin: 0;
+                box-shadow: none;
+                max-width: 100%;
+                height: auto;
+                page-break-after: always;
+            }
+            .right-column {
+                overflow-y: visible;
+            }
+        }
+
+        /* ═══════════════════ UTILITIES ═══════════════════ */
+        .text-muted {
+            color: #888;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-8 {
+            margin-top: 8px;
+        }
+
+        .mb-12 {
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="logo-section">
+                <div class="company-info">
+                    <h1>${companyName}</h1>
+                    <p>Professional Invoice</p>
+                </div>
+            </div>
+            <div class="invoice-header">
+                <span class="invoice-number">${invoiceNumber}</span>
+                <div class="invoice-meta">
+                    <div>Dated: ${invoiceDate}</div>
+                    <div>Due: ${dueDate}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="content">
+            <!-- LEFT COLUMN: CUSTOMER & BUSINESS DETAILS -->
+            <div class="left-column">
+                <!-- Bill To -->
+                <div class="detail-block">
+                    <div class="detail-label">📋 Bill To</div>
+                    <div class="detail-content">
+                        <strong>${customerName}</strong>
+                        ${customerAddress}
+                    </div>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="detail-block">
+                    <div class="detail-label">📞 Contact</div>
+                    <div class="contact-row">
+                        <span class="contact-icon">📧</span>
+                        <span>${customerEmail}</span>
+                    </div>
+                    <div class="contact-row">
+                        <span class="contact-icon">📱</span>
+                        <span>${customerPhone}</span>
+                    </div>
+                </div>
+
+                <!-- Business Details -->
+                <div class="detail-block">
+                    <div class="detail-label">🏢 Business</div>
+                    <div class="detail-content">
+                        <strong>${businessName}</strong>
+                        ABN: ${businessAbn}
+                    </div>
+                </div>
+
+                <!-- Payment Details -->
+                <div class="detail-block">
+                    <div class="detail-label">💳 Payment</div>
+                    <div class="detail-content">
+                        <div>${bankName}</div>
+                        <div>Account: ${accountNumber}</div>
+                        <div>BSB: ${bsbNumber}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: INVOICE DATA & ITEMS -->
+            <div class="right-column">
+                <!-- Summary Block -->
+                <div class="summary-block">
+                    <div class="summary-item">
+                        <div class="summary-label">Invoice Date</div>
+                        <div class="summary-value">${invoiceDate}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Due Date</div>
+                        <div class="summary-value">${dueDate}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Payment Terms</div>
+                        <div class="summary-value">${paymentTerms} days</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Invoice Status</div>
+                        <div class="summary-value" style="color: #27ae60;">${invoiceStatus}</div>
+                    </div>
+                </div>
+
+                <!-- Items Section -->
+                <div class="items-section">
+                    <div class="items-header">
+                        <div>Description</div>
+                        <div style="text-align: right;">Qty</div>
+                        <div style="text-align: right;">Unit Price</div>
+                        <div style="text-align: right;">Total</div>
+                    </div>
+                    <div class="items-table">
+                        ${itemsHtml}
+                    </div>
+                </div>
+
+                <!-- Totals -->
+                <div class="totals-section">
+                    <div class="total-row">
+                        <div class="total-label">Subtotal:</div>
+                        <div class="total-value">${subtotal}</div>
+                    </div>
+                    <div class="total-row">
+                        <div class="total-label">Tax (${taxRate}%):</div>
+                        <div class="total-value">${taxAmount}</div>
+                    </div>
+                    <div class="grand-total-row">
+                        <div class="grand-total-label">TOTAL DUE:</div>
+                        <div class="grand-total-value">${totalAmount}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <div class="footer-section">
+                <h4>Thank You!</h4>
+                <div class="footer-content">
+                    <p>Thank you for your business. Please pay by the due date to avoid late fees.</p>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Payment Instructions</h4>
+                <div class="footer-content">
+                    <p>Bank: ${bankName}</p>
+                    <p>Account: ${accountNumber}</p>
+                    <p>Reference: ${invoiceNumber}</p>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Authorized By</h4>
+                <div class="footer-content">
+                    <div class="signature-area">
+                        <p><em>${authorizedBy}</em></p>
+                        <p style="margin-top: 12px; font-size: 9px; opacity: 0.7;">_____________________</p>
+                        <p style="margin-top: 4px; font-size: 9px; opacity: 0.7;">Signature</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

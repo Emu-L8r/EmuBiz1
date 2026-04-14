@@ -3,6 +3,8 @@ package com.emul8r.bizap.integration
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.model.balanceRemaining
+import com.emul8r.bizap.domain.model.isFullyPaid
 import com.emul8r.bizap.util.TestDataFactory
 import org.junit.Test
 import kotlin.test.*
@@ -33,14 +35,16 @@ class InvoiceCreationTest : BaseUnitTest() {
     @Test
     fun `test_invoice_calculation_balance_remaining`() {
         val invoice = TestDataFactory.createTestInvoice(total = 100000L).copy(amountPaid = 30000L)
-        assertEquals(70000L, invoice.balanceRemaining, "Balance = total - paid")
+        val balance: Double = invoice.balanceRemaining
+        assertEquals(700.0, balance, "Balance = total - paid")
         assertFalse(invoice.isFullyPaid, "Invoice should not be fully paid")
     }
 
     @Test
     fun `test_invoice_calculation_fully_paid`() {
         val invoice = TestDataFactory.createTestInvoice(total = 50000L).copy(amountPaid = 50000L)
-        assertEquals(0L, invoice.balanceRemaining, "Balance should be zero when paid in full")
+        val balance: Double = invoice.balanceRemaining
+        assertEquals(0.0, balance, "Balance should be zero when paid in full")
         assertTrue(invoice.isFullyPaid, "Invoice should be marked fully paid")
     }
 
@@ -48,7 +52,8 @@ class InvoiceCreationTest : BaseUnitTest() {
     fun `test_invoice_partial_payment_still_owing`() {
         val invoice = TestDataFactory.createTestInvoice(total = 100000L).copy(amountPaid = 35000L)
         assertEquals(35000L, invoice.amountPaid)
-        assertEquals(65000L, invoice.balanceRemaining, "Remaining balance = $650")
+        val balance: Double = invoice.balanceRemaining
+        assertEquals(650.0, balance, "Remaining balance = $650")
         assertFalse(invoice.isFullyPaid)
     }
 
@@ -63,7 +68,8 @@ class InvoiceCreationTest : BaseUnitTest() {
     fun `test_invoice_zero_amount_invoice`() {
         val invoice = TestDataFactory.createTestInvoice(total = 0L)
         assertEquals(0L, invoice.totalAmount)
-        assertEquals(0L, invoice.balanceRemaining)
+        val balance: Double = invoice.balanceRemaining
+        assertEquals(0.0, balance)
     }
 }
 
@@ -96,7 +102,8 @@ class StatusTransitionTest : BaseUnitTest() {
         val partialInvoice = invoice.copy(amountPaid = 40000L, status = InvoiceStatus.PARTIALLY_PAID)
         assertFalse(partialInvoice.isFullyPaid)
         assertEquals(InvoiceStatus.PARTIALLY_PAID, partialInvoice.status)
-        assertEquals(60000L, partialInvoice.balanceRemaining)
+        val balance: Double = partialInvoice.balanceRemaining
+        assertEquals(600.0, balance)
     }
 
     @Test
@@ -126,7 +133,8 @@ class PaymentRecordingTest : BaseUnitTest() {
         val invoice = TestDataFactory.createTestInvoice(total = 100000L)
         val paidInvoice = invoice.copy(amountPaid = 100000L)
         assertEquals(100000L, paidInvoice.amountPaid)
-        assertEquals(0L, paidInvoice.balanceRemaining)
+        val balance: Double = paidInvoice.balanceRemaining
+        assertEquals(0.0, balance)
         assertTrue(paidInvoice.isFullyPaid)
     }
 
@@ -135,7 +143,8 @@ class PaymentRecordingTest : BaseUnitTest() {
         val invoice = TestDataFactory.createTestInvoice(total = 100000L)
         val afterPayment = invoice.copy(amountPaid = 30000L)
         assertEquals(30000L, afterPayment.amountPaid)
-        assertEquals(70000L, afterPayment.balanceRemaining)
+        val balance: Double = afterPayment.balanceRemaining
+        assertEquals(700.0, balance)
     }
 
     @Test
@@ -144,15 +153,18 @@ class PaymentRecordingTest : BaseUnitTest() {
 
         invoice = invoice.copy(amountPaid = 30000L)
         assertEquals(30000L, invoice.amountPaid)
-        assertEquals(70000L, invoice.balanceRemaining)
+        var balance: Double = invoice.balanceRemaining
+        assertEquals(700.0, balance)
 
         invoice = invoice.copy(amountPaid = 50000L)
         assertEquals(50000L, invoice.amountPaid)
-        assertEquals(50000L, invoice.balanceRemaining)
+        balance = invoice.balanceRemaining
+        assertEquals(500.0, balance)
 
         invoice = invoice.copy(amountPaid = 100000L)
         assertEquals(100000L, invoice.amountPaid)
-        assertEquals(0L, invoice.balanceRemaining)
+        balance = invoice.balanceRemaining
+        assertEquals(0.0, balance)
         assertTrue(invoice.isFullyPaid)
     }
 
@@ -173,7 +185,8 @@ class PaymentRecordingTest : BaseUnitTest() {
 
         val zero = invoice.copy(amountPaid = 0L)
         assertEquals(0L, zero.amountPaid)
-        assertEquals(100000L, zero.balanceRemaining)
+        val balance: Double = zero.balanceRemaining
+        assertEquals(1000.0, balance)
 
         val negative = invoice.copy(amountPaid = -10000L)
         assertEquals(-10000L, negative.amountPaid)
@@ -224,4 +237,7 @@ class ConcurrencyTest : BaseUnitTest() {
         assertEquals(100000L, v3.amountPaid)
     }
 }
+
+
+
 

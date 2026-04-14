@@ -29,12 +29,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.webkit.WebSettings
 import android.webkit.WebView
 import com.emul8r.bizap.domain.model.CanvasInvoiceTemplate
+import com.emul8r.bizap.domain.model.ColorScheme
 import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
 import com.emul8r.bizap.domain.model.InvoiceLocale
 import com.emul8r.bizap.domain.model.InvoiceTheme
 import com.emul8r.bizap.domain.model.PdfEngine
 import com.emul8r.bizap.domain.model.PageLayout
+import com.emul8r.bizap.domain.model.SpacingProfile
 import com.emul8r.bizap.domain.model.Typography
+import com.emul8r.bizap.domain.model.VisualAccents
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +48,27 @@ fun InvoiceSettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val previewHtml by viewModel.previewHtml.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // ✨ PHASE 1: Derive stable preview state key for responsive recomposition
+    val previewStateKey = remember(
+        uiState.settings?.selectedPdfEngine,
+        uiState.settings?.selectedPageLayout,
+        uiState.settings?.selectedHtmlStyle,
+        uiState.settings?.selectedCanvasTemplate,
+        uiState.settings?.primaryColor,
+        uiState.settings?.accentColor,
+        uiState.settings?.enableGradientHeader,
+        uiState.settings?.enableRoundedCorners,
+        uiState.settings?.enableAlternatingRowColors,
+        uiState.settings?.enableDividers,
+        uiState.settings?.dividerStyle,
+        uiState.settings?.highlightTotals,
+        uiState.settings?.enableStatusBadges,
+        uiState.settings?.enableBackgroundPattern,
+        uiState.settings?.enableWatermarkText
+    ) {
+        viewModel.getPreviewStateKey()
+    }
 
     // ✅ UX IMPROVEMENT: Tab state for intuitive navigation
     var selectedTabIndex by remember { mutableStateOf(0) }
@@ -94,7 +118,7 @@ fun InvoiceSettingsScreen(
                 ) { tabIndex ->
                     when (tabIndex) {
                         0 -> QuickSetupTab(viewModel = viewModel, uiState = uiState)
-                        1 -> DesignTab(viewModel = viewModel, uiState = uiState, previewHtml = previewHtml)
+                        1 -> DesignTab(viewModel = viewModel, uiState = uiState, previewHtml = previewHtml, previewStateKey = previewStateKey)
                         2 -> AdvancedTab(viewModel = viewModel, uiState = uiState)
                     }
                 }
@@ -142,17 +166,46 @@ private fun QuickSetupTab(
         }
 
         item {
-            val currentTheme = when (uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS) {
-                PdfEngine.HTML_CSS -> InvoiceTheme.HTML_PDF
-                PdfEngine.CANVAS   -> InvoiceTheme.CANVAS
+            val selectedEngine = uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS
+
+            // Only show template selection for Canvas and HTML_CSS engines
+            // SASS_PROFESSIONAL is a complete template, no template selection needed
+            if (selectedEngine != PdfEngine.SASS_PROFESSIONAL) {
+                val currentTheme = when (selectedEngine) {
+                    PdfEngine.HTML_CSS -> InvoiceTheme.HTML_PDF
+                    PdfEngine.CANVAS   -> InvoiceTheme.CANVAS
+                    PdfEngine.SASS_PROFESSIONAL -> InvoiceTheme.HTML_PDF  // Fallback
+                }
+                TemplateSelectionSection(
+                    currentTheme = currentTheme,
+                    selectedCanvasTemplate = uiState.settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN,
+                    selectedHtmlStyle = uiState.settings?.selectedHtmlStyle ?: HtmlInvoiceStyle.MODERN,
+                    onCanvasTemplateSelected = { viewModel.updateSelectedCanvasTemplate(it) },
+                    onHtmlStyleSelected = { viewModel.updateSelectedHtmlStyle(it) }
+                )
+            } else {
+                // SASS Professional info card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "✨ SASS Professional Template",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Text(
+                            "Using premium two-column layout with professional branding. Customize colors, spacing, and visual accents in the Design tab.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                }
             }
-            TemplateSelectionSection(
-                currentTheme = currentTheme,
-                selectedCanvasTemplate = uiState.settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN,
-                selectedHtmlStyle = uiState.settings?.selectedHtmlStyle ?: HtmlInvoiceStyle.MODERN,
-                onCanvasTemplateSelected = { viewModel.updateSelectedCanvasTemplate(it) },
-                onHtmlStyleSelected = { viewModel.updateSelectedHtmlStyle(it) }
-            )
         }
 
         item {
@@ -210,7 +263,8 @@ private fun QuickSetupTab(
 private fun DesignTab(
     viewModel: InvoiceSettingsViewModel,
     uiState: InvoiceSettingsUiState,
-    previewHtml: String?
+    previewHtml: String?,
+    previewStateKey: String
 ) {
     LazyColumn(
         modifier = Modifier
@@ -245,12 +299,47 @@ private fun DesignTab(
             }
         }
 
+        // ─────────────────────────────────────────────────────────────────────────
+        // PHASE 3: NEW CUSTOMIZATION LAYERS
+        // ─────────────────────────────────────────────────────────────────────────
+
         item {
-            LivePreviewSection(
+            uiState.settings?.let { settings ->
+                ColorSchemeSection(
+                    selectedColorScheme = settings.selectedColorScheme,
+                    onColorSchemeSelected = { viewModel.updateSelectedColorScheme(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                SpacingProfileSection(
+                    selectedSpacingProfile = settings.selectedSpacingProfile,
+                    onSpacingProfileSelected = { viewModel.updateSelectedSpacingProfile(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                VisualAccentsSection(
+                    accents = settings.getVisualAccents(),
+                    onAccentsChanged = { viewModel.updateVisualAccents(it) }
+                )
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
+
+        item {
+            // ✨ PHASE 1: Use unified preview with stable state key for responsiveness
+            UnifiedPdfPreview(
                 previewHtml = previewHtml,
                 onRefresh = { viewModel.generatePreview() },
                 selectedEngine = uiState.settings?.selectedPdfEngine ?: PdfEngine.CANVAS,
-                selectedCanvasTemplate = uiState.settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN
+                selectedCanvasTemplate = uiState.settings?.selectedCanvasTemplate ?: CanvasInvoiceTemplate.MODERN,
+                previewStateKey = previewStateKey
             )
         }
 
@@ -346,6 +435,248 @@ private fun AdvancedTab(
                 )
             }
         }
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // ✨ PHASE 2: VISUAL CUSTOMIZATION SECTIONS (20+ Options)
+        // ─────────────────────────────────────────────────────────────────────────
+
+        item {
+            HorizontalDivider()
+            Text(
+                "✨ Visual Enhancements",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                GradientAccentSection(
+                    enableGradientHeader = settings.enableGradientHeader,
+                    headerGradientEndColor = settings.headerGradientEndColor,
+                    onGradientToggled = { viewModel.toggleGradientHeader(it) },
+                    onGradientColorChanged = { viewModel.updateHeaderGradientEndColor(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                ShapeShadowSection(
+                    enableRoundedCorners = settings.enableRoundedCorners,
+                    cornerRadiusDp = settings.cornerRadiusDp,
+                    enableShadows = settings.enableShadows,
+                    shadowIntensity = settings.shadowIntensity,
+                    onRoundedCornersToggled = { viewModel.toggleRoundedCorners(it) },
+                    onCornerRadiusChanged = { viewModel.updateCornerRadius(it) },
+                    onShadowsToggled = { viewModel.toggleShadows(it) },
+                    onShadowIntensityChanged = { viewModel.updateShadowIntensity(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                RowStylingSection(
+                    enableAlternatingRowColors = settings.enableAlternatingRowColors,
+                    alternateRowColor = settings.alternateRowColor,
+                    onAlternatingToggled = { viewModel.toggleAlternatingRowColors(it) },
+                    onColorChanged = { viewModel.updateAlternateRowColor(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                DividerOptionsSection(
+                    enableDividers = settings.enableDividers,
+                    dividerStyle = settings.dividerStyle,
+                    dividerColor = settings.dividerColor,
+                    dividerThicknessPx = settings.dividerThicknessPx,
+                    onDividersToggled = { viewModel.toggleDividers(it) },
+                    onStyleChanged = { viewModel.updateDividerStyle(it) },
+                    onColorChanged = { viewModel.updateDividerColor(it) },
+                    onThicknessChanged = { viewModel.updateDividerThickness(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                HighlightOptionsSection(
+                    highlightTotals = settings.highlightTotals,
+                    totalBoxStyle = settings.totalBoxStyle,
+                    enableStatusBadges = settings.enableStatusBadges,
+                    badgeStyle = settings.badgeStyle,
+                    onHighlightToggled = { viewModel.toggleHighlightTotals(it) },
+                    onTotalBoxStyleChanged = { viewModel.updateTotalBoxStyle(it) },
+                    onBadgesToggled = { viewModel.toggleStatusBadges(it) },
+                    onBadgeStyleChanged = { viewModel.updateBadgeStyle(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                BackgroundPatternSection(
+                    enableBackgroundPattern = settings.enableBackgroundPattern,
+                    backgroundPatternType = settings.backgroundPatternType,
+                    patternOpacity = settings.patternOpacity,
+                    onPatternToggled = { viewModel.toggleBackgroundPattern(it) },
+                    onPatternTypeChanged = { viewModel.updateBackgroundPatternType(it) },
+                    onOpacityChanged = { viewModel.updatePatternOpacity(it) }
+                )
+            }
+        }
+
+        item {
+            uiState.settings?.let { settings ->
+                WatermarkSection(
+                    enableWatermarkText = settings.enableWatermarkText,
+                    watermarkText = settings.watermarkText,
+                    watermarkOpacity = settings.watermarkOpacity,
+                    onWatermarkToggled = { viewModel.toggleWatermarkText(it) },
+                    onWatermarkTextChanged = { viewModel.updateWatermarkText(it) },
+                    onOpacityChanged = { viewModel.updateWatermarkOpacity(it) }
+                )
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // ✨ PHASE 3: BRANDING CUSTOMIZATION SECTIONS
+        // ─────────────────────────────────────────────────────────────────────────
+
+        item {
+            HorizontalDivider()
+            Text(
+                "🎨 Brand Your Invoices",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
+            Text(
+                "Customize logos, colors, payment methods, QR codes, and more",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // ✨ Logo Section
+        item {
+            uiState.settings?.let { settings ->
+                LogoSection(
+                    enableLogo = settings.enableLogo,
+                    logoUri = settings.logoUri,
+                    logoWidthMm = settings.logoWidthMm,
+                    logoHeightMm = settings.logoHeightMm,
+                    logoPosition = settings.logoPosition,
+                    onLogoToggled = { viewModel.toggleLogo(it) },
+                    onLogoSelected = { viewModel.updateLogoUri(it) },
+                    onWidthChanged = { viewModel.updateLogoWidth(it) },
+                    onHeightChanged = { viewModel.updateLogoHeight(it) },
+                    onPositionChanged = { viewModel.updateLogoPosition(it) }
+                )
+            }
+        }
+
+        // ✨ Motto Section
+        item {
+            uiState.settings?.let { settings ->
+                MottoSection(
+                    enableMotto = settings.enableMotto,
+                    mottoText = settings.mottoText,
+                    mottoFontSize = settings.mottoFontSize,
+                    mottoColor = settings.mottoColor,
+                    onMottoToggled = { viewModel.toggleMotto(it) },
+                    onMottoTextChanged = { viewModel.updateMottoText(it) },
+                    onFontSizeChanged = { viewModel.updateMottoFontSize(it) },
+                    onColorChanged = { viewModel.updateMottoColor(it) }
+                )
+            }
+        }
+
+        // ✨ Payment Icons Section
+        item {
+            uiState.settings?.let { settings ->
+                PaymentIconsSection(
+                    enablePaymentIcons = settings.enablePaymentIcons,
+                    acceptedPaymentMethodsJson = settings.acceptedPaymentMethodsJson,
+                    paymentIconsSize = settings.paymentIconsSize,
+                    onPaymentIconsToggled = { viewModel.togglePaymentIcons(it) },
+                    onPaymentMethodsChanged = { viewModel.updatePaymentMethods(it) },
+                    onSizeChanged = { viewModel.updatePaymentIconsSize(it) }
+                )
+            }
+        }
+
+        // ✨ Signature Section
+        item {
+            uiState.settings?.let { settings ->
+                SignatureSection(
+                    enableSignatureArea = settings.enableSignatureArea,
+                    signatureLabel = settings.signatureLabel,
+                    signatureLineLengthMm = settings.signatureLineLengthMm,
+                    onSignatureToggled = { viewModel.toggleSignatureArea(it) },
+                    onLabelChanged = { viewModel.updateSignatureLabel(it) },
+                    onLineLengthChanged = { viewModel.updateSignatureLineLength(it) }
+                )
+            }
+        }
+
+        // ✨ QR Code Section
+        item {
+            uiState.settings?.let { settings ->
+                QrCodeSection(
+                    enableQrCode = settings.enableQrCode,
+                    qrCodeContent = settings.qrCodeContent,
+                    qrCodeSizeMm = settings.qrCodeSizeMm,
+                    qrCodePosition = settings.qrCodePosition,
+                    onQrToggled = { viewModel.toggleQrCode(it) },
+                    onContentChanged = { viewModel.updateQrCodeContent(it) },
+                    onSizeChanged = { viewModel.updateQrCodeSize(it) },
+                    onPositionChanged = { viewModel.updateQrCodePosition(it) }
+                )
+            }
+        }
+
+        // ✨ Company Info Section
+        item {
+            uiState.settings?.let { settings ->
+                CompanyInfoSection(
+                    companyMotto = settings.companyMotto,
+                    companyWebsite = settings.companyWebsite,
+                    companySocialMediaJson = settings.companySocialMediaJson,
+                    onMottoChanged = { viewModel.updateCompanyMotto(it) },
+                    onWebsiteChanged = { viewModel.updateCompanyWebsite(it) },
+                    onSocialMediaChanged = { platform, handle -> viewModel.updateSocialMediaHandle(platform, handle) }
+                )
+            }
+        }
+
+        // ✨ Branding Preview Section
+        item {
+            uiState.settings?.let { settings ->
+                BrandingPreviewSection(
+                    enableLogo = settings.enableLogo,
+                    enableMotto = settings.enableMotto,
+                    enablePaymentIcons = settings.enablePaymentIcons,
+                    enableQrCode = settings.enableQrCode,
+                    enableSignatureArea = settings.enableSignatureArea,
+                    mottoText = settings.mottoText,
+                    paymentIconsCount = try {
+                        settings.acceptedPaymentMethodsJson.split(",").filter { it.isNotBlank() }.size
+                    } catch (e: Exception) {
+                        0
+                    },
+                    qrCodeContent = settings.qrCodeContent,
+                    signatureLabel = settings.signatureLabel,
+                    companySocialMediaJson = settings.companySocialMediaJson
+                )
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
 
         item {
             Row(
@@ -674,7 +1005,7 @@ fun PdfEngineSection(
             fontWeight = FontWeight.Bold
         )
         Text(
-            "Select how your PDF invoices are generated",
+            "Select how your PDF invoices are generated (3 professional options)",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -682,12 +1013,12 @@ fun PdfEngineSection(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             EngineOptionCard(
                 title = "Canvas",
                 emoji = "🎨",
-                description = "Direct coordinate control",
+                description = "Artistic coordinate control",
                 isSelected = selectedEngine == PdfEngine.CANVAS,
                 modifier = Modifier.weight(1f),
                 onClick = { onEngineSelected(PdfEngine.CANVAS) }
@@ -696,10 +1027,19 @@ fun PdfEngineSection(
             EngineOptionCard(
                 title = "HTML+CSS",
                 emoji = "📄",
-                description = "CSS-based styling",
+                description = "Modern CSS styling",
                 isSelected = selectedEngine == PdfEngine.HTML_CSS,
                 modifier = Modifier.weight(1f),
                 onClick = { onEngineSelected(PdfEngine.HTML_CSS) }
+            )
+
+            EngineOptionCard(
+                title = "SASS Pro",
+                emoji = "✨",
+                description = "Premium two-column layout",
+                isSelected = selectedEngine == PdfEngine.SASS_PROFESSIONAL,
+                modifier = Modifier.weight(1f),
+                onClick = { onEngineSelected(PdfEngine.SASS_PROFESSIONAL) }
             )
         }
     }
@@ -763,57 +1103,71 @@ fun PageLayoutSection(
             fontWeight = FontWeight.Bold
         )
         Text(
-            "Choose how invoice content is organized",
+            "Choose how invoice content is organized (8 professional layouts)",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Row 1: Classic & Modern
+        // Row 1: Classic, Modern, Spacious, Compact
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             LayoutOptionCard(
-                title = "Classic",
-                emoji = "📋",
-                description = "Traditional layout",
+                layout = PageLayout.CLASSIC,
                 isSelected = selectedLayout == PageLayout.CLASSIC,
                 modifier = Modifier.weight(1f),
                 onClick = { onLayoutSelected(PageLayout.CLASSIC) }
             )
-
             LayoutOptionCard(
-                title = "Modern",
-                emoji = "🎯",
-                description = "Compact grid layout",
+                layout = PageLayout.MODERN,
                 isSelected = selectedLayout == PageLayout.MODERN,
                 modifier = Modifier.weight(1f),
                 onClick = { onLayoutSelected(PageLayout.MODERN) }
             )
-        }
-
-        // Row 2: Spacious & Compact
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
             LayoutOptionCard(
-                title = "Spacious",
-                emoji = "✨",
-                description = "Generous spacing",
+                layout = PageLayout.SPACIOUS,
                 isSelected = selectedLayout == PageLayout.SPACIOUS,
                 modifier = Modifier.weight(1f),
                 onClick = { onLayoutSelected(PageLayout.SPACIOUS) }
             )
-
             LayoutOptionCard(
-                title = "Compact",
-                emoji = "📊",
-                description = "Executive tight fit",
+                layout = PageLayout.COMPACT,
                 isSelected = selectedLayout == PageLayout.COMPACT,
                 modifier = Modifier.weight(1f),
                 onClick = { onLayoutSelected(PageLayout.COMPACT) }
+            )
+        }
+
+        // Row 2: Sidebar, Cards, Minimal, Focused
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            LayoutOptionCard(
+                layout = PageLayout.SIDEBAR,
+                isSelected = selectedLayout == PageLayout.SIDEBAR,
+                modifier = Modifier.weight(1f),
+                onClick = { onLayoutSelected(PageLayout.SIDEBAR) }
+            )
+            LayoutOptionCard(
+                layout = PageLayout.CARDS,
+                isSelected = selectedLayout == PageLayout.CARDS,
+                modifier = Modifier.weight(1f),
+                onClick = { onLayoutSelected(PageLayout.CARDS) }
+            )
+            LayoutOptionCard(
+                layout = PageLayout.MINIMAL_TABLES,
+                isSelected = selectedLayout == PageLayout.MINIMAL_TABLES,
+                modifier = Modifier.weight(1f),
+                onClick = { onLayoutSelected(PageLayout.MINIMAL_TABLES) }
+            )
+            LayoutOptionCard(
+                layout = PageLayout.FOCUSED,
+                isSelected = selectedLayout == PageLayout.FOCUSED,
+                modifier = Modifier.weight(1f),
+                onClick = { onLayoutSelected(PageLayout.FOCUSED) }
             )
         }
     }
@@ -821,9 +1175,7 @@ fun PageLayoutSection(
 
 @Composable
 private fun LayoutOptionCard(
-    title: String,
-    emoji: String,
-    description: String,
+    layout: PageLayout,
     isSelected: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
@@ -839,23 +1191,25 @@ private fun LayoutOptionCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(emoji, fontSize = 24.sp)
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(layout.emoji, fontSize = 20.sp)
+            Text(layout.displayName, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
             Text(
-                description,
+                layout.description,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                fontSize = 8.sp
             )
             if (isSelected) {
                 Icon(
                     Icons.Default.Check,
                     contentDescription = "Selected",
                     tint = primaryColor,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(14.dp)
                 )
             }
         }
@@ -907,37 +1261,41 @@ private fun PreviewModeSection(
 }
 
 /**
+ * ✨ DEPRECATED - PHASE 1 CONSOLIDATION
+ *
  * SECTION 4: Live Preview — shows a WebView rendering of the selected invoice style.
- * Updates automatically when the style changes.
+ * REPLACED BY: UnifiedPdfPreview.kt for improved responsiveness and code consolidation
+ *
+ * This function has been consolidated into UnifiedPdfPreview composable for:
+ * - Single code path instead of branching by engine type
+ * - Stable state key-based recomposition
+ * - Immediate preview updates
+ * - Easier future maintenance
  */
 @Composable
+@Deprecated("Use UnifiedPdfPreview instead", ReplaceWith("UnifiedPdfPreview(...)"))
+@Suppress("DEPRECATION")
 private fun LivePreviewSection(
     previewHtml: String?,
     onRefresh: () -> Unit,
     selectedEngine: PdfEngine = PdfEngine.CANVAS,
     selectedCanvasTemplate: CanvasInvoiceTemplate = CanvasInvoiceTemplate.MODERN
 ) {
-    when (selectedEngine) {
-        PdfEngine.CANVAS -> {
-            CanvasTemplatePreview(
-                template = selectedCanvasTemplate,
-                previewHtml = previewHtml,
-                onRefresh = onRefresh
-            )
-        }
-        PdfEngine.HTML_CSS -> {
-            HtmlPreview(
-                previewHtml = previewHtml,
-                onRefresh = onRefresh
-            )
-        }
-    }
+    // Delegate to UnifiedPdfPreview for all rendering
+    UnifiedPdfPreview(
+        previewHtml = previewHtml,
+        onRefresh = onRefresh
+    )
 }
 
 /**
+ * ✨ DEPRECATED - PHASE 1 CONSOLIDATION
+ *
  * Canvas template visual preview
+ * REPLACED BY: UnifiedPdfPreview.kt
  */
 @Composable
+@Deprecated("Use UnifiedPdfPreview instead", ReplaceWith("UnifiedPdfPreview(...)"))
 private fun CanvasTemplatePreview(
     template: CanvasInvoiceTemplate,
     previewHtml: String?,
@@ -1066,9 +1424,13 @@ private fun CanvasTemplatePreview(
 }
 
 /**
+ * ✨ DEPRECATED - PHASE 1 CONSOLIDATION
+ *
  * HTML preview component
+ * REPLACED BY: UnifiedPdfPreview.kt
  */
 @Composable
+@Deprecated("Use UnifiedPdfPreview instead", ReplaceWith("UnifiedPdfPreview(...)"))
 private fun HtmlPreview(
     previewHtml: String?,
     onRefresh: () -> Unit
@@ -1436,5 +1798,298 @@ private fun LocaleOptionItem(
                 modifier = Modifier.size(20.dp)
             )
         }
+    }
+}
+
+/**
+ * COLOR SCHEME SECTION - Choose from 6 professional color palettes
+ */
+@Composable
+private fun ColorSchemeSection(
+    selectedColorScheme: ColorScheme,
+    onColorSchemeSelected: (ColorScheme) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "4️⃣  Color Scheme",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            "Choose a color palette for your invoice design",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Row 1: Professional, Vibrant, Minimal
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ColorSchemeCard(
+                scheme = ColorScheme.PROFESSIONAL,
+                isSelected = selectedColorScheme == ColorScheme.PROFESSIONAL,
+                modifier = Modifier.weight(1f),
+                onClick = { onColorSchemeSelected(ColorScheme.PROFESSIONAL) }
+            )
+            ColorSchemeCard(
+                scheme = ColorScheme.VIBRANT,
+                isSelected = selectedColorScheme == ColorScheme.VIBRANT,
+                modifier = Modifier.weight(1f),
+                onClick = { onColorSchemeSelected(ColorScheme.VIBRANT) }
+            )
+            ColorSchemeCard(
+                scheme = ColorScheme.MINIMAL,
+                isSelected = selectedColorScheme == ColorScheme.MINIMAL,
+                modifier = Modifier.weight(1f),
+                onClick = { onColorSchemeSelected(ColorScheme.MINIMAL) }
+            )
+        }
+
+        // Row 2: Warm, Tech, Nature
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ColorSchemeCard(
+                scheme = ColorScheme.WARM,
+                isSelected = selectedColorScheme == ColorScheme.WARM,
+                modifier = Modifier.weight(1f),
+                onClick = { onColorSchemeSelected(ColorScheme.WARM) }
+            )
+            ColorSchemeCard(
+                scheme = ColorScheme.TECH,
+                isSelected = selectedColorScheme == ColorScheme.TECH,
+                modifier = Modifier.weight(1f),
+                onClick = { onColorSchemeSelected(ColorScheme.TECH) }
+            )
+            ColorSchemeCard(
+                scheme = ColorScheme.NATURE,
+                isSelected = selectedColorScheme == ColorScheme.NATURE,
+                modifier = Modifier.weight(1f),
+                onClick = { onColorSchemeSelected(ColorScheme.NATURE) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColorSchemeCard(
+    scheme: ColorScheme,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val border = if (isSelected) BorderStroke(2.dp, primaryColor) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        border = border,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) primaryColor.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // Color preview box
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(24.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(android.graphics.Color.parseColor(scheme.primaryHex)))
+            )
+            Text(scheme.displayName, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            if (isSelected) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = "Selected",
+                    tint = primaryColor,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * SPACING PROFILE SECTION - Choose spacing presets
+ */
+@Composable
+private fun SpacingProfileSection(
+    selectedSpacingProfile: SpacingProfile,
+    onSpacingProfileSelected: (SpacingProfile) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            "5️⃣  Spacing Profile",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            "Control whitespace and padding throughout the invoice",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // All 4 options in one row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SpacingProfileCard(
+                profile = SpacingProfile.TIGHT,
+                isSelected = selectedSpacingProfile == SpacingProfile.TIGHT,
+                modifier = Modifier.weight(1f),
+                onClick = { onSpacingProfileSelected(SpacingProfile.TIGHT) }
+            )
+            SpacingProfileCard(
+                profile = SpacingProfile.NORMAL,
+                isSelected = selectedSpacingProfile == SpacingProfile.NORMAL,
+                modifier = Modifier.weight(1f),
+                onClick = { onSpacingProfileSelected(SpacingProfile.NORMAL) }
+            )
+            SpacingProfileCard(
+                profile = SpacingProfile.GENEROUS,
+                isSelected = selectedSpacingProfile == SpacingProfile.GENEROUS,
+                modifier = Modifier.weight(1f),
+                onClick = { onSpacingProfileSelected(SpacingProfile.GENEROUS) }
+            )
+            SpacingProfileCard(
+                profile = SpacingProfile.PREMIUM,
+                isSelected = selectedSpacingProfile == SpacingProfile.PREMIUM,
+                modifier = Modifier.weight(1f),
+                onClick = { onSpacingProfileSelected(SpacingProfile.PREMIUM) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SpacingProfileCard(
+    profile: SpacingProfile,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val border = if (isSelected) BorderStroke(2.dp, primaryColor) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        border = border,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) primaryColor.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(profile.emoji, fontSize = 20.sp)
+            Text(profile.displayName, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            if (isSelected) {
+                Icon(
+                    Icons.Default.Check,
+                    contentDescription = "Selected",
+                    tint = primaryColor,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * VISUAL ACCENTS SECTION - Toggle design enhancements
+ */
+@Composable
+private fun VisualAccentsSection(
+    accents: VisualAccents,
+    onAccentsChanged: (VisualAccents) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            "6️⃣  Visual Accents",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            "Fine-tune visual elements for your invoice design",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        // Toggle options
+        VisualAccentToggle(
+            icon = "🗃️",
+            label = "Show Borders",
+            isEnabled = accents.showBorders,
+            onToggle = { onAccentsChanged(accents.copy(showBorders = !accents.showBorders)) }
+        )
+        VisualAccentToggle(
+            icon = "⬜",
+            label = "Show Shadows",
+            isEnabled = accents.showShadows,
+            onToggle = { onAccentsChanged(accents.copy(showShadows = !accents.showShadows)) }
+        )
+        VisualAccentToggle(
+            icon = "─",
+            label = "Show Dividers",
+            isEnabled = accents.showDividers,
+            onToggle = { onAccentsChanged(accents.copy(showDividers = !accents.showDividers)) }
+        )
+        VisualAccentToggle(
+            icon = "💰",
+            label = "Highlight Totals",
+            isEnabled = accents.highlightTotals,
+            onToggle = { onAccentsChanged(accents.copy(highlightTotals = !accents.highlightTotals)) }
+        )
+        VisualAccentToggle(
+            icon = "🌈",
+            label = "Use Gradients",
+            isEnabled = accents.useGradients,
+            onToggle = { onAccentsChanged(accents.copy(useGradients = !accents.useGradients)) }
+        )
+    }
+}
+
+@Composable
+private fun VisualAccentToggle(
+    icon: String,
+    label: String,
+    isEnabled: Boolean,
+    onToggle: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onToggle)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (isEnabled) 0.5f else 0.2f))
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(icon, fontSize = 18.sp)
+            Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+        }
+        Checkbox(
+            checked = isEnabled,
+            onCheckedChange = { onToggle() },
+            modifier = Modifier.size(24.dp)
+        )
     }
 }

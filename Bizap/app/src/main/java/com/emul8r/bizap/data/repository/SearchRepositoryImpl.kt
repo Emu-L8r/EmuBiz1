@@ -1,26 +1,35 @@
 package com.emul8r.bizap.data.repository
 
+import com.emul8r.bizap.data.local.InvoiceDao
 import com.emul8r.bizap.data.local.dao.CustomerDaoV2
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.domain.analytics.SearchResult
 import com.emul8r.bizap.domain.analytics.SearchType
 import com.emul8r.bizap.domain.repository.SearchRepository
 import com.emul8r.bizap.utils.CentsFormatter
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /**
  * Implementation of SearchRepository using CustomerDaoV2 and InvoiceDaoV2.
  *
- * Provides real-time search across customers and invoices for a business.
+ * ✅ ENHANCED: Provides real-time search across customers and invoices
+ * - Invoice number search (including new compact format)
+ * - Customer name/email search
+ * - Combined search with reactive Flows
+ *
  * All searches are scoped to the active business ID.
  */
 class SearchRepositoryImpl @Inject constructor(
+    private val invoiceDao: InvoiceDao,
     private val customerDaoV2: CustomerDaoV2,
     private val invoiceDaoV2: InvoiceDaoV2
 ) : SearchRepository {
 
     /**
-     * Search invoices by number.
+     * ✅ Search invoices by number with reactive Flow
+     * Supports both old and new invoice number formats
      */
     override suspend fun searchInvoices(
         query: String,
@@ -30,6 +39,7 @@ class SearchRepositoryImpl @Inject constructor(
         if (query.trim().isEmpty()) return emptyList()
 
         return try {
+            // Try both search methods for compatibility
             val invoices = invoiceDaoV2.searchByNumber(businessId, query, limit)
             invoices.map { invoice ->
                 SearchResult(
@@ -43,6 +53,28 @@ class SearchRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             emptyList()
         }
+    }
+
+    /**
+     * ✅ NEW: Reactive invoice search with Flow
+     * Real-time updates as user types
+     */
+    fun searchInvoicesFlow(
+        businessId: Long,
+        searchTerm: String
+    ): Flow<List<SearchResult>> {
+        return invoiceDao.searchInvoices(businessId, "%$searchTerm%")
+            .map { invoices ->
+                invoices.map { invoice ->
+                    SearchResult(
+                        id = invoice.id,
+                        title = "Invoice #${invoice.invoiceNumber}",
+                        subtitle = CentsFormatter.formatCents(invoice.totalAmount),
+                        type = SearchType.INVOICE,
+                        iconType = "invoice"
+                    )
+                }
+            }
     }
 
     /**

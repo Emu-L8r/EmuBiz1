@@ -34,6 +34,7 @@ import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.designsystem.BizapStatusBadge
 import com.emul8r.bizap.ui.components.ErrorStateView
 import com.emul8r.bizap.ui.components.SkeletonLoadingItem
+import com.emul8r.bizap.ui.components.StatusColoredInvoiceCard
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.gui2.common.formatCents
@@ -123,6 +124,11 @@ fun InvoiceListScreen(
             onCreateInvoice = onCreateInvoice,
             onBack = onBack,
         )
+        GuiMode.GUI3 -> InvoiceListScreenV2Content(
+            onInvoiceClick = onInvoiceClick,
+            onCreateInvoice = onCreateInvoice,
+            onBack = onBack,
+        )
     }
 }
 
@@ -182,64 +188,12 @@ fun InvoiceList(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(invoices) { invoice ->
-            val statusColor = invoice.status.getStatusColor()
-            val backgroundColor = invoice.status.getBackgroundColor()
-
-            Card(
+            // Use new StatusColoredInvoiceCard component (GUI1 style - no accent bar)
+            StatusColoredInvoiceCard(
+                invoice = invoice,
                 onClick = { onInvoiceClick(invoice.id) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = backgroundColor
-                ),
-                border = BorderStroke(2.dp, statusColor.copy(alpha = 0.3f)),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    // Top accent line
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(3.dp)
-                            .padding(bottom = 8.dp)
-                    )
-
-                    // Header row with invoice number and status badge
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = invoice.displayName.ifBlank { invoice.invoiceNumber },
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        BizapStatusBadge(status = invoice.status)
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Customer name
-                    Text(
-                        text = invoice.customerName,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // Amount and date
-                    Text(
-                        text = "Total: ${CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode)} | ${formatDate(invoice.date)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+                showAccentBar = false
+            )
         }
     }
 }

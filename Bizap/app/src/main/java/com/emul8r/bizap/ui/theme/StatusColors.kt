@@ -15,14 +15,27 @@ object StatusColors {
     val Overdue = Color(0xFFB3261E)        // Red - Past due, at risk
     val Outstanding = Color(0xFFFFA500)    // Orange - Expected but not collected
     val PartiallyPaid = Color(0xFFFFA500)  // Orange - Partial payment received
-    
     // Darker variants for text
-    val PaidDark = Color(0xFF2E7D32)
-    val SentDark = Color(0xFF1565C0)
-    val DraftDark = Color(0xFF666666)
-    val OverdueDark = Color(0xFFC62828)
-    val OutstandingDark = Color(0xFFE65100)
-    val PartiallyPaidDark = Color(0xFFE65100)
+    val PaidDark = Color(0xFF1B5E20)       // Darker green for better contrast
+    val SentDark = Color(0xFF0D47A1)       // Darker blue for better contrast
+    val DraftDark = Color(0xFF424242)      // Darker gray for better contrast
+    val OverdueDark = Color(0xFF7B1217)    // Darker red for better contrast
+    val OutstandingDark = Color(0xFFBF360C) // Darker orange for better contrast
+    val PartiallyPaidDark = Color(0xFFBF360C) // Darker orange for better contrast
+
+    // Background colors (soft, light) for cards
+    val PaidBackground = Color(0xFFD4EDDA)      // Soft green
+    val SentBackground = Color(0xFFCCE5FF)      // Soft blue
+    val DraftBackground = Color(0xFFF5F5F5)     // Soft gray
+    val OverdueBackground = Color(0xFFF8D7DA)   // Soft red/pink
+    val PartiallyPaidBackground = Color(0xFFFFE0B2) // Soft orange
+
+    // Border colors (darker/saturated) for cards
+    val PaidBorder = Color(0xFF81C784)     // Green border
+    val SentBorder = Color(0xFF9ECBFF)     // Blue border
+    val DraftBorder = Color(0xFFCCCCCC)    // Gray border
+    val OverdueBorder = Color(0xFFEF9A9A)  // Red border
+    val PartiallyPaidBorder = Color(0xFFFFCC80) // Orange border
 }
 
 /**
@@ -35,6 +48,7 @@ fun InvoiceStatus.getStatusColor(): Color {
         InvoiceStatus.DRAFT -> StatusColors.Draft
         InvoiceStatus.OVERDUE -> StatusColors.Overdue
         InvoiceStatus.PARTIALLY_PAID -> StatusColors.PartiallyPaid
+        InvoiceStatus.CANCELLED -> Color(0xFF555555) // Dark gray for cancelled
     }
 }
 
@@ -45,15 +59,30 @@ fun InvoiceStatus.getStatusColorDark(): Color {
         InvoiceStatus.DRAFT -> StatusColors.DraftDark
         InvoiceStatus.OVERDUE -> StatusColors.OverdueDark
         InvoiceStatus.PARTIALLY_PAID -> StatusColors.PartiallyPaidDark
+        InvoiceStatus.CANCELLED -> Color(0xFF2A2A2A) // Darker gray for cancelled
     }
 }
 
 fun InvoiceStatus.getBackgroundColor(): Color {
-    return this.getStatusColor().copy(alpha = 0.12f)
+    return when (this) {
+        InvoiceStatus.PAID -> StatusColors.PaidBackground
+        InvoiceStatus.SENT -> StatusColors.SentBackground
+        InvoiceStatus.DRAFT -> StatusColors.DraftBackground
+        InvoiceStatus.OVERDUE -> StatusColors.OverdueBackground
+        InvoiceStatus.PARTIALLY_PAID -> StatusColors.PartiallyPaidBackground
+        InvoiceStatus.CANCELLED -> Color(0xFFE8E8E8) // Light gray background for cancelled
+    }
 }
 
 fun InvoiceStatus.getBorderColor(): Color {
-    return this.getStatusColor().copy(alpha = 0.3f)
+    return when (this) {
+        InvoiceStatus.PAID -> StatusColors.PaidBorder
+        InvoiceStatus.SENT -> StatusColors.SentBorder
+        InvoiceStatus.DRAFT -> StatusColors.DraftBorder
+        InvoiceStatus.OVERDUE -> StatusColors.OverdueBorder
+        InvoiceStatus.PARTIALLY_PAID -> StatusColors.PartiallyPaidBorder
+        InvoiceStatus.CANCELLED -> Color(0xFFAAAAAA) // Gray border for cancelled
+    }
 }
 
 /**

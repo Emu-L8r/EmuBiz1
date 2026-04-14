@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 import timber.log.Timber
 
 /**
@@ -33,8 +33,8 @@ import timber.log.Timber
  */
 @Composable
 fun TemplateLineItemsEditor(
-    items: List<LineItem>,
-    onItemsChange: (List<LineItem>) -> Unit,
+    items: List<InvoiceItem>,
+    onItemsChange: (List<InvoiceItem>) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
@@ -128,8 +128,8 @@ fun TemplateLineItemsEditor(
  */
 @Composable
 private fun TemplateLineItemRow(
-    item: LineItem,
-    onUpdate: (LineItem) -> Unit,
+    item: InvoiceItem,
+    onUpdate: (InvoiceItem) -> Unit,
     onDelete: () -> Unit,
     enabled: Boolean = true,
     modifier: Modifier = Modifier
@@ -229,7 +229,7 @@ private fun TemplateLineItemRow(
  */
 @Composable
 private fun TemplateLineItemForm(
-    onSave: (LineItem) -> Unit,
+    onSave: (InvoiceItem) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -296,7 +296,7 @@ private fun TemplateLineItemForm(
                 Button(
                     onClick = {
                         if (description.isNotBlank() && quantity.toDoubleOrNull() != null && unitPrice.toDoubleOrNull() != null) {
-                            val newItem = LineItem(
+                            val newItem = InvoiceItem(
                                 id = (System.currentTimeMillis() % 100000).toLong(),
                                 description = description,
                                 quantity = quantity.toDouble(),
@@ -318,8 +318,8 @@ private fun TemplateLineItemForm(
  */
 @Composable
 private fun TemplateLineItemEditForm(
-    item: LineItem,
-    onSave: (LineItem) -> Unit,
+    item: InvoiceItem,
+    onSave: (InvoiceItem) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {

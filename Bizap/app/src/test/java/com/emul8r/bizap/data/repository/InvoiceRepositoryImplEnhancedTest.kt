@@ -444,8 +444,7 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
         val invoice = TestDataFactory.createTestInvoice(id = 0, status = InvoiceStatus.PAID)
 
         coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
-        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
-        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 0
+        coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 0
         coEvery { invoiceDao.insert(any(), any()) } returns 123L
         coEvery { analyticsDao.insertDailySnapshot(any()) } just Runs
         coEvery { analyticsDao.getDailySnapshotByDate(any(), any()) } returns null
@@ -739,3 +738,6 @@ class InvoiceRepositoryImplEnhancedTest : BaseUnitTest() {
         }
     }
 }
+
+
+

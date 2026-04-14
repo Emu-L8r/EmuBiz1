@@ -100,7 +100,7 @@ fun InvoiceListRow(
 
             // Amount row
             Text(
-                text = CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode),
+                text = CentsFormatter.formatCents(invoice.totalAmount, invoice.currency),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium
             )

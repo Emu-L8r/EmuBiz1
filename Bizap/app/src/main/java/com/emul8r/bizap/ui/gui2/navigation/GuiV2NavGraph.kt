@@ -3,14 +3,19 @@ package com.emul8r.bizap.ui.gui2.navigation
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import android.content.Intent
+import com.emul8r.bizap.ui.activities.MatrixGUIMainActivity
 import com.emul8r.bizap.ui.components.SyncStatusIndicator
 import com.emul8r.bizap.ui.documents.DocumentVaultScreen
 import com.emul8r.bizap.ui.dunning.DunningNoticesScreen
 import com.emul8r.bizap.ui.notes.NotesScreen
+import com.emul8r.bizap.ui.predictions.PredictionsScreen
+import com.emul8r.bizap.ui.reports.ReportsScreen
 import com.emul8r.bizap.ui.gui2.analytics.InvoiceAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.PaymentAnalyticsScreenV2
 import com.emul8r.bizap.ui.gui2.analytics.RevenueAnalyticsScreenV2
@@ -53,6 +58,7 @@ fun GuiV2NavGraph(
     ) {
         composable<ScreenV2.Dashboard> { backStackEntry ->
             val route: ScreenV2.Dashboard = backStackEntry.toRoute()
+            val context = LocalContext.current
             Column {
                 SyncStatusIndicator()
                 DashboardScreenV2(
@@ -68,7 +74,6 @@ fun GuiV2NavGraph(
                     onNavigateToDunningNotices = { navController.navigate(ScreenV2.DunningNotices(route.businessId)) },
                     onNavigateToVault = { navController.navigate(ScreenV2.Vault(route.businessId)) },
                     onNavigateToNotes = {
-                        // ✅ FIX: Navigate to GUI2 Notes screen using ScreenV2.Notes route
                         try {
                             navController.navigate(ScreenV2.Notes(businessId = route.businessId))
                             Timber.d("Navigating to Notes screen from GUI2")
@@ -80,6 +85,14 @@ fun GuiV2NavGraph(
                     onCreateInvoice = { navController.navigate(ScreenV2.CreateInvoice(route.businessId)) },
                     onNavigateToSettings = { navController.navigateToSettingsV2(route.businessId) },
                     onSwitchToGui1 = onSwitchToGui1,
+                    onSwitchToGui3 = {
+                        Timber.d("GUI2: Switching to GUI3 (Matrix)")
+                        context.startActivity(
+                            Intent(context, MatrixGUIMainActivity::class.java).apply {
+                                putExtra("businessId", route.businessId)
+                            }
+                        )
+                    },
                     uiMode = uiMode
                 )
             }
@@ -323,6 +336,23 @@ fun GuiV2NavGraph(
             val route: ScreenV2.Notes = backStackEntry.toRoute()
             NotesScreen(
                 navController = navController
+            )
+        }
+
+        composable<ScreenV2.Predictions> { backStackEntry ->
+            val route: ScreenV2.Predictions = backStackEntry.toRoute()
+            PredictionsScreen(
+                onNavigateToInvoice = { invoiceId ->
+                    navController.navigate(ScreenV2.InvoiceDetail(route.businessId, invoiceId))
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ScreenV2.AdvancedReporting> { backStackEntry ->
+            val route: ScreenV2.AdvancedReporting = backStackEntry.toRoute()
+            ReportsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

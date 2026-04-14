@@ -183,7 +183,7 @@ fun EditInvoiceContent(
             val total = invoice.items.sumOf { it.calculateTotal() }
             InvoiceBottomSummary(
                 total = total,
-                currencyCode = invoice.currencyCode,
+                currencyCode = invoice.currency,
                 isSaving = isSaving,
                 onSave = { viewModel.saveInvoice() }
             )
@@ -205,7 +205,7 @@ fun EditInvoiceContent(
                 val currencies by viewModel.currencies.collectAsStateWithLifecycle()
                 CurrencySelector(
                     currencies = currencies,
-                    selectedCurrencyCode = invoice.currencyCode,
+                    selectedCurrencyCode = invoice.currency,
                     onCurrencySelected = viewModel::onCurrencyChange,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -213,13 +213,13 @@ fun EditInvoiceContent(
 
             item { Text("Line Items (changes save automatically)", style = MaterialTheme.typography.titleMedium) }
 
-            items(invoice.items, key = { item -> item.transientId }) { item -> // Use transientId for key
+             items(invoice.items, key = { item -> item.id }) { item ->
                 LineItemEditor(
                     description = item.description,
                     quantity = item.quantity,
                     unitPrice = item.unitPrice,
-                    onUpdate = { desc, qty, price -> viewModel.updateLineItem(item.transientId, desc, qty, price) },
-                    onRemove = { viewModel.removeLineItem(item.transientId) }
+                    onUpdate = { desc, qty, price -> viewModel.updateLineItem(item.id.toString(), desc, qty, price) },
+                    onRemove = { viewModel.removeLineItem(item.id.toString()) }
                 )
             }
 

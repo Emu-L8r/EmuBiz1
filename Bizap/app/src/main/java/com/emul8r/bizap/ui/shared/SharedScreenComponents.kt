@@ -32,7 +32,7 @@ fun InvoiceHeaderCard(
         GuiMode.GUI1 -> CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
-        GuiMode.GUI2 -> CardDefaults.cardColors()
+        GuiMode.GUI2, GuiMode.GUI3 -> CardDefaults.cardColors()
     }
 
     Card(

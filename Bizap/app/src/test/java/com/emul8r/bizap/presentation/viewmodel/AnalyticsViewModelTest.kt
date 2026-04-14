@@ -6,6 +6,7 @@ import com.emul8r.bizap.data.model.*
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -24,6 +25,7 @@ import kotlin.test.assertTrue
  * 2. Days-to-payment and invoicing-velocity flows switch correctly when the
  *    business context changes.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class AnalyticsViewModelTest : BaseUnitTest() {
 
     private val analyticsDao: AnalyticsDao = mockk(relaxed = true)
@@ -134,3 +136,6 @@ class AnalyticsViewModelTest : BaseUnitTest() {
         // The ViewModel uses flatMapLatest to switch data based on active business ID
     }
 }
+
+
+

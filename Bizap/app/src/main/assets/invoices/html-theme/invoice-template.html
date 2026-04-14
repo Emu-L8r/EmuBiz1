@@ -58,6 +58,18 @@
             </div>
         </section>
 
+        <!-- CUSTOM HEADER / SUBHEADER SECTION (Phase 2.0.3) -->
+        <#if header?? || subheader??>
+        <section class="custom-header-section">
+            <#if header??>
+            <h2 class="custom-header">${header}</h2>
+            </#if>
+            <#if subheader??>
+            <p class="custom-subheader">${subheader}</p>
+            </#if>
+        </section>
+        </#if>
+
         <!-- ITEMS TABLE SECTION -->
         <section class="items-section">
             <table class="items-table">

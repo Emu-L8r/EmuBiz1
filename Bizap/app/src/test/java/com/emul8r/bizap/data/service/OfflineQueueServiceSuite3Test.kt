@@ -68,7 +68,7 @@ class OfflineQueueServiceSuite3Test {
 
             // Act: Create invoice for same customer
             queueService.queueCreateInvoice(
-                com.emul8r.bizap.domain.model.Invoice(id = 1L, businessProfileId = 1L, customerId = 1L, customerName = "Acme Corp", totalAmount = 2500, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L)
+                com.emul8r.bizap.domain.model.Invoice(id = 1L, businessProfileId = 1L, customerId = 1L, customerName = "Acme Corp", totalAmount = 2500, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, dateCreated = java.time.Instant.now().toString(), dueDate = java.time.Instant.now().toString())
             )
 
             // Assert: Verify both operations queued
@@ -109,13 +109,13 @@ class OfflineQueueServiceSuite3Test {
                 id
             }
 
-            // Act: Create 5 invoices rapidly
-            val invoiceAmounts = listOf(500L, 750L, 1200L, 600L, 400L)
-            invoiceAmounts.forEachIndexed { i, amount ->
-                queueService.queueCreateInvoice(
-                    com.emul8r.bizap.domain.model.Invoice(id = i.toLong(), businessProfileId = 1L, customerId = 1L, customerName = "Test", totalAmount = amount, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L)
-                )
-            }
+             // Act: Create 5 invoices rapidly
+             val invoiceAmounts = listOf(500L, 750L, 1200L, 600L, 400L)
+             invoiceAmounts.forEachIndexed { i, amount ->
+                 queueService.queueCreateInvoice(
+                     com.emul8r.bizap.domain.model.Invoice(id = i.toLong(), businessProfileId = 1L, customerId = 1L, customerName = "Test", totalAmount = amount, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, dateCreated = java.time.Instant.now().toString(), dueDate = java.time.Instant.now().toString())
+                 )
+             }
 
             // Assert: All 5 invoices queued
             assertEquals(5, capturedOperations.size)
@@ -166,14 +166,14 @@ class OfflineQueueServiceSuite3Test {
             // Act: Step 1 - Create customer
             queueService.queueCreateCustomer(com.emul8r.bizap.domain.model.Customer(id = 1L, name = "Customer X"))
 
-            // Act: Step 2 - Create invoice for customer
-            queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 1L, businessProfileId = 1L, customerId = 1L, customerName = "Customer X", totalAmount = 3000, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
+             // Act: Step 2 - Create invoice for customer
+             queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 1L, businessProfileId = 1L, customerId = 1L, customerName = "Customer X", totalAmount = 3000, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, dateCreated = java.time.Instant.now().toString(), dueDate = java.time.Instant.now().toString()))
 
             // Act: Step 3 - Record payment
             queueService.queueRecordPayment(1L, 1500L, 1L)
 
-            // Act: Step 4 - Create another invoice
-            queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 2L, businessProfileId = 1L, customerId = 2L, customerName = "Other", totalAmount = 800, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
+             // Act: Step 4 - Create another invoice
+             queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 2L, businessProfileId = 1L, customerId = 2L, customerName = "Other", totalAmount = 800, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, dateCreated = java.time.Instant.now().toString(), dueDate = java.time.Instant.now().toString()))
 
             // Act: Step 5 - Update customer
             queueService.queueUpdateCustomer(com.emul8r.bizap.domain.model.Customer(id = 1L, name = "Customer X Updated"))
@@ -231,16 +231,16 @@ class OfflineQueueServiceSuite3Test {
                 operationIdCounter.incrementAndGet()
             }
 
-            // Act: Launch concurrent operations from multiple coroutines
-            val job1 = async {
-                queueService.queueCreateCustomer(com.emul8r.bizap.domain.model.Customer(name = "Customer 1"))
-                queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 1L, customerId = null, customerName = "C1", totalAmount = 100, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
-            }
+             // Act: Launch concurrent operations from multiple coroutines
+             val job1 = async {
+                 queueService.queueCreateCustomer(com.emul8r.bizap.domain.model.Customer(name = "Customer 1"))
+                 queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 1L, customerId = null, customerName = "C1", totalAmount = 100, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, dateCreated = java.time.Instant.now().toString(), dueDate = java.time.Instant.now().toString()))
+             }
 
-            val job2 = async {
-                queueService.queueCreateCustomer(com.emul8r.bizap.domain.model.Customer(name = "Customer 2"))
-                queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 2L, customerId = null, customerName = "C2", totalAmount = 200, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
-            }
+             val job2 = async {
+                 queueService.queueCreateCustomer(com.emul8r.bizap.domain.model.Customer(name = "Customer 2"))
+                 queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = 2L, customerId = null, customerName = "C2", totalAmount = 200, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, dateCreated = java.time.Instant.now().toString(), dueDate = java.time.Instant.now().toString()))
+             }
 
             val job3 = async {
                 queueService.queueRecordPayment(1L, 150L, 1L)
@@ -286,15 +286,15 @@ class OfflineQueueServiceSuite3Test {
                 operationIdCounter.incrementAndGet()
             }
 
-            // Act: Create a realistic mix of operations
-            // 4 customer creates
-            repeat(4) {
-                queueService.queueCreateCustomer(com.emul8r.bizap.domain.model.Customer(name = "Customer $it"))
-            }
-            // 7 invoice creates
-            repeat(7) {
-                queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = it.toLong(), customerId = null, customerName = "C$it", totalAmount = (it + 1) * 100L, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, date = 0L))
-            }
+             // Act: Create a realistic mix of operations
+             // 4 customer creates
+             repeat(4) {
+                 queueService.queueCreateCustomer(com.emul8r.bizap.domain.model.Customer(name = "Customer $it"))
+             }
+             // 7 invoice creates
+             repeat(7) {
+                 queueService.queueCreateInvoice(com.emul8r.bizap.domain.model.Invoice(id = it.toLong(), customerId = null, customerName = "C$it", totalAmount = (it + 1) * 100L, items = emptyList(), isQuote = false, status = com.emul8r.bizap.domain.model.InvoiceStatus.DRAFT, dateCreated = java.time.Instant.now().toString(), dueDate = java.time.Instant.now().toString()))
+             }
             // 2 deletes
             repeat(2) {
                 queueService.queueDeleteInvoice(it.toLong(), 1L)
@@ -322,3 +322,6 @@ class OfflineQueueServiceSuite3Test {
         }
     }
 }
+
+
+

@@ -144,3 +144,6 @@ class DailyRevenueTotalTest : BaseUnitTest() {
         assertTrue(report.checkedAtMs in before..after)
     }
 }
+
+
+

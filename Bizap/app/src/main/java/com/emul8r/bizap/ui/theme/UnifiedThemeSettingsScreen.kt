@@ -118,7 +118,7 @@ fun UnifiedThemeSettingsScreen(
             // INFO CARD: Direct users to App Appearance for theme mode
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
+                colors = androidx.compose.material3.CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer
                 )
             ) {
@@ -287,7 +287,7 @@ fun UnifiedThemeSettingsScreen(
 private fun PreviewPanel(colors: ThemeColors) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
+        colors = androidx.compose.material3.CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
@@ -520,7 +520,7 @@ private fun PresetCard(
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable { onSelected(preset) },
-        colors = CardDefaults.cardColors(
+        colors = androidx.compose.material3.CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(12.dp)

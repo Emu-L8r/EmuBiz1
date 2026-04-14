@@ -131,6 +131,10 @@ fun InvoiceDetailScreen(
             invoiceId = invoiceId,
             onBack = onBack,
         )
+        GuiMode.GUI3 -> InvoiceDetailScreenV2Content(
+            invoiceId = invoiceId,
+            onBack = onBack,
+        )
     }
 }
 
@@ -311,7 +315,7 @@ private fun InvoiceDetailScreenV1Content(
                             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                                 Column(Modifier.padding(16.dp)) {
                                     Text(invoice.displayName.ifBlank { invoice.invoiceNumber }, style = MaterialTheme.typography.headlineSmall)
-                                    Text(formatDate(invoice.date), style = MaterialTheme.typography.bodyMedium)
+                                    Text(formatDate(invoice.dateCreated), style = MaterialTheme.typography.bodyMedium)
                                     Text("Customer: ${invoice.customerName}", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 4.dp))
 
                                     HorizontalDivider(Modifier.padding(vertical = 12.dp))
@@ -338,7 +342,7 @@ private fun InvoiceDetailScreenV1Content(
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text("Subtotal", style = MaterialTheme.typography.bodyLarge)
                                         Text(
-                                            text = CentsFormatter.formatCents(invoice.totalAmount - invoice.taxAmount, invoice.currencyCode),
+                                            text = CentsFormatter.formatCents(invoice.totalAmount - invoice.taxAmount, invoice.currency),
                                             style = MaterialTheme.typography.bodyLarge
                                         )
                                     }
@@ -349,7 +353,7 @@ private fun InvoiceDetailScreenV1Content(
                                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                             Text("Tax (${(invoice.taxRate * 100).toInt()}%)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                             Text(
-                                                text = CentsFormatter.formatCents(invoice.taxAmount, invoice.currencyCode),
+                                                text = CentsFormatter.formatCents(invoice.taxAmount, invoice.currency),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -370,7 +374,7 @@ private fun InvoiceDetailScreenV1Content(
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text("Total", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                                         Text(
-                                            text = CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode),
+                                            text = CentsFormatter.formatCents(invoice.totalAmount, invoice.currency),
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
@@ -818,16 +822,16 @@ private fun InvoiceDetailV2Content(invoice: Invoice, modifier: Modifier = Modifi
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SectionHeaderV2("Invoice Info")
-        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                InvoiceDetailRowV2("Customer", invoice.customerName)
-                InvoiceDetailRowV2("Status", invoice.status.name)
-                InvoiceDetailRowV2("Date", dateFormatter.format(java.util.Date(invoice.date)))
-                if (invoice.dueDate > 0) InvoiceDetailRowV2("Due Date", dateFormatter.format(java.util.Date(invoice.dueDate)))
-                InvoiceDetailRowV2("Total", formatCents(invoice.totalAmount))
-                InvoiceDetailRowV2("Amount Paid", formatCents(invoice.amountPaid))
-                InvoiceDetailRowV2("Outstanding", formatCents(invoice.totalAmount - invoice.amountPaid))
-                InvoiceDetailRowV2("Currency", invoice.currencyCode)
+         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                 InvoiceDetailRowV2("Customer", invoice.customerName)
+                 InvoiceDetailRowV2("Status", invoice.status.name)
+                 InvoiceDetailRowV2("Date", dateFormatter.format(java.util.Date(java.time.Instant.parse(invoice.dateCreated).toEpochMilli())))
+                 if (invoice.dueDate.isNotBlank()) InvoiceDetailRowV2("Due Date", dateFormatter.format(java.util.Date(java.time.Instant.parse(invoice.dueDate).toEpochMilli())))
+                 InvoiceDetailRowV2("Total", formatCents(invoice.totalAmount))
+                 InvoiceDetailRowV2("Amount Paid", formatCents(invoice.amountPaid))
+                 InvoiceDetailRowV2("Outstanding", formatCents(invoice.totalAmount - invoice.amountPaid))
+                 InvoiceDetailRowV2("Currency", invoice.currency)
             }
         }
         if (invoice.items.isNotEmpty()) {

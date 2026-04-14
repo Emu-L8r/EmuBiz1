@@ -109,14 +109,7 @@ class InvoicePdfService @Inject constructor(
 
                     // FIX #1: Additional validation
                     Timber.d("🔍 Step 3: Validate settings object")
-                    @Suppress("ConstantConditionIf")  // Redundant check: selectedHtmlStyle is guaranteed non-null from Step 2
-                    if (settings.selectedHtmlStyle == null) {
-                        Timber.e("❌ VALIDATION FAILED: selectedHtmlStyle is NULL")
-                        throw IllegalStateException(
-                            "Settings loaded but selectedHtmlStyle is NULL. " +
-                            "This indicates a data model error."
-                        )
-                    }
+                    // Note: selectedHtmlStyle is guaranteed non-null from Step 2, redundant check removed
                     Timber.d("   ✅ Validation passed - selectedHtmlStyle is NOT NULL")
 
                     // Create service with validated settings
@@ -445,29 +438,29 @@ class InvoicePdfService @Inject constructor(
 
 
         // ===== HEADER AND SUBHEADER TEXT (Optional, appears before line items) =====
-        if (snapshot.headerText.isNotBlank() || snapshot.subheaderText.isNotBlank()) {
+        if (snapshot.header.isNotBlank() || snapshot.subheader.isNotBlank()) {
             canvas = pageManager.ensureSpace(50f)
 
             // ✅ FIX: Header/Subheader rendering with proper spacing to prevent overlap
-            if (snapshot.headerText.isNotBlank()) {
-                val headerTextPaint = Paint().apply {
+            if (snapshot.header.isNotBlank()) {
+                val headerPaint = Paint().apply {
                     typeface = boldTypeface
                     textSize = 14f  // Prominent header
                     color = colors.primary
                     isAntiAlias = true
                 }
-                canvas.drawText(snapshot.headerText, 40f, pageManager.currentY + 12f, headerTextPaint)
+                canvas.drawText(snapshot.header, 40f, pageManager.currentY + 12f, headerPaint)
                 pageManager.advanceY(20f)  // Increased spacing for large header
             }
 
-            if (snapshot.subheaderText.isNotBlank()) {
+            if (snapshot.subheader.isNotBlank()) {
                 val subheaderPaint = Paint().apply {
                     typeface = regularTypeface
                     textSize = 11f  // Slightly smaller
                     color = colors.textLight
                     isAntiAlias = true
                 }
-                canvas.drawText(snapshot.subheaderText, 40f, pageManager.currentY + 10f, subheaderPaint)
+                canvas.drawText(snapshot.subheader, 40f, pageManager.currentY + 10f, subheaderPaint)
                 pageManager.advanceY(16f)  // Good spacing after subheader
             }
 
@@ -477,7 +470,7 @@ class InvoicePdfService @Inject constructor(
         if (!hideLineItems) {
             // ===== PHASE 2: ITEMS TABLE WITH GRID-BASED POSITIONING =====
             // Draw table header with professional styling
-            val headerTextPaint = Paint(headerPaint).apply {
+            val headerPaint = Paint(headerPaint).apply {
                 color = Color.WHITE
                 textSize = 11f
                 typeface = boldTypeface
@@ -511,7 +504,7 @@ class InvoicePdfService @Inject constructor(
                 alternateRowColor = Color.parseColor("#F9F9F9")
             )
 
-            tableRenderer.drawRow(listOf("Description", "Qty", "Price", "Total"), headerTextPaint, isHeader = true, headerTextColor = Color.WHITE)
+            tableRenderer.drawRow(listOf("Description", "Qty", "Price", "Total"), headerPaint, isHeader = true)
             pageManager.setY(tableRenderer.getPosition())
 
             // Draw vertical column separators for clarity

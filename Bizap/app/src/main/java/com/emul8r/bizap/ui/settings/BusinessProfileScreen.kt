@@ -48,9 +48,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.BuildConfig
 import com.emul8r.bizap.domain.model.BusinessProfile
+import com.emul8r.bizap.ui.components.FormField
+import com.emul8r.bizap.ui.components.FormSection
+import com.emul8r.bizap.ui.components.SectionHeader
 import com.emul8r.bizap.ui.gui2.common.ErrorStateV2
 import com.emul8r.bizap.ui.gui2.common.LoadingIndicatorV2
 import com.emul8r.bizap.ui.landing.GuiMode
+import com.emul8r.bizap.ui.theme.Spacing
 import com.emul8r.bizap.utils.ImageCompressor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,6 +72,7 @@ fun BusinessProfileScreen(
     when (guiMode) {
         GuiMode.GUI1 -> BusinessProfileScreenV1Content(viewModel = viewModel)
         GuiMode.GUI2 -> BusinessProfileScreenV2Content(onBack = onBack, viewModel = viewModel)
+        GuiMode.GUI3 -> BusinessProfileScreenV2Content(onBack = onBack, viewModel = viewModel) // Use GUI2 design for now
     }
 }
 

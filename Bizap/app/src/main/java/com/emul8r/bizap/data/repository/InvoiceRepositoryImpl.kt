@@ -76,42 +76,24 @@ class InvoiceRepositoryImpl @Inject constructor(
         ).flow
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getInvoiceGroupWithVersions(year: Int, sequence: Int): Flow<List<Invoice>> {
-        return businessProfileRepository.activeProfile.flatMapLatest { business ->
-            invoiceDao.getInvoiceGroupWithVersions(year, sequence, business.id).map { list ->
-                list.map { entity ->
-                    val placeholderWithItems = InvoiceWithItems(entity, emptyList())
-                    placeholderWithItems.toDomain()
-                }
-            }
-        }
-    }
+    // ❌ TEMPORARILY DISABLED: Requires DAO method not yet implemented
+    // TODO: Re-enable after invoice numbering refactor
+    // @OptIn(ExperimentalCoroutinesApi::class)
+    // override fun getInvoiceGroupWithVersions(year: Int, sequence: Int): Flow<List<Invoice>> { ... }
 
     override suspend fun saveInvoice(invoice: Invoice): Result<Long> = runCatching {
         val activeBusinessId = businessProfileRepository.getActiveBusinessId()
         var invoiceToSave = invoice.copy(businessProfileId = activeBusinessId)
 
         if (invoiceToSave.id == 0L) {
-            // NEW invoice: INSERT with auto-generated ID
-            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-            val nextSequence = invoiceDao.getMaxSequenceForYear(currentYear, activeBusinessId) + 1
-
-            // ── Daily counter & display name (v1.0.1) ──────────────────────────
-            val nowMillis = System.currentTimeMillis()
-            val existingCountToday = invoiceDao.countInvoicesOnDate(nowMillis)
-            val dailyCounter = existingCountToday + 1
-            val displayName = buildDisplayName(invoiceToSave.customerName, nowMillis, dailyCounter)
-            // ─────────────────────────────────────────────────────────────────────
+            // ✅ NEW: Get next daily sequence
+            val nextDailySequence = getNextDailySequence(activeBusinessId, invoiceToSave.dateCreated.toEpochMilli())
 
             invoiceToSave = invoiceToSave.copy(
-                invoiceYear = currentYear,
-                invoiceSequence = nextSequence,
-                version = 1,
-                dailyCounter = dailyCounter,
-                displayName = displayName
+                dailySequence = nextDailySequence,
+                version = 1
             )
-            Timber.i("🔢 Invoice display name: $displayName (counter=$dailyCounter) for business $activeBusinessId")
+            Timber.i("🔢 Invoice number: ${invoiceToSave.invoiceNumber} (daily sequence=$nextDailySequence) for business $activeBusinessId")
 
             val invoiceEntity = invoiceToSave.toEntity()
             val lineItemEntities = invoiceToSave.items.map { it.toEntity(invoiceToSave.id) }
@@ -184,9 +166,9 @@ class InvoiceRepositoryImpl @Inject constructor(
     }
 
     override suspend fun createCorrection(originalInvoiceId: Long): Result<Long> = runCatching {
-        val original = invoiceDao.getInvoiceWithItemsById(originalInvoiceId).first() 
+        val original = invoiceDao.getInvoiceWithItemsById(originalInvoiceId).first()
             ?: throw Exception("Original invoice not found")
-        
+
         val correctionEntity = original.invoice.copy(
             id = 0,
             status = InvoiceStatus.DRAFT.name,
@@ -507,7 +489,8 @@ class InvoiceRepositoryImpl @Inject constructor(
         invoice: com.emul8r.bizap.data.local.entities.InvoiceEntity,
         businessProfileId: Long
     ) {
-        val computedInvoiceNumber = "INV-${invoice.invoiceYear}-${invoice.invoiceSequence.toString().padStart(6, '0')}"
+        // Use compact date-based format: YY-MMDD-SEQ-CUSTOMER
+        val computedInvoiceNumber = invoice.invoiceNumber
         val paidStatuses = listOf(InvoiceStatus.PAID.name, InvoiceStatus.PARTIALLY_PAID.name)
 
         // 1. Create or update InvoiceAnalyticsSnapshot
@@ -704,7 +687,8 @@ class InvoiceRepositoryImpl @Inject constructor(
                 ((System.currentTimeMillis() - invoice.dueDate) / MILLIS_PER_DAY).toInt()
             } else 0
 
-            val computedInvoiceNumber = "INV-${invoice.invoiceYear}-${invoice.invoiceSequence.toString().padStart(6, '0')}"
+            // Use compact date-based format: YY-MMDD-SEQ-CUSTOMER
+            val computedInvoiceNumber = invoice.invoiceNumber
             val paymentSnapshot = InvoicePaymentSnapshot(
                 invoiceId = invoice.id,
                 businessProfileId = invoice.businessProfileId,
@@ -912,18 +896,98 @@ class InvoiceRepositoryImpl @Inject constructor(
         invoiceDao.deleteAllInvoices()
         timber.log.Timber.d("✅ All invoices and payments deleted")
     }
+
+    /**
+     * 🔴 PHASE 1.2: UNIFIED ANALYTICS LAYER
+     *
+     * Single source of truth for invoice status counts.
+     * Both GUI1 and GUI2 dashboards observe this same Flow.
+     *
+     * Guarantees parity: DRAFT, SENT, PAID, OVERDUE, PARTIALLY_PAID all shown
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getInvoiceStatusCountsFlow(): Flow<Map<String, Int>> {
+        return getAllInvoicesWithItems()
+            .map { invoices ->
+                // Initialize map with all 5 statuses (ensures keys exist even if count is 0)
+                val statusMap = mutableMapOf(
+                    "DRAFT" to 0,
+                    "SENT" to 0,
+                    "PAID" to 0,
+                    "OVERDUE" to 0,
+                    "PARTIALLY_PAID" to 0
+                )
+
+                // Count invoices by status
+                val counts = invoices.groupingBy { it.status.toString() }.eachCount()
+                statusMap.putAll(counts)
+
+                Timber.d("📊 Status Counts (unified): $statusMap")
+                statusMap.toMap()
+            }
+            .catch { e ->
+                Timber.e(e, "Error calculating invoice status counts")
+                // Return default empty map structure on error
+                emit(mapOf(
+                    "DRAFT" to 0,
+                    "SENT" to 0,
+                    "PAID" to 0,
+                    "OVERDUE" to 0,
+                    "PARTIALLY_PAID" to 0
+                ))
+            }
+    }
+
+    /**
+     * ✅ NOW ENABLED: Get next daily sequence
+     * Resets daily - finds max sequence for the given date and increments
+     * Migration 44→45 schema columns now available ✅
+     */
+    private suspend fun getNextDailySequence(
+        businessId: Long,
+        date: Long
+    ): Int {
+        val cal = Calendar.getInstance().apply { timeInMillis = date }
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        val dayStart = cal.timeInMillis
+
+        cal.add(Calendar.DAY_OF_MONTH, 1)
+        val dayEnd = cal.timeInMillis
+
+        val maxSeq = invoiceDao.getMaxDailySequence(businessId, dayStart, dayEnd) ?: 0
+        return (maxSeq + 1).coerceIn(1, 99)
+    }
 }
 
 // ==================== EXTENSION FUNCTIONS ====================
 
 /**
- * Formats an [InvoiceEntity] invoice number in the canonical form
- * `INV-YYYY-NNNNNN` (with optional `-vN` suffix for versions > 1).
+ * Formats an [InvoiceEntity] invoice number in the compact date-based form
+ * `YY-MMDD-SEQ-CUSTOMER[-vVERSION]` (with optional `-vN` suffix for versions > 1).
  *
  * Centralises the formatting logic that is also used in [Invoice.invoiceNumber]
  * so that entity-layer code does not duplicate the pattern.
  */
 private fun com.emul8r.bizap.data.local.entities.InvoiceEntity.formattedInvoiceNumber(): String {
-    val base = "INV-$invoiceYear-${invoiceSequence.toString().padStart(6, '0')}"
-    return if (version > 1) "$base-v$version" else base
+    // Use InvoiceNumberingUtils for consistent formatting
+    return com.emul8r.bizap.utils.InvoiceNumberingUtils.generateInvoiceNumber(
+        date = this.date,
+        dailySequence = this.dailySequence,
+        customerName = this.customerName,
+        version = this.version
+    )
 }
+
+// Helper to convert ISO-8601 string to epoch millis
+private fun String?.toEpochMilli(): Long {
+    return try {
+        if (this.isNullOrBlank()) 0L
+        else Instant.parse(this).toEpochMilli()
+    } catch (e: Exception) {
+        0L
+    }
+}
+
+

@@ -6,9 +6,20 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import java.io.File
 import java.text.SimpleDateFormat
+import java.time.Instant
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
+
+// Helper to convert ISO-8601 string to epoch millis
+private fun String?.toEpochMilli(): Long {
+    return try {
+        if (this.isNullOrBlank()) 0L
+        else Instant.parse(this).toEpochMilli()
+    } catch (e: Exception) {
+        0L
+    }
+}
 
 /**
  * Service that generates CSV files from invoice data.
@@ -41,13 +52,13 @@ class CsvExportService @Inject constructor(
             writer.appendLine(
                 listOf(
                     csvEscape(displayId),
-                    dateFormat.format(Date(invoice.date)),
-                    if (invoice.dueDate > 0) dateFormat.format(Date(invoice.dueDate)) else "",
+                    dateFormat.format(Date(invoice.dateCreated.toEpochMilli())),
+                    if (invoice.dueDate.isNotBlank()) dateFormat.format(Date(invoice.dueDate.toEpochMilli())) else "",
                     csvEscape(invoice.customerName),
                     csvEscape(invoice.customerAddress),
                     csvEscape(invoice.customerEmail ?: ""),
                     invoice.status.name,
-                    invoice.currencyCode,
+                    invoice.currency,
                     centsToDecimal(invoice.totalAmount - invoice.taxAmount),
                     formatTaxRate(invoice.taxRate),
                     centsToDecimal(invoice.taxAmount),
@@ -113,11 +124,11 @@ class CsvExportService @Inject constructor(
                 writer.appendLine(
                     listOf(
                         csvEscape(displayId),
-                        dateFormat.format(Date(invoice.date)),
-                        if (invoice.dueDate > 0) dateFormat.format(Date(invoice.dueDate)) else "",
+                        dateFormat.format(Date(invoice.dateCreated.toEpochMilli())),
+                        if (invoice.dueDate.isNotBlank()) dateFormat.format(Date(invoice.dueDate.toEpochMilli())) else "",
                         csvEscape(invoice.customerName),
                         invoice.status.name,
-                        invoice.currencyCode,
+                        invoice.currency,
                         centsToDecimal(invoice.totalAmount),
                         centsToDecimal(invoice.amountPaid),
                         centsToDecimal(invoice.totalAmount - invoice.amountPaid)

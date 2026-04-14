@@ -14,6 +14,7 @@ import com.emul8r.bizap.domain.usecase.settings.UpdateThemeUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -22,6 +23,7 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest : BaseUnitTest() {
 
     private val settingsFlow = MutableStateFlow(Settings())
@@ -139,3 +141,6 @@ class SettingsViewModelTest : BaseUnitTest() {
         assertEquals(ThemePreference.DARK, viewModel.themePreference.first())
     }
 }
+
+
+

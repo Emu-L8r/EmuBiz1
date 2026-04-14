@@ -28,6 +28,7 @@ import com.emul8r.bizap.ui.gui2.invoices.InvoiceListUiStateV2
 import com.emul8r.bizap.ui.gui2.invoices.components.CompactInvoiceList
 import com.emul8r.bizap.ui.gui2.invoices.components.ModernInvoiceList
 import com.emul8r.bizap.domain.model.UIMode
+import com.emul8r.bizap.ui.components.StatusColoredInvoiceCard
 
 import androidx.navigation.NavController
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
@@ -87,10 +88,11 @@ fun InvoiceListScreenV2(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(state.invoices) { invoice ->
-                        InvoiceListItem(
+                        // Use new StatusColoredInvoiceCard component (GUI2 modern style - with accent bar)
+                        StatusColoredInvoiceCard(
                             invoice = invoice,
                             onClick = { navController.navigate(ScreenV2.InvoiceDetail(businessId, invoice.id)) },
-                            modifier = Modifier.fillMaxWidth()
+                            showAccentBar = true  // Modern design with left accent bar
                         )
                     }
                 }

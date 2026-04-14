@@ -15,7 +15,7 @@ class TaxCalculationTest {
     // ── calculateTax_10Percent_Correct ────────────────────────────────────────
 
     @Test
-    fun `calculateTax_10Percent_Correct - 10% tax on 100000 cents is 10000 cents`() {
+    fun `calculateTax_10Percent_Correct - 10percent tax on 100000 cents is 10000 cents`() {
         val subtotal = 100000L  // $1000.00
         val taxRate = 0.10
         val tax = calculateTax(subtotal, taxRate)
@@ -23,7 +23,7 @@ class TaxCalculationTest {
     }
 
     @Test
-    fun `calculateTax_10Percent_Correct - total with 10% tax is correct`() {
+    fun `calculateTax_10Percent_Correct - total with 10percent tax is correct`() {
         val subtotal = 100000L
         val taxRate = 0.10
         val tax = calculateTax(subtotal, taxRate)
@@ -32,7 +32,7 @@ class TaxCalculationTest {
     }
 
     @Test
-    fun `calculateTax_10Percent_Correct - 10% tax on 50000 cents is 5000 cents`() {
+    fun `calculateTax_10Percent_Correct - 10percent tax on 50000 cents is 5000 cents`() {
         val subtotal = 50000L  // $500.00
         val taxRate = 0.10
         val tax = calculateTax(subtotal, taxRate)
@@ -40,7 +40,7 @@ class TaxCalculationTest {
     }
 
     @Test
-    fun `calculateTax_10Percent_Correct - 10% tax on 1 cent results in 0 cents (floor rounding)`() {
+    fun `calculateTax_10Percent_Correct - 10percent tax on 1 cent results in 0 cents (floor rounding)`() {
         val subtotal = 1L  // 1 cent
         val taxRate = 0.10
         val tax = calculateTax(subtotal, taxRate)
@@ -51,7 +51,7 @@ class TaxCalculationTest {
     // ── calculateTax_ZeroPercent ──────────────────────────────────────────────
 
     @Test
-    fun `calculateTax_ZeroPercent - 0% tax results in zero tax amount`() {
+    fun `calculateTax_ZeroPercent - 0percent tax results in zero tax amount`() {
         val subtotal = 100000L
         val taxRate = 0.0
         val tax = calculateTax(subtotal, taxRate)
@@ -59,7 +59,7 @@ class TaxCalculationTest {
     }
 
     @Test
-    fun `calculateTax_ZeroPercent - total equals subtotal when tax is 0%`() {
+    fun `calculateTax_ZeroPercent - total equals subtotal when tax is 0percent`() {
         val subtotal = 50000L
         val taxRate = 0.0
         val tax = calculateTax(subtotal, taxRate)
@@ -107,7 +107,7 @@ class TaxCalculationTest {
     }
 
     @Test
-    fun `calculateTax_EdgeCases - 15% tax rate calculation`() {
+    fun `calculateTax_EdgeCases - 15percent tax rate calculation`() {
         val subtotal = 100000L
         val taxRate = 0.15
         val tax = calculateTax(subtotal, taxRate)
@@ -120,3 +120,6 @@ class TaxCalculationTest {
         return (subtotalCents * taxRate).toLong()
     }
 }
+
+
+

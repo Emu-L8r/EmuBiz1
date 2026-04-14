@@ -3,10 +3,7 @@ package com.emul8r.bizap.ui.dashboard
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -19,13 +16,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.emul8r.bizap.domain.config.BizapConfig
-import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
-import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
 import com.emul8r.bizap.presentation.viewmodel.AnalyticsViewModel
 import com.emul8r.bizap.presentation.viewmodel.AnalyticsUiState
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
-import com.emul8r.bizap.ui.common.MetricCard
 import com.emul8r.bizap.ui.customers.CustomerViewModel
 import com.emul8r.bizap.ui.dashboard.components.InvoiceStatusPieChart
 import com.emul8r.bizap.ui.dashboard.components.NotesCard
@@ -36,14 +30,11 @@ import com.emul8r.bizap.ui.dashboard.components.analytics.InvoicingVelocityCard
 import com.emul8r.bizap.ui.dashboard.components.base.AnalyticsSectionCard
 import com.emul8r.bizap.ui.dashboard.components.base.HeaderCardBase
 import com.emul8r.bizap.ui.dashboard.components.base.MetricCardBase
-import com.emul8r.bizap.ui.gui2.common.*
-import com.emul8r.bizap.ui.gui2.components.animations.DashboardSkeletonV2
-import com.emul8r.bizap.ui.gui2.dashboard.DashboardUiStateV2
-import com.emul8r.bizap.ui.gui2.dashboard.DashboardViewModelV2
+import com.emul8r.bizap.ui.dashboard.DashboardRevenueState
+import com.emul8r.bizap.ui.dashboard.DashboardViewModel
 import com.emul8r.bizap.ui.invoices.InvoiceList
 import com.emul8r.bizap.ui.invoices.InvoiceListUiState
 import com.emul8r.bizap.ui.invoices.InvoiceListViewModel
-import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.navigation.Screen
 import com.emul8r.bizap.ui.notes.NotesViewModel
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
@@ -52,7 +43,6 @@ import com.emul8r.bizap.ui.theme.DashboardTheme
 import com.emul8r.bizap.ui.designsystem.BizapColors
 import com.emul8r.bizap.ui.common.LoadingScreen
 import com.emul8r.bizap.utils.CentsFormatter
-import com.emul8r.bizap.utils.FirebaseEventTracker
 import timber.log.Timber
 
 
@@ -161,19 +151,6 @@ fun DashboardScreen(
     val invoicingVelocity by analyticsViewModel.invoicingVelocity.collectAsStateWithLifecycle()
     var showSwitcher by remember { mutableStateOf(false) }
 
-    // CRITICAL FIX: Check if profile is loaded before rendering
-    @Suppress("ConstantConditionIf")  // Defensive check: activeBusiness collected from ViewModel state
-    if (activeBusiness == null) {
-        LoadingScreen(message = "Loading business profile...")
-        return
-    }
-
-    // CRITICAL FIX: Check if customers data is loaded
-    @Suppress("ConstantConditionIf")  // Defensive check: customers collected from ViewModel state
-    if (customers == null) {
-        LoadingScreen(message = "Loading customers...")
-        return
-    }
 
     if (showSwitcher) {
         BusinessSwitcherDialog(onDismiss = { showSwitcher = false })
@@ -241,9 +218,9 @@ fun DashboardScreen(
                 NotesCard(
                     currentNotesCount = currentNotesCount,
                     onClick = {
-                        // Navigate to Notes screen via ScreenV2.Notes route
+                        // Navigate to Notes screen via Screen.Notes route (GUI1)
                         try {
-                            navController.navigate(ScreenV2.Notes(businessId = activeBusiness?.id ?: 1L))
+                            navController.navigate(Screen.Notes)
                         } catch (e: IllegalArgumentException) {
                             Timber.e(e, "Navigation to Notes screen failed")
                         }

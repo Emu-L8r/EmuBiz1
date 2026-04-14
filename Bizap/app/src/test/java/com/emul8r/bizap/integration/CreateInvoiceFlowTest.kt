@@ -232,3 +232,6 @@ class CreateInvoiceFlowTest : BaseUnitTest() {
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(avgDays)
     }
 }
+
+
+

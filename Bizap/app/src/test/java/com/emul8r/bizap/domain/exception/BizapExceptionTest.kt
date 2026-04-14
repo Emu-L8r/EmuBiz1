@@ -66,7 +66,7 @@ class BizapExceptionTest {
 
     @Test
     fun `DatabaseError message includes operation and table`() {
-        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", message = "Constraint")
+        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", details = "Constraint")
         assertNotNull(ex.message, "Message should not be null")
         assertTrue(ex.message!!.contains("INSERT"), "Message should contain operation: ${ex.message}")
         assertTrue(ex.message!!.contains("invoices"), "Message should contain table: ${ex.message}")
@@ -74,19 +74,19 @@ class BizapExceptionTest {
 
     @Test
     fun `DatabaseError SELECT operation is retryable`() {
-        val ex = BizapException.DatabaseError(operation = "SELECT", table = "customers", message = "Timeout")
+        val ex = BizapException.DatabaseError(operation = "SELECT", table = "customers", details = "Timeout")
         assertTrue(ex.isRetryable())
     }
 
     @Test
     fun `DatabaseError DELETE operation is NOT retryable`() {
-        val ex = BizapException.DatabaseError(operation = "DELETE", table = "invoices", message = "Error")
+        val ex = BizapException.DatabaseError(operation = "DELETE", table = "invoices", details = "Error")
         assertFalse(ex.isRetryable())
     }
 
     @Test
     fun `DatabaseError has CRITICAL severity`() {
-        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", message = "Error")
+        val ex = BizapException.DatabaseError(operation = "INSERT", table = "invoices", details = "Error")
         assertEquals(ErrorSeverity.CRITICAL, ex.severity())
     }
 
@@ -286,3 +286,6 @@ class BizapExceptionTest {
         }
     }
 }
+
+
+

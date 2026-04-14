@@ -215,7 +215,7 @@ class CreateInvoiceViewModel @Inject constructor(
      * This allows users to quickly add pre-configured line items that were saved
      * in the invoice settings, speeding up invoice creation.
      */
-    fun loadPrefilledItems(prefilledItems: List<com.emul8r.bizap.domain.model.LineItem>) {
+    fun loadPrefilledItems(prefilledItems: List<com.emul8r.bizap.domain.model.InvoiceItem>) {
         if (prefilledItems.isEmpty()) {
             Timber.d("No pre-filled items to load")
             return
@@ -277,10 +277,10 @@ class CreateInvoiceViewModel @Inject constructor(
      * @param updatedItems List of updated LineItem objects from the editor (in same order)
      * @param currentItems Current list of LineItemForm objects in ViewModel state
      */
-    fun updateLineItemsFromEditor(
-        updatedItems: List<com.emul8r.bizap.domain.model.LineItem>,
-        currentItems: List<LineItemForm>
-    ) {
+     fun updateLineItemsFromEditor(
+         updatedItems: List<com.emul8r.bizap.domain.model.InvoiceItem>,
+         currentItems: List<LineItemForm>
+     ) {
         Timber.d("🔄 updateLineItemsFromEditor called:")
         Timber.d("   - Updated items count: ${updatedItems.size}")
         Timber.d("   - Current items count: ${currentItems.size}")
@@ -397,7 +397,7 @@ class CreateInvoiceViewModel @Inject constructor(
         val invoiceForCalculation = Invoice(
             customerId = customerId,
             customerName = customerName,
-            date = System.currentTimeMillis(),
+            dateCreated = java.time.Instant.ofEpochMilli(System.currentTimeMillis()).toString(),
             totalAmount = 0L,  // Placeholder — overridden by metrics
             items = state.items.map { it.toDomain() },
             isQuote = false,
@@ -434,10 +434,10 @@ class CreateInvoiceViewModel @Inject constructor(
 
                 // Use CalculateInvoiceMetricsUseCase as single source of truth for all calculations
                 val taxRate: Double = if (businessProfile.isTaxRegistered) businessProfile.defaultTaxRate.toDouble() else 0.0
-                val tempInvoice = Invoice(
+                 val tempInvoice = Invoice(
                     customerId = customer.id,
                     customerName = customer.name,
-                    date = System.currentTimeMillis(),  // Placeholder for metrics calculation only
+                    dateCreated = java.time.Instant.ofEpochMilli(System.currentTimeMillis()).toString(),
                     totalAmount = 0L,  // Placeholder — metrics will provide the real value
                     items = lineItems,
                     isQuote = false,
@@ -464,8 +464,8 @@ class CreateInvoiceViewModel @Inject constructor(
                     customerName = customer.name,
                     customerAddress = customer.address ?: "",
                     customerEmail = customer.email,
-                    date = createdAt,
-                    dueDate = dueDate,
+                    dateCreated = java.time.Instant.ofEpochMilli(createdAt).toString(),
+                    dueDate = java.time.Instant.ofEpochMilli(dueDate).toString(),
                     totalAmount = metrics.totalAmount,
                     items = lineItems,
                     isQuote = false,
@@ -479,7 +479,7 @@ class CreateInvoiceViewModel @Inject constructor(
                     taxAmount = metrics.taxAmount,
                     companyLogoPath = businessProfile.logoBase64,
                     updatedAt = createdAt,
-                    currencyCode = state.selectedCurrencyCode
+                    currency = state.selectedCurrencyCode
                 )
 
                 Timber.d("✅ STEP 6: Invoice object created:")
@@ -516,7 +516,7 @@ class CreateInvoiceViewModel @Inject constructor(
                     invoiceId = invoiceId,
                     customerId = invoice.customerId ?: 0L,
                     amount = invoice.totalAmount,
-                    currencyCode = invoice.currencyCode,
+                    currencyCode = invoice.currency,
                     lineItemCount = invoice.items.size
                 )
 
@@ -540,16 +540,24 @@ class CreateInvoiceViewModel @Inject constructor(
 
                 Timber.d("🔵 STEP 10b: Starting PDF generation with theme...")
                 Timber.d("   About to call generateAndSaveInvoiceUseCase with theme=${selectedTheme?.name ?: "NULL"}")
+
+                // 📊 DEBUG: Log header/subheader values before PDF generation
+                Timber.d("📋 DEBUG - Snapshot Customization Fields:")
+                Timber.d("   header='${state.header}' (length=${state.header.length})")
+                Timber.d("   subheader='${state.subheader}' (length=${state.subheader.length})")
+                Timber.d("   footer='${state.footer}' (length=${state.footer.length})")
+                Timber.d("   notes='${state.notes}' (length=${state.notes.length})")
+
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceWithId,
                     snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
                         invoiceId = invoiceWithId.id,
-                        invoiceNumber = invoiceWithId.getFormattedInvoiceNumber(),
+                        invoiceNumber = invoiceWithId.invoiceNumber,
                         customerName = invoiceWithId.customerName,
                         customerAddress = invoiceWithId.customerAddress,
-                        customerEmail = invoiceWithId.customerEmail,
-                        date = invoiceWithId.date,
-                        dueDate = invoiceWithId.dueDate,
+                        customerEmail = invoiceWithId.customerEmail ?: "",
+                        date = invoiceWithId.dateCreated.toEpochMillis(),
+                        dueDate = invoiceWithId.dueDate.toEpochMillis(),
                         items = invoiceWithId.items.map {
                             val itemTotal = (it.unitPrice * it.quantity).toLong()  // Cents
                             com.emul8r.bizap.domain.model.LineItemSnapshot(
@@ -570,8 +578,8 @@ class CreateInvoiceViewModel @Inject constructor(
                         businessAddress = businessProfile.address,
                         logoBase64 = businessProfile.logoBase64,
                         currencyCode = state.selectedCurrencyCode,
-                        headerText = state.header,
-                        subheaderText = state.subheader,
+                        header = state.header,
+                        subheader = state.subheader,
                         footerText = state.footer,
                         notes = state.notes,
                         bankAccountName = businessProfile.accountName ?: "",
@@ -620,6 +628,19 @@ class CreateInvoiceViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    /**
+     * Convert ISO-8601 date string to epoch milliseconds.
+     */
+    private fun String?.toEpochMillis(): Long {
+        return try {
+            if (this.isNullOrBlank()) 0L
+            else java.time.Instant.parse(this).toEpochMilli()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to parse date string: $this")
+            0L
+        }
     }
 
     /**

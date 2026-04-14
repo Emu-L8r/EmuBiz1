@@ -4,7 +4,9 @@ package com.emul8r.bizap.ui.gui2.invoices
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
+import com.emul8r.bizap.domain.model.balanceRemaining
+import com.emul8r.bizap.domain.model.isFullyPaid
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
@@ -14,6 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import java.time.Instant
 
 /**
  * Unit tests for [EditInvoiceViewModelV2].
@@ -24,22 +27,22 @@ class EditInvoiceViewModelTest : BaseUnitTest() {
 
     private lateinit var invoiceRepository: InvoiceRepository
 
-    private val now = System.currentTimeMillis()
-    private val tomorrow = now + 86_400_000L
+    private val now = Instant.now().toString()
+    private val tomorrow = Instant.now().plusSeconds(86_400L).toString()
 
     private val sampleInvoice = Invoice(
         id = 1L,
         businessProfileId = 1L,
         customerId = 1L,
         customerName = "Sample Customer",
-        date = now,
+        dateCreated = now,
         dueDate = tomorrow,
         totalAmount = 50000L,
         amountPaid = 0L,
-        items = listOf(LineItem(description = "Service", quantity = 1.0, unitPrice = 50000L)),
+        items = listOf(InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 50000L)),
         isQuote = false,
         status = InvoiceStatus.DRAFT,
-        currencyCode = "AUD"
+        currency = "AUD"
     )
 
     @Before
@@ -97,7 +100,8 @@ class EditInvoiceViewModelTest : BaseUnitTest() {
             amountPaid = 50000L,
             status = InvoiceStatus.PAID
         )
-        assertEquals(0L, paidInvoice.balanceRemaining)
+        val balance: Double = paidInvoice.balanceRemaining
+        assertEquals(0.0, balance)
         assertTrue(paidInvoice.isFullyPaid)
     }
 
@@ -128,3 +132,6 @@ class EditInvoiceViewModelTest : BaseUnitTest() {
         assertEquals("Invoice not found", (state as EditInvoiceUiStateV2.Error).message)
     }
 }
+
+
+

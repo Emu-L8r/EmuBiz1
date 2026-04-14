@@ -36,8 +36,9 @@ interface InvoiceRepository {
      */
     fun getInvoicesPaged(businessId: Long): Flow<PagingData<Invoice>>
 
-    // --- PHASE 3A: Management & Versioning ---
-    fun getInvoiceGroupWithVersions(year: Int, sequence: Int): Flow<List<Invoice>>
+    // ❌ TEMPORARILY DISABLED: Requires schema migration and DAO implementation
+    // TODO: Re-enable after invoice numbering refactor
+    // fun getInvoiceGroupWithVersions(year: Int, sequence: Int): Flow<List<Invoice>>
 
     /**
      * Updates the amount paid for an invoice locally.
@@ -130,6 +131,34 @@ interface InvoiceRepository {
      * Customer records are preserved.
      */
     suspend fun deleteAllInvoices(): Result<Unit>
+
+    /**
+     * 🔴 PHASE 1.2: UNIFIED ANALYTICS - Gets invoice status counts for dashboard pie charts.
+     *
+     * **Purpose:** Single source of truth for status counts across both GUI1 and GUI2.
+     * Both dashboards observe this same Flow to guarantee parity.
+     *
+     * **Returned Map Keys:** "DRAFT", "SENT", "PAID", "OVERDUE", "PARTIALLY_PAID"
+     *
+     * **Guarantees:**
+     * - Returns map with all 5 status keys (even if count is 0)
+     * - Reactive: updates automatically when invoice status changes
+     * - Includes all statuses (GUI1 and GUI2 pie charts show same statuses)
+     *
+     * **Example Output:**
+     * ```
+     * {
+     *     "DRAFT" to 1,
+     *     "SENT" to 3,
+     *     "PARTIALLY_PAID" to 1,
+     *     "PAID" to 5,
+     *     "OVERDUE" to 2
+     * }
+     * ```
+     *
+     * @return Flow emitting Map<status, count> with all 5 statuses
+     */
+    fun getInvoiceStatusCountsFlow(): Flow<Map<String, Int>>
 }
 
 

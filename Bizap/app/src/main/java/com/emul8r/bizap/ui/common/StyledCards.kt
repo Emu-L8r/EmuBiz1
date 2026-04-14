@@ -124,6 +124,11 @@ fun StatusBadge(
             MaterialTheme.colorScheme.tertiary,
             Icons.Default.Schedule
         )
+        InvoiceStatus.CANCELLED -> Triple(
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.12f),
+            MaterialTheme.colorScheme.surfaceVariant,
+            Icons.Default.Close
+        )
     }
 
     Surface(

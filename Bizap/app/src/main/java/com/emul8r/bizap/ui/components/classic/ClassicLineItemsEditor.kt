@@ -13,12 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 
 @Composable
 fun ClassicLineItemsEditor(
-    items: List<LineItem>,
-    onItemsChange: (List<LineItem>) -> Unit,
+    items: List<InvoiceItem>,
+    onItemsChange: (List<InvoiceItem>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -104,7 +104,7 @@ fun ClassicLineItemsEditor(
         // Add Item button
         Button(
             onClick = {
-                onItemsChange(items + LineItem(
+                onItemsChange(items + InvoiceItem(
                     id = (items.maxOfOrNull { it.id } ?: 0) + 1,
                     description = "",
                     quantity = 1.0,

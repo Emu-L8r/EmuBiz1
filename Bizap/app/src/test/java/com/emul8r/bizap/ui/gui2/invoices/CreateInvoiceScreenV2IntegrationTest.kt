@@ -74,10 +74,10 @@ class CreateInvoiceScreenV2IntegrationTest : BaseUnitTest() {
             totalAmount = 10000L,
             amountPaid = 0L,
             status = InvoiceStatus.DRAFT,
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis() + 86400000,
+            dateCreated = java.time.Instant.now().toString(),
+            dueDate = java.time.Instant.now().toString() + 86400000,
             isQuote = false,
-            currencyCode = "AUD",
+            currency = "AUD",
             taxRate = 0.0,
             taxAmount = 0L,
             invoiceYear = 2026,
@@ -168,10 +168,10 @@ class CreateInvoiceScreenV2IntegrationTest : BaseUnitTest() {
             totalAmount = 5000L,
             amountPaid = 0L,
             status = InvoiceStatus.DRAFT,
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis(),
+            dateCreated = java.time.Instant.now().toString(),
+            dueDate = java.time.Instant.now().toString(),
             isQuote = false,
-            currencyCode = "AUD",
+            currency = "AUD",
             taxRate = 0.0,
             taxAmount = 0L,
             invoiceYear = 2026,
@@ -243,10 +243,10 @@ class CreateInvoiceScreenV2IntegrationTest : BaseUnitTest() {
             totalAmount = 1000L,
             amountPaid = 0L,
             status = InvoiceStatus.DRAFT,
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis(),
+            dateCreated = java.time.Instant.now().toString(),
+            dueDate = java.time.Instant.now().toString(),
             isQuote = false,
-            currencyCode = "AUD",
+            currency = "AUD",
             taxRate = 0.0,
             taxAmount = 0L,
             invoiceYear = 2026,
@@ -333,10 +333,10 @@ class CreateInvoiceScreenV2IntegrationTest : BaseUnitTest() {
             totalAmount = 1000L,
             amountPaid = 0L,
             status = InvoiceStatus.DRAFT,
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis(),
+            dateCreated = java.time.Instant.now().toString(),
+            dueDate = java.time.Instant.now().toString(),
             isQuote = false,
-            currencyCode = "AUD",
+            currency = "AUD",
             taxRate = 0.0,
             taxAmount = 0L,
             invoiceYear = 2026,
@@ -365,4 +365,9 @@ class CreateInvoiceScreenV2IntegrationTest : BaseUnitTest() {
         coVerify(exactly = 2) { invoiceRepository.saveInvoice(any()) }
     }
 }
+
+
+
+
+
 

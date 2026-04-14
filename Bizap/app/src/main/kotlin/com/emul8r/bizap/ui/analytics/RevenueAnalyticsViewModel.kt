@@ -67,7 +67,11 @@ class RevenueAnalyticsViewModel @Inject constructor(
                 // Group by date
                 val dailyRevenueMap = mutableMapOf<Long, Long>()
                 paidInvoices.forEach { invoice ->
-                    val invoiceDateMs = invoice.date - (invoice.date % 86400000)
+                    val invoiceDateMs = try {
+                        java.time.Instant.parse(invoice.dateCreated).toEpochMilli() - (java.time.Instant.parse(invoice.dateCreated).toEpochMilli() % 86400000)
+                    } catch (e: Exception) {
+                        System.currentTimeMillis() - (System.currentTimeMillis() % 86400000)
+                    }
                     val currentAmount = dailyRevenueMap[invoiceDateMs] ?: 0L
                     dailyRevenueMap[invoiceDateMs] = currentAmount + invoice.totalAmount
                 }
@@ -90,11 +94,25 @@ class RevenueAnalyticsViewModel @Inject constructor(
 
                 // Month/year revenue
                 val thisMonthRevenue = paidInvoices
-                    .filter { it.date >= monthStart }
+                    .filter {
+                        try {
+                            val invoiceDate = java.time.Instant.parse(it.dateCreated).toEpochMilli()
+                            invoiceDate >= monthStart
+                        } catch (e: Exception) {
+                            false
+                        }
+                    }
                     .sumOf { it.totalAmount }
 
                 val thisYearRevenue = paidInvoices
-                    .filter { it.date >= yearStart }
+                    .filter {
+                        try {
+                            val invoiceDate = java.time.Instant.parse(it.dateCreated).toEpochMilli()
+                            invoiceDate >= yearStart
+                        } catch (e: Exception) {
+                            false
+                        }
+                    }
                     .sumOf { it.totalAmount }
 
                 val averageDaily = if (dailyRevenue.isNotEmpty()) {

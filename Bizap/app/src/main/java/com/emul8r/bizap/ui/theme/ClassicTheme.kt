@@ -13,7 +13,7 @@ import timber.log.Timber
 
 /**
  * Classic theme using Material Design 2 style aesthetics.
- * 
+ *
  * Features:
  * - Dynamically generated color palette from user's seed color
  * - Smaller corner radiuses (4-12dp) for a more traditional look
@@ -52,7 +52,7 @@ fun ClassicTheme(
         onError = Color.White,
         errorContainer = Color(0xFFFFCDD2),
         onErrorContainer = Color(0xFFB71C1C),
-        
+
         background = Color(0xFFFAFAFA),
         onBackground = Color(0xFF212121),
 
@@ -85,15 +85,15 @@ fun ClassicTheme(
         onError = Color(0xFFB71C1C),
         errorContainer = Color(0xFFC62828),
         onErrorContainer = Color(0xFFFFEBEE),
-        
+
         background = Color(0xFF121212),
         onBackground = Color(0xFFE0E0E0),
-        
+
         surface = Color(0xFF1E1E1E),
         onSurface = Color(0xFFE0E0E0),
         surfaceVariant = seedColor.darken(0.35f),
         onSurfaceVariant = Color(0xFFBDBDBD),
-        
+
         outline = Color(0xFF616161),
         outlineVariant = Color(0xFF424242)
     )
@@ -107,8 +107,16 @@ fun ClassicTheme(
         extraLarge = RoundedCornerShape(16.dp)
     )
 
+    // Animate color scheme transitions
+    val animatedColorScheme = animateColorSchemeColors(
+        lightColors = lightColors,
+        darkColors = darkColors,
+        isDarkMode = themeConfig.isDarkMode,
+        useOLEDOptimization = false  // Can be toggled via settings
+    )
+
     MaterialTheme(
-        colorScheme = if (themeConfig.isDarkMode) darkColors else lightColors,
+        colorScheme = animatedColorScheme,
         shapes = shapes,
         typography = MaterialTheme.typography,
         content = content

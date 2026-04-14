@@ -29,7 +29,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.emul8r.bizap.domain.analytics.SearchResult
+import com.emul8r.bizap.ui.shared.GuiModeSwitcher
+import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.domain.model.gui2.DashboardStateV2
+import com.emul8r.bizap.domain.prediction.PredictionsViewModel
 import com.emul8r.bizap.ui.common.GradientBackgrounds.ImagePlaceholderBackground
 import com.emul8r.bizap.ui.common.GradientBackgrounds.subtleVerticalGradient
 import com.emul8r.bizap.ui.dashboard.components.InvoiceStatusPieChart
@@ -42,6 +45,7 @@ import com.emul8r.bizap.ui.gui2.dashboard.components.CompactDashboardMetrics
 import com.emul8r.bizap.ui.gui2.dashboard.components.CompactQuickActions
 import com.emul8r.bizap.ui.gui2.dashboard.components.ModernDashboardMetrics
 import com.emul8r.bizap.ui.gui2.dashboard.components.ModernQuickActions
+import com.emul8r.bizap.ui.gui2.dashboard.components.PredictionsSummaryCard
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.AnalyticsSearchBar
 import com.emul8r.bizap.ui.gui2.dashboard.widgets.DashboardMetricsWidget
 import com.emul8r.bizap.domain.model.UIMode
@@ -72,12 +76,17 @@ fun DashboardScreenV2(
     onCreateInvoice: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
     onSwitchToGui1: () -> Unit = {},
+    onSwitchToGui3: () -> Unit = {},
     uiMode: UIMode = UIMode.MODERN,
-    viewModel: DashboardViewModelV2 = hiltViewModel()
+    viewModel: DashboardViewModelV2 = hiltViewModel(),
+    predictionsViewModel: PredictionsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val statusCounts by viewModel.statusCounts.collectAsStateWithLifecycle()
     val currentNotesCount by viewModel.currentNotesCount.collectAsStateWithLifecycle()
+    val forecast30 by predictionsViewModel.cashFlowForecast30.collectAsStateWithLifecycle()
+    val criticalAlerts by predictionsViewModel.criticalAlerts.collectAsStateWithLifecycle()
+    val riskInvoices by predictionsViewModel.riskInvoices.collectAsStateWithLifecycle()
     val dashboardMetrics by viewModel.dashboardMetrics.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -88,9 +97,12 @@ fun DashboardScreenV2(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
-                    IconButton(onClick = onSwitchToGui1) {
-                        Icon(Icons.Default.SwapHoriz, contentDescription = "Switch to Classic UI")
-                    }
+                    GuiModeSwitcher(
+                        currentMode = GuiMode.GUI2,
+                        onGui1Click = onSwitchToGui1,
+                        onGui2Click = {},  // Already on GUI2
+                        onGui3Click = onSwitchToGui3
+                    )
                 }
             )
         }
@@ -109,6 +121,9 @@ fun DashboardScreenV2(
                 currentNotesCount = currentNotesCount,
                 dashboardMetrics = dashboardMetrics,
                 viewModel = viewModel,
+                forecast30 = forecast30,
+                criticalAlerts = criticalAlerts,
+                riskInvoicesCount = riskInvoices.size,
                 onNavigateToRevenue = onNavigateToRevenue,
                 onNavigateToPayment = onNavigateToPayment,
                 onNavigateToRisk = onNavigateToRisk,
@@ -119,6 +134,7 @@ fun DashboardScreenV2(
                 onNavigateToDunningNotices = onNavigateToDunningNotices,
                 onNavigateToVault = onNavigateToVault,
                 onNavigateToNotes = onNavigateToNotes,
+                onNavigateToPredictions = { navController.navigate(com.emul8r.bizap.ui.gui2.navigation.ScreenV2.Predictions(businessId)) },
                 onCreateCustomer = onCreateCustomer,
                 onCreateInvoice = onCreateInvoice,
                 uiMode = uiMode,
@@ -136,6 +152,9 @@ private fun DashboardContentV2(
     currentNotesCount: Int,
     dashboardMetrics: com.emul8r.bizap.domain.repository.DashboardMetrics,
     viewModel: DashboardViewModelV2,
+    forecast30: com.emul8r.bizap.domain.model.insights.CashFlowPrediction,
+    criticalAlerts: List<String>,
+    riskInvoicesCount: Int,
     onNavigateToRevenue: () -> Unit,
     onNavigateToPayment: () -> Unit,
     onNavigateToRisk: () -> Unit,
@@ -144,6 +163,7 @@ private fun DashboardContentV2(
     onNavigateToInvoice: (Long) -> Unit,
     onCreateCustomer: () -> Unit,
     onCreateInvoice: () -> Unit,
+    onNavigateToPredictions: () -> Unit,
     modifier: Modifier = Modifier,
     uiMode: UIMode = UIMode.MODERN,
     onNavigateToInvoiceAnalytics: () -> Unit = {},
@@ -227,6 +247,17 @@ private fun DashboardContentV2(
                     onPaidClick = { onNavigateToRevenue() }
                 )
             }
+
+            HorizontalDivider()
+
+            // ── Predictions Summary Card (NEW) ────────────────────────────────
+            // Shows key predictions: 30-day forecast, at-risk invoices, critical alerts
+            PredictionsSummaryCard(
+                forecast = forecast30,
+                alerts = criticalAlerts,
+                riskCount = riskInvoicesCount,
+                onNavigateToPredictions = onNavigateToPredictions
+            )
 
             HorizontalDivider()
             CategorizedSmartQuickTasks(

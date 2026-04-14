@@ -38,7 +38,7 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
     // ── taxCalculation_Correct ────────────────────────────────────────────────
 
     @Test
-    fun `taxCalculation_Correct - 10% tax on 100000 cents equals 10000 cents`() {
+    fun `taxCalculation_Correct - 10percent tax on 100000 cents equals 10000 cents`() {
         val subtotal = 100000L  // $1000
         val taxRate = 0.10
         val taxAmount = (subtotal * taxRate).toLong()
@@ -46,7 +46,7 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
     }
 
     @Test
-    fun `taxCalculation_Correct - 0% tax results in zero tax amount`() {
+    fun `taxCalculation_Correct - 0percent tax results in zero tax amount`() {
         val subtotal = 100000L
         val taxRate = 0.0
         val taxAmount = (subtotal * taxRate).toLong()
@@ -151,3 +151,6 @@ class AnalyticsRepositoryTest : BaseUnitTest() {
         assertEquals(businessId, metrics.businessProfileId)
     }
 }
+
+
+

@@ -52,7 +52,7 @@ fun InvoiceList(
                     ListItem(
                         modifier = Modifier.clickable { onInvoiceClick(invoice.id) },
                         headlineContent = { Text("Invoice #${invoice.id} - ${invoice.customerName}") },
-                        supportingContent = { Text("Total: ${CentsFormatter.formatCents(invoice.totalAmount, invoice.currencyCode)}") },
+                        supportingContent = { Text("Total: ${CentsFormatter.formatCents(invoice.totalAmount, invoice.currency)}") },
                         trailingContent = { InvoiceStatusChip(status = invoice.status.name) }
                     )
                 }

@@ -176,3 +176,6 @@ class AuthenticationManagerTest {
         verify { mockActivityManager.clearApplicationUserData() }
     }
 }
+
+
+

@@ -9,6 +9,9 @@ import com.emul8r.bizap.data.local.dao.*
 import com.emul8r.bizap.data.local.migration.MIGRATION_AddInvoiceSettings
 import com.emul8r.bizap.data.local.migration.MIGRATION_AddPdfEngineAndLayout
 import com.emul8r.bizap.data.local.migration.MIGRATION_AddSignatureField
+import com.emul8r.bizap.data.local.migration.MIGRATION_42_43
+import com.emul8r.bizap.data.local.migrations.MIGRATION_44_45
+import com.emul8r.bizap.data.local.migrations.Migration_45_46
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTimeTypeConverter
@@ -17,7 +20,7 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
 /**
  * # Database Schema & Migration Architecture
  *
- * **Current Version:** 42
+ * **Current Version:** 46
  * **Location:** data/local/migrations/ (standardized)
  *
  * ## Migration History (Version Chain)
@@ -32,6 +35,9 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
  * | 39 | 40 | Add PDF engine & layout | migration/MIGRATION_AddPdfEngineAndLayout.kt ⚠️ |
  * | 40 | 41 | Add signature field | migration/MIGRATION_AddSignatureField.kt ⚠️ |
  * | 41 | 42 | Add discount + FTS4 | migration/Migration_41_42.kt ⚠️ |
+ * | 42 | 43 | Add customization layers | migration/Migration_42_43.kt ⚠️ |
+ * | 44 | 45 | Add invoice numbering | migrations/Migration_44_45.kt ✅ |
+ * | 45 | 46 | Add payment media attachments | migrations/Migration_45_46.kt ✅ |
  *
  * **⚠️ Future Action:** Rename the `migration/` folder to `migrations/` and rename
  * MIGRATION_* classes to Migration_*_* for consistency (post-launch cleanup).
@@ -56,34 +62,59 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
  */
 @Database(
     entities = [
+        // Core Business Entities
+        BusinessProfileEntity::class,
         CustomerEntity::class,
+
+        // Invoice Entities (GUI1)
         InvoiceEntity::class,
         LineItemEntity::class,
         PrefilledItemEntity::class,
+
+        // Invoice Entities (GUI2)
+        InvoiceItemEntity::class,
+        PaymentEntity::class,
+
+        // Document & Generated Content
         GeneratedDocumentEntity::class,
-        BusinessProfileEntity::class,
+
+        // Currency Management
         CurrencyEntity::class,
         ExchangeRateEntity::class,
+
+        // Analytics Snapshots
         InvoiceAnalyticsSnapshot::class,
         DailyRevenueSnapshot::class,
         CustomerAnalyticsSnapshot::class,
         BusinessHealthMetrics::class,
+
+        // Payment Tracking & Snapshots
         InvoicePaymentEntity::class,
         InvoicePaymentSnapshot::class,
         DailyPaymentSnapshot::class,
         CollectionMetrics::class,
+        PaymentMediaAttachment::class,  // ✅ NEW: Payment proof media
+
+        // Templates & Customization
         InvoiceTemplate::class,
         InvoiceCustomField::class,
+
+        // Offline Operations
         PendingOperationEntity::class,
         OfflineOperation::class,
-        InvoiceItemEntity::class,
-        PaymentEntity::class,
+
+        // Notes & Events
         NoteEntity::class,
-        AnalyticsEventEntity::class,  // Event tracking
-        com.emul8r.bizap.domain.model.InvoiceSettings::class,  // Invoice settings
-        com.emul8r.bizap.data.local.entities.InvoiceFTS::class  // Full-text search
+        AnalyticsEventEntity::class,
+
+        // Search Index
+        InvoiceFTS::class,
+
+        // Settings & Preferences
+        com.emul8r.bizap.domain.model.InvoiceSettings::class,
+        DashboardPreferencesEntity::class
     ],
-    version = 42,  // v41→42: Add discount_amount column; create InvoiceFTS virtual table
+    version = 46,  // v45→46: Add payment media attachments for proof-of-payment feature
     exportSchema = true
 )
 @TypeConverters(
@@ -103,6 +134,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun analyticsDao(): AnalyticsDao
     abstract fun customerAnalyticsDao(): CustomerAnalyticsDao
     abstract fun invoicePaymentDao(): InvoicePaymentDao
+    abstract fun paymentMediaAttachmentDao(): PaymentMediaAttachmentDao  // ✅ NEW
     abstract fun invoiceTemplateDao(): InvoiceTemplateDao
     abstract fun invoiceCustomFieldDao(): InvoiceCustomFieldDao
     abstract fun pendingOperationDao(): PendingOperationDao

@@ -13,6 +13,7 @@ import com.emul8r.bizap.domain.settings.UIPreferences
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.domain.model.UIMode
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
+import android.content.Context
 
 private val KEY_GUI_MODE = stringPreferencesKey("gui_mode")
 private val KEY_FIRST_LAUNCH_WARNING_SHOWN = booleanPreferencesKey("first_launch_warning_shown")
@@ -39,15 +41,16 @@ private val KEY_FIRST_LAUNCH_WARNING_SHOWN = booleanPreferencesKey("first_launch
  * has completed its first read. This removes the previous hardcoded 2500 ms splash
  * delay while still ensuring the branded splash is visible during actual data loading.
  *
- * As of v2.0, GUI2 is the only supported interface. GUI1 is no longer offered
- * and the GUI selection screen is never shown. Any previously stored GUI1 preference
- * is silently upgraded to GUI2.
+ * As of v3.0, GUI1, GUI2, and GUI3 (Matrix) are all supported. Users can switch
+ * between them at any time via the GUI mode selector in Settings or the dashboard.
+ * GUI3 launches in a separate activity (MatrixGUIMainActivity).
  */
 @HiltViewModel
 class AppStateViewModel @Inject constructor(
-    private val authManager: AuthenticationManager,
     private val dataStore: DataStore<Preferences>,
-    private val uiPreferences: UIPreferences
+    private val authManager: AuthenticationManager,
+    private val uiPreferences: UIPreferences,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     /** Mutable auth state, updated synchronously on construction and on demand. */
@@ -130,9 +133,10 @@ class AppStateViewModel @Inject constructor(
         is AuthState.NotInitialized -> AppState.PINSetup
         is AuthState.Authenticated -> when {
             !warningShown -> AppState.FirstLaunchWarning
-            // GUI2 is now the only supported interface. GUI1 is no longer offered.
-            // Any stored preference (including null or GUI1) defaults to GUI2.
-            else -> AppState.AppReady(GuiMode.GUI2)
+            // If a GUI mode is persisted, use it (supports GUI1, GUI2, GUI3)
+            selectedMode != null -> AppState.AppReady(selectedMode)
+            // If no preference is set, show Landing screen so user can pick
+            else -> AppState.Landing
         }
         else -> AppState.Login
     }
@@ -163,23 +167,45 @@ class AppStateViewModel @Inject constructor(
     /** Persists acknowledgement of the first-launch data-loss warning. */
     fun markFirstLaunchWarningShown() {
         viewModelScope.launch {
-            dataStore.edit { it[KEY_FIRST_LAUNCH_WARNING_SHOWN] = true }
+            dataStore.edit { prefs ->
+                prefs[KEY_FIRST_LAUNCH_WARNING_SHOWN] = true
+            }
         }
     }
 
     /**
-     * No-op in v2.0. GUI2 is always used; the GUI mode preference is ignored.
-     * Kept for backward compatibility with code that may call this method.
+     * Persists the selected GUI mode and triggers appState recomposition.
+     * GUI3 launches MatrixGUIMainActivity, while GUI1/GUI2 stay in the current flow.
+     *
+     * @param mode The GUI mode to persist and activate
      */
     fun selectGui(mode: GuiMode) {
-        Timber.d("AppStateViewModel: selectGui($mode) called — GUI2 is always used in v2.0")
+        viewModelScope.launch {
+            try {
+                dataStore.edit { prefs ->
+                    prefs[KEY_GUI_MODE] = mode.name
+                }
+                Timber.d("AppStateViewModel: selectGui($mode) persisted to DataStore")
+            } catch (e: Exception) {
+                Timber.e(e, "AppStateViewModel: failed to persist GUI mode: $mode")
+            }
+        }
     }
 
     /**
-     * No-op in v2.0. GUI2 is always used; there is no GUI selection screen to return to.
-     * Kept for backward compatibility with code that may call this method.
+     * Resets GUI mode preference to trigger landing screen on next launch.
+     * Used when user wants to re-select their GUI preference.
      */
     fun resetGuiMode() {
-        Timber.d("AppStateViewModel: resetGuiMode() called — no-op in v2.0")
+        viewModelScope.launch {
+            try {
+                dataStore.edit { prefs ->
+                    prefs.remove(KEY_GUI_MODE)
+                }
+                Timber.d("AppStateViewModel: resetGuiMode() cleared from DataStore")
+            } catch (e: Exception) {
+                Timber.e(e, "AppStateViewModel: failed to reset GUI mode")
+            }
+        }
     }
 }

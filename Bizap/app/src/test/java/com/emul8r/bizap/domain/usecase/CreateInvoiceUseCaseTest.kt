@@ -4,7 +4,7 @@ package com.emul8r.bizap.domain.usecase
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.validation.ValidationRules
 import io.mockk.*
@@ -14,6 +14,7 @@ import org.junit.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import java.time.Instant
 
 /**
  * Unit tests for invoice creation, covering validation and repository delegation.
@@ -25,13 +26,13 @@ class CreateInvoiceUseCaseTest : BaseUnitTest() {
 
     private lateinit var invoiceRepository: InvoiceRepository
 
-    private val now = System.currentTimeMillis()
-    private val tomorrow = now + 86_400_000L
+    private val now = Instant.now().toString()
+    private val tomorrow = Instant.now().plusSeconds(86_400L).toString()
 
     private fun buildInvoice(
         customerId: Long? = 1L,
-        items: List<LineItem> = listOf(
-            LineItem(description = "Consulting", quantity = 1.0, unitPrice = 50000L)
+        items: List<InvoiceItem> = listOf(
+            InvoiceItem(description = "Consulting", quantity = 1.0, unitPrice = 50000L)
         ),
         totalAmount: Long = 50000L,
         customerName: String = "Test Customer"
@@ -40,13 +41,13 @@ class CreateInvoiceUseCaseTest : BaseUnitTest() {
         businessProfileId = 1L,
         customerId = customerId,
         customerName = customerName,
-        date = now,
+        dateCreated = now,
         dueDate = tomorrow,
         totalAmount = totalAmount,
         items = items,
         isQuote = false,
         status = InvoiceStatus.DRAFT,
-        currencyCode = "AUD"
+        currency = "AUD"
     )
 
     @Before
@@ -107,7 +108,7 @@ class CreateInvoiceUseCaseTest : BaseUnitTest() {
     @Test
     fun `noLineItems_Failure - single item invoice passes validation`() {
         val invoice = buildInvoice(items = listOf(
-            LineItem(description = "Service", quantity = 1.0, unitPrice = 10000L)
+            InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 10000L)
         ))
         val result = ValidationRules.validateInvoice(invoice)
         assertTrue(result.isSuccess(), "Invoice with at least one item should pass validation")
@@ -149,3 +150,7 @@ class CreateInvoiceUseCaseTest : BaseUnitTest() {
         assertNotNull(result.exceptionOrNull())
     }
 }
+
+
+
+

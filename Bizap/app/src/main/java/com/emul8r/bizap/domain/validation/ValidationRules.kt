@@ -2,7 +2,7 @@ package com.emul8r.bizap.domain.validation
 
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 import com.emul8r.bizap.domain.model.Result
 import timber.log.Timber
 
@@ -85,11 +85,17 @@ object ValidationRules {
             return Result.Failure(message)
         }
 
-        // Rule 3: Due date >= invoice date
-        if (invoice.dueDate < invoice.date) {
-            val message = "Due date must be on or after invoice date"
-            Timber.w("❌ $message")
-            return Result.Failure(message)
+        // Rule 3: Due date >= invoice date (both are ISO-8601 strings)
+        if (invoice.dueDate.isNotBlank() && invoice.dateCreated.isNotBlank()) {
+            try {
+                if (invoice.dueDate < invoice.dateCreated) {
+                    val message = "Due date must be on or after invoice date"
+                    Timber.w("❌ $message")
+                    return Result.Failure(message)
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to compare dates")
+            }
         }
 
         // Rule 4: Customer name required
@@ -108,9 +114,10 @@ object ValidationRules {
         }
 
         // Rule 6: Currency code format
-        if (invoice.currencyCode.length != 3 || !invoice.currencyCode.all { it.isLetter() }) {
+        val currency = invoice.currency ?: ""
+        if (currency.isBlank() || currency.length != 3 || !currency.all { it.isLetter() }) {
             val message = "Currency code must be 3 letters (e.g., AUD, USD, EUR)"
-            Timber.w("❌ $message (provided: ${invoice.currencyCode})")
+            Timber.w("❌ $message (provided: $currency)")
             return Result.Failure(message)
         }
 
@@ -217,7 +224,7 @@ object ValidationRules {
      * - Zero or negative price = data error or user forgot to enter
      * - Excessive totals indicate bad data (e.g., 99999999 cents = $999,999)
      */
-    fun validateLineItem(item: LineItem): Result<Unit> {
+    fun validateLineItem(item: InvoiceItem): Result<Unit> {
         // Rule 1 & 2: Description required and length limit
         if (item.description.isBlank()) {
             val message = "Item description is required"

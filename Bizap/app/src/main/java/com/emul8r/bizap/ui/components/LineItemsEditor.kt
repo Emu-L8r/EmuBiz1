@@ -2,7 +2,7 @@ package com.emul8r.bizap.ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 import com.emul8r.bizap.ui.theme.AppTheme
 import com.emul8r.bizap.ui.components.classic.ClassicLineItemsEditor
 import com.emul8r.bizap.ui.components.modern.ModernLineItemsEditor
@@ -24,8 +24,8 @@ import com.emul8r.bizap.ui.components.modern.ModernLineItemsEditor
  */
 @Composable
 fun LineItemsEditor(
-    items: List<LineItem>,
-    onItemsChange: (List<LineItem>) -> Unit,
+    items: List<InvoiceItem>,
+    onItemsChange: (List<InvoiceItem>) -> Unit,
     isDarkMode: Boolean,
     modifier: Modifier = Modifier,
     onAddPrefilledClick: (() -> Unit)? = null

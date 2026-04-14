@@ -197,3 +197,6 @@ class SettingsRepositoryImplTest : BaseUnitTest() {
         assertTrue(repository.settings.first().lastUpdated > 0)
     }
 }
+
+
+

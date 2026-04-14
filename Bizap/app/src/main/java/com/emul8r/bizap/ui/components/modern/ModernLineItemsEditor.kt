@@ -13,13 +13,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 import timber.log.Timber
 
 @Composable
 fun ModernLineItemsEditor(
-    items: List<LineItem>,
-    onItemsChange: (List<LineItem>) -> Unit,
+    items: List<InvoiceItem>,
+    onItemsChange: (List<InvoiceItem>) -> Unit,
     modifier: Modifier = Modifier,
     onAddPrefilledClick: (() -> Unit)? = null
 ) {
@@ -155,7 +155,7 @@ fun ModernLineItemsEditor(
                     Timber.d("🎬 ADD ITEM BUTTON CLICKED!")
                     Timber.d("   Current items: ${items.size}")
                     Timber.d("   Creating new item with ID=${(items.maxOfOrNull { it.id } ?: 0) + 1}")
-                    val newItem = LineItem(
+                    val newItem = InvoiceItem(
                         id = (items.maxOfOrNull { it.id } ?: 0) + 1,
                         description = "",
                         quantity = 1.0,

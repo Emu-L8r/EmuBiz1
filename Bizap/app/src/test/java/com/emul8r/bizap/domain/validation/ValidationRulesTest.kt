@@ -3,11 +3,12 @@ package com.emul8r.bizap.domain.validation
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 import com.emul8r.bizap.domain.model.Result
 import org.junit.Test
 import org.junit.Assert.*
 import java.util.*
+import java.time.Instant
 
 /**
  * VALIDATION RULES TEST SUITE
@@ -39,15 +40,15 @@ class ValidationRulesTest {
             businessProfileId = 1,
             customerId = 1,
             customerName = "John Doe",
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis() + 86400000,  // 1 day later
+            dateCreated = Instant.now().toString(),
+            dueDate = Instant.now().plusSeconds(86400L).toString(),
             totalAmount = 10000,  // $100 in cents
             items = listOf(
-                LineItem(description = "Service A", quantity = 1.0, unitPrice = 10000)
+                InvoiceItem(description = "Service A", quantity = 1.0, unitPrice = 10000)
             ),
             isQuote = false,
             status = InvoiceStatus.DRAFT,
-            currencyCode = "AUD"
+            currency = "AUD"
         )
 
         // ACT
@@ -65,13 +66,13 @@ class ValidationRulesTest {
             businessProfileId = 1,
             customerId = 1,
             customerName = "John Doe",
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis() + 86400000,
+            dateCreated = Instant.now().toString(),
+            dueDate = Instant.now().plusSeconds(86400L).toString(),
             totalAmount = 0,  // No items = no amount
             items = emptyList(),  // ❌ EMPTY!
             isQuote = false,
             status = InvoiceStatus.DRAFT,
-            currencyCode = "AUD"
+            currency = "AUD"
         )
 
         // ACT
@@ -92,15 +93,15 @@ class ValidationRulesTest {
             businessProfileId = 1,
             customerId = 1,
             customerName = "John Doe",
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis() + 86400000,
+            dateCreated = java.time.Instant.now().toString(),
+            dueDate = java.time.Instant.now().toString() + 86400000,
             totalAmount = 0,  // ❌ ZERO!
             items = listOf(
-                LineItem(description = "Service", quantity = 1.0, unitPrice = 0)
+                InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 0)
             ),
             isQuote = false,
             status = InvoiceStatus.DRAFT,
-            currencyCode = "AUD"
+            currency = "AUD"
         )
 
         // ACT
@@ -113,25 +114,26 @@ class ValidationRulesTest {
             result.getErrorOrNull()?.contains("greater than zero") ?: false
         )
     }
-
     @Test
     fun validateInvoice_dueDateBeforeInvoiceDate_returnsFailure() {
-        val now = System.currentTimeMillis()
-
         // ARRANGE: Due date is BEFORE invoice date (impossible!)
+        val now = Instant.now().toString()
+        val yesterday = Instant.now().minusSeconds(86_400L).toString()
+
+        // ACT
         val invoice = Invoice(
             businessProfileId = 1,
             customerId = 1,
             customerName = "John Doe",
-            date = now,
-            dueDate = now - 86400000,  // ❌ YESTERDAY!
+            dateCreated = now,
+            dueDate = yesterday,  // ❌ YESTERDAY!
             totalAmount = 10000,
             items = listOf(
-                LineItem(description = "Service", quantity = 1.0, unitPrice = 10000)
+                InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 10000)
             ),
             isQuote = false,
             status = InvoiceStatus.DRAFT,
-            currencyCode = "AUD"
+            currency = "AUD"
         )
 
         // ACT
@@ -152,11 +154,11 @@ class ValidationRulesTest {
             businessProfileId = 1,
             customerId = 1,
             customerName = "",  // ❌ BLANK!
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis() + 86400000,
+            dateCreated = java.time.Instant.now().toString(),
+            dueDate = java.time.Instant.now().toString() + 86400000,
             totalAmount = 10000,
             items = listOf(
-                LineItem(description = "Service", quantity = 1.0, unitPrice = 10000)
+                InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 10000)
             ),
             isQuote = false,
             status = InvoiceStatus.DRAFT,
@@ -176,20 +178,20 @@ class ValidationRulesTest {
 
     @Test
     fun validateInvoice_invalidCurrencyCode_returnsFailure() {
-        // ARRANGE: Currency code must be exactly 3 letters
+        // ARRANGE: Invoice with invalid currency (must be 3 letters)
         val invoice = Invoice(
             businessProfileId = 1,
             customerId = 1,
             customerName = "John Doe",
-            date = System.currentTimeMillis(),
-            dueDate = System.currentTimeMillis() + 86400000,
-            totalAmount = 10000,
+            dateCreated = Instant.now().toString(),
+            dueDate = Instant.now().plusSeconds(86_400L).toString(),
+            totalAmount = 10_000,
             items = listOf(
-                LineItem(description = "Service", quantity = 1.0, unitPrice = 10000)
+                InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 10000)
             ),
             isQuote = false,
             status = InvoiceStatus.DRAFT,
-            currencyCode = "US"  // ❌ Only 2 letters!
+            currency = "US"  // ❌ Only 2 letters!
         )
 
         // ACT
@@ -328,7 +330,7 @@ class ValidationRulesTest {
     @Test
     fun validateLineItem_validItem_returnsSuccess() {
         // ARRANGE
-        val item = LineItem(
+        val item = InvoiceItem(
             description = "Consulting Services",
             quantity = 2.5,
             unitPrice = 10000  // $100 in cents
@@ -344,7 +346,7 @@ class ValidationRulesTest {
     @Test
     fun validateLineItem_blankDescription_returnsFailure() {
         // ARRANGE
-        val item = LineItem(
+        val item = InvoiceItem(
             description = "",  // ❌ BLANK!
             quantity = 1.0,
             unitPrice = 10000
@@ -360,7 +362,7 @@ class ValidationRulesTest {
     @Test
     fun validateLineItem_zeroQuantity_returnsFailure() {
         // ARRANGE
-        val item = LineItem(
+        val item = InvoiceItem(
             description = "Service",
             quantity = 0.0,  // ❌ ZERO!
             unitPrice = 10000
@@ -376,7 +378,7 @@ class ValidationRulesTest {
     @Test
     fun validateLineItem_negativePrice_returnsFailure() {
         // ARRANGE
-        val item = LineItem(
+        val item = InvoiceItem(
             description = "Service",
             quantity = 1.0,
             unitPrice = -5000  // ❌ NEGATIVE!
@@ -392,7 +394,7 @@ class ValidationRulesTest {
     @Test
     fun validateLineItem_excessiveTotal_returnsFailure() {
         // ARRANGE: Total cannot exceed $1,000,000
-        val item = LineItem(
+        val item = InvoiceItem(
             description = "Service",
             quantity = 1000000.0,
             unitPrice = 1000000  // ❌ Unreasonably large!
@@ -498,4 +500,9 @@ class ValidationRulesTest {
         assertTrue("Batch should fail if any customer is invalid", result.isFailure())
     }
 }
+
+
+
+
+
 

@@ -28,6 +28,10 @@ object PageLayoutFactory {
             PageLayout.MODERN -> ModernPageLayout()
             PageLayout.SPACIOUS -> SpaciousPageLayout()
             PageLayout.COMPACT -> CompactPageLayout()
+            PageLayout.SIDEBAR -> ClassicPageLayout()  // Default to Classic for unsupported layouts
+            PageLayout.CARDS -> ClassicPageLayout()
+            PageLayout.MINIMAL_TABLES -> ClassicPageLayout()
+            PageLayout.FOCUSED -> ClassicPageLayout()
         }
     }
 
@@ -36,6 +40,10 @@ object PageLayoutFactory {
         PageLayout.MODERN -> "MODERN"
         PageLayout.SPACIOUS -> "SPACIOUS"
         PageLayout.COMPACT -> "COMPACT"
+        PageLayout.SIDEBAR -> "SIDEBAR"
+        PageLayout.CARDS -> "CARDS"
+        PageLayout.MINIMAL_TABLES -> "MINIMAL_TABLES"
+        PageLayout.FOCUSED -> "FOCUSED"
     }
 }
 

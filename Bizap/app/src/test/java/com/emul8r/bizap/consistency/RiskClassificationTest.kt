@@ -188,3 +188,6 @@ class RiskClassificationTest : BaseUnitTest() {
         assertTrue(risk2.healthyCount > risk1.healthyCount)
     }
 }
+
+
+

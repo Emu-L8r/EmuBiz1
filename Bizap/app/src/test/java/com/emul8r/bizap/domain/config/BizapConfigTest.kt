@@ -192,3 +192,6 @@ class BizapConfigTest {
         assertEquals(0.0, noThresholdConfig.paymentWarningThresholdDays)
     }
 }
+
+
+

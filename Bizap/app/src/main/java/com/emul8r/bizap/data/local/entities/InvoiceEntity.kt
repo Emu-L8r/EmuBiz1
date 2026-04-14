@@ -20,8 +20,8 @@ import androidx.room.PrimaryKey
         Index(name = "idx_invoices_customer", value = ["customerId"]),
         Index(name = "idx_invoices_status", value = ["status"]),
         Index(name = "idx_invoices_business_status", value = ["businessProfileId", "status"]),
-        Index(name = "idx_invoices_business_date", value = ["businessProfileId", "date"]),  // ✅ NEW: For date range queries
-        Index(name = "idx_invoices_year_sequence", value = ["invoiceYear", "invoiceSequence", "businessProfileId"]),
+        Index(name = "idx_invoices_business_date", value = ["businessProfileId", "date"]),
+        Index(name = "idx_invoices_date_sequence", value = ["date", "dailySequence"]),
         Index(name = "idx_invoices_date", value = ["date"]),
         Index(name = "idx_invoices_customer_date", value = ["customerId", "date"]),
         Index(name = "idx_invoices_number_business", value = ["invoiceNumber", "businessProfileId"])
@@ -52,8 +52,9 @@ data class InvoiceEntity(
     val amountPaid: Long = 0,           // Store as cents
     val parentInvoiceId: Long? = null,
     val version: Int = 1,
-    val invoiceYear: Int = 0,
-    val invoiceSequence: Int = 0,
+    val dailySequence: Int,             // Sequence for the day (1-99)
+    val invoiceYear: Int = 0,           // Year for yearly invoice numbering
+    val invoiceSequence: Int = 0,       // Annual sequence number
     val currencyCode: String = "AUD",
     // Template integration fields (Phase 5)
     val templateId: String? = null,              // Reference to InvoiceTemplate used

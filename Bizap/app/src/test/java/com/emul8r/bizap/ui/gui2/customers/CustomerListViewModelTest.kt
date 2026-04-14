@@ -118,3 +118,6 @@ class CustomerListViewModelTest : BaseUnitTest() {
         assertEquals(1, filtered.size)
     }
 }
+
+
+

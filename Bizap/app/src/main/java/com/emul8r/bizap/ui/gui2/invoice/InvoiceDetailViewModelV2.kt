@@ -120,6 +120,19 @@ class InvoiceDetailViewModelV2 @Inject constructor(
         }
     }
 
+    /**
+     * Convert ISO-8601 date string to epoch milliseconds.
+     */
+    private fun String?.toEpochMillis(): Long {
+        return try {
+            if (this.isNullOrBlank()) 0L
+            else java.time.Instant.parse(this).toEpochMilli()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to parse date string: $this")
+            0L
+        }
+    }
+
     // ===== PAYMENT =====
     fun recordPayment(amount: Long) {
         viewModelScope.launch {
@@ -208,6 +221,8 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                     paymentRepositoryV2.markInvoiceAsPaid(invoiceId, businessId)
                         .onSuccess {
                             Timber.i("✅ updateInvoiceStatus: Invoice marked as paid - invoiceId=$invoiceId")  // ⬅️ ADD
+                            // 🔴 CRITICAL FIX #1: Reload invoice to reflect updated status in UI
+                            loadInvoice()
                             _uiState.value = currentState.copy(
                                 dialogState = DialogState.None,
                                 statusUpdateError = null
@@ -222,6 +237,8 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                 } else {
                     invoiceRepository.updateInvoiceStatus(invoiceId, newStatus).getOrThrow()
                     Timber.i("✅ updateInvoiceStatus: Status updated successfully - invoiceId=$invoiceId, status=$newStatus")  // ⬅️ ENHANCE
+                    // 🔴 CRITICAL FIX #1: Reload invoice to reflect updated status in UI
+                    loadInvoice()
                     _uiState.value = currentState.copy(
                         dialogState = DialogState.None,
                         statusUpdateError = null
@@ -273,8 +290,8 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                     customerName = invoice.customerName,
                     customerAddress = invoice.customerAddress,
                     customerEmail = invoice.customerEmail,
-                    date = invoice.date,
-                    dueDate = invoice.dueDate,
+                    date = invoice.dateCreated.toEpochMillis(),
+                    dueDate = invoice.dueDate.toEpochMillis(),
                     items = invoice.items.map { item ->
                         com.emul8r.bizap.domain.model.LineItemSnapshot(
                             description = item.description,
@@ -294,8 +311,9 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                     businessAddress = businessProfile.address ?: "",
                     logoBase64 = businessProfile.logoBase64,
                     currencyCode = "AUD",
-                    headerText = invoice.header ?: "",
-                    subheaderText = invoice.subheader ?: "",
+                    // Standardized naming (Phase 2.0.3)
+                    header = invoice.header ?: "",
+                    subheader = invoice.subheader ?: "",
                     footerText = invoice.footer ?: "",
                     notes = invoice.notes ?: "",
                     bankAccountName = businessProfile.accountName ?: "",
@@ -460,4 +478,3 @@ sealed class InvoiceDetailUiStateV2 {
     ) : InvoiceDetailUiStateV2()
     data class Error(val message: String) : InvoiceDetailUiStateV2()
 }
-

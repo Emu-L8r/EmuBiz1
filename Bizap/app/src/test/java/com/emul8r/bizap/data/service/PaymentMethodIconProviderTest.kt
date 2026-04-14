@@ -101,3 +101,6 @@ class PaymentMethodIconProviderTest {
         assertTrue("Badge should contain the provided accent color", badge.contains("#FF5500"))
     }
 }
+
+
+

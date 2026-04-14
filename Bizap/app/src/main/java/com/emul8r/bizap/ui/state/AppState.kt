@@ -28,16 +28,19 @@ sealed class AppState {
     data object FirstLaunchWarning : AppState()
 
     /**
-     * Authenticated, warning acknowledged, but no GUI mode saved yet.
-     * Show [com.emul8r.bizap.ui.landing.LandingScreen] so the user can pick GUI1 or GUI2.
+     * Authenticated, warning acknowledged, but no GUI mode saved yet (user reset preference).
+     * Show [com.emul8r.bizap.ui.landing.LandingScreen] so the user can pick GUI1, GUI2, or GUI3.
+     * This state is triggered when:
+     * - First launch after warning acknowledgement (no preference set)
+     * - User clicks GUI switcher buttons in Matrix dashboard and resets preference
      */
-    data object GUISelection : AppState()
+    data object Landing : AppState()
 
     /**
      * Authenticated, warning acknowledged, and a GUI mode has been persisted.
      * Render the chosen GUI directly.
      *
-     * @param gui The GUI mode to display ([GuiMode.GUI1] or [GuiMode.GUI2]).
+     * @param gui The GUI mode to display ([GuiMode.GUI1], [GuiMode.GUI2], or [GuiMode.GUI3]).
      */
     data class AppReady(val gui: GuiMode) : AppState()
 }

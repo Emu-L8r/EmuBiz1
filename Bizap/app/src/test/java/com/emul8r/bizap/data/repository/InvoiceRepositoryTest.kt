@@ -9,6 +9,8 @@ import com.emul8r.bizap.data.local.entities.InvoiceWithItems
 import com.emul8r.bizap.data.repository.SnapshotSyncHelper
 import com.emul8r.bizap.data.remote.api.InvoiceApi
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.model.balanceRemaining
+import com.emul8r.bizap.domain.model.isFullyPaid
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.util.TestDataFactory
@@ -21,13 +23,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import com.emul8r.bizap.data.mapper.toEntity
+import java.time.Instant
 
 /**
  * Unit tests for InvoiceRepositoryImpl
  * Verifies multi-business isolation and invoice operations.
  */
 class InvoiceRepositoryTest : BaseUnitTest() {
-    
+
     private val invoiceDao: InvoiceDao = mockk()
     private val businessProfileRepo: BusinessProfileRepository = mockk()
     private val analyticsDao: AnalyticsDao = mockk(relaxed = true)
@@ -35,12 +38,12 @@ class InvoiceRepositoryTest : BaseUnitTest() {
     private val snapshotSyncHelper: SnapshotSyncHelper = mockk(relaxed = true)
     private val invoiceApi: InvoiceApi = mockk(relaxed = true)
     private lateinit var repository: InvoiceRepository
-    
+
     @Before
     fun setup() {
         repository = InvoiceRepositoryImpl(invoiceDao, businessProfileRepo, analyticsDao, paymentDao, snapshotSyncHelper, invoiceApi)
     }
-    
+
     @Test
     fun `test get invoices by business id filters correctly`() = runTest {
         // Arrange
@@ -49,9 +52,9 @@ class InvoiceRepositoryTest : BaseUnitTest() {
             TestDataFactory.createTestInvoice(id = 1, businessProfileId = businessId),
             TestDataFactory.createTestInvoice(id = 2, businessProfileId = businessId)
         ).map { com.emul8r.bizap.data.local.entities.InvoiceWithItems(it.toEntity(), emptyList()) }
-        
+
         coEvery { invoiceDao.getInvoicesByBusinessId(businessId) } returns flowOf(testInvoices)
-        
+
         // This is a placeholder for actual repository-level scoping tests
         assertTrue(true)
     }
@@ -62,7 +65,8 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         val invoice = TestDataFactory.createTestInvoice(total = 100000L).copy(amountPaid = 30000L)
 
         // Act & Assert
-        assertEquals(70000L, invoice.balanceRemaining)
+        val balance: Double = invoice.balanceRemaining
+        assertEquals(700.0, balance)
         assertEquals(false, invoice.isFullyPaid)
     }
 
@@ -72,7 +76,8 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         val invoice = TestDataFactory.createTestInvoice(total = 50000L).copy(amountPaid = 50000L)
 
         // Act & Assert
-        assertEquals(0L, invoice.balanceRemaining)
+        val balance: Double = invoice.balanceRemaining
+        assertEquals(0.0, balance)
         assertEquals(true, invoice.isFullyPaid)
     }
 
@@ -83,18 +88,18 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         // Arrange
         val businessId = 1L
         val expectedRowId = 42L
-        val testDate = System.currentTimeMillis()
+        val testDate = Instant.now().toString()
         val invoice = TestDataFactory.createTestInvoice(id = 0).copy(
-            date = testDate,
+            dateCreated = testDate,
             dailyCounter = 1,
             displayName = "testcustomer-11032026-01"
         )
 
         coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
-        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
-        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 0  // ← ADD THIS
+        coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 0
         coEvery { invoiceDao.insert(any(), any()) } returns expectedRowId
-        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs  // ← ADD THIS
+        coEvery { invoiceDao.insertLineItems(any()) } just Runs
+        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
 
         // Act
         val result = repository.saveInvoice(invoice)
@@ -108,18 +113,18 @@ class InvoiceRepositoryTest : BaseUnitTest() {
     fun `saveInvoice returns failure result when database throws`() = runTest {
         // Arrange
         val businessId = 1L
-        val testDate = System.currentTimeMillis()
+        val testDate = Instant.now().toString()
         val invoice = TestDataFactory.createTestInvoice(id = 0).copy(
-            date = testDate,
+            dateCreated = testDate,
             dailyCounter = 1,
             displayName = "testcustomer-11032026-01"
         )
         val dbException = RuntimeException("Database error")
 
         coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
-        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
-        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 0  // ← ADD THIS
+        coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 0
         coEvery { invoiceDao.insert(any(), any()) } throws dbException
+        coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
 
         // Act
         val result = repository.saveInvoice(invoice)
@@ -222,33 +227,31 @@ class InvoiceRepositoryTest : BaseUnitTest() {
     fun `invoice counter increments for same customer same day`() = runTest {
         // Given
         val businessId = 1L
-        val testDate = System.currentTimeMillis()
+        val testDate = Instant.now().toString()
         val baseInvoice = TestDataFactory.createTestInvoice(id = 0).copy(
-            date = testDate,
+            dateCreated = testDate,
             dailyCounter = 1,
             displayName = "testcustomer-${testDate}-01"
         )
 
         coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
-        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 0
+        coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 0
         coEvery { snapshotSyncHelper.syncAllSnapshots(any(), any()) } just Runs
+        coEvery { invoiceDao.insertLineItems(any()) } just Runs
 
         // When - first invoice: countInvoicesOnDate returns 0 → dailyCounter = 1
-        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 0
         coEvery { invoiceDao.insert(any(), any()) } returns 1L
         val result1 = repository.saveInvoice(baseInvoice)
         assertTrue(result1.isSuccess, "First invoice should save successfully")
 
         // When - second invoice same day: countInvoicesOnDate returns 1 → dailyCounter = 2
-        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 1
-        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 1
+        coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 1
         coEvery { invoiceDao.insert(any(), any()) } returns 2L
         val result2 = repository.saveInvoice(baseInvoice)
         assertTrue(result2.isSuccess, "Second invoice should save successfully")
 
         // When - third invoice same day: countInvoicesOnDate returns 2 → dailyCounter = 3
-        coEvery { invoiceDao.countInvoicesOnDate(any()) } returns 2
-        coEvery { invoiceDao.getMaxSequenceForYear(any(), businessId) } returns 2
+        coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 2
         coEvery { invoiceDao.insert(any(), any()) } returns 3L
         val result3 = repository.saveInvoice(baseInvoice)
         assertTrue(result3.isSuccess, "Third invoice should save successfully")
@@ -261,7 +264,7 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         assertEquals(3L, result3.getOrNull(), "Third invoice ID should be 3")
 
         // Verify countInvoicesOnDate was called for each new invoice
-        coVerify(atLeast = 3) { invoiceDao.countInvoicesOnDate(any()) }
+        coVerify(atLeast = 3) { invoiceDao.getMaxDailySequence(any(), any(), any()) }
     }
 
     @Test
@@ -302,3 +305,7 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         assertTrue(result.isSuccess)
     }
 }
+
+
+
+

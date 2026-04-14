@@ -100,4 +100,14 @@ sealed interface ScreenV2 {
 
     @Serializable
     data class Notes(val businessId: Long) : ScreenV2
+
+    @Serializable
+    data class Predictions(val businessId: Long) : ScreenV2
+
+    /**
+     * Paywall/Subscription screen (premium upgrade).
+     * Shows pricing and allows user to purchase premium tier.
+     */
+    @Serializable
+    data class Paywall(val businessId: Long) : ScreenV2
 }

@@ -113,47 +113,60 @@ class EditInvoiceViewModel @Inject constructor(
         initialValue = EditInvoiceUiState.Loading
     )
 
-    fun addLineItem() {
-        val currentState = uiState.value
-        if (currentState is EditInvoiceUiState.Success) {
-            val currentInvoice = currentState.invoice
-            val updatedInvoice = currentInvoice.copy(
-                items = currentInvoice.items + com.emul8r.bizap.domain.model.LineItem(
-                    id = tempIdCounter.getAndDecrement(),
-                    description = "",
-                    quantity = 1.0,
-                    unitPrice = 0L
-                )
-            )
-            _editState.update { updatedInvoice }
-        }
-    }
+     fun addLineItem() {
+         val currentState = uiState.value
+         if (currentState is EditInvoiceUiState.Success) {
+             val currentInvoice = currentState.invoice
+             val updatedInvoice = currentInvoice.copy(
+                 items = currentInvoice.items + com.emul8r.bizap.domain.model.InvoiceItem(
+                     id = tempIdCounter.getAndDecrement(),
+                     description = "",
+                     quantity = 1.0,
+                     unitPrice = 0L
+                 )
+             )
+             _editState.update { updatedInvoice }
+         }
+     }
 
-    fun removeLineItem(transientId: String) {
-        val currentState = uiState.value
-        if (currentState is EditInvoiceUiState.Success) {
-            val currentInvoice = currentState.invoice
-            val updatedInvoice = currentInvoice.copy(
-                items = currentInvoice.items.filter { it.transientId != transientId }
-            )
-            _editState.update { updatedInvoice }
-        }
-    }
+     fun removeLineItem(transientId: String) {
+         val currentState = uiState.value
+         if (currentState is EditInvoiceUiState.Success) {
+             val currentInvoice = currentState.invoice
+             val updatedInvoice = currentInvoice.copy(
+                 items = currentInvoice.items.filter { it.id.toString() != transientId }
+             )
+             _editState.update { updatedInvoice }
+         }
+     }
 
-    fun updateLineItem(transientId: String, description: String, quantity: Double, unitPrice: Long) {
-        val currentState = uiState.value
-        if (currentState is EditInvoiceUiState.Success) {
-            val currentInvoice = currentState.invoice
-            val updatedInvoice = currentInvoice.copy(
-                items = currentInvoice.items.map { item ->
-                    if (item.transientId == transientId) {
-                        item.copy(description = description, quantity = quantity, unitPrice = unitPrice)
-                    } else {
-                        item
-                    }
-                }
-            )
-            _editState.update { updatedInvoice }
+     fun updateLineItem(transientId: String, description: String, quantity: Double, unitPrice: Long) {
+         val currentState = uiState.value
+         if (currentState is EditInvoiceUiState.Success) {
+             val currentInvoice = currentState.invoice
+             val updatedInvoice = currentInvoice.copy(
+                 items = currentInvoice.items.map { item ->
+                     if (item.id.toString() == transientId) {
+                         item.copy(description = description, quantity = quantity, unitPrice = unitPrice)
+                     } else {
+                         item
+                     }
+                 }
+             )
+             _editState.update { updatedInvoice }
+         }
+     }
+
+    /**
+     * Convert ISO-8601 date string to epoch milliseconds.
+     */
+    private fun String?.toEpochMillis(): Long {
+        return try {
+            if (this.isNullOrBlank()) 0L
+            else java.time.Instant.parse(this).toEpochMilli()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to parse date string: $this")
+            0L
         }
     }
 
@@ -164,7 +177,7 @@ class EditInvoiceViewModel @Inject constructor(
     fun onCurrencyChange(code: String) {
         val currentState = uiState.value
         if (currentState is EditInvoiceUiState.Success) {
-            _editState.update { currentState.invoice.copy(currencyCode = code) }
+            _editState.update { currentState.invoice.copy(currency = code) }
         }
     }
 
@@ -202,12 +215,12 @@ class EditInvoiceViewModel @Inject constructor(
                     // Build snapshot for PDF generation
                     val snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
                         invoiceId = invoice.id,
-                        invoiceNumber = invoice.getFormattedInvoiceNumber(),
+                        invoiceNumber = invoice.invoiceNumber,
                         customerName = invoice.customerName,
                         customerAddress = invoice.customerAddress,
-                        customerEmail = invoice.customerEmail,
-                        date = invoice.date,
-                        dueDate = invoice.dueDate,
+                        customerEmail = invoice.customerEmail ?: "",
+                        date = invoice.dateCreated.toEpochMillis(),
+                        dueDate = invoice.dueDate.toEpochMillis(),
                         items = invoice.items.map {
                             val itemTotal = it.calculateTotal()
                             com.emul8r.bizap.domain.model.LineItemSnapshot(
@@ -227,8 +240,8 @@ class EditInvoiceViewModel @Inject constructor(
                         businessPhone = businessProfile.phone,
                         businessAddress = businessProfile.address,
                         logoBase64 = businessProfile.logoBase64,
-                        headerText = invoice.header ?: "",
-                        subheaderText = invoice.subheader ?: "",
+                        header = invoice.header ?: "",
+                        subheader = invoice.subheader ?: "",
                         notes = invoice.notes ?: "",
                         footerText = invoice.footer ?: "",
                         bankAccountName = businessProfile.accountName ?: "",

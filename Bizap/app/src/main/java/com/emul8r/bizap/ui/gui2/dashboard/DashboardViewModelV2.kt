@@ -122,11 +122,10 @@ class DashboardViewModelV2 @Inject constructor(
     )
 
     // ===== INVOICE STATUS COUNTS FOR PIE CHART =====
+    // 🔴 PHASE 1.2: Using unified analytics layer
+    // Both GUI1 and GUI2 now observe the same Flow for guaranteed parity
     val statusCounts: StateFlow<Map<String, Int>> = invoiceRepository
-        .getAllInvoicesWithItems()
-        .map { invoices ->
-            invoices.groupingBy { it.status.toString() }.eachCount()
-        }
+        .getInvoiceStatusCountsFlow()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

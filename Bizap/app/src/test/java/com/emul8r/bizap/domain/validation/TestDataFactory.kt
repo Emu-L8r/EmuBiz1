@@ -3,7 +3,8 @@ package com.emul8r.bizap.domain.validation
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.domain.model.InvoiceStatus
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
+import java.time.Instant
 
 /**
  * TEST DATA FACTORY
@@ -45,30 +46,23 @@ object TestDataFactory {
     // ===============================
 
     /**
-     * Get a consistent "now" for testing
+     * Get a consistent "now" for testing (as ISO-8601 String)
      *
      * WHY CONSISTENT TIME?
      * ====================
-     * System.currentTimeMillis() returns different values each time.
+     * Instant.now() returns different values each time.
      * This makes tests non-deterministic (different result each run).
-     *
-     * EXAMPLE (BAD):
-     *   val invoice1 = Invoice(date = System.currentTimeMillis())
-     *   val invoice2 = Invoice(date = System.currentTimeMillis())
-     *   invoice1.date != invoice2.date  // Different times!
-     *
-     * EXAMPLE (GOOD):
-     *   val now = System.currentTimeMillis()
-     *   val invoice1 = Invoice(date = now)
-     *   val invoice2 = Invoice(date = now)
-     *   invoice1.date == invoice2.date  // Same time, consistent!
+     * So we use a fixed Instant and convert to ISO-8601 string.
      */
-    private fun getNow(): Long = 1709596800000  // Fixed timestamp for testing
+    private fun getNow(): String = Instant.ofEpochMilli(1709596800000).toString()  // Fixed ISO-8601 timestamp
 
     /**
      * Get a valid due date (30 days after invoice date)
      */
-    private fun getValidDueDate(invoiceDate: Long): Long = invoiceDate + (30L * 24 * 60 * 60 * 1000)
+    private fun getValidDueDate(invoiceDateStr: String): String {
+        val instant = Instant.parse(invoiceDateStr)
+        return instant.plusSeconds(30L * 24 * 60 * 60).toString()
+    }
 
     // ===============================
     // INVOICE FACTORIES
@@ -103,13 +97,13 @@ object TestDataFactory {
             businessProfileId = 1,
             customerId = 1,
             customerName = "Test Customer",
-            date = now,
+            dateCreated = now,
             dueDate = getValidDueDate(now),
-            totalAmount = 10000,                    // $100 in cents
-            items = listOf(createValidLineItem()),  // At least one item
+            totalAmount = 10000,                     // $100 in cents
+            items = listOf(createValidInvoiceItem()), // At least one item
             isQuote = false,
             status = InvoiceStatus.DRAFT,
-            currencyCode = "AUD"
+            currency = "AUD"
         )
     }
 
@@ -143,9 +137,10 @@ object TestDataFactory {
      */
     fun createInvoiceWithInvalidDueDate(): Invoice {
         val now = getNow()
+        val yesterday = Instant.parse(now).minusSeconds(86400L).toString()
         return createValidInvoice().copy(
-            date = now,
-            dueDate = now - 86400000  // ❌ Yesterday - before invoice date!
+            dateCreated = now,
+            dueDate = yesterday  // ❌ Yesterday - before invoice date!
         )
     }
 
@@ -167,7 +162,7 @@ object TestDataFactory {
      */
     fun createInvoiceWithInvalidCurrencyCode(): Invoice {
         return createValidInvoice().copy(
-            currencyCode = "US"  // ❌ Only 2 letters!
+            currency = "US"  // ❌ Only 2 letters!
         )
     }
 
@@ -259,19 +254,19 @@ object TestDataFactory {
     }
 
     // ===============================
-    // LINE ITEM FACTORIES
+    // INVOICE ITEM FACTORIES
     // ===============================
 
     /**
-     * Create a VALID line item
+     * Create a VALID invoice item
      *
      * FIELDS:
      *   description: "Test Item" (1-500 chars, not blank)
      *   quantity: 1.0 (positive, can be fractional like 1.5)
      *   unitPrice: 10000 (positive, in cents = $100)
      */
-    fun createValidLineItem(): LineItem {
-        return LineItem(
+    fun createValidInvoiceItem(): InvoiceItem {
+        return InvoiceItem(
             description = "Test Item",
             quantity = 1.0,
             unitPrice = 10000  // $100 in cents
@@ -283,8 +278,8 @@ object TestDataFactory {
      *
      * Use when testing: "item description is required"
      */
-    fun createLineItemWithBlankDescription(): LineItem {
-        return createValidLineItem().copy(
+    fun createLineItemWithBlankDescription(): InvoiceItem {
+        return createValidInvoiceItem().copy(
             description = ""  // ❌ Blank
         )
     }
@@ -294,8 +289,8 @@ object TestDataFactory {
      *
      * Use when testing: "quantity must be positive"
      */
-    fun createLineItemWithZeroQuantity(): LineItem {
-        return createValidLineItem().copy(
+    fun createLineItemWithZeroQuantity(): InvoiceItem {
+        return createValidInvoiceItem().copy(
             quantity = 0.0  // ❌ Zero
         )
     }
@@ -305,8 +300,8 @@ object TestDataFactory {
      *
      * Use when testing: "price must be positive"
      */
-    fun createLineItemWithNegativePrice(): LineItem {
-        return createValidLineItem().copy(
+    fun createLineItemWithNegativePrice(): InvoiceItem {
+        return createValidInvoiceItem().copy(
             unitPrice = -5000  // ❌ Negative
         )
     }
@@ -316,8 +311,8 @@ object TestDataFactory {
      *
      * Use when testing: "item total cannot exceed $1,000,000"
      */
-    fun createLineItemWithExcessiveTotal(): LineItem {
-        return createValidLineItem().copy(
+    fun createLineItemWithExcessiveTotal(): InvoiceItem {
+        return createValidInvoiceItem().copy(
             quantity = 1000000.0,      // Million quantity
             unitPrice = 1000000        // $10,000 per unit = $10 billion total!
         )
@@ -328,8 +323,8 @@ object TestDataFactory {
      *
      * Use when testing: "fractional quantities are OK (e.g., 1.5 hours)"
      */
-    fun createLineItemWithFractionalQuantity(): LineItem {
-        return createValidLineItem().copy(
+    fun createLineItemWithFractionalQuantity(): InvoiceItem {
+        return createValidInvoiceItem().copy(
             quantity = 2.5  // 2.5 hours of work
         )
     }
@@ -439,4 +434,8 @@ object TestDataFactory {
     fun createBusinessProfileWithInvalidEmail(): com.emul8r.bizap.domain.model.BusinessProfile {
         return createValidBusinessProfile().copy(email = "not-an-email")
     }
+
 }
+
+
+

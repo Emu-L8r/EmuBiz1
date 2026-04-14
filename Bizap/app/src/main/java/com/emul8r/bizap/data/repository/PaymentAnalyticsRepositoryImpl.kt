@@ -9,11 +9,9 @@ import com.emul8r.bizap.domain.invoice.repository.PaymentAnalyticsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
-import kotlin.math.absoluteValue
 
 /**
  * Repository implementation for payment analytics.
@@ -92,8 +90,9 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
             val calculated = invoiceDao.calculatePaymentMetrics(businessId)
             val metricsRow = paymentDao.getPaymentMetrics(businessId)
 
-            @Suppress("ConstantConditionIf")  // Intentional: ensures both metrics are available for comparison
+            // Check if both are non-null before comparing
             if (calculated != null && metricsRow != null) {
+                @Suppress("SENSELESS_COMPARISON")  // Compiler false positive - null check is necessary for safety
                 val snapshotCollectionRate = if (metricsRow.totalAmount > 0.0) {
                     ((metricsRow.paidAmount / metricsRow.totalAmount) * 100.0).coerceIn(0.0, 100.0)
                 } else 0.0

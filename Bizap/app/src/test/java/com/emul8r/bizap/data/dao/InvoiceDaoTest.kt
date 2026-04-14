@@ -38,7 +38,8 @@ class InvoiceDaoTest : BaseUnitTest() {
         currencyCode = "AUD",
         status = "DRAFT",
         isQuote = false,
-        version = 1
+        version = 1,
+        dailySequence = 1
     )
 
     private val testLineItem = LineItemEntity(
@@ -159,3 +160,6 @@ class InvoiceDaoTest : BaseUnitTest() {
         assertEquals(2, result.size)
     }
 }
+
+
+

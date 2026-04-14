@@ -96,15 +96,37 @@ interface InvoiceDao {
         deleteInvoice(id)
     }
 
-    @Query("SELECT COALESCE(MAX(invoiceSequence), 0) FROM invoices WHERE invoiceYear = :year AND businessProfileId = :businessId")
-    suspend fun getMaxSequenceForYear(year: Int, businessId: Long): Int
-
+    // ✅ STEP 1: Daily Sequence Generator - Get max sequence for today
     @Query("""
-        SELECT * FROM invoices 
-        WHERE invoiceYear = :invoiceYear AND invoiceSequence = :invoiceSequence AND businessProfileId = :businessId
-        ORDER BY version ASC
+        SELECT COALESCE(MAX(dailySequence), 0) FROM invoices
+        WHERE businessProfileId = :businessId
+        AND date BETWEEN :dateStart AND :dateEnd
     """)
-    fun getInvoiceGroupWithVersions(invoiceYear: Int, invoiceSequence: Int, businessId: Long): Flow<List<InvoiceEntity>>
+    suspend fun getMaxDailySequence(
+        businessId: Long,
+        dateStart: Long,
+        dateEnd: Long
+    ): Int?
+
+    // ✅ STEP 2: Search by invoice number (including new compact format)
+    @Query("""
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
+        AND (invoiceNumber LIKE :searchTerm OR customerName LIKE :searchTerm)
+        ORDER BY date DESC
+    """)
+    fun searchInvoices(businessId: Long, searchTerm: String): Flow<List<InvoiceEntity>>
+
+    // ✅ STEP 3: Find by exact invoice number
+    @Query("""
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
+        AND invoiceNumber = :invoiceNumber
+    """)
+    suspend fun findByInvoiceNumber(
+        businessId: Long,
+        invoiceNumber: String
+    ): InvoiceEntity?
 
     // ==================== DIRECT REVENUE QUERIES ====================
 
@@ -117,7 +139,7 @@ interface InvoiceDao {
     )
 
     @Query("""
-        SELECT 
+        SELECT
             COALESCE(SUM(amountPaid), 0) as mtdRevenue
         FROM invoices
         WHERE businessProfileId = :businessId
@@ -142,7 +164,7 @@ interface InvoiceDao {
     }
 
     @Query("""
-        SELECT 
+        SELECT
             COALESCE(SUM(amountPaid), 0) as ytdRevenue
         FROM invoices
         WHERE businessProfileId = :businessId
@@ -167,7 +189,7 @@ interface InvoiceDao {
     }
 
     @Query("""
-        SELECT 
+        SELECT
             COALESCE(SUM(amountPaid), 0) as weeklyRevenue
         FROM invoices
         WHERE businessProfileId = :businessId
@@ -186,7 +208,7 @@ interface InvoiceDao {
     }
 
     @Query("""
-        SELECT 
+        SELECT
             COALESCE(SUM(amountPaid), 0) as totalPaidRevenue
         FROM invoices
         WHERE businessProfileId = :businessId
@@ -195,7 +217,7 @@ interface InvoiceDao {
     fun observeTotalPaidRevenue(businessId: Long): Flow<Long>
 
     @Query("""
-        SELECT 
+        SELECT
             COALESCE(SUM(totalAmount - amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
@@ -204,7 +226,7 @@ interface InvoiceDao {
     fun observeOutstandingAmount(businessId: Long): Flow<Long>
 
     @Query("""
-        SELECT 
+        SELECT
             DATE(date/1000, 'unixepoch') as dateString,
             COALESCE(SUM(CASE WHEN status IN ('PAID', 'PARTIALLY_PAID') THEN amountPaid ELSE 0 END), 0) as revenue,
             COUNT(*) as invoiceCount,
@@ -229,14 +251,14 @@ interface InvoiceDao {
     // ==================== VALIDATION TEST QUERY ====================
 
     @Query("""
-        SELECT 
+        SELECT
             COUNT(*) as totalInvoices,
             SUM(CASE WHEN status = 'PAID' THEN 1 ELSE 0 END) as paidInvoices,
             SUM(CASE WHEN status IN ('SENT', 'PARTIALLY_PAID', 'OVERDUE') THEN 1 ELSE 0 END) as unpaidInvoices,
             SUM(totalAmount) as totalAmount,
             SUM(amountPaid) as paidAmount,
             SUM(totalAmount - amountPaid) as totalOutstanding,
-            CASE 
+            CASE
                 WHEN SUM(totalAmount) > 0 THEN ROUND((SUM(amountPaid) / CAST(SUM(totalAmount) AS REAL)) * 100.0, 1)
                 ELSE 0.0
             END as collectionRate
@@ -269,9 +291,9 @@ interface InvoiceDao {
 
     @Transaction
     @Query("""
-        SELECT * FROM invoices 
-        WHERE businessProfileId = :businessId 
-        ORDER BY date DESC 
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
+        ORDER BY date DESC
         LIMIT :limit OFFSET :offset
     """)
     suspend fun getInvoicesPaged(
@@ -296,8 +318,8 @@ interface InvoiceDao {
      */
     @Transaction
     @Query("""
-        SELECT * FROM invoices 
-        WHERE businessProfileId = :businessId 
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
         AND isActive = 1
         ORDER BY date DESC
     """)
@@ -309,8 +331,8 @@ interface InvoiceDao {
      */
     @Transaction
     @Query("""
-        SELECT * FROM invoices 
-        WHERE businessProfileId = :businessId 
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
         AND isActive = 1
         AND (invoiceNumber LIKE '%' || :searchText || '%'
              OR customerName LIKE '%' || :searchText || '%'
@@ -330,8 +352,8 @@ interface InvoiceDao {
      */
     @Transaction
     @Query("""
-        SELECT * FROM invoices 
-        WHERE businessProfileId = :businessId 
+        SELECT * FROM invoices
+        WHERE businessProfileId = :businessId
         AND isActive = 1
         AND (:status = '' OR status = :status)
         ORDER BY date DESC

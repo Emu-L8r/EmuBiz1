@@ -1,12 +1,12 @@
 package com.emul8r.bizap.ui.invoices
 
 import com.emul8r.bizap.data.local.entities.LineItemEntity
-import com.emul8r.bizap.domain.model.LineItem
+import com.emul8r.bizap.domain.model.InvoiceItem
 import javax.inject.Inject
 
 class LineItemMapper @Inject constructor() {
 
-    fun toEntity(lineItem: LineItem, parentId: Long): LineItemEntity {
+    fun toEntity(lineItem: InvoiceItem, parentId: Long): LineItemEntity {
         return LineItemEntity(
             id = lineItem.id,
             invoiceId = parentId,

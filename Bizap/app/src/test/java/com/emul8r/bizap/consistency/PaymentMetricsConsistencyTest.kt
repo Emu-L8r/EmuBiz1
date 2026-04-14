@@ -199,3 +199,6 @@ class PaymentMetricsConsistencyTest : BaseUnitTest() {
         every { dao.observeAverageDaysToPayment(businessId) } returns flowOf(avgDays)
     }
 }
+
+
+

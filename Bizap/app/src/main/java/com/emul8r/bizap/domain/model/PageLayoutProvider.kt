@@ -91,7 +91,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:24px 24px;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:20pt;font-weight:bold;color:#ffffff;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#e0d8f0;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#e0d8f0;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:10px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#e0d8f0;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#e0d8f0;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -129,7 +129,7 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:16px;font-style:italic;color:#555555;line-height:1.8;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:16px;font-style:italic;color:#555555;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
 <!-- LINE ITEMS TABLE -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:4px;">
@@ -475,7 +475,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:30px 30px 10px 30px;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:24pt;font-weight:bold;color:#ffffff;margin-top:10px;line-height:1.4;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheaderText.isNotBlank()) """<div style="font-size:14pt;color:#ddd8f8;margin-top:8px;line-height:1.6;">${escapeHtml(snapshot.subheaderText)}</div>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:14pt;color:#ddd8f8;margin-top:8px;line-height:1.6;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:12px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:10pt;color:#e0d8f0;margin-top:6px;line-height:2.0;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:10pt;color:#e0d8f0;margin-top:6px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -514,7 +514,7 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.headerText.isNotBlank()) """<p style="margin-bottom:24px;font-style:italic;color:#555555;line-height:2.0;">${escapeHtml(snapshot.headerText)}</p>""" else ""}
+${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:24px;font-style:italic;color:#555555;line-height:2.0;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
 <!-- SPACIOUS LINE ITEMS TABLE: 16px row padding, 12pt font -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:4px;">

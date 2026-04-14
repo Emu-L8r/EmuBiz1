@@ -78,6 +78,7 @@ val InvoiceStatus.displayName: String
         InvoiceStatus.PAID -> "Paid"
         InvoiceStatus.PARTIALLY_PAID -> "Partial"
         InvoiceStatus.OVERDUE -> "Overdue"
+        InvoiceStatus.CANCELLED -> "Cancelled"
     }
 
 

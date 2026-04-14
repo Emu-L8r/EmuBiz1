@@ -62,10 +62,15 @@ class RevenueRepositoryImpl @Inject constructor(
             ) { values ->
                 @Suppress("UNCHECKED_CAST")
                 val mtd = values[0] as Long
+                @Suppress("UNCHECKED_CAST")
                 val ytd = values[1] as Long
+                @Suppress("UNCHECKED_CAST")
                 val weekly = values[2] as Long
+                @Suppress("UNCHECKED_CAST")
                 val totalPaid = values[3] as Long
+                @Suppress("UNCHECKED_CAST")
                 val trend = values[4] as List<DailyRevenueTrendV2>
+                @Suppress("UNCHECKED_CAST")
                 val overdueAmt = values[5] as Long
 
                 Timber.d("RevenueRepositoryImpl: metrics update — mtd=$mtd ytd=$ytd weekly=$weekly totalPaid=$totalPaid overdueAmt=$overdueAmt")

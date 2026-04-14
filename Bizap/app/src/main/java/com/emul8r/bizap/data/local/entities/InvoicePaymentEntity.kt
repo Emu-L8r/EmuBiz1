@@ -7,6 +7,8 @@ import androidx.room.PrimaryKey
 
 /**
  * Invoice payment record - tracks each individual payment against an invoice.
+ *
+ * ✅ ENHANCED: Now supports notes and proof media
  */
 @Entity(
     tableName = "invoice_payments",
@@ -26,11 +28,45 @@ data class InvoicePaymentEntity(
     val invoiceId: Long,
     val amountPaid: Long,  // Cents (e.g., 14999 = $149.99)
     val paymentDate: Long,  // Unix timestamp
-    val paymentMethod: String,  // "CASH", "CHECK", "CREDIT_CARD", etc.
+    val paymentMethod: String,  // "CASH", "CHECK", "CREDIT_CARD", "ACH", "WIRE", etc.
     val transactionReference: String,
-    val notes: String? = null,
+    val notes: String? = null,  // ✅ Payment context (why, agreed terms, etc.)
     val createdAtMs: Long = System.currentTimeMillis(),
     val updatedAtMs: Long = System.currentTimeMillis()
+)
+
+/**
+ * ✅ NEW: Payment Media Attachment - Proof of payment
+ *
+ * Supports:
+ * - Receipt photos
+ * - Check photos
+ * - Transaction confirmations
+ * - Payment proof
+ * - Before/after photos
+ */
+@Entity(
+    tableName = "payment_media_attachments",
+    foreignKeys = [
+        ForeignKey(
+            entity = InvoicePaymentEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["paymentId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("paymentId"), Index("invoiceId")]
+)
+data class PaymentMediaAttachment(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val paymentId: Long,          // Reference to invoice_payments.id
+    val invoiceId: Long,          // Denormalized for queries
+    val mediaUri: String,         // Local file path or content URI
+    val mediaType: String,        // "image/jpeg", "image/png", etc.
+    val caption: String? = null,  // "Receipt", "Check #456", "Payment proof", etc.
+    val mediaSize: Long = 0,      // Bytes
+    val uploadedAtMs: Long = System.currentTimeMillis()
 )
 
 /**
@@ -69,7 +105,7 @@ data class InvoicePaymentSnapshot(
     val invoiceNumber: String,
     val invoiceDate: Long,
     val dueDate: Long,
-    
+
     val totalAmount: Long,           // Cents
     val paidAmount: Long,            // Cents
     val outstandingAmount: Long,     // Cents
@@ -78,15 +114,15 @@ data class InvoicePaymentSnapshot(
     val ageingBucket: String,
     val daysOverdue: Int,
     val daysSinceDue: Int,
-    
+
     val lastPaymentDate: Long? = null,
     val lastPaymentAmount: Long = 0,  // Cents
     val paymentCount: Int = 0,
-    
+
     val isAtRisk: Boolean = false,
     val riskScore: Double = 0.0,
     val riskFactors: String = "",
-    
+
     val lastUpdatedMs: Long = System.currentTimeMillis(),
     val snapshotDateMs: Long = System.currentTimeMillis()
 )
@@ -106,7 +142,7 @@ data class DailyPaymentSnapshot(
     val id: Long = 0,
     val businessProfileId: Long,
     val snapshotDate: Long,
-    
+
     val paymentsReceivedCount: Int,
     val paymentsReceivedAmount: Long,      // Cents
     val invoicesDueCount: Int,
@@ -134,13 +170,13 @@ data class CollectionMetrics(
     @PrimaryKey
     val businessProfileId: Long,
     val metricsDate: Long,
-    
+
     val totalInvoicesIssued: Int,
     val totalInvoiceAmount: Long,      // Cents
     val totalPaidAmount: Long,         // Cents
     val totalOutstandingAmount: Long,  // Cents
     val collectionRate: Double,
-    
+
     val ageingCurrent: Long,           // Cents
     val ageingPast30: Long,            // Cents
     val ageingPast60: Long,            // Cents
@@ -153,7 +189,7 @@ data class CollectionMetrics(
 
     val collectionRateTrend: Double,
     val overdueTrend: Double,
-    
+
     val projectedCollectionRate30Days: Double,
     val projectedOutstanding30Days: Long,  // Cents
 

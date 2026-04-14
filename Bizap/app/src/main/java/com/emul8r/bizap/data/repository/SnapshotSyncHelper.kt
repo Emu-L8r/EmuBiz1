@@ -71,7 +71,7 @@ class SnapshotSyncHelper @Inject constructor(
                 Timber.d("✅ Updated InvoiceAnalyticsSnapshot for invoice ${invoice.id}")
             } else {
                 // Create new snapshot
-                val computedInvoiceNumber = "INV-${invoice.invoiceYear}-${invoice.invoiceSequence.toString().padStart(6, '0')}"
+                val computedInvoiceNumber = invoice.invoiceNumber
                 val snapshot = InvoiceAnalyticsSnapshot(
                     invoiceId = invoice.id,
                     businessProfileId = businessId,
@@ -199,7 +199,7 @@ class SnapshotSyncHelper @Inject constructor(
                 Timber.d("✅ Updated InvoicePaymentSnapshot for invoice ${invoice.id}")
             } else {
                 // Create new payment snapshot
-                val computedInvoiceNumber = "INV-${invoice.invoiceYear}-${invoice.invoiceSequence.toString().padStart(6, '0')}"
+                val computedInvoiceNumber = invoice.invoiceNumber
                 val snapshot = InvoicePaymentSnapshot(
                     invoiceId = invoice.id,
                     businessProfileId = businessId,

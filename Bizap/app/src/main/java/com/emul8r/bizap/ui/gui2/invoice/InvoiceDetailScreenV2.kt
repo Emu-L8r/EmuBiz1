@@ -105,7 +105,7 @@ fun InvoiceDetailScreenV2(
                         businessId = businessId,
                         invoiceTotal = state.invoice.totalAmount,
                         amountPaid = state.invoice.amountPaid,
-                        invoiceDate = state.invoice.date,
+                        invoiceDate = state.invoice.dateCreated.toEpochMillis(),
                         invoiceStatus = currentStatus,
                         isLoading = state.paymentLoading,
                         error = state.paymentError,
@@ -294,14 +294,14 @@ private fun InvoiceDetailsTab(
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 DetailRowV2("Customer", invoice.customerName)
                 DetailRowV2("Status", invoice.status.name)
-                DetailRowV2("Date", dateFormatter.format(Date(invoice.date)))
-                if (invoice.dueDate > 0) {
-                    DetailRowV2("Due Date", dateFormatter.format(Date(invoice.dueDate)))
+                DetailRowV2("Date", formatDateString(invoice.dateCreated))
+                if (invoice.dueDate.isNotBlank()) {
+                    DetailRowV2("Due Date", formatDateString(invoice.dueDate))
                 }
                 DetailRowV2("Total", formatCents(invoice.totalAmount))
                 DetailRowV2("Amount Paid", formatCents(invoice.amountPaid))
                 DetailRowV2("Outstanding", formatCents(invoice.totalAmount - invoice.amountPaid))
-                DetailRowV2("Currency", invoice.currencyCode)
+                DetailRowV2("Currency", invoice.currency)
             }
         }
 
@@ -400,3 +400,30 @@ private fun DetailRowV2(label: String, value: String) {
         )
     }
 }
+
+/**
+ * Convert ISO-8601 date string to epoch milliseconds.
+ */
+private fun String?.toEpochMillis(): Long {
+    return try {
+        if (this.isNullOrBlank()) 0L
+        else java.time.Instant.parse(this).toEpochMilli()
+    } catch (e: Exception) {
+        0L
+    }
+}
+
+/**
+ * Format ISO-8601 date string to readable format.
+ */
+private fun formatDateString(isoDateString: String?): String {
+    return try {
+        if (isoDateString.isNullOrBlank()) return ""
+        val instant = java.time.Instant.parse(isoDateString)
+        val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+        sdf.format(Date(instant.toEpochMilli()))
+    } catch (e: Exception) {
+        isoDateString ?: ""
+    }
+}
+

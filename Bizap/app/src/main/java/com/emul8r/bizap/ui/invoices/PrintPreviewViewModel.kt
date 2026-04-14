@@ -43,10 +43,19 @@ class InvoicePdfViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<PdfPreviewUiState>(PdfPreviewUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
-    fun preparePreview(invoiceId: Long, isQuote: Boolean) {
+    private var invoiceId: Long = 0L
+    private var isQuote: Boolean = false
+
+    fun preparePreview(newInvoiceId: Long, newIsQuote: Boolean) {
+        invoiceId = newInvoiceId
+        isQuote = newIsQuote
+        loadPdfPreview()
+    }
+
+    private fun loadPdfPreview() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                Timber.d("📄 Starting PDF preview preparation for invoice: $invoiceId")
+                _uiState.value = PdfPreviewUiState.Loading
 
                 val invoice = invoiceRepo.getInvoiceWithItemsById(invoiceId).first()
                     ?: throw IllegalStateException("Invoice not found: $invoiceId")
@@ -56,12 +65,12 @@ class InvoicePdfViewModel @Inject constructor(
                 // Build snapshot for PDF generation
                 val snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
                     invoiceId = invoice.id,
-                    invoiceNumber = invoice.getFormattedInvoiceNumber(),
+                    invoiceNumber = invoice.invoiceNumber,
                     customerName = invoice.customerName,
                     customerAddress = invoice.customerAddress,
-                    customerEmail = invoice.customerEmail,
-                    date = invoice.date,
-                    dueDate = invoice.dueDate,
+                    customerEmail = invoice.customerEmail ?: "",
+                    date = invoice.dateCreated.toEpochMillis(),
+                    dueDate = invoice.dueDate.toEpochMillis(),
                     items = invoice.items.map {
                         val itemTotal = (it.unitPrice * it.quantity).toLong()
                         com.emul8r.bizap.domain.model.LineItemSnapshot(
@@ -81,8 +90,8 @@ class InvoicePdfViewModel @Inject constructor(
                     businessPhone = profile.phone,
                     businessAddress = profile.address,
                     logoBase64 = profile.logoBase64,
-                    headerText = invoice.header ?: "",
-                    subheaderText = invoice.subheader ?: "",
+                    header = invoice.header ?: "",
+                    subheader = invoice.subheader ?: "",
                     footerText = invoice.footer ?: "",
                     notes = invoice.notes ?: "",
                     bankAccountName = profile.accountName ?: "",
@@ -116,6 +125,19 @@ class InvoicePdfViewModel @Inject constructor(
                 Timber.e(e, "❌ Error preparing PDF preview for invoice: $invoiceId")
                 _uiState.value = PdfPreviewUiState.Error(e.message ?: "An unexpected error occurred during PDF generation")
             }
+        }
+    }
+
+    /**
+     * Convert ISO-8601 date string to epoch milliseconds.
+     */
+    private fun String?.toEpochMillis(): Long {
+        return try {
+            if (this.isNullOrBlank()) 0L
+            else java.time.Instant.parse(this).toEpochMilli()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to parse date string: $this")
+            0L
         }
     }
 

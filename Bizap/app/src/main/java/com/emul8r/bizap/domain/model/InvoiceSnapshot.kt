@@ -25,8 +25,9 @@ data class InvoiceSnapshot(
     val businessAddress: String,
     val logoBase64: String?,
     val currencyCode: String = "AUD",
-    val headerText: String = "",
-    val subheaderText: String = "",
+    // Standardized naming: Header/Subheader terminology (Phase 2.0.3)
+    val header: String = "",
+    val subheader: String = "",
     val footerText: String = "",
     val notes: String = "",
     // Bank / payment details — shown in the PDF "Payment Details" section
