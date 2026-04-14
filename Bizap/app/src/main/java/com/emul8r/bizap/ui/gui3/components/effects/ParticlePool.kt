@@ -2,7 +2,7 @@ package com.emul8r.bizap.ui.gui3.components.effects
 
 import androidx.compose.ui.graphics.Color
 import timber.log.Timber
-import kotlin.math.random.Random
+import kotlin.random.Random
 
 /**
  * Particle: Reusable data object for GPU particle effects
@@ -59,7 +59,7 @@ class ParticlePool(initialCapacity: Int = 500) {
         }
         // Pool exhausted
         if (activeCount % 100 == 0) {
-            Timber.w("ParticlePool exhausted: $activeCount/$capacity particles active")
+            Timber.w("ParticlePool exhausted: $activeCount/${particles.size} particles active")
         }
         return null
     }
