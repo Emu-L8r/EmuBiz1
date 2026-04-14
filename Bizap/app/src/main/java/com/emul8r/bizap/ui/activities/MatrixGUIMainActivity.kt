@@ -62,17 +62,19 @@ class MatrixGUIMainActivity : AppCompatActivity() {
           // Disable action bar completely
           supportActionBar?.hide()
 
-          // Enable edge-to-edge rendering (extends behind system bars)
-          WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Enable edge-to-edge rendering (extends behind system bars)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
-         // Set system bar colors to pure black (Matrix theme) - CRITICAL FIX
-         window.statusBarColor = AndroidColor.BLACK
-         window.navigationBarColor = AndroidColor.BLACK
+        // Set system bar colors to pure black (Matrix theme) - CRITICAL FIX
+        @Suppress("DEPRECATION")
+        window.statusBarColor = AndroidColor.BLACK
+        @Suppress("DEPRECATION")
+        window.navigationBarColor = AndroidColor.BLACK
 
-         // For API 29+: Set system bar contrasting for light icons on dark background
-         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-             window.isNavigationBarContrastEnforced = false  // Allow custom colors
-         }
+        // For API 29+: Set system bar contrasting for light icons on dark background
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false  // Allow custom colors
+        }
 
          // Use WindowInsetsControllerCompat for broader compatibility
          val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)

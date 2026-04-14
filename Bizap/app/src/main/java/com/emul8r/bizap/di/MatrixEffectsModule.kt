@@ -5,7 +5,11 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.scopes.ActivityScoped
-import com.emul8r.bizap.ui.gui3.components.effects.*
+import com.emul8r.bizap.ui.gui3.util.RainParticleEffect
+import com.emul8r.bizap.ui.gui3.util.GlitchEffect
+import com.emul8r.bizap.ui.gui3.util.ScanlineEffect
+import com.emul8r.bizap.ui.gui3.components.effects.EffectRegistry
+import com.emul8r.bizap.ui.gui3.components.effects.MatrixEffectsPipeline
 import com.emul8r.bizap.ui.gui3.util.PerformanceProfiler
 import com.emul8r.bizap.utils.FirebaseEventTracker
 
@@ -70,5 +74,6 @@ object MatrixEffectsModule {
         return MatrixEffectsPipeline(registry, eventTracker, profiler)
     }
 }
+
 
 
