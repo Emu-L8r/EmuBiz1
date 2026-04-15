@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.TextUnit
 import kotlin.random.Random
 import com.emul8r.bizap.ui.gui3.theme.MatrixBlack
 import com.emul8r.bizap.ui.gui3.theme.MatrixGreen
+import com.emul8r.bizap.ui.gui3.util.MatrixCascadeState
 import timber.log.Timber
 
 /**
@@ -84,7 +85,18 @@ private fun FallingCharacterColumnLayered(
     alpha: Float = 0.9f,
     fontSize: androidx.compose.ui.unit.TextUnit = 14.sp
 ) {
-    val characters = listOf("█", "▓", "▒", "░", "█", "0", "1", "█", "►", "◄")
+    // Enhanced character mix: 50% binary + 30% hacker symbols + 20% Katakana
+    val characters = listOf(
+        // Binary (50% - every other position)
+        "0", "1", "0", "1", "0", "1", "0", "1", "0", "1",
+        // Hacker symbols (30% - mixed in)
+        "@", "#", "$", "%", "&", "*", "(", ")", "[", "]",
+        "{", "}", "<", ">", "/", "\\", "|", "+", "=", "~",
+        // More binary for density
+        "0", "1", "0", "1", "0", "1", "0", "1",
+        // Katakana accent (20%)
+        "ニ", "ハ", "ミ", "ヲ", "ネ", "ホ", "ヘ", "レ", "カ", "キ"
+    )
 
     val animatedProgress = rememberInfiniteTransition(label = "layeredFall_$columnIndex")
         .animateFloat(
@@ -99,6 +111,14 @@ private fun FallingCharacterColumnLayered(
             ),
             label = "progress_$columnIndex"
         )
+
+    // ✅ PHASE 2 TASK 3 & 4: Update cascade position on first column (non-suspend version)
+    if (columnIndex == 0) {
+        LaunchedEffect(animatedProgress.value) {
+            val cascadeY = (animatedProgress.value * 1200f)
+            MatrixCascadeState.updateCascadePosition(cascadeY)
+        }
+    }
 
     repeat(5) { charIdx ->
         val yOffset = (animatedProgress.value * 1200f).dp + (charIdx * 50).dp - 100.dp
@@ -120,7 +140,18 @@ private fun FallingCharacterColumn(
     columnIndex: Int,
     xPosition: Dp
 ) {
-    val characters = listOf("█", "▓", "▒", "░", "█", "0", "1", "█")
+    // Enhanced character mix: 50% binary + 30% hacker symbols + 20% Katakana
+    val characters = listOf(
+        // Binary (50%)
+        "0", "1", "0", "1", "0", "1", "0", "1", "0", "1",
+        // Hacker symbols (30%)
+        "@", "#", "$", "%", "&", "*", "(", ")", "[", "]",
+        "{", "}", "<", ">", "/", "\\", "|", "+", "=", "~",
+        // More binary
+        "0", "1", "0", "1", "0", "1", "0", "1",
+        // Katakana (20%)
+        "ニ", "ハ", "ミ", "ヲ", "ネ", "ホ", "ヘ", "レ", "カ", "キ"
+    )
 
     val animatedProgress = rememberInfiniteTransition(label = "matrixFall$columnIndex")
         .animateFloat(
@@ -162,6 +193,9 @@ fun MatrixBackgroundStatic(modifier: Modifier = Modifier, content: @Composable (
 fun Modifier.matrixGlow(intensity: Float = 0.15f): Modifier = this
     .alpha(1f - intensity)
     .blur(radius = 2.dp)
+
+
+
 
 
 

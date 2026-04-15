@@ -87,15 +87,16 @@ private fun DashboardScreenV3Content(
                 .fillMaxSize()
                 .zIndex(1f)
         ) {
-            // ===== IMMERSIVE GUI3 TOP BAR (Cyberpunk Style) =====
+            // ===== IMMERSIVE GUI3 TOP BAR (Cyberpunk Style - Glassmorphic) =====
+            // ✅ PHASE 1: Reduced opacity (0.7f) reveals cascading background behind top bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .background(MatrixBlack)
+                    .background(MatrixBlack.copy(alpha = 0.7f))  // ✅ CHANGED: 0.7f opacity instead of solid
                     .border(
                         width = 2.dp,
-                        color = MatrixGreen.copy(alpha = 0.7f)
+                        color = MatrixGreen.copy(alpha = 0.8f)  // ✅ Slightly brighter border for contrast
                     )
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
@@ -223,7 +224,11 @@ fun KeyMetricsMatrix() {
 }
 
 /**
- * Quick Actions Section - NOW WITH VAULT ACCESS
+ * Quick Actions Section - REORGANIZED FOR BETTER UX (PHASE 1)
+ * ✅ Row 1: NEW INVOICE | NEW CUSTOMER (core actions, highlighted)
+ * ✅ Row 2: VIEW INVOICES | VIEW CUSTOMERS (navigation)
+ * ✅ Row 3: PAYMENTS | ANALYTICS (secondary actions)
+ * ✅ Row 4: VAULT (single button, centered - future feature)
  */
 @Composable
 fun QuickActionsMatrix(
@@ -233,8 +238,8 @@ fun QuickActionsMatrix(
     val context = LocalContext.current
 
     MatrixCardPremium(title = ">> ACTIONS", isPulsing = false) {
-        // Row 1: NEW INVOICE | CUSTOMERS (2 buttons, equal width)
-        // ✅ Automatic spacing from parent Column handles vertical spacing
+        // ===== ROW 1: CORE ACTIONS (NEW INVOICE | NEW CUSTOMER) =====
+        // ✅ Highlighted with isHighlight=true, larger visual weight
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -243,34 +248,16 @@ fun QuickActionsMatrix(
             verticalAlignment = Alignment.CenterVertically
         ) {
             GlowingMatrixButton(
-                text = "NEW INVOICE",
+                text = "📋 NEW INVOICE",
                 onClick = { navController.navigate(ScreenV3.CreateInvoice(businessId)) },
                 modifier = Modifier
                     .weight(1f)
                     .wrapContentHeight(),
-                isHighlight = true
+                isHighlight = true  // ✅ Core action emphasized
             )
 
             GlowingMatrixButton(
-                text = "CUSTOMERS",
-                onClick = { navController.navigate(ScreenV3.Customers(businessId)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight()
-            )
-        }
-
-        // Row 2: NEW CUSTOMER | INVOICES | PAYMENTS (3 buttons, equal width)
-        // ✅ Automatic spacing from parent Column (no manual Spacer needed)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            GlowingMatrixButton(
-                text = "NEW CUSTOMER",
+                text = "👤 NEW CUSTOMER",
                 onClick = {
                     Timber.d("GUI3: Navigate to create customer from dashboard")
                     navController.navigate(ScreenV3.CreateCustomer(businessId))
@@ -278,11 +265,21 @@ fun QuickActionsMatrix(
                 modifier = Modifier
                     .weight(1f)
                     .wrapContentHeight(),
-                isHighlight = true
+                isHighlight = true  // ✅ Core action emphasized
             )
+        }
 
+        // ===== ROW 2: NAVIGATION (VIEW INVOICES | VIEW CUSTOMERS) =====
+        // ✅ Standard buttons, equal weight
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             GlowingMatrixButton(
-                text = "INVOICES",
+                text = "📄 INVOICES",
                 onClick = { navController.navigate(ScreenV3.Invoices(businessId)) },
                 modifier = Modifier
                     .weight(1f)
@@ -290,34 +287,58 @@ fun QuickActionsMatrix(
             )
 
             GlowingMatrixButton(
-                text = "PAYMENTS",
-                onClick = { navController.navigate(ScreenV3.PaymentTracking(businessId)) },
+                text = "👥 CUSTOMERS",
+                onClick = { navController.navigate(ScreenV3.Customers(businessId)) },
                 modifier = Modifier
                     .weight(1f)
                     .wrapContentHeight()
             )
         }
 
-        // Row 3: Vault Access (Coming Soon) - single button, left-aligned
-        // ✅ Automatic spacing from parent Column
+        // ===== ROW 3: SECONDARY ACTIONS (PAYMENTS | ANALYTICS) =====
+        // ✅ Standard buttons, supporting features
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
-            horizontalArrangement = Arrangement.Start,  // ✅ CHANGED: Left-aligned for vault
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             GlowingMatrixButton(
-                text = "📁 VAULT",
+                text = "💳 PAYMENTS",
+                onClick = { navController.navigate(ScreenV3.PaymentTracking(businessId)) },
+                modifier = Modifier
+                    .weight(1f)
+                    .wrapContentHeight()
+            )
+
+            GlowingMatrixButton(
+                text = "📊 ANALYTICS",
+                onClick = { navController.navigate(ScreenV3.RevenueAnalytics(businessId)) },
+                modifier = Modifier
+                    .weight(1f)
+                    .wrapContentHeight()
+            )
+        }
+
+        // ===== ROW 4: VAULT (SINGLE BUTTON, LEFT-ALIGNED) =====
+        // ✅ Future premium feature, currently disabled
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            GlowingMatrixButton(
+                text = "🔐 VAULT",
                 onClick = {
                     Timber.d("GUI3: Vault feature coming soon")
-                    // TODO: Integrate vault access in next phase
                 },
                 modifier = Modifier
-                    .fillMaxWidth(0.4f)  // ✅ CHANGED: 40% width instead of weight(1f)
+                    .fillMaxWidth(0.48f)  // ✅ Roughly half width, single button
                     .wrapContentHeight(),
-                isHighlight = true,
-                enabled = false  // Disabled for now - vault integration coming
+                enabled = false  // Disabled until vault integration ready
             )
         }
     }

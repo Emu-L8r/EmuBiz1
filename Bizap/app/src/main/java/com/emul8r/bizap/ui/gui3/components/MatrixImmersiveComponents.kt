@@ -16,12 +16,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.util.MatrixCascadeState
 import com.emul8r.bizap.ui.theme.Spacing
 import kotlinx.coroutines.flow.collect
 
@@ -33,6 +35,8 @@ import kotlinx.coroutines.flow.collect
 
 /**
  * GLOWING BUTTON - Pure Cyberpunk Matrix Button (No Material3 dependency)
+ * ✅ PHASE 2 TASK 2: Glasmorphic style - cascading background visible through buttons!
+ * ✅ PHASE 2 TASK 3 & 4: Cascade glow reaction - button glows when code passes behind
  * Interactive with pulsing glow and full click handling
  */
 @Composable
@@ -56,6 +60,14 @@ fun GlowingMatrixButton(
         label = "glowAlpha"
     )
 
+    // ✅ PHASE 2 TASK 3 & 4: Read cascade state - simple immersive effect
+    val cascadeVisibility by MatrixCascadeState.cascadeVisibility
+    val cascadeGlowIntensity by animateFloatAsState(
+        targetValue = glowAlpha + (cascadeVisibility * 0.2f),  // Glow intensifies when cascade is visible
+        animationSpec = tween(200),
+        label = "cascadeGlow"
+    )
+
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.95f else 1f,
         animationSpec = tween(100, easing = EaseInOutQuad),
@@ -63,7 +75,7 @@ fun GlowingMatrixButton(
     )
 
     val borderColor = if (isHighlight) MatrixGreenBright else MatrixGreen
-    val backgroundColor = if (isPressed) MatrixGreen.copy(alpha = 0.15f) else Color.Transparent
+    val backgroundColor = if (isPressed) MatrixGreen.copy(alpha = 0.15f) else MatrixBlack.copy(alpha = 0.08f)  // ✅ Nearly transparent
 
     val interactionSource = remember { MutableInteractionSource() }
 
@@ -81,14 +93,25 @@ fun GlowingMatrixButton(
         }
     }
 
+    // ✅ PHASE 2 TASK 2: Glasmorphic box - cascade visible through!
     Box(
         modifier = modifier
             .heightIn(min = 48.dp)
             .border(
                 width = 2.dp,
-                color = borderColor.copy(alpha = glowAlpha)
+                color = borderColor.copy(alpha = cascadeGlowIntensity),  // ✅ TASK 4: Glow intensity changes
+                shape = RoundedCornerShape(4.dp)
             )
-            .background(backgroundColor)
+            .background(
+                color = backgroundColor,  // ✅ 0.08f = nearly transparent
+                shape = RoundedCornerShape(4.dp)
+            )
+            .shadow(
+                elevation = (2f + (cascadeVisibility * 4f)).dp,  // ✅ TASK 4: Shadow increases when cascade active
+                shape = RoundedCornerShape(4.dp),
+                ambientColor = MatrixGreen.copy(alpha = cascadeGlowIntensity * 0.4f)  // ✅ Glow shadow
+            )
+            .alpha(0.9f)  // ✅ Button slightly transparent overall
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -116,6 +139,7 @@ fun GlowingMatrixButton(
 
 /**
  * MATRIX CARD - Premium bordered container with glow
+ * ✅ PHASE 1: Glassmorphic style with reduced opacity to reveal background
  * Use for important data sections
  */
 @Composable
@@ -136,6 +160,7 @@ fun MatrixCardPremium(
         label = "borderAlpha"
     )
 
+    // ✅ GLASSMORPHIC: Semi-transparent background (0.15f opacity) reveals cascading effect
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -149,7 +174,7 @@ fun MatrixCardPremium(
                 shape = RoundedCornerShape(10.dp),
                 ambientColor = MatrixGreen.copy(alpha = 0.3f)
             ),
-        color = MatrixSurface,
+        color = MatrixBlack.copy(alpha = 0.15f),  // ✅ CHANGED: 0.15f glassmorphic instead of MatrixSurface
         shape = RoundedCornerShape(10.dp)
     ) {
         Column(

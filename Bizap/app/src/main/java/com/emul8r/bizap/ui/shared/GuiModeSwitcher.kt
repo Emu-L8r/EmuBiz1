@@ -1,6 +1,7 @@
 package com.emul8r.bizap.ui.shared
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -9,14 +10,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.ui.landing.GuiMode
+import com.emul8r.bizap.ui.gui3.theme.MatrixBlack
+import com.emul8r.bizap.ui.gui3.theme.MatrixGreen
 import com.emul8r.bizap.ui.theme.Spacing
 
 /**
  * GUI Mode Selector for TopAppBar
  * Displays 3 small buttons (1, 2, 3) to switch between GUIs
  * Placed in top-right corner for easy access from any screen
+ *
+ * ✅ PHASE 2 TASK 1: Redesigned with Matrix theme (no more grey box!)
  */
 @Composable
 fun GuiModeSwitcher(
@@ -29,11 +35,22 @@ fun GuiModeSwitcher(
     Box(
         modifier = modifier.padding(end = Spacing.md)
     ) {
+        // ✅ PHASE 2 TASK 1: Glasmorphic + neon border (no more grey!)
         Row(
             modifier = Modifier
                 .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.7f),
-                    shape = RoundedCornerShape(8.dp)
+                    color = MatrixBlack.copy(alpha = 0.2f),  // ✅ Semi-transparent Matrix black
+                    shape = RoundedCornerShape(6.dp)
+                )
+                .border(
+                    width = 1.5.dp,
+                    color = MatrixGreen.copy(alpha = 0.8f),  // ✅ Neon green border
+                    shape = RoundedCornerShape(6.dp)
+                )
+                .shadow(
+                    elevation = 4.dp,
+                    shape = RoundedCornerShape(6.dp),
+                    ambientColor = MatrixGreen.copy(alpha = 0.3f)  // ✅ Subtle glow shadow
                 )
                 .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically

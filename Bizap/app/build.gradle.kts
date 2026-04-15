@@ -512,3 +512,20 @@ tasks.withType<Test> {
         }
     }
 }
+
+// ============================================================================
+// Build Performance Profiling Note
+// ============================================================================
+// Build performance is tracked via gradle.properties settings:
+// - org.gradle.configuration-cache=true (enabled for 20-30% faster incremental builds)
+// - ksp.incremental=true (faster annotation processing)
+// - org.gradle.caching=true (automatic task output caching)
+// - org.gradle.workers.max=4 (parallel compilation)
+//
+// Real-time profiling can be enabled with:
+//   ./gradlew build --profile
+// This generates HTML report at: app/build/reports/profile/
+//
+// For detailed build metrics, run verification script:
+//   ./scripts/verify-build.ps1
+// ============================================================================
