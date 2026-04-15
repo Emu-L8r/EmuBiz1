@@ -105,7 +105,11 @@ fun InvoiceDetailScreenV3(
                     }
                     is InvoiceDetailUiStateV2.Success -> {
                         val invoice = (uiState as InvoiceDetailUiStateV2.Success).invoice
-                        InvoiceDetailContentV3(invoice = invoice)
+                        InvoiceDetailContentV3(
+                            invoice = invoice,
+                            navController = navController,
+                            businessId = businessId
+                        )
                     }
                     is InvoiceDetailUiStateV2.Error -> {
                         Box(
@@ -146,6 +150,8 @@ fun InvoiceDetailScreenV3(
 @Composable
 private fun InvoiceDetailContentV3(
     invoice: Invoice,
+    navController: NavHostController,
+    businessId: Long,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -190,7 +196,14 @@ private fun InvoiceDetailContentV3(
         ) {
             GlowingMatrixButton(
                 text = "EDIT",
-                onClick = { Timber.d("Edit invoice action") },
+                onClick = {
+                    navController.navigate(
+                        com.emul8r.bizap.ui.gui3.navigation.ScreenV3.EditInvoice(
+                            businessId = businessId,
+                            invoiceId = invoice.id
+                        )
+                    )
+                },
                 modifier = Modifier.weight(1f),
                 isHighlight = true
             )

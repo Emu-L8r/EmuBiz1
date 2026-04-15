@@ -22,6 +22,9 @@ sealed class ScreenV3 {
     data class CreateInvoice(val businessId: Long = 1L) : ScreenV3()
 
     @Serializable
+    data class EditInvoice(val businessId: Long = 1L, val invoiceId: Long) : ScreenV3()
+
+    @Serializable
     data class Customers(val businessId: Long = 1L) : ScreenV3()
 
     @Serializable
@@ -29,6 +32,9 @@ sealed class ScreenV3 {
 
     @Serializable
     data class CreateCustomer(val businessId: Long = 1L) : ScreenV3()
+
+    @Serializable
+    data class EditCustomer(val businessId: Long = 1L, val customerId: Long) : ScreenV3()
 
     @Serializable
     data class PaymentTracking(val businessId: Long = 1L) : ScreenV3()

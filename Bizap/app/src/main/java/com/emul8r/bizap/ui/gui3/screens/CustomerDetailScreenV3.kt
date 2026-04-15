@@ -127,7 +127,14 @@ fun CustomerDetailScreenV3(
                 ) {
                     MatrixButton(
                         text = "EDIT",
-                        onClick = { /* TODO: Navigate to edit */ },
+                        onClick = {
+                            navController.navigate(
+                                com.emul8r.bizap.ui.gui3.navigation.ScreenV3.EditCustomer(
+                                    businessId = businessId,
+                                    customerId = customerId
+                                )
+                            )
+                        },
                         modifier = Modifier.weight(1f),
                         isHighlight = false
                     )

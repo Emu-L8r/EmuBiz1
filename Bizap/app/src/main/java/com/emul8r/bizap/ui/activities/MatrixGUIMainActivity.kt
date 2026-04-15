@@ -27,10 +27,12 @@ import com.emul8r.bizap.ui.gui3.screens.DashboardScreenV3
 import com.emul8r.bizap.ui.gui3.screens.InvoiceListScreenV3
 import com.emul8r.bizap.ui.gui3.screens.InvoiceDetailScreenV3
 import com.emul8r.bizap.ui.gui3.screens.CreateInvoiceScreenV3
+import com.emul8r.bizap.ui.gui3.screens.EditInvoiceScreenV3
 import com.emul8r.bizap.ui.gui3.screens.SettingsScreenV3
 import com.emul8r.bizap.ui.gui3.screens.CustomerListScreenV3
 import com.emul8r.bizap.ui.gui3.screens.CustomerDetailScreenV3
 import com.emul8r.bizap.ui.gui3.screens.CreateCustomerScreenV3
+import com.emul8r.bizap.ui.gui3.screens.EditCustomerScreenV3
 import com.emul8r.bizap.ui.gui3.screens.PaymentTrackingScreenV3
 import com.emul8r.bizap.ui.gui3.screens.RevenueAnalyticsScreenV3
 import com.emul8r.bizap.ui.gui3.screens.PaymentAnalyticsScreenV3
@@ -245,6 +247,12 @@ fun MatrixGUINavigation(
                 customerId = null,
                 navController = navController
             )
+        }
+
+        // Edit Customer
+        composable<ScreenV3.EditCustomer> { backStackEntry ->
+            val route: ScreenV3.EditCustomer = backStackEntry.toRoute()
+            EditCustomerScreenV3(navController = navController)
         }
 
         // Payment Tracking
