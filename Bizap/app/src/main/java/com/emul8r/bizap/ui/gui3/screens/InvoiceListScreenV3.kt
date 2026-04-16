@@ -28,7 +28,6 @@ import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
 import com.emul8r.bizap.ui.gui3.theme.*
-import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListUiStateV2
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListViewModelV2
 import com.emul8r.bizap.ui.theme.Spacing
@@ -69,13 +68,13 @@ fun InvoiceListScreenV3(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    MatrixBackgroundWrapper(screenType = ScreenType.LIST) {
+    MatrixBackground(intensity = 1.0f) {
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "BIZAP > INVOICES",
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "BIZAP > INVOICES",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontFamily = FontFamily.Monospace,
                             color = MatrixGreenBright,
@@ -112,30 +111,30 @@ fun InvoiceListScreenV3(
                 Icon(Icons.Default.Add, contentDescription = "Create Invoice")
             }
         },
-        containerColor = MatrixBlack
-    ) { paddingValues ->
-        when (val state = uiState) {
-            is InvoiceListUiStateV2.Loading -> {
-                LoadingStateV3(modifier = Modifier.padding(paddingValues))
-            }
-            is InvoiceListUiStateV2.Error -> {
-                ErrorStateV3(
-                    message = state.message,
-                    onRetry = { /* Retry functionality */ },
-                    modifier = Modifier.padding(paddingValues)
-                )
-            }
-            is InvoiceListUiStateV2.Success -> {
-                InvoiceListContentV3(
-                    invoices = state.invoices,
-                    onInvoiceClick = { invoiceId ->
-                        navController.navigate(ScreenV3.InvoiceDetail(businessId, invoiceId))
-                    },
-                    modifier = Modifier.padding(paddingValues)
-                )
+            containerColor = MatrixBlack.copy(alpha = 0.8f)
+        ) { paddingValues ->
+            when (val state = uiState) {
+                is InvoiceListUiStateV2.Loading -> {
+                    LoadingStateV3(modifier = Modifier.padding(paddingValues))
+                }
+                is InvoiceListUiStateV2.Error -> {
+                    ErrorStateV3(
+                        message = state.message,
+                        onRetry = { /* Retry functionality */ },
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
+                is InvoiceListUiStateV2.Success -> {
+                    InvoiceListContentV3(
+                        invoices = state.invoices,
+                        onInvoiceClick = { invoiceId ->
+                            navController.navigate(ScreenV3.InvoiceDetail(businessId, invoiceId))
+                        },
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
             }
         }
-    }
     }
 }
 
@@ -536,7 +535,6 @@ private fun formatAmountV3(cents: Long): String {
     val centsPart = cents % 100
     return String.format(Locale.US, "$%,d.%02d", dollars, centsPart)
 }
-
 
 
 

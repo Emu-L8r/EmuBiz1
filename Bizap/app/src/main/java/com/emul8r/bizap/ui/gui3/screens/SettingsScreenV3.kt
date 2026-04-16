@@ -1,5 +1,6 @@
 package com.emul8r.bizap.ui.gui3.screens
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,6 +9,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,18 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dagger.hilt.android.EntryPointAccessors
 import com.emul8r.bizap.data.config.FeatureFlag
-import com.emul8r.bizap.ui.gui3.components.MatrixButton
-import com.emul8r.bizap.ui.gui3.components.SectionCardMatrix
-import com.emul8r.bizap.ui.gui3.components.GlowingMatrixButton
-import com.emul8r.bizap.ui.gui3.components.DetailRowMatrix
-import com.emul8r.bizap.ui.gui3.components.MatrixBackgroundWrapper
+import com.emul8r.bizap.data.config.FeatureFlagManager
+import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.theme.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
-import com.emul8r.bizap.ui.gui3.util.ScreenType
-import com.emul8r.bizap.ui.gui3.util.Gui3ServiceEntryPoint
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.theme.Spacing
 import kotlinx.coroutines.launch
@@ -57,33 +54,29 @@ fun SettingsScreenV3(
     var invoiceRemindersEnabled by remember { mutableStateOf(true) }
     var overdueAlertsEnabled by remember { mutableStateOf(true) }
 
-    val appContext = LocalContext.current.applicationContext
-    val flagManager = remember(appContext) {
-        EntryPointAccessors.fromApplication(appContext, Gui3ServiceEntryPoint::class.java)
-            .featureFlagManager()
-    }
+    val flagManager: FeatureFlagManager = hiltViewModel()
     val scope = rememberCoroutineScope()
 
     val canvasEnabled by flagManager
         .observeFlag(FeatureFlag.MATRIX_CANVAS_RENDERER)
         .collectAsStateWithLifecycle(false)
 
-    MatrixBackgroundWrapper(screenType = ScreenType.SETTINGS) {
+    MatrixBackground(intensity = 0.8f) {
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            ">> SETTINGS",
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                fontFamily = FontFamily.Monospace,
-                                color = MatrixGreenBright,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
-                                letterSpacing = 1.sp
-                            )
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        ">> SETTINGS",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontFamily = FontFamily.Monospace,
+                            color = MatrixGreenBright,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            letterSpacing = 1.sp
                         )
-                    },
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -97,16 +90,16 @@ fun SettingsScreenV3(
             )
         },
         containerColor = MatrixBlack.copy(alpha = 0.8f)
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MatrixBlack)
-                .verticalScroll(rememberScrollState())
-                .padding(paddingValues)
-                .padding(Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-        ) {
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MatrixBlack)
+                    .verticalScroll(rememberScrollState())
+                    .padding(paddingValues)
+                    .padding(Spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+            ) {
             // ============= APPEARANCE SECTION =============
             SectionCardMatrix(title = ">> APPEARANCE") {
                 // GUI Mode Selection
@@ -471,7 +464,7 @@ fun SettingsScreenV3(
                     val isDebugBuild = remember {
                         try {
                             context.packageManager.getApplicationInfo(context.packageName, 0).flags and 2 != 0
-                        } catch (_: Exception) {
+                        } catch (e: Exception) {
                             false
                         }
                     }
@@ -495,7 +488,7 @@ fun SettingsScreenV3(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        "Access your searchable document vault and archive summaries.",
+                        "Access your document vault (Coming Soon)",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = MatrixGreen.copy(alpha = 0.7f)
                         )
@@ -503,10 +496,10 @@ fun SettingsScreenV3(
 
                     GlowingMatrixButton(
                         text = "📁 OPEN VAULT",
-                        onClick = { navController.navigate(ScreenV3.Vault(businessId)) },
+                        onClick = { /* TODO: Implement in next phase */ },
                         modifier = Modifier.fillMaxWidth(),
                         isHighlight = true,
-                        enabled = true
+                        enabled = false  // Disabled for now - vault integration coming
                     )
                 }
             }
@@ -541,13 +534,8 @@ fun SettingsScreenV3(
             }
 
             Spacer(modifier = Modifier.height(Spacing.xxl))
+            }
         }
     }
 }
-
-}
-
-
-
-
 

@@ -32,7 +32,6 @@ import com.emul8r.bizap.ui.customers.CustomerListViewModel
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
 import com.emul8r.bizap.ui.gui3.theme.*
-import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
 import timber.log.Timber
 
@@ -63,7 +62,7 @@ fun CustomerListScreenV3(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
 
-    MatrixBackgroundWrapper(screenType = ScreenType.LIST) {
+    MatrixBackground(intensity = 1.0f) {
         Scaffold(
         topBar = {
             TopAppBar(
@@ -114,14 +113,14 @@ fun CustomerListScreenV3(
                 Icon(Icons.Default.Add, contentDescription = "Add Customer", tint = MatrixGreenBright)
             }
         },
-        containerColor = MatrixBlack
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MatrixBlack)
-                .padding(paddingValues)
-        ) {
+            containerColor = MatrixBlack.copy(alpha = 0.8f)
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MatrixBlack)
+                    .padding(paddingValues)
+            ) {
             // Search Bar
             OutlinedTextField(
                 value = searchQuery,
@@ -156,58 +155,58 @@ fun CustomerListScreenV3(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
             )
 
-            // Content
-            when (val state = uiState) {
-                is CustomerListUiState.Loading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MatrixBlack),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = MatrixGreen)
-                    }
-                }
-                is CustomerListUiState.Error -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MatrixBlack)
-                            .padding(Spacing.lg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+                // Content
+                when (val state = uiState) {
+                    is CustomerListUiState.Loading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MatrixBlack),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                "Error loading customers",
-                                style = MaterialTheme.typography.headlineSmall.copy(
-                                    color = MatrixError
-                                )
-                            )
-                            Text(
-                                state.message,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = MatrixGreen.copy(alpha = 0.8f)
-                                )
-                            )
+                            CircularProgressIndicator(color = MatrixGreen)
                         }
                     }
-                }
-                is CustomerListUiState.Success -> {
-                    CustomerListContentV3(
-                        customers = state.customers,
-                        searchQuery = searchQuery,
-                        onCustomerClick = { customerId ->
-                            navController.navigate(ScreenV3.CustomerDetail(businessId, customerId))
+                    is CustomerListUiState.Error -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MatrixBlack)
+                                .padding(Spacing.lg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+                            ) {
+                                Text(
+                                    "Error loading customers",
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        color = MatrixError
+                                    )
+                                )
+                                Text(
+                                    state.message,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = MatrixGreen.copy(alpha = 0.8f)
+                                    )
+                                )
+                            }
                         }
-                    )
+                    }
+                    is CustomerListUiState.Success -> {
+                        CustomerListContentV3(
+                            customers = state.customers,
+                            searchQuery = searchQuery,
+                            onCustomerClick = { customerId ->
+                                navController.navigate(ScreenV3.CustomerDetail(businessId, customerId))
+                            }
+                        )
+                    }
                 }
             }
         }
-    }  // Close Scaffold
-    }  // Close MatrixBackgroundWrapper
+    }
 }
 
 @Composable

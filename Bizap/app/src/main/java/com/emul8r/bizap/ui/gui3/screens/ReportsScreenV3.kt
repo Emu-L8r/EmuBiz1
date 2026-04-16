@@ -17,13 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.emul8r.bizap.ui.gui3.components.MatrixButton
-import com.emul8r.bizap.ui.gui3.components.SectionCardMatrix
-import com.emul8r.bizap.ui.gui3.components.DetailRowMatrix
-import com.emul8r.bizap.ui.gui3.components.MatrixStatusBadge
-import com.emul8r.bizap.ui.gui3.components.MatrixBackgroundWrapper
+import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.theme.*
-import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
 
 /**
@@ -36,7 +31,7 @@ fun ReportsScreenV3(
     businessId: Long,
     navController: NavHostController
 ) {
-    MatrixBackgroundWrapper(screenType = ScreenType.ANALYTICS) {
+    MatrixBackground(intensity = 1.0f) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -140,5 +135,4 @@ fun ReportsScreenV3(
         }
     }
 }
-
 
