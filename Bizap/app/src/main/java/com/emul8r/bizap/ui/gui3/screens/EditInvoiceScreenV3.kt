@@ -7,6 +7,7 @@ import androidx.navigation.NavController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.theme.MatrixGreen
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailViewModelV2
 import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailUiStateV2
 import androidx.compose.ui.Modifier
@@ -21,12 +22,15 @@ import timber.log.Timber
  */
 @Composable
 fun EditInvoiceScreenV3(
+    businessId: Long,
+    invoiceId: Long,
     navController: NavController,
     viewModel: InvoiceDetailViewModelV2 = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    when (uiState) {
+    MatrixBackgroundWrapper(screenType = ScreenType.FORM) {
+        when (uiState) {
         is InvoiceDetailUiStateV2.Loading -> {
             Box(
                 modifier = Modifier
@@ -121,5 +125,7 @@ fun EditInvoiceScreenV3(
             }
         }
     }
+    }
 }
+
 

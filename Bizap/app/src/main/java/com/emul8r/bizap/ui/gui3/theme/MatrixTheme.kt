@@ -35,16 +35,22 @@ fun MatrixTheme(
     isDarkMode: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    println("🎨 MatrixTheme: Applying Matrix typography (bypassing Material3 theme constraints)")
+    println("🎨 MatrixTheme: Applying Matrix typography + color scheme (full Material3 integration)")
 
     val typography = MatrixTypography()
+    val colorScheme = MatrixColorScheme.darkColorScheme()
 
-    // Apply typography without MaterialTheme wrapper that would enforce Material3 colors
-    // This lets GUI3 render with full custom control over backgrounds and colors
-    CompositionLocalProvider(
-        LocalTextStyle provides typography.bodyMedium
+    // Wrap with MaterialTheme to ensure ALL Material3 colors are replaced with Matrix colors
+    // This eliminates Material3 blue color leakage and enforces consistent Matrix aesthetic
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = typography
     ) {
-        content()
+        CompositionLocalProvider(
+            LocalTextStyle provides typography.bodyMedium
+        ) {
+            content()
+        }
     }
 }
 

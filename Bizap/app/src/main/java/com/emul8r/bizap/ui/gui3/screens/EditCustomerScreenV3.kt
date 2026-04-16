@@ -7,6 +7,7 @@ import androidx.navigation.NavController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.theme.MatrixGreen
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.customers.CustomerDetailViewModel
 import com.emul8r.bizap.ui.customers.CustomerDetailUiState
 import androidx.compose.ui.Modifier
@@ -21,12 +22,15 @@ import timber.log.Timber
  */
 @Composable
 fun EditCustomerScreenV3(
+    businessId: Long,
+    customerId: Long,
     navController: NavController,
     viewModel: CustomerDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    when (uiState) {
+    MatrixBackgroundWrapper(screenType = ScreenType.FORM) {
+        when (uiState) {
         is CustomerDetailUiState.Loading -> {
             Box(
                 modifier = Modifier
@@ -109,7 +113,9 @@ fun EditCustomerScreenV3(
             }
         }
     }
+    }
 }
+
 
 
 

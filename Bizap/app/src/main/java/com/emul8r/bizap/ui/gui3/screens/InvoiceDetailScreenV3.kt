@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.GetApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -22,10 +24,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.emul8r.bizap.domain.model.Invoice
+import com.emul8r.bizap.ui.gui2.invoice.DialogState
 import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailViewModelV2
 import com.emul8r.bizap.ui.gui2.invoice.InvoiceDetailUiStateV2
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
 import timber.log.Timber
 
@@ -48,7 +52,7 @@ fun InvoiceDetailScreenV3(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    MatrixBackground(intensity = 1.0f) {
+    MatrixBackgroundWrapper(screenType = ScreenType.DETAIL) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -104,12 +108,99 @@ fun InvoiceDetailScreenV3(
                         }
                     }
                     is InvoiceDetailUiStateV2.Success -> {
+                        val state = uiState as InvoiceDetailUiStateV2.Success
                         val invoice = (uiState as InvoiceDetailUiStateV2.Success).invoice
                         InvoiceDetailContentV3(
                             invoice = invoice,
                             navController = navController,
-                            businessId = businessId
+                            businessId = businessId,
+                            onExportPdf = { viewModel.openPdfExport() }
                         )
+
+                        when (val dialogState = state.dialogState) {
+                            is DialogState.PdfExport.Loading -> {
+                                AlertDialog(
+                                    onDismissRequest = { /* Keep loading dialog open */ },
+                                    confirmButton = {},
+                                    title = { Text("📄 Generating PDF") },
+                                    text = {
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                                        ) {
+                                            CircularProgressIndicator(color = MatrixGreen)
+                                            Text(
+                                                "Creating your invoice PDF...",
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    fontFamily = FontFamily.Monospace,
+                                                    color = MatrixGreen
+                                                )
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                            is DialogState.PdfExport.Success -> {
+                                val file = dialogState.file
+                                AlertDialog(
+                                    onDismissRequest = { viewModel.closeDialog() },
+                                    title = { Text("✅ PDF Generated") },
+                                    text = {
+                                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                                            Text("Invoice PDF saved successfully.")
+                                            Text(
+                                                file.name,
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontFamily = FontFamily.Monospace,
+                                                    color = MatrixGreen
+                                                )
+                                            )
+                                        }
+                                    },
+                                    confirmButton = {
+                                        Button(onClick = {
+                                            viewModel.closeDialog()
+                                            navController.navigate(
+                                                com.emul8r.bizap.ui.gui3.navigation.ScreenV3.ViewPdf(
+                                                    businessId = businessId,
+                                                    invoiceId = invoice.id,
+                                                    pdfPath = file.absolutePath
+                                                )
+                                            )
+                                        }) {
+                                            Text("View PDF")
+                                        }
+                                    },
+                                    dismissButton = {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                                            TextButton(onClick = {
+                                                viewModel.closeDialog()
+                                                navController.navigate(com.emul8r.bizap.ui.gui3.navigation.ScreenV3.Vault(businessId))
+                                            }) {
+                                                Text("Go to Vault")
+                                            }
+                                            TextButton(onClick = { viewModel.closeDialog() }) {
+                                                Text("Done")
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                            is DialogState.PdfExport.Error -> {
+                                AlertDialog(
+                                    onDismissRequest = { viewModel.closeDialog() },
+                                    confirmButton = {
+                                        Button(onClick = { viewModel.closeDialog() }) {
+                                            Text("OK")
+                                        }
+                                    },
+                                    title = { Text("❌ Export Failed") },
+                                    text = { Text(dialogState.message) }
+                                )
+                            }
+                            else -> Unit
+                        }
                     }
                     is InvoiceDetailUiStateV2.Error -> {
                         Box(
@@ -152,8 +243,11 @@ private fun InvoiceDetailContentV3(
     invoice: Invoice,
     navController: NavHostController,
     businessId: Long,
+    onExportPdf: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val showDeleteDialog = remember { mutableStateOf(false) }
+
     Column(modifier = modifier.fillMaxWidth()) {
         // Invoice Header
         MatrixCardPremium(title = ">> INVOICE #${invoice.invoiceNumber}") {
@@ -210,16 +304,35 @@ private fun InvoiceDetailContentV3(
 
             GlowingMatrixButton(
                 text = "DELETE",
-                onClick = { Timber.d("Delete invoice action") },
+                onClick = { showDeleteDialog.value = true },
                 modifier = Modifier.weight(1f)
             )
 
             GlowingMatrixButton(
                 text = "PDF",
-                onClick = { Timber.d("Export to PDF") },
+                onClick = {
+                    onExportPdf()
+                },
                 modifier = Modifier.weight(1f)
             )
         }
+    }
+
+    // Delete Confirmation Dialog
+    if (showDeleteDialog.value) {
+        MatrixDialog(
+            title = "DELETE INVOICE?",
+            message = "Are you sure you want to delete invoice #${invoice.invoiceNumber}? This action cannot be undone.",
+            onDismiss = { showDeleteDialog.value = false },
+            onConfirm = {
+                Timber.d("Delete invoice: ${invoice.id}")
+                showDeleteDialog.value = false
+                navController.popBackStack()
+                // TODO: Call repository to delete invoice
+            },
+            confirmButtonText = "DELETE",
+            dismissButtonText = "CANCEL"
+        )
     }
 }
 

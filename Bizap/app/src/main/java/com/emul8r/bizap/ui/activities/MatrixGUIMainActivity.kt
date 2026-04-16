@@ -10,8 +10,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import android.graphics.Color as AndroidColor
@@ -38,9 +42,15 @@ import com.emul8r.bizap.ui.gui3.screens.RevenueAnalyticsScreenV3
 import com.emul8r.bizap.ui.gui3.screens.PaymentAnalyticsScreenV3
 import com.emul8r.bizap.ui.gui3.screens.ReportsScreenV3
 import com.emul8r.bizap.ui.gui3.screens.HelpScreenV3
+import com.emul8r.bizap.ui.gui3.screens.PdfViewerScreenV3
+import com.emul8r.bizap.ui.gui3.screens.SecurityVaultScreenV3
+import com.emul8r.bizap.ui.gui3.screens.VaultScreenV3
 import com.emul8r.bizap.ui.gui3.theme.MatrixTheme
+import com.emul8r.bizap.ui.gui3.theme.MatrixGreen
+import com.emul8r.bizap.ui.gui3.theme.MatrixBlack
 import com.emul8r.bizap.ui.landing.LandingViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import com.emul8r.bizap.ui.settings.PrefilledItemsScreen
 import timber.log.Timber
 
 /**
@@ -220,6 +230,16 @@ fun MatrixGUINavigation(
             )
         }
 
+        // Edit Invoice
+        composable<ScreenV3.EditInvoice> { backStackEntry ->
+            val route: ScreenV3.EditInvoice = backStackEntry.toRoute()
+            EditInvoiceScreenV3(
+                businessId = route.businessId,
+                invoiceId = route.invoiceId,
+                navController = navController
+            )
+        }
+
         // Customers List
         composable<ScreenV3.Customers> { backStackEntry ->
             val route: ScreenV3.Customers = backStackEntry.toRoute()
@@ -243,7 +263,6 @@ fun MatrixGUINavigation(
         composable<ScreenV3.CreateCustomer> { backStackEntry ->
             val route: ScreenV3.CreateCustomer = backStackEntry.toRoute()
             CreateCustomerScreenV3(
-                businessId = route.businessId,
                 customerId = null,
                 navController = navController
             )
@@ -252,7 +271,11 @@ fun MatrixGUINavigation(
         // Edit Customer
         composable<ScreenV3.EditCustomer> { backStackEntry ->
             val route: ScreenV3.EditCustomer = backStackEntry.toRoute()
-            EditCustomerScreenV3(navController = navController)
+            EditCustomerScreenV3(
+                businessId = route.businessId,
+                customerId = route.customerId,
+                navController = navController
+            )
         }
 
         // Payment Tracking
@@ -300,13 +323,48 @@ fun MatrixGUINavigation(
             )
         }
 
-        // Help
-        composable<ScreenV3.Help> { backStackEntry ->
-            val route: ScreenV3.Help = backStackEntry.toRoute()
-            HelpScreenV3(
-                businessId = route.businessId,
-                navController = navController
-            )
+        // Prefilled Items
+        composable<ScreenV3.PrefilledItems> { backStackEntry ->
+            val route: ScreenV3.PrefilledItems = backStackEntry.toRoute()
+            PrefilledItemsScreen()
         }
-    }
-}
+
+         // Help
+         composable<ScreenV3.Help> { backStackEntry ->
+             val route: ScreenV3.Help = backStackEntry.toRoute()
+             HelpScreenV3(
+                 businessId = route.businessId,
+                 navController = navController
+             )
+         }
+
+         // PDF Viewer (Phase 4.1)
+         composable<ScreenV3.ViewPdf> { backStackEntry ->
+             val route: ScreenV3.ViewPdf = backStackEntry.toRoute()
+             PdfViewerScreenV3(
+                 businessId = route.businessId,
+                 invoiceId = route.invoiceId,
+                 pdfPath = route.pdfPath,
+                 navController = navController
+             )
+         }
+
+         // Vault (Phase 4.2)
+         composable<ScreenV3.Vault> { backStackEntry ->
+             val route: ScreenV3.Vault = backStackEntry.toRoute()
+             VaultScreenV3(
+                 businessId = route.businessId,
+                 navController = navController
+             )
+         }
+
+         // Security Vault (info-rich GUI3 vault)
+         composable<ScreenV3.SecurityVault> { backStackEntry ->
+             val route: ScreenV3.SecurityVault = backStackEntry.toRoute()
+             SecurityVaultScreenV3(
+                 businessId = route.businessId,
+                 navController = navController
+             )
+         }
+     }
+ }

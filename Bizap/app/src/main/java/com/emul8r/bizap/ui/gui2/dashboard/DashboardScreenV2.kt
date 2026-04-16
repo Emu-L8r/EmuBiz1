@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
@@ -97,12 +98,14 @@ fun DashboardScreenV2(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
-                    GuiModeSwitcher(
-                        currentMode = GuiMode.GUI2,
-                        onGui1Click = onSwitchToGui1,
-                        onGui2Click = {},  // Already on GUI2
-                        onGui3Click = onSwitchToGui3
-                    )
+                    // Simple GUI swap button (Material Design 3 styled - no Matrix theme)
+                    IconButton(onClick = onSwitchToGui1) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "Switch to Classic",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             )
         }

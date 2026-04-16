@@ -54,6 +54,9 @@ sealed interface MatrixEffect {
  * @property charsetProvider Source for character glyphs (Katakana, alphanumeric, etc.)
  * @property enableAdaptivePerf Auto-reduce density on jank detection
  * @property debugLogging Verbose logging for development/debugging
+ * @property heroGlitchChance Glitch probability for hero column (0.04–0.15)
+ * @property heroGhostChance Ghost shimmer probability for hero column (0.05–0.20)
+ * @property heroGlitchOffset Max pixel offset for hero glitch jitter (1–6)
  */
 data class MatrixBackgroundConfig(
     val canvasEnabled: Boolean = true,
@@ -64,7 +67,11 @@ data class MatrixBackgroundConfig(
     val scanlineAlpha: Float = 0.05f,
     val charsetProvider: MatrixCharsetProvider = MatrixCharsetProvider.ALPHANUMERIC,
     val enableAdaptivePerf: Boolean = false,
-    val debugLogging: Boolean = false
+    val debugLogging: Boolean = false,
+    // ✅ PHASE 3: Hero column tuning (Remote Config driven)
+    val heroGlitchChance: Float = 0.06f,     // Remote Config: matrix_hero_glitch_chance (default: 0.06)
+    val heroGhostChance: Float = 0.07f,      // Remote Config: matrix_hero_ghost_chance (default: 0.07)
+    val heroGlitchOffset: Int = 3            // Remote Config: matrix_hero_glitch_offset (default: 3)
 )
 
 /**

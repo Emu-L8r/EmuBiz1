@@ -1,33 +1,40 @@
 package com.emul8r.bizap.ui.gui3.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emul8r.bizap.data.config.FeatureFlag
-import com.emul8r.bizap.data.config.FeatureFlagManager
-import com.emul8r.bizap.ui.gui3.components.MatrixBackground
 import com.emul8r.bizap.ui.gui3.components.GlowingMatrixButton
 import com.emul8r.bizap.ui.gui3.components.MatrixCardPremium
+import com.emul8r.bizap.ui.gui3.components.MatrixBackgroundWrapper
 import com.emul8r.bizap.ui.gui3.theme.MatrixGreen
-import com.emul8r.bizap.ui.gui3.theme.MatrixBlack
 import com.emul8r.bizap.ui.gui3.util.AdaptivePerformanceManager
+import com.emul8r.bizap.ui.gui3.util.Gui3ServiceEntryPoint
 import com.emul8r.bizap.ui.gui3.util.MatrixBackgroundConfig
 import com.emul8r.bizap.ui.gui3.util.PerformanceProfiler
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.Locale
 
 /**
  * Matrix Debug Panel — Live effect tuning and profiling UI.
@@ -43,14 +50,20 @@ import timber.log.Timber
  * - View real-time performance metrics
  * - Reset all parameters to defaults
  */
+@Suppress("unused")
 @Composable
 fun MatrixDebugPanelScreenV3(
     businessId: Long = 1L,
     onDismiss: () -> Unit = {}
 ) {
-    val flagManager: FeatureFlagManager = hiltViewModel()
-    val adaptivePerf: AdaptivePerformanceManager = hiltViewModel()
-    val profiler: PerformanceProfiler = hiltViewModel()
+    val appContext = LocalContext.current.applicationContext
+    val entryPoint = remember(appContext) {
+        EntryPointAccessors.fromApplication(appContext, Gui3ServiceEntryPoint::class.java)
+    }
+
+    val flagManager = remember(entryPoint) { entryPoint.featureFlagManager() }
+    val adaptivePerf: AdaptivePerformanceManager = remember(entryPoint) { entryPoint.adaptivePerformanceManager() }
+    val profiler: PerformanceProfiler = remember(entryPoint) { entryPoint.performanceProfiler() }
 
     val canvasEnabled by flagManager
         .observeFlag(FeatureFlag.MATRIX_CANVAS_RENDERER)
@@ -72,7 +85,7 @@ fun MatrixDebugPanelScreenV3(
 
     val scope = rememberCoroutineScope()
 
-    MatrixBackground(intensity = 1.0f) {
+    MatrixBackgroundWrapper(screenType = ScreenType.DEBUG) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -163,7 +176,7 @@ fun MatrixDebugPanelScreenV3(
                             fontSize = 12.sp
                         )
                         Text(
-                            text = "${String.format("%.2f", rainDensity)}",
+                            text = String.format(Locale.US, "%.2f", rainDensity),
                             color = MatrixGreen,
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
@@ -195,7 +208,7 @@ fun MatrixDebugPanelScreenV3(
                             fontSize = 12.sp
                         )
                         Text(
-                            text = "${String.format("%.2f", rainSpeed)}",
+                            text = String.format(Locale.US, "%.2f", rainSpeed),
                             color = MatrixGreen,
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
@@ -227,7 +240,7 @@ fun MatrixDebugPanelScreenV3(
                             fontSize = 12.sp
                         )
                         Text(
-                            text = "${String.format("%.2f", glitchIntensity)}",
+                            text = String.format(Locale.US, "%.2f", glitchIntensity),
                             color = MatrixGreen,
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
@@ -259,7 +272,7 @@ fun MatrixDebugPanelScreenV3(
                             fontSize = 12.sp
                         )
                         Text(
-                            text = "${String.format("%.3f", scanlineAlpha)}",
+                            text = String.format(Locale.US, "%.3f", scanlineAlpha),
                             color = MatrixGreen,
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
@@ -288,19 +301,19 @@ fun MatrixDebugPanelScreenV3(
                 ) {
                     MetricRow(
                         label = "Avg Frame Time",
-                        value = "${String.format("%.2f", metrics.avgFrameTimeMs)}ms"
+                        value = String.format(Locale.US, "%.2fms", metrics.avgFrameTimeMs)
                     )
                     MetricRow(
                         label = "Max Frame Time",
-                        value = "${String.format("%.2f", metrics.maxFrameTimeMs)}ms"
+                        value = String.format(Locale.US, "%.2fms", metrics.maxFrameTimeMs)
                     )
                     MetricRow(
                         label = "Jank Frames",
-                        value = "${metrics.jankCount}"
+                        value = metrics.jankCount.toString()
                     )
                     MetricRow(
                         label = "Jank Rate",
-                        value = "${String.format("%.1f", metrics.jankRate)}%",
+                        value = String.format(Locale.US, "%.1f%%", metrics.jankRate),
                         color = if (metrics.jankRate <= 5.0) MatrixGreen else Color.Red
                     )
                     MetricRow(

@@ -10,6 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -18,8 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.emul8r.bizap.ui.gui3.components.*
+import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
+import timber.log.Timber
 
 /**
  * Customer Detail Screen V3 (Matrix Edition)
@@ -32,7 +37,8 @@ fun CustomerDetailScreenV3(
     customerId: Long,
     navController: NavHostController
 ) {
-    MatrixBackground(intensity = 1.2f) {
+    val showDeleteDialog = remember { mutableStateOf(false) }
+    MatrixBackgroundWrapper(screenType = ScreenType.DETAIL) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -125,8 +131,8 @@ fun CustomerDetailScreenV3(
                         .padding(top = Spacing.md),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.md)
                 ) {
-                    MatrixButton(
-                        text = "EDIT",
+                    GlowingMatrixButton(
+                        text = "✏️ EDIT",
                         onClick = {
                             navController.navigate(
                                 com.emul8r.bizap.ui.gui3.navigation.ScreenV3.EditCustomer(
@@ -136,19 +142,40 @@ fun CustomerDetailScreenV3(
                             )
                         },
                         modifier = Modifier.weight(1f),
-                        isHighlight = false
-                    )
-                    MatrixButton(
-                        text = "VIEW INVOICES",
-                        onClick = { /* TODO: Filter invoices */ },
-                        modifier = Modifier.weight(1f),
                         isHighlight = true
+                    )
+                    GlowingMatrixButton(
+                        text = "🗑️ DELETE",
+                        onClick = { showDeleteDialog.value = true },
+                        modifier = Modifier.weight(1f)
+                    )
+                    GlowingMatrixButton(
+                        text = "📄 INVOICES",
+                        onClick = { navController.navigate(ScreenV3.Invoices(businessId)) },
+                        modifier = Modifier.weight(1f)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(Spacing.xl))
             }
         }
+    }
+
+    // Delete Confirmation Dialog
+    if (showDeleteDialog.value) {
+        MatrixDialog(
+            title = "DELETE CUSTOMER?",
+            message = "Are you sure you want to delete this customer? This action cannot be undone.",
+            onDismiss = { showDeleteDialog.value = false },
+            onConfirm = {
+                Timber.d("Delete customer: $customerId")
+                showDeleteDialog.value = false
+                navController.popBackStack()
+                // TODO: Call repository to delete customer
+            },
+            confirmButtonText = "DELETE",
+            dismissButtonText = "CANCEL"
+        )
     }
 }
 

@@ -48,6 +48,12 @@ sealed class ScreenV3 {
     @Serializable
     data class Help(val businessId: Long = 1L) : ScreenV3()
 
+    /**
+     * Template items screen for quickly managing invoice presets.
+     */
+    @Serializable
+    data class PrefilledItems(val businessId: Long = 1L) : ScreenV3()
+
     @Serializable
     data class PaymentAnalytics(val businessId: Long = 1L) : ScreenV3()
 
@@ -69,4 +75,24 @@ sealed class ScreenV3 {
      */
     @Serializable
     data class MatrixDebugPanel(val businessId: Long = 1L) : ScreenV3()
+
+    /**
+     * PDF Viewer Screen (Phase 4.1)
+     * Displays and manages PDF documents with download/share functionality.
+     */
+    @Serializable
+    data class ViewPdf(val businessId: Long = 1L, val invoiceId: Long, val pdfPath: String) : ScreenV3()
+
+    /**
+     * Vault Screen (Phase 4.2)
+     * Secure storage for documents, backups, and credentials.
+     */
+    @Serializable
+    data class Vault(val businessId: Long = 1L) : ScreenV3()
+
+    /**
+     * Security Vault Screen — info-rich Matrix vault for docs, backups, and security status.
+     */
+    @Serializable
+    data class SecurityVault(val businessId: Long = 1L) : ScreenV3()
 }

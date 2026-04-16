@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
 
 /**
@@ -200,7 +201,7 @@ fun PaymentAnalyticsScreenV3(
     businessId: Long,
     navController: NavHostController
 ) {
-    MatrixBackground(intensity = 1.2f) {
+    MatrixBackgroundWrapper(screenType = ScreenType.ANALYTICS) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -246,27 +247,32 @@ fun PaymentAnalyticsScreenV3(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         // Total Payments This Month
+                        // TODO(GUI3): Inject PaymentAnalyticsRepository and observe real metrics
+                        // Replace hardcoded "$45,234.50" with uiState.monthlyPaymentTotal
                         DetailRowMatrix(
                             label = "Total Payments (This Month)",
-                            value = "$45,234.50"
+                            value = "$45,234.50"  // TODO: Wire real data
                         )
 
                         // Payment Success Rate
+                        // TODO(GUI3): Wire real success rate from PaymentAnalyticsRepository
                         DetailRowMatrix(
                             label = "Success Rate",
-                            value = "96.5%"
+                            value = "96.5%"  // TODO: Wire real rate
                         )
 
                         // Days Sales Outstanding
+                        // TODO(GUI3): Calculate DSO from invoice data
                         DetailRowMatrix(
                             label = "Days Sales Outstanding (DSO)",
-                            value = "12.3 days"
+                            value = "12.3 days"  // TODO: Wire real DSO
                         )
 
                         // Average Payment Amount
+                        // TODO(GUI3): Calculate average from payment records
                         DetailRowMatrix(
                             label = "Average Payment",
-                            value = "$3,452.65"
+                            value = "$3,452.65"  // TODO: Wire real average
                         )
                     }
                 }
@@ -321,7 +327,8 @@ fun PaymentAnalyticsScreenV3(
                         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Payment Timeline Items
+                        // TODO(GUI3): Inject PaymentAnalyticsRepository and observe real payments
+                        // Payment Timeline Items - Currently hardcoded (TODO: wire real data)
                         PaymentTimelineItemV3(
                             date = "Apr 13, 2026",
                             customer = "Acme Corporation",

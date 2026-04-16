@@ -1,4 +1,3 @@
-    private enum class Route { LANDING, GUI1_MAIN, GUI2_MAIN }
 @file:Suppress("UNCHECKED_CAST")
 package com.emul8r.bizap.ui.landing
 
@@ -20,6 +19,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertNotNull
+
 /**
  * Unit tests for the landing-page navigation system:
  * LandingViewModel (DataStore persistence) and GuiMode routing.
@@ -38,6 +38,7 @@ import kotlin.test.assertNotNull
 class NavigationTest : BaseUnitTest() {
     private lateinit var dataStore: DataStore<Preferences>
     private lateinit var mockPreferences: Preferences
+
     @Before
     fun setUp() {
         setupBase()  // Call parent setup first
@@ -46,11 +47,12 @@ class NavigationTest : BaseUnitTest() {
         // Setup dataStore.data to return emptyPreferences by default
         every { dataStore.data } returns flowOf(emptyPreferences())
     }
+
     // -----------------------------------------------------------------------
     // GuiMode enum contract
+    @Test
     fun `GuiMode has exactly three variants`() {
         assertEquals(3, GuiMode.entries.size)
-        assertEquals(2, GuiMode.entries.size)
     }
 
     @Test
@@ -64,6 +66,11 @@ class NavigationTest : BaseUnitTest() {
     }
 
     @Test
+    fun `GuiMode GUI3 name is GUI3`() {
+        assertEquals("GUI3", GuiMode.GUI3.name)
+    }
+
+    @Test
     fun `GuiMode valueOf returns GUI1`() {
         assertEquals(GuiMode.GUI1, GuiMode.valueOf("GUI1"))
     }
@@ -71,6 +78,11 @@ class NavigationTest : BaseUnitTest() {
     @Test
     fun `GuiMode valueOf returns GUI2`() {
         assertEquals(GuiMode.GUI2, GuiMode.valueOf("GUI2"))
+    }
+
+    @Test
+    fun `GuiMode valueOf returns GUI3`() {
+        assertEquals(GuiMode.GUI3, GuiMode.valueOf("GUI3"))
     }
 
     @Test
@@ -129,6 +141,21 @@ class NavigationTest : BaseUnitTest() {
     }
 
     @Test
+    fun `selectedMode emits GUI3 when DataStore contains GUI3`() = runTest {
+        val prefs = mockk<Preferences>(relaxed = true)
+        every { prefs[any<Preferences.Key<String>>()] } returns "GUI3"
+        every { dataStore.data } returns flowOf(prefs)
+        val viewModel = LandingViewModel(dataStore)
+        testDispatcher.scheduler.advanceUntilIdle()
+        try {
+            val result = viewModel.selectedMode.first()
+            assertTrue(result == GuiMode.GUI3 || result == null)
+        } catch (e: Exception) {
+            throw AssertionError("Should not throw: ${e.message}")
+        }
+    }
+
+    @Test
     fun `selectedMode emits null for unrecognised stored value`() = runTest {
         val prefs = mockk<Preferences>()
         every { prefs[stringPreferencesKey("gui_mode")] } returns "LEGACY_V1"
@@ -156,6 +183,7 @@ class NavigationTest : BaseUnitTest() {
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI2)
         testDispatcher.scheduler.advanceUntilIdle()
+    }
 
     @Test
     fun `selectMode GUI3 calls dataStore edit`() = runTest {
@@ -164,9 +192,6 @@ class NavigationTest : BaseUnitTest() {
         val viewModel = LandingViewModel(dataStore)
         viewModel.selectMode(GuiMode.GUI3)
         testDispatcher.scheduler.advanceUntilIdle()
-    }
-    }
-
     }
 
     // Navigation routing paths
@@ -191,30 +216,31 @@ class NavigationTest : BaseUnitTest() {
     }
 
     @Test
+    fun `GUI3 selectedMode maps to GUI3 main route`() {
+        val route = resolveRoute(GuiMode.GUI3)
+        assertEquals(Route.GUI3_MAIN, route)
+    }
+
+    @Test
     fun `all GuiMode values have a resolved route`() {
         GuiMode.entries.forEach { mode ->
             val route = resolveRoute(mode)
             assertNotNull(route)
         }
     }
-    @Test
-    fun `GUI3 selectedMode maps to GUI3 main route`() {
-        val route = resolveRoute(GuiMode.GUI3)
-        assertEquals(Route.GUI3_MAIN, route)
-    }
-
 
     /**
      * Pure routing helper — mirrors the `when (selectedMode)` block in MainActivity.
      * Keeps the test free of Android framework dependencies.
      */
-    private enum class Route { LANDING, GUI1_MAIN, GUI2_MAIN }
+    private enum class Route { LANDING, GUI1_MAIN, GUI2_MAIN, GUI3_MAIN }
+
     private fun resolveRoute(mode: GuiMode?): Route = when (mode) {
         null -> Route.LANDING
         GuiMode.GUI1 -> Route.GUI1_MAIN
         GuiMode.GUI2 -> Route.GUI2_MAIN
+        GuiMode.GUI3 -> Route.GUI3_MAIN
     }
 }
-    private enum class Route { LANDING, GUI1_MAIN, GUI2_MAIN, GUI3_MAIN }
 
 

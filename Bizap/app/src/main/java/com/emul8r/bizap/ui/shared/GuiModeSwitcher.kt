@@ -1,28 +1,37 @@
 package com.emul8r.bizap.ui.shared
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.gui3.theme.MatrixBlack
 import com.emul8r.bizap.ui.gui3.theme.MatrixGreen
+import com.emul8r.bizap.ui.gui3.theme.MatrixGreenBright
 import com.emul8r.bizap.ui.theme.Spacing
 
 /**
- * GUI Mode Selector for TopAppBar
- * Displays 3 small buttons (1, 2, 3) to switch between GUIs
- * Placed in top-right corner for easy access from any screen
+ * GUI Mode Selector - Terminal Edition (Phase 1.2)
  *
- * ✅ PHASE 2 TASK 1: Redesigned with Matrix theme (no more grey box!)
+ * Displays system selector "SYS › 1 ◆ 2 ◆ 3" with cyberpunk aesthetic
+ * - Monospace font throughout
+ * - Pure Matrix green colors
+ * - CRT flicker effect on active mode
+ * - Terminal-style label "SYS"
+ * - Sharp corners (RoundedCornerShape 2.dp minimal)
  */
 @Composable
 fun GuiModeSwitcher(
@@ -35,84 +44,160 @@ fun GuiModeSwitcher(
     Box(
         modifier = modifier.padding(end = Spacing.md)
     ) {
-        // ✅ PHASE 2 TASK 1: Glasmorphic + neon border (no more grey!)
         Row(
             modifier = Modifier
                 .background(
-                    color = MatrixBlack.copy(alpha = 0.2f),  // ✅ Semi-transparent Matrix black
-                    shape = RoundedCornerShape(6.dp)
+                    color = MatrixBlack.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(2.dp)
                 )
                 .border(
-                    width = 1.5.dp,
-                    color = MatrixGreen.copy(alpha = 0.8f),  // ✅ Neon green border
-                    shape = RoundedCornerShape(6.dp)
+                    width = 1.dp,
+                    color = MatrixGreen.copy(alpha = 0.9f),
+                    shape = RoundedCornerShape(2.dp)
                 )
                 .shadow(
-                    elevation = 4.dp,
-                    shape = RoundedCornerShape(6.dp),
-                    ambientColor = MatrixGreen.copy(alpha = 0.3f)  // ✅ Subtle glow shadow
+                    elevation = 2.dp,
+                    shape = RoundedCornerShape(2.dp),
+                    ambientColor = MatrixGreen.copy(alpha = 0.4f)
                 )
-                .padding(4.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(Spacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
         ) {
+            // System label
+            Text(
+                text = "SYS",
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp,
+                color = MatrixGreen.copy(alpha = 0.8f),
+                letterSpacing = 0.5.sp,
+                modifier = Modifier.padding(horizontal = Spacing.sm)
+            )
+
+            // Chevron separator
+            Text(
+                text = "›",
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                color = MatrixGreen.copy(alpha = 0.7f)
+            )
+
             // GUI1 Button
-            SwitchButton(
+            TerminalModeButton(
                 label = "1",
                 isSelected = currentMode == GuiMode.GUI1,
-                onClick = onGui1Click,
-                isMatrix = false
+                onClick = onGui1Click
+            )
+
+            // Diamond separator
+            Text(
+                text = "◆",
+                fontFamily = FontFamily.Monospace,
+                fontSize = 8.sp,
+                color = MatrixGreen.copy(alpha = 0.6f)
             )
 
             // GUI2 Button
-            SwitchButton(
+            TerminalModeButton(
                 label = "2",
                 isSelected = currentMode == GuiMode.GUI2,
-                onClick = onGui2Click,
-                isMatrix = false
+                onClick = onGui2Click
             )
 
-            // GUI3 Button
-            SwitchButton(
+            // Diamond separator
+            Text(
+                text = "◆",
+                fontFamily = FontFamily.Monospace,
+                fontSize = 8.sp,
+                color = MatrixGreen.copy(alpha = 0.6f)
+            )
+
+            // GUI3 Button (always bright when selected)
+            TerminalModeButton(
                 label = "3",
                 isSelected = currentMode == GuiMode.GUI3,
                 onClick = onGui3Click,
-                isMatrix = true
+                isPremium = true
             )
         }
     }
 }
 
+/**
+ * Terminal mode button with CRT flicker for active selection
+ */
 @Composable
-private fun SwitchButton(
+private fun TerminalModeButton(
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    isMatrix: Boolean = false,
+    isPremium: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    IconButton(
+    val infiniteTransition = rememberInfiniteTransition(label = "crtFlicker")
+
+    // CRT flicker effect - only when selected
+    val flickerAlpha by if (isSelected) {
+        infiniteTransition.animateFloat(
+            initialValue = 0.9f,
+            targetValue = 1.0f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(100, easing = EaseInOutQuad),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "crtFlickerAlpha"
+        )
+    } else {
+        rememberInfiniteTransition(label = "disabled").animateFloat(
+            initialValue = 0.6f,
+            targetValue = 0.6f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "noFlicker"
+        )
+    }
+
+    val backgroundColor = when {
+        isSelected && isPremium -> MatrixGreenBright.copy(alpha = 0.15f)
+        isSelected -> MatrixGreen.copy(alpha = 0.1f)
+        else -> MatrixBlack.copy(alpha = 0.05f)
+    }
+
+    val textColor = when {
+        isSelected && isPremium -> MatrixGreenBright
+        isSelected -> MatrixGreen
+        else -> MatrixGreen.copy(alpha = 0.5f)
+    }
+
+    Button(
         onClick = onClick,
         modifier = modifier
+            .height(24.dp)
+            .width(24.dp)
+            .border(1.dp, textColor.copy(alpha = if (isSelected) 0.8f else 0.4f), RoundedCornerShape(2.dp))
+            .background(backgroundColor, RoundedCornerShape(2.dp))
+            .alpha(flickerAlpha),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            contentColor = textColor,
+            disabledContainerColor = Color.Transparent,
+            disabledContentColor = MatrixGreen.copy(alpha = 0.3f)
+        ),
+        shape = RoundedCornerShape(2.dp),
+        contentPadding = PaddingValues(0.dp),
+        enabled = true
     ) {
-        Box(
-            modifier = Modifier
-                .background(
-                    color = when {
-                        isSelected && isMatrix -> androidx.compose.ui.graphics.Color(0xFF00DD00).copy(alpha = 0.9f)
-                        isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
-                        else -> MaterialTheme.colorScheme.surfaceContainerLow
-                    },
-                    shape = RoundedCornerShape(6.dp)
-                )
-                .padding(6.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = if (isSelected && isMatrix) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        Text(
+            text = label,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold,
+            fontSize = 10.sp,
+            letterSpacing = 0.5.sp
+        )
     }
 }
 

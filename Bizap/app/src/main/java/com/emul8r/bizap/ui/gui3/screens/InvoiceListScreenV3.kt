@@ -28,6 +28,7 @@ import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListUiStateV2
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListViewModelV2
 import com.emul8r.bizap.ui.theme.Spacing
@@ -68,12 +69,13 @@ fun InvoiceListScreenV3(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "BIZAP > INVOICES",
+    MatrixBackgroundWrapper(screenType = ScreenType.LIST) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "BIZAP > INVOICES",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontFamily = FontFamily.Monospace,
                             color = MatrixGreenBright,
@@ -133,6 +135,7 @@ fun InvoiceListScreenV3(
                 )
             }
         }
+    }
     }
 }
 

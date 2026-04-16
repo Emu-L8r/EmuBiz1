@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
 
 /**
@@ -33,7 +34,7 @@ fun PaymentTrackingScreenV3(
     businessId: Long,
     navController: NavHostController
 ) {
-    MatrixBackground(intensity = 1.2f) {
+    MatrixBackgroundWrapper(screenType = ScreenType.LIST) {
         Scaffold(
             topBar = {
                 TopAppBar(

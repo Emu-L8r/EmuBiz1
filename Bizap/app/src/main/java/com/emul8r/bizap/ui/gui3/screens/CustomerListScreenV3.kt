@@ -32,6 +32,7 @@ import com.emul8r.bizap.ui.customers.CustomerListViewModel
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
 import timber.log.Timber
 
@@ -62,7 +63,8 @@ fun CustomerListScreenV3(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
 
-    Scaffold(
+    MatrixBackgroundWrapper(screenType = ScreenType.LIST) {
+        Scaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -204,7 +206,8 @@ fun CustomerListScreenV3(
                 }
             }
         }
-    }
+    }  // Close Scaffold
+    }  // Close MatrixBackgroundWrapper
 }
 
 @Composable

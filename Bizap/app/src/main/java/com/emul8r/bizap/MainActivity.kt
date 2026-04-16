@@ -81,6 +81,7 @@ import com.emul8r.bizap.ui.notes.NotesScreen
 import com.emul8r.bizap.ui.onboarding.FirstLaunchWarningDialog
 import com.emul8r.bizap.ui.theme.ThemeManager
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.emul8r.bizap.BuildConfig
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber

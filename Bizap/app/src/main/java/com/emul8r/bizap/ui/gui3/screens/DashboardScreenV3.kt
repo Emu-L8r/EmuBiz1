@@ -1,6 +1,8 @@
+@file:Suppress("unused")
+
 package com.emul8r.bizap.ui.gui3.screens
 
-import android.content.Intent
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -12,9 +14,14 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,11 +31,10 @@ import androidx.navigation.NavHostController
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
 import com.emul8r.bizap.ui.gui3.theme.*
-import com.emul8r.bizap.ui.landing.GuiMode
-import com.emul8r.bizap.ui.shared.GuiModeSwitcher
+import com.emul8r.bizap.ui.gui3.util.MatrixCascadeState
 import com.emul8r.bizap.ui.theme.Spacing
 import timber.log.Timber
-import androidx.compose.material3.TopAppBarDefaults as MaterialTopAppBarDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 /**
  * Dashboard Screen V3 (Matrix Edition)
@@ -69,6 +75,7 @@ private fun DashboardScreenV3Content(
     onSwitchToGui2: () -> Unit
 ) {
     println("🟤B DashboardScreenV3Content START")
+    var showOverflowMenu by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background animation layer - FIRST layer, at z=0
@@ -87,17 +94,12 @@ private fun DashboardScreenV3Content(
                 .fillMaxSize()
                 .zIndex(1f)
         ) {
-            // ===== IMMERSIVE GUI3 TOP BAR (Cyberpunk Style - Glassmorphic) =====
-            // ✅ PHASE 1: Reduced opacity (0.7f) reveals cascading background behind top bar
-            Box(
+            // ===== TRANSPARENT GUI3 TOP STRIP =====
+            // Keep the action controls, but remove the opaque boxed overlay that was
+            // producing the harsh square at the top of the dashboard.
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
-                    .background(MatrixBlack.copy(alpha = 0.7f))  // ✅ CHANGED: 0.7f opacity instead of solid
-                    .border(
-                        width = 2.dp,
-                        color = MatrixGreen.copy(alpha = 0.8f)  // ✅ Slightly brighter border for contrast
-                    )
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Row(
@@ -120,24 +122,106 @@ private fun DashboardScreenV3Content(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        GuiModeSwitcher(
-                            currentMode = GuiMode.GUI3,
-                            onGui1Click = onSwitchToGui1,
-                            onGui2Click = onSwitchToGui2,
-                            onGui3Click = {}
-                        )
-
                         IconButton(
-                            onClick = { navController.navigate(ScreenV3.Settings(businessId)) }
+                            onClick = {
+                                Timber.d("Dashboard: opening settings from top bar")
+                                navController.navigate(ScreenV3.Settings(businessId))
+                            },
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MatrixSurface.copy(alpha = 0.45f))
+                                .border(1.dp, MatrixGreen.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
                         ) {
                             Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MatrixGreen)
                         }
 
-                        IconButton(onClick = {}) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "More", tint = MatrixGreen)
+                        Box {
+                            IconButton(
+                                onClick = { showOverflowMenu = true },
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(MatrixSurface.copy(alpha = 0.45f))
+                                    .border(1.dp, MatrixGreen.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+                            ) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More actions", tint = MatrixGreen)
+                            }
+
+                            DropdownMenu(
+                                expanded = showOverflowMenu,
+                                onDismissRequest = { showOverflowMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(">> SWITCH EXPERIENCE", color = MatrixGreen.copy(alpha = 0.65f)) },
+                                    onClick = {},
+                                    enabled = false
+                                )
+
+                                DropdownMenuItem(
+                                    text = { Text("GUI1 · CLASSIC") },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        Timber.d("Dashboard menu: switch to GUI1")
+                                        onSwitchToGui1()
+                                    }
+                                )
+
+                                DropdownMenuItem(
+                                    text = { Text("GUI2 · MODERN") },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        Timber.d("Dashboard menu: switch to GUI2")
+                                        onSwitchToGui2()
+                                    }
+                                )
+
+                                DropdownMenuItem(
+                                    text = { Text("GUI3 · ACTIVE") },
+                                    onClick = { showOverflowMenu = false },
+                                    enabled = false
+                                )
+
+                                HorizontalDivider()
+
+                                DropdownMenuItem(
+                                    text = { Text("⚙ OPEN SETTINGS") },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        Timber.d("Dashboard menu: settings")
+                                        navController.navigate(ScreenV3.Settings(businessId))
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Settings, contentDescription = null, tint = MatrixGreen)
+                                    }
+                                )
+
+                                DropdownMenuItem(
+                                    text = { Text("🔐 SECURITY VAULT") },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        Timber.d("Dashboard menu: security vault")
+                                        navController.navigate(ScreenV3.SecurityVault(businessId))
+                                    }
+                                )
+
+                                DropdownMenuItem(
+                                    text = { Text("📁 DOCUMENT VAULT") },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        Timber.d("Dashboard menu: document vault")
+                                        navController.navigate(ScreenV3.Vault(businessId))
+                                    }
+                                )
+                            }
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(Spacing.sm))
+
+                HorizontalDivider(
+                    color = MatrixGreen.copy(alpha = 0.25f),
+                    thickness = 1.dp
+                )
             }
 
             // ===== SCROLLABLE CONTENT AREA (Pure Box/Column, NO Scaffold) =====
@@ -186,23 +270,35 @@ private fun DashboardScreenV3Content(
 
 /**
  * Welcome Banner with Matrix Aesthetic - PULSING PREMIUM CARD
+ * ✅ IMMERSION: Responds to cascading background visibility for reactive feel
  */
 @Composable
 fun WelcomeMatrixBanner() {
-    MatrixCardPremium(title = ">> WELCOME BACK", isPulsing = true) {
-        Text(
-            text = "The Matrix awaits your command.",
-            style = MaterialTheme.typography.bodyLarge.copy(
-                color = MatrixGreen.copy(alpha = 0.9f)
-            )
-        )
+    // ✅ IMMERSION: Read cascade state for reactive opacity animation
+    val cascadeVisibility = MatrixCascadeState.cascadeVisibility.value
 
-        Text(
-            text = "Follow the green line to manage your invoices.",
-            style = MaterialTheme.typography.bodySmall.copy(
-                color = MatrixGreen.copy(alpha = 0.7f)
+    val bannerAlpha by animateFloatAsState(
+        targetValue = 0.8f + (cascadeVisibility * 0.2f),  // Opacity ranges 0.8-1.0 based on cascade
+        animationSpec = tween(300),
+        label = "bannerOpacity"
+    )
+
+    Box(modifier = Modifier.alpha(bannerAlpha)) {
+        MatrixCardPremium(title = ">> WELCOME BACK", isPulsing = true) {
+            Text(
+                text = "The Matrix awaits your command.",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = MatrixGreen.copy(alpha = 0.9f)
+                )
             )
-        )
+
+            Text(
+                text = "Follow the green line to manage your invoices.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MatrixGreen.copy(alpha = 0.7f)
+                )
+            )
+        }
     }
 }
 
@@ -224,19 +320,18 @@ fun KeyMetricsMatrix() {
 }
 
 /**
- * Quick Actions Section - REORGANIZED FOR BETTER UX (PHASE 1)
+ * Quick Actions Section - EXPANDED FOR PHASE 2.3
  * ✅ Row 1: NEW INVOICE | NEW CUSTOMER (core actions, highlighted)
  * ✅ Row 2: VIEW INVOICES | VIEW CUSTOMERS (navigation)
  * ✅ Row 3: PAYMENTS | ANALYTICS (secondary actions)
- * ✅ Row 4: VAULT (single button, centered - future feature)
+ * ✅ Row 4: REPORTS | SECURITY VAULT (management & secure access)
+ * ✅ Row 5: TEMPLATES | HELP (quick preset management & support)
  */
 @Composable
 fun QuickActionsMatrix(
     navController: NavHostController,
     businessId: Long
 ) {
-    val context = LocalContext.current
-
     MatrixCardPremium(title = ">> ACTIONS", isPulsing = false) {
         // ===== ROW 1: CORE ACTIONS (NEW INVOICE | NEW CUSTOMER) =====
         // ✅ Highlighted with isHighlight=true, larger visual weight
@@ -321,24 +416,56 @@ fun QuickActionsMatrix(
             )
         }
 
-        // ===== ROW 4: VAULT (SINGLE BUTTON, LEFT-ALIGNED) =====
-        // ✅ Future premium feature, currently disabled
+        // ===== ROW 4: MANAGEMENT (REPORTS | SECURITY VAULT) =====
+        // ✅ Advanced features for power users
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
-            horizontalArrangement = Arrangement.Start,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             GlowingMatrixButton(
-                text = "🔐 VAULT",
-                onClick = {
-                    Timber.d("GUI3: Vault feature coming soon")
-                },
+                text = "📈 REPORTS",
+                onClick = { navController.navigate(ScreenV3.Reports(businessId)) },
                 modifier = Modifier
-                    .fillMaxWidth(0.48f)  // ✅ Roughly half width, single button
+                    .weight(1f)
+                    .wrapContentHeight()
+            )
+
+            GlowingMatrixButton(
+                text = "🔐 SECURITY VAULT",
+                onClick = { navController.navigate(ScreenV3.SecurityVault(businessId)) },
+                modifier = Modifier
+                    .weight(1f)
                     .wrapContentHeight(),
-                enabled = false  // Disabled until vault integration ready
+                isHighlight = false
+            )
+        }
+
+        // ===== ROW 5: UTILITIES (TEMPLATES | HELP) =====
+        // ✅ Template management for pre-filled invoice items
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            GlowingMatrixButton(
+                text = "🧩 TEMPLATES",
+                onClick = { navController.navigate(ScreenV3.PrefilledItems(businessId)) },
+                modifier = Modifier
+                    .weight(1f)
+                    .wrapContentHeight()
+            )
+
+            GlowingMatrixButton(
+                text = "❓ HELP",
+                onClick = { navController.navigate(ScreenV3.Help(businessId)) },
+                modifier = Modifier
+                    .weight(1f)
+                    .wrapContentHeight()
             )
         }
     }
@@ -438,80 +565,6 @@ fun GuiSwitcherMatrix(
                 text = "GUI2",
                 onClick = onSwitchToGui2,
                 modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-/**
- * Coming Soon Placeholder Screen
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ComingSoonScreen(
-    title: String,
-    onBack: () -> Unit
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "BIZAP > $title",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontFamily = FontFamily.Monospace,
-                            color = MatrixGreenBright
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MatrixGreen
-                        )
-                    }
-                },
-                colors = matrixTopAppBarColors()
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MatrixBlack)
-                .padding(paddingValues)
-                .padding(Spacing.lg),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                ">> MATRIX",
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontFamily = FontFamily.Monospace,
-                    color = MatrixGreenBright,
-                    letterSpacing = 2.sp
-                )
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.lg))
-
-            Text(
-                "$title coming soon...",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    color = MatrixGreen,
-                    fontFamily = FontFamily.Monospace
-                )
-            )
-
-            Spacer(modifier = Modifier.height(Spacing.xxl))
-
-            Text(
-                "Screen under construction",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MatrixGreen.copy(alpha = 0.6f)
-                )
             )
         }
     }
