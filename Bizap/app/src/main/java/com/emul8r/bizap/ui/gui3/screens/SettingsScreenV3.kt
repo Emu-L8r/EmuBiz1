@@ -61,7 +61,8 @@ fun SettingsScreenV3(
         .observeFlag(FeatureFlag.MATRIX_CANVAS_RENDERER)
         .collectAsStateWithLifecycle(false)
 
-    Scaffold(
+    MatrixBackground(intensity = 0.8f) {
+        Scaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -89,16 +90,16 @@ fun SettingsScreenV3(
             )
         },
         containerColor = MatrixBlack.copy(alpha = 0.8f)
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MatrixBlack)
-                .verticalScroll(rememberScrollState())
-                .padding(paddingValues)
-                .padding(Spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-        ) {
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MatrixBlack)
+                    .verticalScroll(rememberScrollState())
+                    .padding(paddingValues)
+                    .padding(Spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+            ) {
             // ============= APPEARANCE SECTION =============
             SectionCardMatrix(title = ">> APPEARANCE") {
                 // GUI Mode Selection
@@ -533,8 +534,8 @@ fun SettingsScreenV3(
             }
 
             Spacer(modifier = Modifier.height(Spacing.xxl))
+            }
         }
     }
 }
-
 

@@ -19,6 +19,7 @@ import kotlin.random.Random
 import com.emul8r.bizap.ui.gui3.theme.MatrixBlack
 import com.emul8r.bizap.ui.gui3.theme.MatrixGreen
 import com.emul8r.bizap.ui.gui3.util.MatrixCascadeState
+import kotlin.math.pow
 import timber.log.Timber
 
 /**
@@ -120,14 +121,15 @@ private fun FallingCharacterColumnLayered(
         }
     }
 
-    repeat(5) { charIdx ->
+    repeat(4) { charIdx ->
         val yOffset = (animatedProgress.value * 1200f).dp + (charIdx * 50).dp - 100.dp
+        val charAlpha = calculateTailAlpha(charIdx, 4, alpha)
 
         Text(
             text = characters[(columnIndex + charIdx) % characters.size],
             modifier = Modifier
                 .offset(x = xPosition, y = yOffset)
-                .alpha(alpha),
+                .alpha(charAlpha),
             color = MatrixGreen,
             fontSize = fontSize,
             fontFamily = FontFamily.Monospace
@@ -169,17 +171,28 @@ private fun FallingCharacterColumn(
 
     repeat(4) { charIdx ->
         val yOffset = (animatedProgress.value * 1200f).dp + (charIdx * 60).dp - 120.dp
+        val charAlpha = calculateTailAlpha(charIdx, 4, 0.9f)
 
         Text(
             text = characters[(columnIndex + charIdx) % characters.size],
             modifier = Modifier
                 .offset(x = xPosition, y = yOffset)
-                .alpha(0.9f),
+                .alpha(charAlpha),
             color = MatrixGreen,
             fontSize = 14.sp,
             fontFamily = FontFamily.Monospace
         )
     }
+}
+
+/**
+ * Calculate exponential tail alpha for comet-stream effect
+ */
+private fun calculateTailAlpha(charIndex: Int, totalChars: Int, baseAlpha: Float): Float {
+    if (charIndex == 0) return maxOf(baseAlpha, 0.45f)
+    val fadeFactor = 0.3f.pow(charIndex)
+    val backHalfFade = if (charIndex >= totalChars / 2) 0.7f else 1f
+    return (baseAlpha * fadeFactor * backHalfFade).coerceAtLeast(0.01f)
 }
 
 @Composable
@@ -193,7 +206,6 @@ fun MatrixBackgroundStatic(modifier: Modifier = Modifier, content: @Composable (
 fun Modifier.matrixGlow(intensity: Float = 0.15f): Modifier = this
     .alpha(1f - intensity)
     .blur(radius = 2.dp)
-
 
 
 

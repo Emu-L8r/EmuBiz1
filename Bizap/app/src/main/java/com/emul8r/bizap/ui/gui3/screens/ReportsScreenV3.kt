@@ -31,7 +31,7 @@ fun ReportsScreenV3(
     businessId: Long,
     navController: NavHostController
 ) {
-    MatrixBackground(intensity = 1.2f) {
+    MatrixBackground(intensity = 1.0f) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -135,5 +135,4 @@ fun ReportsScreenV3(
         }
     }
 }
-
 
