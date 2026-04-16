@@ -68,7 +68,8 @@ fun InvoiceListScreenV3(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
+    MatrixBackground(intensity = 1.0f) {
+        Scaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -110,27 +111,28 @@ fun InvoiceListScreenV3(
                 Icon(Icons.Default.Add, contentDescription = "Create Invoice")
             }
         },
-        containerColor = MatrixBlack
-    ) { paddingValues ->
-        when (val state = uiState) {
-            is InvoiceListUiStateV2.Loading -> {
-                LoadingStateV3(modifier = Modifier.padding(paddingValues))
-            }
-            is InvoiceListUiStateV2.Error -> {
-                ErrorStateV3(
-                    message = state.message,
-                    onRetry = { /* Retry functionality */ },
-                    modifier = Modifier.padding(paddingValues)
-                )
-            }
-            is InvoiceListUiStateV2.Success -> {
-                InvoiceListContentV3(
-                    invoices = state.invoices,
-                    onInvoiceClick = { invoiceId ->
-                        navController.navigate(ScreenV3.InvoiceDetail(businessId, invoiceId))
-                    },
-                    modifier = Modifier.padding(paddingValues)
-                )
+            containerColor = MatrixBlack.copy(alpha = 0.8f)
+        ) { paddingValues ->
+            when (val state = uiState) {
+                is InvoiceListUiStateV2.Loading -> {
+                    LoadingStateV3(modifier = Modifier.padding(paddingValues))
+                }
+                is InvoiceListUiStateV2.Error -> {
+                    ErrorStateV3(
+                        message = state.message,
+                        onRetry = { /* Retry functionality */ },
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
+                is InvoiceListUiStateV2.Success -> {
+                    InvoiceListContentV3(
+                        invoices = state.invoices,
+                        onInvoiceClick = { invoiceId ->
+                            navController.navigate(ScreenV3.InvoiceDetail(businessId, invoiceId))
+                        },
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
             }
         }
     }
@@ -533,7 +535,6 @@ private fun formatAmountV3(cents: Long): String {
     val centsPart = cents % 100
     return String.format(Locale.US, "$%,d.%02d", dollars, centsPart)
 }
-
 
 
 
