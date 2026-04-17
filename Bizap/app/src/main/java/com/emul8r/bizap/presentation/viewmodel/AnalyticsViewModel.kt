@@ -98,7 +98,7 @@ class AnalyticsViewModel @Inject constructor(
      */
     val cashFlowTrend: StateFlow<List<CashFlowTrendPoint>> =
         activeBusinessId.flatMapLatest { businessId ->
-            analyticsDao.observeDailyRevenue(businessId)
+            analyticsDao.observeDailyRevenue(businessId, System.currentTimeMillis() - THIRTY_DAYS_MS)
                 .map { dailyRevenues ->
                     dailyRevenues.map { dr ->
                         CashFlowTrendPoint(
@@ -192,7 +192,7 @@ class AnalyticsViewModel @Inject constructor(
      */
     val invoicingVelocity: StateFlow<List<InvoiceVelocity>> =
         activeBusinessId.flatMapLatest { businessId ->
-            analyticsDao.observeInvoicingVelocity(businessId)
+            analyticsDao.observeInvoicingVelocity(businessId, System.currentTimeMillis() - THIRTY_DAYS_MS)
                 .catch { error ->
                     Timber.e(error, "Error loading invoicing velocity")
                     emit(emptyList())
@@ -353,5 +353,10 @@ class AnalyticsViewModel @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "AnalyticsViewModel: Error during cleanup")
         }
+    }
+
+    companion object {
+        /** 30 days in milliseconds — used for date-range query boundaries (Phase 2B). */
+        const val THIRTY_DAYS_MS = 30L * 24 * 60 * 60 * 1000
     }
 }

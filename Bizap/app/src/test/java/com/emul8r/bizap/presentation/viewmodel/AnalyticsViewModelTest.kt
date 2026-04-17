@@ -33,11 +33,11 @@ class AnalyticsViewModelTest : BaseUnitTest() {
         every { businessContextRepository.observeActiveBusinessId() } returns flowOf(businessId)
 
         // Default stubs — return empty lists / zero values
-        every { analyticsDao.observeDailyRevenue(businessId) } returns flowOf(emptyList())
+        every { analyticsDao.observeDailyRevenue(businessId, any()) } returns flowOf(emptyList())
         every { analyticsDao.observeTopCustomers(businessId, any()) } returns flowOf(emptyList())
         every { analyticsDao.observeAverageDaysToPayment(businessId) } returns flowOf(0.0)
         every { analyticsDao.observeAverageDaysToPayTrend(businessId) } returns flowOf(emptyList())
-        every { analyticsDao.observeInvoicingVelocity(businessId) } returns flowOf(emptyList())
+        every { analyticsDao.observeInvoicingVelocity(businessId, any()) } returns flowOf(emptyList())
 
         viewModel = AnalyticsViewModel(analyticsDao, businessContextRepository)
     }
@@ -60,7 +60,7 @@ class AnalyticsViewModelTest : BaseUnitTest() {
             invoiceCount = 2,
             paidCount = 1
         )
-        every { analyticsDao.observeDailyRevenue(businessId) } returns flowOf(listOf(daily))
+        every { analyticsDao.observeDailyRevenue(businessId, any()) } returns flowOf(listOf(daily))
 
         val vm = AnalyticsViewModel(analyticsDao, businessContextRepository)
         advanceUntilIdle()
@@ -151,11 +151,11 @@ class AnalyticsViewModelTest : BaseUnitTest() {
     fun `switching business context reloads cashFlowTrend for new business`() = runUnitTest {
         val newBusinessId = 99L
         every { businessContextRepository.observeActiveBusinessId() } returns flowOf(newBusinessId)
-        every { analyticsDao.observeDailyRevenue(newBusinessId) } returns flowOf(emptyList())
+        every { analyticsDao.observeDailyRevenue(newBusinessId, any()) } returns flowOf(emptyList())
         every { analyticsDao.observeTopCustomers(newBusinessId, any()) } returns flowOf(emptyList())
         every { analyticsDao.observeAverageDaysToPayment(newBusinessId) } returns flowOf(0.0)
         every { analyticsDao.observeAverageDaysToPayTrend(newBusinessId) } returns flowOf(emptyList())
-        every { analyticsDao.observeInvoicingVelocity(newBusinessId) } returns flowOf(emptyList())
+        every { analyticsDao.observeInvoicingVelocity(newBusinessId, any()) } returns flowOf(emptyList())
 
         val vm = AnalyticsViewModel(analyticsDao, businessContextRepository)
         advanceUntilIdle()
@@ -167,7 +167,7 @@ class AnalyticsViewModelTest : BaseUnitTest() {
 
     @Test
     fun `cashFlowTrend emits empty on DAO error`() = runUnitTest {
-        every { analyticsDao.observeDailyRevenue(businessId) } returns flow { throw RuntimeException("DB error") }
+        every { analyticsDao.observeDailyRevenue(businessId, any()) } returns flow { throw RuntimeException("DB error") }
 
         val vm = AnalyticsViewModel(analyticsDao, businessContextRepository)
         advanceUntilIdle()
