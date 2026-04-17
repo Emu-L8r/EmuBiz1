@@ -1,165 +1,132 @@
 package com.emul8r.bizap.ui.gui3.components.effects
 
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.ui.gui3.util.MatrixBackgroundConfig
-import com.emul8r.bizap.ui.gui3.util.MatrixCharsetProvider
+import com.emul8r.bizap.ui.gui3.util.MatrixEffect
+import com.emul8r.bizap.ui.gui3.util.PerformanceProfiler
 import com.emul8r.bizap.utils.FirebaseEventTracker
-import io.mockk.*
-import kotlinx.coroutines.test.runTest
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.Before
 import org.junit.Test
-import timber.log.Timber
-import kotlin.test.assertTrue
-import kotlin.test.assertFalse
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
- * Unit tests for MatrixEffectsPipeline
- *
- * Verifies:
- * - Pipeline renders all effects within frame time budget (< 16ms)
- * - Effect ordering is correct (background → mid → foreground)
- * - Errors in one effect don't crash pipeline
- * - Preset switching works correctly
- * - Performance profiling integrates without errors
+ * Unit tests for [MatrixEffectsPipeline].
+ * Verifies rendering orchestration, error isolation, and profiler integration.
  */
 class MatrixEffectsPipelineTest : BaseUnitTest() {
 
-    private val rainEffect: RainParticleEffect = mockk(relaxed = true)
-    private val glitchEffect: GlitchEffect = mockk(relaxed = true)
-    private val scanlineEffect: ScanlineEffect = mockk(relaxed = true)
+    private val effectRegistry: EffectRegistry = mockk()
+    private val eventTracker: FirebaseEventTracker = mockk(relaxed = true)
     private val profiler: PerformanceProfiler = mockk(relaxed = true)
-    private val eventTracker: FirebaseEventTracker? = null
 
-    private lateinit var registry: EffectRegistry
     private lateinit var pipeline: MatrixEffectsPipeline
+
+    private val config = MatrixBackgroundConfig()
 
     @Before
     fun setUp() {
-        // Mock DrawScope for testing
-        every { rainEffect.effectName } returns "rain_particles"
-        every { rainEffect.estimatedFrameTimeMicros() } returns 8000
-        every { rainEffect.isAvailable() } returns true
-        every { rainEffect.render(any(), any()) } just Runs
-
-        every { glitchEffect.effectName } returns "glitch"
-        every { glitchEffect.estimatedFrameTimeMicros() } returns 500
-        every { glitchEffect.isAvailable() } returns true
-        every { glitchEffect.render(any(), any()) } just Runs
-
-        every { scanlineEffect.effectName } returns "scanlines"
-        every { scanlineEffect.estimatedFrameTimeMicros() } returns 1000
-        every { scanlineEffect.isAvailable() } returns true
-        every { scanlineEffect.render(any(), any()) } just Runs
-
-        every { profiler.recordFrameTime(any()) } just Runs
-
-        // Create registry with mocked effects
-        registry = EffectRegistry(rainEffect, glitchEffect, scanlineEffect)
-        pipeline = MatrixEffectsPipeline(registry, eventTracker, profiler)
+        every { profiler.recordFrame(any()) } returns Unit
+        every { profiler.snapshot() } returns mockk(relaxed = true)
+        pipeline = MatrixEffectsPipeline(effectRegistry, eventTracker, profiler)
     }
 
-    /**
-     * Test 1: Pipeline completes all effects within frame budget (< 16ms)
-     */
+    // ── renderFrame — happy path ───────────────────────────────────────────
+
     @Test
-    fun testPipelineFrameTimeBudget() = runTest {
-        val mockDrawScope = mockk<DrawScope>(relaxed = true)
-        val config = createTestConfig(rainDensity = 0.8f, glitchIntensity = 0.5f, scanlineAlpha = 0.05f)
-
-        // Mock frame time tracking
-        var totalFrameTimeRecorded = 0L
-        every { profiler.recordFrameTime(any()) } answers {
-            totalFrameTimeRecorded = firstArg<Long>()
-        }
-
-        // Simulate render
-        pipeline.renderFrame(scope = mockDrawScope, config = config, enableGlitch = true)
-
-        // Verify all effects were called
-        verify { rainEffect.render(any(), any()) }
-        verify { glitchEffect.render(any(), any()) }
-        verify { scanlineEffect.render(any(), any()) }
-        verify { profiler.recordFrameTime(any()) }
-
-        // Frame time should be recorded (actual value depends on mock performance)
-        assertTrue(totalFrameTimeRecorded >= 0, "Frame time should be non-negative")
-        Timber.d("✅ TEST 1 PASSED: Pipeline frame time recorded = ${totalFrameTimeRecorded}μs")
+    fun `renderFrame calls profiler recordFrame`() = runUnitTest {
+        every { effectRegistry.getActiveEffects(any(), any()) } returns emptyList()
+        val scope = mockk<androidx.compose.ui.graphics.drawscope.DrawScope>(relaxed = true)
+        pipeline.renderFrame(scope, config)
+        advanceUntilIdle()
+        verify { profiler.recordFrame(any()) }
     }
 
-    /**
-     * Test 2: Preset switching (minimal → balanced → intense) works without errors
-     */
     @Test
-    fun testPresetSwitching() = runTest {
-        val mockDrawScope = mockk<DrawScope>(relaxed = true)
+    fun `renderFrame renders all active effects`() = runUnitTest {
+        val effect1 = mockk<MatrixEffect>(relaxed = true)
+        val effect2 = mockk<MatrixEffect>(relaxed = true)
+        every { effect1.effectName } returns "effect_1"
+        every { effect2.effectName } returns "effect_2"
+        every { effectRegistry.getActiveEffects(any(), any()) } returns listOf(effect1, effect2)
 
-        // Test minimal preset
-        val minimalConfig = createTestConfig(rainDensity = 0.3f, glitchIntensity = 0.2f, scanlineAlpha = 0.02f)
-        pipeline.renderFrame(scope = mockDrawScope, config = minimalConfig, enableGlitch = true)
-        verify { rainEffect.render(any(), any()) }
+        val scope = mockk<androidx.compose.ui.graphics.drawscope.DrawScope>(relaxed = true)
+        pipeline.renderFrame(scope, config)
+        advanceUntilIdle()
 
-        // Test balanced preset (default)
-        val balancedConfig = createTestConfig(rainDensity = 0.8f, glitchIntensity = 0.5f, scanlineAlpha = 0.05f)
-        pipeline.renderFrame(scope = mockDrawScope, config = balancedConfig, enableGlitch = true)
-        verify { rainEffect.render(any(), any()) }
-
-        // Test intense preset
-        val intenseConfig = createTestConfig(rainDensity = 1.2f, glitchIntensity = 0.7f, scanlineAlpha = 0.08f)
-        pipeline.renderFrame(scope = mockDrawScope, config = intenseConfig, enableGlitch = true)
-        verify { rainEffect.render(any(), any()) }
-
-        Timber.d("✅ TEST 2 PASSED: All 3 presets (minimal/balanced/intense) rendered successfully")
+        coVerify { effect1.render(scope, config) }
+        coVerify { effect2.render(scope, config) }
     }
 
-    /**
-     * Test 3: Pipeline recovers gracefully when one effect crashes
-     */
     @Test
-    fun testErrorHandlingWhenEffectCrashes() = runTest {
-        val mockDrawScope = mockk<DrawScope>(relaxed = true)
-        val config = createTestConfig()
+    fun `renderFrame continues when one effect throws`() = runUnitTest {
+        val failingEffect = mockk<MatrixEffect>(relaxed = true)
+        val goodEffect = mockk<MatrixEffect>(relaxed = true)
+        every { failingEffect.effectName } returns "failing_effect"
+        every { goodEffect.effectName } returns "good_effect"
+        coEvery { failingEffect.render(any(), any()) } throws RuntimeException("Render failed")
 
-        // Make glitch effect throw an exception
-        every { glitchEffect.render(any(), any()) } throws IllegalStateException("Effect render failed")
+        every { effectRegistry.getActiveEffects(any(), any()) } returns listOf(failingEffect, goodEffect)
 
-        // Pipeline should NOT crash; it should catch and skip the broken effect
-        try {
-            pipeline.renderFrame(scope = mockDrawScope, config = config, enableGlitch = true)
-            assertTrue(true, "Pipeline should not crash when effect throws")
-        } catch (e: Exception) {
-            throw AssertionError("Pipeline should catch effect exceptions gracefully, but got: $e")
-        }
+        val scope = mockk<androidx.compose.ui.graphics.drawscope.DrawScope>(relaxed = true)
+        // Should not throw
+        pipeline.renderFrame(scope, config)
+        advanceUntilIdle()
 
-        // Verify that other effects still ran
-        verify { rainEffect.render(any(), any()) }
-        verify { scanlineEffect.render(any(), any()) }
-        // Glitch was called (and threw), but pipeline continued
-        verify { glitchEffect.render(any(), any()) }
-
-        Timber.d("✅ TEST 3 PASSED: Pipeline gracefully handled effect crash")
+        // Good effect should still be called despite the first one failing
+        coVerify { goodEffect.render(scope, config) }
     }
 
-    /**
-     * Helper: Create test config with customizable parameters
-     */
-    private fun createTestConfig(
-        rainDensity: Float = 0.8f,
-        glitchIntensity: Float = 0.5f,
-        scanlineAlpha: Float = 0.05f
-    ): MatrixBackgroundConfig {
-        return MatrixBackgroundConfig(
-            rainDensity = rainDensity,
-            glitchIntensity = glitchIntensity,
-            scanlineAlpha = scanlineAlpha,
-            charsetProvider = MatrixCharsetProvider.MIXED,
-            scanlineHeight = Dp(1.5f)
-        )
+    @Test
+    fun `renderFrame with empty effects list still records frame time`() = runUnitTest {
+        every { effectRegistry.getActiveEffects(any(), any()) } returns emptyList()
+        val scope = mockk<androidx.compose.ui.graphics.drawscope.DrawScope>(relaxed = true)
+        pipeline.renderFrame(scope, config)
+        advanceUntilIdle()
+        verify { profiler.recordFrame(any()) }
+    }
+
+    // ── getMetrics ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `getMetrics delegates to profiler snapshot`() {
+        val result = pipeline.getMetrics()
+        verify { profiler.snapshot() }
+    }
+
+    // ── resetProfiler ──────────────────────────────────────────────────────
+
+    @Test
+    fun `resetProfiler calls profiler reset`() {
+        every { profiler.reset() } returns Unit
+        pipeline.resetProfiler()
+        verify { profiler.reset() }
+    }
+
+    // ── glitch / scanline flags ────────────────────────────────────────────
+
+    @Test
+    fun `renderFrame passes enableGlitch=false to registry`() = runUnitTest {
+        every { effectRegistry.getActiveEffects(enableGlitch = false, enableScanlines = true) } returns emptyList()
+        val scope = mockk<androidx.compose.ui.graphics.drawscope.DrawScope>(relaxed = true)
+        pipeline.renderFrame(scope, config, enableGlitch = false, enableScanlines = true)
+        advanceUntilIdle()
+        verify { effectRegistry.getActiveEffects(enableGlitch = false, enableScanlines = true) }
+    }
+
+    @Test
+    fun `renderFrame passes enableScanlines=false to registry`() = runUnitTest {
+        every { effectRegistry.getActiveEffects(enableGlitch = true, enableScanlines = false) } returns emptyList()
+        val scope = mockk<androidx.compose.ui.graphics.drawscope.DrawScope>(relaxed = true)
+        pipeline.renderFrame(scope, config, enableGlitch = true, enableScanlines = false)
+        advanceUntilIdle()
+        verify { effectRegistry.getActiveEffects(enableGlitch = true, enableScanlines = false) }
     }
 }
 

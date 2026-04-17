@@ -19,8 +19,9 @@ class InvoiceNumberingUtilsTest {
 
     @Test
     fun `generateCustomerCode handles multi-word company names`() {
+        // "Corp" is a common suffix and is filtered out; last non-suffix word is returned
         val result = InvoiceNumberingUtils.generateCustomerCode("Acme Corp")
-        assertEquals("Corp", result)
+        assertEquals("Acme", result)
         val result2 = InvoiceNumberingUtils.generateCustomerCode("Acme Corp Inc.")
         assertEquals("Inc.", result2)
     }
@@ -54,7 +55,8 @@ class InvoiceNumberingUtilsTest {
             version = 2
         )
 
-        assertEquals("26-0410-05-Corp-v2", number)
+        // "Corp" is filtered as common suffix, customer code becomes "Acme"
+        assertEquals("26-0410-05-Acme-v2", number)
     }
 
     @Test

@@ -29,11 +29,40 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    # --continue: run all test modules even if one fails, then exit non-zero.
+    # This ensures ALL failures are reported in one pass, not just the first.
     - name: Run Unit Tests
       run: ./gradlew testDebugUnitTest --continue
 
+    # HARD GATE: parse XML test reports and fail CI if ANY test failed.
+    # Guards against Gradle config errors that might exit 0 without running tests.
+    - name: Verify Test Results (Hard Gate)
+      run: |
+        XML_REPORTS=$(find app/build/test-results -name "*.xml" 2>/dev/null || true)
+
+        if [ -z "$XML_REPORTS" ]; then
+          echo "⚠️  No XML test reports found — treating as failure"
+          exit 1
+        fi
+
+        FAILURES=$(grep -r 'failures="[^0]' app/build/test-results/ 2>/dev/null | wc -l)
+        ERRORS=$(grep -r 'errors="[^0]' app/build/test-results/ 2>/dev/null | wc -l)
+
+        if [ "$FAILURES" -gt 0 ] || [ "$ERRORS" -gt 0 ]; then
+          echo "❌ Test failures detected: $FAILURES failure blocks, $ERRORS error blocks"
+          exit 1
+        fi
+
+        echo "✅ All tests passed (hard gate verified)"
+
+    # detekt: maxIssues=0 in .detekt.yml → exits non-zero on any violation
+    # ktlintCheck: exits non-zero on style violations
     - name: Run Lint & Code Quality
       run: ./gradlew ktlintCheck detekt
+
+    # Android lint as separate step for visibility
+    - name: Run Android Lint
+      run: ./gradlew lint
 
     - name: Generate Code Coverage Report
       run: ./gradlew jacocoTestDebugUnitTestReport
@@ -54,19 +83,62 @@ jobs:
         path: app/build/outputs/apk/debug/app-debug.apk
         retention-days: 7
 
+    # PR comment with REAL test metrics from XML (not guesswork)
     - name: Comment PR with Results
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v6
       with:
         script: |
           const fs = require('fs');
-          const testResults = fs.existsSync('./app/build/reports/tests/testDebugUnitTest/index.html') ? '✅ Tests Passed' : '⚠️ Check logs';
+          let totalTests = 0, totalFailures = 0, totalErrors = 0, totalSkipped = 0;
+          try {
+            const { execSync } = require('child_process');
+            const xmlFiles = execSync('find app/build/test-results -name "*.xml" 2>/dev/null || echo ""')
+              .toString().trim().split('\n').filter(Boolean);
+            for (const f of xmlFiles) {
+              const content = fs.readFileSync(f, 'utf8');
+              const tests = content.match(/tests="(\d+)"/);
+              const failures = content.match(/failures="(\d+)"/);
+              const errors = content.match(/errors="(\d+)"/);
+              const skipped = content.match(/skipped="(\d+)"/);
+              if (tests) totalTests += parseInt(tests[1]);
+              if (failures) totalFailures += parseInt(failures[1]);
+              if (errors) totalErrors += parseInt(errors[1]);
+              if (skipped) totalSkipped += parseInt(skipped[1]);
+            }
+          } catch (e) { /* XML parse fallback */ }
+
+          const passed = totalTests - totalFailures - totalErrors - totalSkipped;
+          const passRate = totalTests > 0 ? ((passed / totalTests) * 100).toFixed(1) : 'N/A';
+          const testIcon = (totalFailures + totalErrors === 0) ? '✅' : '❌';
+
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: `## Build Status\n\n✅ **Build:** SUCCESS\n${testResults}\n📦 **APK:** Available in artifacts`
-          })
+            body: `## 🤖 Build Status\n\n| Check | Status |\n|-------|--------|\n| Build | ✅ SUCCESS |\n| Tests | ${testIcon} ${passed}/${totalTests} passed (${passRate}%) |\n| Skipped | ⏭️ ${totalSkipped} |\n| APK | 📦 Available in artifacts |`
+          });
+
+    # Always upload test + lint reports regardless of pass/fail
+    - name: Upload Test Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-reports
+        path: |
+          app/build/reports/tests/
+          app/build/test-results/
+        retention-days: 14
+
+    - name: Upload Lint Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: lint-reports
+        path: |
+          app/build/reports/lint-results*.html
+          app/build/reports/detekt/
+        retention-days: 7
 
     - name: Upload Build Logs on Failure
       if: failure()

@@ -183,9 +183,17 @@ class RemoteConfigManagerTest : BaseUnitTest() {
     }
 
     @Test
-    fun `all FeatureFlag entries default to false`() {
+    fun `all FeatureFlag entries have expected defaults`() {
+        // EFFECT_* flags default to true (enabled by default per AGENTS.md)
+        val trueByDefault = setOf(
+            FeatureFlag.EFFECT_RAIN, FeatureFlag.EFFECT_GLITCH, FeatureFlag.EFFECT_SCANLINES
+        )
         FeatureFlag.entries.forEach { flag ->
-            assertFalse(flag.defaultValue, "Flag ${flag.name} has non-false default")
+            if (flag in trueByDefault) {
+                assertTrue(flag.defaultValue, "Flag ${flag.name} should default to true")
+            } else {
+                assertFalse(flag.defaultValue, "Flag ${flag.name} should default to false")
+            }
         }
     }
 }

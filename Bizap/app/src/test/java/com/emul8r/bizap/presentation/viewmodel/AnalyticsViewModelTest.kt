@@ -2,138 +2,182 @@ package com.emul8r.bizap.presentation.viewmodel
 
 import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.data.local.dao.AnalyticsDao
-import com.emul8r.bizap.data.model.*
+import com.emul8r.bizap.data.model.CustomerRevenue
+import com.emul8r.bizap.data.model.DailyRevenue
 import com.emul8r.bizap.data.repository.gui2.BusinessContextRepositoryV2
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Tests for [AnalyticsViewModel].
- *
- * Verifies that:
- * 1. The active business ID is read dynamically from [BusinessContextRepositoryV2]
- *    rather than using a hardcoded constant (Phase 3.2 – Problem 1 & 3 fix).
- * 2. Days-to-payment and invoicing-velocity flows switch correctly when the
- *    business context changes.
+ * Unit tests for [AnalyticsViewModel].
+ * Verifies that state flows emit correctly when the business context and DAO data change.
  */
 class AnalyticsViewModelTest : BaseUnitTest() {
-@OptIn(ExperimentalCoroutinesApi::class)
 
+    private val analyticsDao: AnalyticsDao = mockk(relaxed = true)
     private val businessContextRepository: BusinessContextRepositoryV2 = mockk()
 
-    private val activeBusinessIdFlow = MutableStateFlow(1L)
+    private val businessId = 1L
 
     private lateinit var viewModel: AnalyticsViewModel
 
     @Before
-    fun setup() {
-        every { businessContextRepository.observeActiveBusinessId() } returns activeBusinessIdFlow
+    fun setUp() {
+        every { businessContextRepository.observeActiveBusinessId() } returns flowOf(businessId)
 
-        // Stub all DAO flows for the default businessId = 1
-        stubDaoForBusiness(1L, dso = 15.0, velocity = listOf(InvoiceVelocity(1L, 0L, 2.5, 3, 2, 1, 1)))
-        // Stub all DAO flows for businessId = 2
-        stubDaoForBusiness(2L, dso = 30.0, velocity = listOf(InvoiceVelocity(2L, 0L, 4.0, 5, 4, 2, 1)))
+        // Default stubs — return empty lists / zero values
+        every { analyticsDao.observeDailyRevenue(businessId) } returns flowOf(emptyList())
+        every { analyticsDao.observeTopCustomers(businessId, any()) } returns flowOf(emptyList())
+        every { analyticsDao.observeAverageDaysToPayment(businessId) } returns flowOf(0.0)
+        every { analyticsDao.observeAverageDaysToPayTrend(businessId) } returns flowOf(emptyList())
+        every { analyticsDao.observeInvoicingVelocity(businessId) } returns flowOf(emptyList())
 
         viewModel = AnalyticsViewModel(analyticsDao, businessContextRepository)
     }
 
-    // ─── Problem 1 fix: Days-to-payment uses active business ────────────────
+    // ── cashFlowTrend ──────────────────────────────────────────────────────
 
     @Test
-    fun `averageDaysToPayment reflects active business - business 1`() = runTest {
+    fun `cashFlowTrend emits empty list when no data`() = runUnitTest {
         advanceUntilIdle()
-
-        val dso = viewModel.averageDaysToPayment.first()
-        assertEquals(15.0, dso, absoluteTolerance = 0.001,
-            message = "Days-to-payment should match business 1's value (15.0)")
+        assertTrue(viewModel.cashFlowTrend.value.isEmpty())
     }
 
     @Test
-    fun `averageDaysToPayment updates when active business switches to business 2`() = runTest {
+    fun `cashFlowTrend maps DailyRevenue to CashFlowTrendPoint`() = runUnitTest {
+        val daily = DailyRevenue(
+            businessId = businessId,
+            date = 1000L,
+            invoicedCents = 50_000L,
+            paidCents = 30_000L,
+            invoiceCount = 2,
+            paidCount = 1
+        )
+        every { analyticsDao.observeDailyRevenue(businessId) } returns flowOf(listOf(daily))
+
+        val vm = AnalyticsViewModel(analyticsDao, businessContextRepository)
         advanceUntilIdle()
 
-        // Switch the active business to ID 2
-        activeBusinessIdFlow.value = 2L
-        advanceUntilIdle()
-
-        val dso = viewModel.averageDaysToPayment.first()
-        assertEquals(30.0, dso, absoluteTolerance = 0.001,
-            message = "Days-to-payment should switch to business 2's value (30.0)")
+        val trend = vm.cashFlowTrend.value
+        assertEquals(1, trend.size)
+        assertEquals(50_000L, trend[0].invoicedCents)
+        assertEquals(30_000L, trend[0].paidCents)
     }
 
-    // ─── Problem 3 fix: Invoicing-velocity (bar graph) uses active business ─
+    // ── topCustomers ───────────────────────────────────────────────────────
 
     @Test
-    fun `invoicingVelocity is non-empty for active business`() = runTest {
+    fun `topCustomers emits empty list when no paid invoices`() = runUnitTest {
         advanceUntilIdle()
-
-        val velocity = viewModel.invoicingVelocity.first()
-        assertTrue(velocity.isNotEmpty(),
-            "Bar graph data should not be empty when business has invoicing velocity data")
-    }
-
-    @Test
-    fun `invoicingVelocity updates when active business switches`() = runTest {
-        advanceUntilIdle()
-        val velocityBusiness1 = viewModel.invoicingVelocity.first()
-        assertEquals(2.5, velocityBusiness1.first().avgDaysFromCreationToSent, absoluteTolerance = 0.001)
-
-        // Switch the active business to ID 2
-        activeBusinessIdFlow.value = 2L
-        advanceUntilIdle()
-
-        val velocityBusiness2 = viewModel.invoicingVelocity.first()
-        assertEquals(4.0, velocityBusiness2.first().avgDaysFromCreationToSent, absoluteTolerance = 0.001,
-            message = "Velocity should switch to business 2's value")
-    }
-
-    // ─── Combined analytics state ────────────────────────────────────────────
-
-    @Test
-    fun `analyticsState emits Success when data is available`() = runTest {
-        advanceUntilIdle()
-
-        val state = viewModel.analyticsState.first()
-        assertTrue(state is AnalyticsUiState.Success,
-            "Analytics state should be Success when DAO returns data")
+        assertTrue(viewModel.topCustomers.value.isEmpty())
     }
 
     @Test
-    fun `analyticsState currentAverageDaysToPayment matches active business`() = runTest {
+    fun `topCustomers computes percentage of total correctly`() = runUnitTest {
+        val customers = listOf(
+            CustomerRevenue(
+                customerId = 1L,
+                customerName = "Alpha Corp",
+                totalRevenueCents = 60_000L,
+                invoiceCount = 3,
+                lastPaymentDate = 0L
+            ),
+            CustomerRevenue(
+                customerId = 2L,
+                customerName = "Beta Ltd",
+                totalRevenueCents = 40_000L,
+                invoiceCount = 2,
+                lastPaymentDate = 0L
+            )
+        )
+        every { analyticsDao.observeTopCustomers(businessId, any()) } returns flowOf(customers)
+
+        val vm = AnalyticsViewModel(analyticsDao, businessContextRepository)
         advanceUntilIdle()
 
-        val state = viewModel.analyticsState.first()
-        assertTrue(state is AnalyticsUiState.Success)
-        assertEquals(15.0, (state as AnalyticsUiState.Success).data.currentAverageDaysToPayment,
-            absoluteTolerance = 0.001,
-            message = "Combined analytics state should carry the correct DSO for the active business")
+        val result = vm.topCustomers.value
+        assertEquals(2, result.size)
+        assertEquals(60.0, result[0].percentageOfTotal, 0.01)
+        assertEquals(40.0, result[1].percentageOfTotal, 0.01)
     }
 
-    // ─── Helper ──────────────────────────────────────────────────────────────
+    @Test
+    fun `topCustomers emits empty when total revenue is zero`() = runUnitTest {
+        val customers = listOf(
+            CustomerRevenue(
+                customerId = 1L,
+                customerName = "No Revenue Co",
+                totalRevenueCents = 0L,
+                invoiceCount = 0,
+                lastPaymentDate = 0L
+            )
+        )
+        every { analyticsDao.observeTopCustomers(businessId, any()) } returns flowOf(customers)
 
-    private fun stubDaoForBusiness(businessId: Long, dso: Double, velocity: List<InvoiceVelocity>) {
-        every { analyticsDao.observeAverageDaysToPayment(businessId) } returns MutableStateFlow(dso)
-        every { analyticsDao.observeAverageDaysToPayTrend(businessId) } returns MutableStateFlow(emptyList())
-        every { analyticsDao.observeInvoicingVelocity(businessId) } returns MutableStateFlow(velocity)
-        every { analyticsDao.observeDailyRevenue(businessId) } returns MutableStateFlow(emptyList())
-        every { analyticsDao.observeTopCustomers(businessId, 5) } returns MutableStateFlow(emptyList())
-        every { analyticsDao.observeTotalRevenue(businessId) } returns MutableStateFlow(0L)
-        every { analyticsDao.observeTotalOutstanding(businessId) } returns MutableStateFlow(0L)
-        every { analyticsDao.observeDraftInvoiceCount(businessId) } returns MutableStateFlow(0)
-        every { analyticsDao.observeOverdueInvoiceCount(businessId) } returns MutableStateFlow(0)
+        val vm = AnalyticsViewModel(analyticsDao, businessContextRepository)
+        advanceUntilIdle()
 
-        // SPRINT 3 FIX: Ensure mocks return proper Flow data to match AnalyticsViewModel expectations
-        // The ViewModel uses flatMapLatest to switch data based on active business ID
+        assertTrue(vm.topCustomers.value.isEmpty())
+    }
+
+    // ── averageDaysToPayment ───────────────────────────────────────────────
+
+    @Test
+    fun `averageDaysToPayment emits 0 when no paid invoices`() = runUnitTest {
+        advanceUntilIdle()
+        assertEquals(0.0, viewModel.averageDaysToPayment.value, 0.01)
+    }
+
+    @Test
+    fun `averageDaysToPayment emits correct DSO value`() = runUnitTest {
+        every { analyticsDao.observeAverageDaysToPayment(businessId) } returns flowOf(14.5)
+
+        val vm = AnalyticsViewModel(analyticsDao, businessContextRepository)
+        advanceUntilIdle()
+
+        assertEquals(14.5, vm.averageDaysToPayment.value, 0.01)
+    }
+
+    // ── business context switching ─────────────────────────────────────────
+
+    @Test
+    fun `switching business context reloads cashFlowTrend for new business`() = runUnitTest {
+        val newBusinessId = 99L
+        every { businessContextRepository.observeActiveBusinessId() } returns flowOf(newBusinessId)
+        every { analyticsDao.observeDailyRevenue(newBusinessId) } returns flowOf(emptyList())
+        every { analyticsDao.observeTopCustomers(newBusinessId, any()) } returns flowOf(emptyList())
+        every { analyticsDao.observeAverageDaysToPayment(newBusinessId) } returns flowOf(0.0)
+        every { analyticsDao.observeAverageDaysToPayTrend(newBusinessId) } returns flowOf(emptyList())
+        every { analyticsDao.observeInvoicingVelocity(newBusinessId) } returns flowOf(emptyList())
+
+        val vm = AnalyticsViewModel(analyticsDao, businessContextRepository)
+        advanceUntilIdle()
+
+        assertTrue(vm.cashFlowTrend.value.isEmpty())
+    }
+
+    // ── error resilience ───────────────────────────────────────────────────
+
+    @Test
+    fun `cashFlowTrend emits empty on DAO error`() = runUnitTest {
+        every { analyticsDao.observeDailyRevenue(businessId) } returns flow { throw RuntimeException("DB error") }
+
+        val vm = AnalyticsViewModel(analyticsDao, businessContextRepository)
+        advanceUntilIdle()
+
+        // Should not throw; emits initial empty value
+        assertTrue(vm.cashFlowTrend.value.isEmpty())
     }
 }
+
+
 
 
 

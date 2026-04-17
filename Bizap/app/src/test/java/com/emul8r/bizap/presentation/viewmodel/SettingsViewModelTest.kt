@@ -4,6 +4,7 @@ import com.emul8r.bizap.BaseUnitTest
 import com.emul8r.bizap.domain.model.DisplayMode
 import com.emul8r.bizap.domain.model.Settings
 import com.emul8r.bizap.domain.model.ThemePreference
+import com.emul8r.bizap.domain.model.UiDensity
 import com.emul8r.bizap.domain.repository.SettingsRepository
 import com.emul8r.bizap.domain.usecase.settings.GetSettingsUseCase
 import com.emul8r.bizap.domain.usecase.settings.ResetSettingsToDefaultUseCase
@@ -13,132 +14,180 @@ import com.emul8r.bizap.domain.usecase.settings.UpdateSyncSettingsUseCase
 import com.emul8r.bizap.domain.usecase.settings.UpdateThemeUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
+/**
+ * Unit tests for [SettingsViewModel].
+ * Verifies state flows and write operations via mocked use cases and repository.
+ */
 class SettingsViewModelTest : BaseUnitTest() {
-@OptIn(ExperimentalCoroutinesApi::class)
 
-    private val repository: SettingsRepository = mockk(relaxed = true) {
-        coEvery { settings } returns settingsFlow
-    }
+    private val defaultSettings = Settings()
+    private val settingsFlow = flowOf(defaultSettings)
+
+    private lateinit var getSettingsUseCase: GetSettingsUseCase
+    private lateinit var settingsRepository: SettingsRepository
+    private lateinit var updateThemeUseCase: UpdateThemeUseCase
+    private lateinit var updateDisplayModeUseCase: UpdateDisplayModeUseCase
+    private lateinit var updateNotificationSettingsUseCase: UpdateNotificationSettingsUseCase
+    private lateinit var updateSyncSettingsUseCase: UpdateSyncSettingsUseCase
+    private lateinit var resetSettingsToDefaultUseCase: ResetSettingsToDefaultUseCase
 
     private lateinit var viewModel: SettingsViewModel
 
     @Before
-    fun setup() {
+    fun setUp() {
+        getSettingsUseCase = mockk()
+        settingsRepository = mockk(relaxed = true)
+        updateThemeUseCase = mockk(relaxed = true)
+        updateDisplayModeUseCase = mockk(relaxed = true)
+        updateNotificationSettingsUseCase = mockk(relaxed = true)
+        updateSyncSettingsUseCase = mockk(relaxed = true)
+        resetSettingsToDefaultUseCase = mockk(relaxed = true)
+
+        every { getSettingsUseCase() } returns settingsFlow
+
         viewModel = SettingsViewModel(
-            getSettingsUseCase = GetSettingsUseCase(repository),
-            settingsRepository = repository,
-            updateThemeUseCase = UpdateThemeUseCase(repository),
-            updateDisplayModeUseCase = UpdateDisplayModeUseCase(repository),
-            updateNotificationSettingsUseCase = UpdateNotificationSettingsUseCase(repository),
-            updateSyncSettingsUseCase = UpdateSyncSettingsUseCase(repository),
-            resetSettingsToDefaultUseCase = ResetSettingsToDefaultUseCase(repository)
+            getSettingsUseCase = getSettingsUseCase,
+            settingsRepository = settingsRepository,
+            updateThemeUseCase = updateThemeUseCase,
+            updateDisplayModeUseCase = updateDisplayModeUseCase,
+            updateNotificationSettingsUseCase = updateNotificationSettingsUseCase,
+            updateSyncSettingsUseCase = updateSyncSettingsUseCase,
+            resetSettingsToDefaultUseCase = resetSettingsToDefaultUseCase
         )
     }
 
-    // ── Initial state ──────────────────────────────────────────────────────
+    // ── settings StateFlow ─────────────────────────────────────────────────
 
     @Test
-    fun `settings exposes initial defaults`() = runTest {
+    fun `settings emits default Settings initially`() = runUnitTest {
         advanceUntilIdle()
-        assertEquals(Settings(), viewModel.settings.first())
+        assertEquals(defaultSettings, viewModel.settings.value)
     }
 
     @Test
-    fun `themePreference derived flow emits AUTO by default`() = runTest {
+    fun `themePreference derives from settings`() = runUnitTest {
         advanceUntilIdle()
-        assertEquals(ThemePreference.AUTO, viewModel.themePreference.first())
+        assertEquals(defaultSettings.themePreference, viewModel.themePreference.value)
     }
 
     @Test
-    fun `displayMode derived flow emits LIST_VIEW by default`() = runTest {
+    fun `displayMode derives from settings`() = runUnitTest {
         advanceUntilIdle()
-        assertEquals(DisplayMode.LIST_VIEW, viewModel.displayMode.first())
+        assertEquals(defaultSettings.displayMode, viewModel.displayMode.value)
     }
 
     @Test
-    fun `notificationsEnabled derived flow is true by default`() = runTest {
+    fun `uiDensity derives from settings`() = runUnitTest {
         advanceUntilIdle()
-        assertEquals(true, viewModel.notificationsEnabled.first())
+        assertEquals(defaultSettings.uiDensity, viewModel.uiDensity.value)
     }
 
     @Test
-    fun `autoSyncEnabled derived flow is true by default`() = runTest {
+    fun `notificationsEnabled derives from settings`() = runUnitTest {
         advanceUntilIdle()
-        assertEquals(true, viewModel.autoSyncEnabled.first())
+        assertEquals(defaultSettings.notificationsEnabled, viewModel.notificationsEnabled.value)
     }
 
-    // ── Delegating to repository ───────────────────────────────────────────
+    @Test
+    fun `autoSyncEnabled derives from settings`() = runUnitTest {
+        advanceUntilIdle()
+        assertEquals(defaultSettings.autoSyncEnabled, viewModel.autoSyncEnabled.value)
+    }
 
     @Test
-    fun `setThemePreference delegates to repository`() = runTest {
+    fun `syncFrequencyMinutes derives from settings`() = runUnitTest {
+        advanceUntilIdle()
+        assertEquals(defaultSettings.syncFrequencyMinutes, viewModel.syncFrequencyMinutes.value)
+    }
+
+    // ── write helpers ──────────────────────────────────────────────────────
+
+    @Test
+    fun `setThemePreference calls updateThemeUseCase`() = runUnitTest {
+        coEvery { updateThemeUseCase(ThemePreference.DARK) } returns Unit
         viewModel.setThemePreference(ThemePreference.DARK)
         advanceUntilIdle()
-        coVerify { repository.updateThemePreference(ThemePreference.DARK) }
+        coVerify { updateThemeUseCase(ThemePreference.DARK) }
     }
 
     @Test
-    fun `setDisplayMode delegates to repository`() = runTest {
+    fun `setDisplayMode calls updateDisplayModeUseCase`() = runUnitTest {
+        coEvery { updateDisplayModeUseCase(DisplayMode.GRID_VIEW) } returns Unit
         viewModel.setDisplayMode(DisplayMode.GRID_VIEW)
         advanceUntilIdle()
-        coVerify { repository.updateDisplayMode(DisplayMode.GRID_VIEW) }
+        coVerify { updateDisplayModeUseCase(DisplayMode.GRID_VIEW) }
     }
 
     @Test
-    fun `setNotificationsEnabled delegates to repository`() = runTest {
+    fun `setUiDensity calls settingsRepository`() = runUnitTest {
+        coEvery { settingsRepository.updateUiDensity(UiDensity.COMPACT) } returns Unit
+        viewModel.setUiDensity(UiDensity.COMPACT)
+        advanceUntilIdle()
+        coVerify { settingsRepository.updateUiDensity(UiDensity.COMPACT) }
+    }
+
+    @Test
+    fun `setNotificationsEnabled calls use case`() = runUnitTest {
+        coEvery { updateNotificationSettingsUseCase.setNotificationsEnabled(false) } returns Unit
         viewModel.setNotificationsEnabled(false)
         advanceUntilIdle()
-        coVerify { repository.updateNotificationsEnabled(false) }
+        coVerify { updateNotificationSettingsUseCase.setNotificationsEnabled(false) }
     }
 
     @Test
-    fun `setEmailNotificationsEnabled delegates to repository`() = runTest {
+    fun `setEmailNotificationsEnabled calls use case`() = runUnitTest {
+        coEvery { updateNotificationSettingsUseCase.setEmailNotificationsEnabled(false) } returns Unit
         viewModel.setEmailNotificationsEnabled(false)
         advanceUntilIdle()
-        coVerify { repository.updateEmailNotificationsEnabled(false) }
+        coVerify { updateNotificationSettingsUseCase.setEmailNotificationsEnabled(false) }
     }
 
     @Test
-    fun `setAutoSyncEnabled delegates to repository`() = runTest {
+    fun `setAutoSyncEnabled calls use case`() = runUnitTest {
+        coEvery { updateSyncSettingsUseCase.setAutoSyncEnabled(false) } returns Unit
         viewModel.setAutoSyncEnabled(false)
         advanceUntilIdle()
-        coVerify { repository.updateAutoSyncEnabled(false) }
+        coVerify { updateSyncSettingsUseCase.setAutoSyncEnabled(false) }
     }
 
     @Test
-    fun `setSyncFrequencyMinutes delegates to repository`() = runTest {
-        viewModel.setSyncFrequencyMinutes(30)
+    fun `setSyncFrequencyMinutes calls use case`() = runUnitTest {
+        coEvery { updateSyncSettingsUseCase.setSyncFrequencyMinutes(60) } returns Unit
+        viewModel.setSyncFrequencyMinutes(60)
         advanceUntilIdle()
-        coVerify { repository.updateSyncFrequencyMinutes(30) }
+        coVerify { updateSyncSettingsUseCase.setSyncFrequencyMinutes(60) }
     }
 
     @Test
-    fun `resetToDefaults delegates to repository`() = runTest {
+    fun `resetToDefaults calls resetSettingsToDefaultUseCase`() = runUnitTest {
+        coEvery { resetSettingsToDefaultUseCase() } returns Unit
         viewModel.resetToDefaults()
         advanceUntilIdle()
-        coVerify { repository.resetToDefaults() }
+        coVerify { resetSettingsToDefaultUseCase() }
     }
 
-    // ── Reactive updates ───────────────────────────────────────────────────
+    // ── updated settings emits new derived values ─────────────────────────
 
     @Test
-    fun `settings flow updates when repository emits new value`() = runTest {
+    fun `settings with DARK theme emits DARK themePreference`() = runUnitTest {
+        val darkSettings = Settings(themePreference = ThemePreference.DARK)
+        every { getSettingsUseCase() } returns flowOf(darkSettings)
+
+        val vm = SettingsViewModel(
+            getSettingsUseCase, settingsRepository, updateThemeUseCase,
+            updateDisplayModeUseCase, updateNotificationSettingsUseCase,
+            updateSyncSettingsUseCase, resetSettingsToDefaultUseCase
+        )
         advanceUntilIdle()
-        val updated = Settings(themePreference = ThemePreference.DARK)
-        settingsFlow.value = updated
-        advanceUntilIdle()
-        // Verify that the derived themePreference flow picks up the emitted change
-        assertEquals(ThemePreference.DARK, viewModel.themePreference.first())
+        assertEquals(ThemePreference.DARK, vm.themePreference.value)
     }
 }
-
-
 

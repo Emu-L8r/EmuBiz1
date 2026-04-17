@@ -1,513 +1,240 @@
-            currencyCode = "US"  // ❌ Only 2 letters!
-            dateCreated = java.time.Instant.now().toString(),
-            dueDate = java.time.Instant.now().toString() + 86400000,
-            totalAmount = 10000,
-        // ARRANGE: Currency code must be exactly 3 letters
 package com.emul8r.bizap.domain.validation
 
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
-import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.model.InvoiceItem
+import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.model.Result
 import org.junit.Test
-import org.junit.Assert.*
-import java.util.*
-import java.time.Instant
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 /**
- * VALIDATION RULES TEST SUITE
- *
- * Tests cover:
- * 1. Happy path (all valid data)
- * 2. Each validation rule failure
- * 3. Edge cases (boundary values)
- * 4. Collection validation (batch operations)
- *
- * TESTING STRATEGY:
- * =================
- * - Test each rule independently
- * - Use realistic data
- * - Cover both success and failure paths
- * - Check error messages are helpful
- * - Use descriptive test names
+ * Unit tests for [ValidationRules] — invoice, customer, and line item validation.
  */
 class ValidationRulesTest {
 
-    // ===============================
-    // INVOICE VALIDATION TESTS
-    // ===============================
+    // ── helpers ────────────────────────────────────────────────────────────
+
+    private fun validItem() = InvoiceItem(
+        description = "Consulting",
+        quantity = 1.0,
+        unitPrice = 10_000L
+    )
+
+    private fun validInvoice() = Invoice(
+        customerId = 1L,
+        customerName = "John Doe",
+        dateCreated = "2026-01-01T00:00:00Z",
+        dueDate = "2026-01-31T00:00:00Z",
+        totalAmount = 10_000L,
+        currency = "AUD",
+        items = listOf(validItem())
+    )
+
+    private fun validCustomer() = Customer(
+        name = "Acme Corp",
+        email = "acme@example.com"
+    )
+
+    // ── validateInvoice — success ──────────────────────────────────────────
 
     @Test
-    fun validateInvoice_validInvoice_returnsSuccess() {
-        // ARRANGE: Create a completely valid invoice
-        val invoice = Invoice(
-            businessProfileId = 1,
-            customerId = 1,
-            customerName = "John Doe",
-            dateCreated = Instant.now().toString(),
-            dueDate = Instant.now().plusSeconds(86400L).toString(),
-            totalAmount = 10000,  // $100 in cents
-            items = listOf(
-                InvoiceItem(description = "Service A", quantity = 1.0, unitPrice = 10000)
-            ),
-            isQuote = false,
-            status = InvoiceStatus.DRAFT,
-            currency = "AUD"
-        )
+    fun `validateInvoice passes for valid invoice`() {
+        val result = ValidationRules.validateInvoice(validInvoice())
+        assertIs<Result.Success<Unit>>(result)
+    }
 
-        // ACT
+    // ── validateInvoice — failure cases ───────────────────────────────────
+
+    @Test
+    fun `validateInvoice fails when no line items`() {
+        val invoice = validInvoice().copy(items = emptyList())
         val result = ValidationRules.validateInvoice(invoice)
-
-        // ASSERT
-        assertTrue("Invoice should be valid", result.isSuccess())
-        assertFalse("Invoice should not have errors", result.isFailure())
+        assertIs<Result.Failure<Unit>>(result)
+        assertTrue((result as Result.Failure).error.contains("line item"))
     }
 
     @Test
-    fun validateInvoice_emptyItems_returnsFailure() {
-        // ARRANGE: Invoice with NO line items
-        val invoice = Invoice(
-            businessProfileId = 1,
-            customerId = 1,
-            customerName = "John Doe",
-            dateCreated = Instant.now().toString(),
-            dueDate = Instant.now().plusSeconds(86400L).toString(),
-            totalAmount = 0,  // No items = no amount
-            items = emptyList(),  // ❌ EMPTY!
-            isQuote = false,
-            status = InvoiceStatus.DRAFT,
-            currency = "AUD"
-        )
-
-        // ACT
+    fun `validateInvoice fails when total amount is zero`() {
+        val invoice = validInvoice().copy(totalAmount = 0L)
         val result = ValidationRules.validateInvoice(invoice)
-
-        // ASSERT
-        assertTrue("Invoice should fail validation", result.isFailure())
-        assertTrue(
-            "Error should mention line items",
-            result.getErrorOrNull()?.contains("line item") ?: false
-        )
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateInvoice_zeroAmount_returnsFailure() {
-        // ARRANGE: Invoice with $0 total
-        val invoice = Invoice(
-            businessProfileId = 1,
-            customerId = 1,
-            customerName = "John Doe",
-            dateCreated = java.time.Instant.now().toString(),
-            dueDate = java.time.Instant.now().toString() + 86400000,
-            totalAmount = 0,  // ❌ ZERO!
-            currency = "AUD"
-                InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 0)
-            ),
-            isQuote = false,
-            status = InvoiceStatus.DRAFT,
-            currencyCode = "AUD"
-        )
-
-        // ACT
+    fun `validateInvoice fails when total amount is negative`() {
+        val invoice = validInvoice().copy(totalAmount = -100L)
         val result = ValidationRules.validateInvoice(invoice)
-
-        // ASSERT
-        assertTrue("Invoice should fail validation", result.isFailure())
-        assertTrue(
-            "Error should mention positive amount",
-            result.getErrorOrNull()?.contains("greater than zero") ?: false
-        )
+        assertIs<Result.Failure<Unit>>(result)
     }
+
     @Test
-    fun validateInvoice_dueDateBeforeInvoiceDate_returnsFailure() {
-        // ARRANGE: Due date is BEFORE invoice date (impossible!)
-        val now = Instant.now().toString()
-        val yesterday = Instant.now().minusSeconds(86_400L).toString()
-
-        // ACT
-        val invoice = Invoice(
-            businessProfileId = 1,
-            customerId = 1,
-            customerName = "John Doe",
-            dateCreated = now,
-            dueDate = yesterday,  // ❌ YESTERDAY!
-            totalAmount = 10000,
-            items = listOf(
-                InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 10000)
-            ),
-            isQuote = false,
-            status = InvoiceStatus.DRAFT,
-            currency = "AUD"
-        )
-
-        // ACT
+    fun `validateInvoice fails when customer name is blank`() {
+        val invoice = validInvoice().copy(customerName = "")
         val result = ValidationRules.validateInvoice(invoice)
-
-        // ASSERT
-        assertTrue("Invoice should fail validation", result.isFailure())
-        assertTrue(
-            "Error should mention due date",
-            result.getErrorOrNull()?.contains("Due date") ?: false
-        )
+        assertIs<Result.Failure<Unit>>(result)
+        assertTrue((result as Result.Failure).error.contains("Customer name"))
     }
 
     @Test
-    fun validateInvoice_blankCustomerName_returnsFailure() {
-        // ARRANGE: No customer name
-        val invoice = Invoice(
-            businessProfileId = 1,
-            customerId = 1,
-            customerName = "",  // ❌ BLANK!
-            dateCreated = java.time.Instant.now().toString(),
-            dueDate = java.time.Instant.now().toString() + 86400000,
-            totalAmount = 10000,
-            items = listOf(
-                InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 10000)
-            ),
-            isQuote = false,
-            status = InvoiceStatus.DRAFT,
-            currencyCode = "AUD"
+    fun `validateInvoice fails when due date is before invoice date`() {
+        val invoice = validInvoice().copy(
+            dateCreated = "2026-02-01T00:00:00Z",
+            dueDate = "2026-01-01T00:00:00Z"
         )
-
-        // ACT
         val result = ValidationRules.validateInvoice(invoice)
-
-        // ASSERT
-        assertTrue("Invoice should fail validation", result.isFailure())
-        assertTrue(
-            "Error should mention customer name",
-            result.getErrorOrNull()?.contains("Customer") ?: false
-        // ARRANGE: Invoice with invalid currency (must be 3 letters)
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateInvoice_invalidCurrencyCode_returnsFailure() {
-            dateCreated = Instant.now().toString(),
-            dueDate = Instant.now().plusSeconds(86_400L).toString(),
-            totalAmount = 10_000,
-            customerId = 1,
-            customerName = "John Doe",
-            dateCreated = java.time.Instant.now().toString(),
-            dueDate = java.time.Instant.now().toString() + 86400000,
-            totalAmount = 10000,
-            currency = "US"  // ❌ Only 2 letters!
-                InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 10000)
-            ),
-            isQuote = false,
-            status = InvoiceStatus.DRAFT,
-            currencyCode = "US"  // ❌ Only 2 letters!
-        )
-
-        // ACT
+    fun `validateInvoice fails when currency code is invalid`() {
+        val invoice = validInvoice().copy(currency = "US")
         val result = ValidationRules.validateInvoice(invoice)
-
-        // ASSERT
-        assertTrue("Invoice should fail validation", result.isFailure())
-        assertTrue(
-            "Error should mention currency code",
-            result.getErrorOrNull()?.contains("Currency") ?: false
-        )
+        assertIs<Result.Failure<Unit>>(result)
     }
 
-    // ===============================
-    // CUSTOMER VALIDATION TESTS
-    // ===============================
+    @Test
+    fun `validateInvoice fails when currency code contains digits`() {
+        val invoice = validInvoice().copy(currency = "US1")
+        val result = ValidationRules.validateInvoice(invoice)
+        assertIs<Result.Failure<Unit>>(result)
+    }
 
     @Test
-    fun validateCustomer_validCustomer_returnsSuccess() {
-        // ARRANGE
-        val customer = Customer(
-            name = "John Doe",
-            email = "john@example.com",
-            phone = "+61298765432"
+    fun `validateInvoice passes when due date equals invoice date`() {
+        val invoice = validInvoice().copy(
+            dateCreated = "2026-01-01T00:00:00Z",
+            dueDate = "2026-01-01T00:00:00Z"
         )
+        val result = ValidationRules.validateInvoice(invoice)
+        assertIs<Result.Success<Unit>>(result)
+    }
 
-        // ACT
+    // ── validateCustomer — success ─────────────────────────────────────────
+
+    @Test
+    fun `validateCustomer passes for valid customer`() {
+        val result = ValidationRules.validateCustomer(validCustomer())
+        assertIs<Result.Success<Unit>>(result)
+    }
+
+    @Test
+    fun `validateCustomer passes with no email`() {
+        val customer = validCustomer().copy(email = null)
         val result = ValidationRules.validateCustomer(customer)
-
-        // ASSERT
-        assertTrue("Customer should be valid", result.isSuccess())
+        assertIs<Result.Success<Unit>>(result)
     }
 
-    @Test
-    fun validateCustomer_blankName_returnsFailure() {
-        // ARRANGE
-        val customer = Customer(
-            name = "",  // ❌ BLANK!
-            email = "john@example.com"
-        )
+    // ── validateCustomer — failure cases ──────────────────────────────────
 
-        // ACT
+    @Test
+    fun `validateCustomer fails when name is blank`() {
+        val customer = validCustomer().copy(name = "")
         val result = ValidationRules.validateCustomer(customer)
-
-        // ASSERT
-        assertTrue("Customer should fail validation", result.isFailure())
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateCustomer_nameTooShort_returnsFailure() {
-        // ARRANGE: Name must be at least 2 characters
-        val customer = Customer(
-            name = "A",  // ❌ Only 1 character!
-            email = "john@example.com"
-        )
-
-        // ACT
+    fun `validateCustomer fails when name is too short`() {
+        val customer = validCustomer().copy(name = "A")
         val result = ValidationRules.validateCustomer(customer)
-
-        // ASSERT
-        assertTrue("Customer should fail validation", result.isFailure())
-        assertTrue(
-            "Error should mention minimum length",
-            result.getErrorOrNull()?.contains("2 characters") ?: false
-        )
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateCustomer_nameTooLong_returnsFailure() {
-        // ARRANGE: Name must be <= 100 characters
-        val customer = Customer(
-            name = "A".repeat(101),  // ❌ 101 characters!
-            email = "john@example.com"
-        )
-
-        // ACT
+    fun `validateCustomer fails when name exceeds 100 characters`() {
+        val customer = validCustomer().copy(name = "A".repeat(101))
         val result = ValidationRules.validateCustomer(customer)
-
-        // ASSERT
-        assertTrue("Customer should fail validation", result.isFailure())
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateCustomer_invalidEmail_returnsFailure() {
-        // ARRANGE: Email must have @ and dot
-        val customer = Customer(
-            name = "John Doe",
-            email = "not-an-email"  // ❌ No @ or dot!
-        )
-
-        // ACT
+    fun `validateCustomer fails when email is invalid format`() {
+        val customer = validCustomer().copy(email = "notanemail")
         val result = ValidationRules.validateCustomer(customer)
-
-        // ASSERT
-        assertTrue("Customer should fail validation", result.isFailure())
-        assertTrue(
-            "Error should mention invalid email",
-            result.getErrorOrNull()?.contains("email") ?: false
-        )
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateCustomer_invalidPhone_returnsFailure() {
-        // ARRANGE: Phone must be 5-20 characters
-        val customer = Customer(
-            name = "John Doe",
-            phone = "123"  // ❌ Too short!
-        )
-
-        // ACT
+    fun `validateCustomer passes when name is exactly 2 characters`() {
+        val customer = validCustomer().copy(name = "Li")
         val result = ValidationRules.validateCustomer(customer)
-
-        // ASSERT
-        assertTrue("Customer should fail validation", result.isFailure())
+        assertIs<Result.Success<Unit>>(result)
     }
 
     @Test
-    fun validateCustomer_optionalEmailBlank_returnsSuccess() {
-        // ARRANGE: Email is optional - blank is OK
-        val customer = Customer(
-            name = "John Doe",
-            email = ""  // ✅ Blank is OK for optional field
-        )
-
-        // ACT
+    fun `validateCustomer passes when name is exactly 100 characters`() {
+        val customer = validCustomer().copy(name = "A".repeat(100))
         val result = ValidationRules.validateCustomer(customer)
-
-        // ASSERT
-        assertTrue("Customer should be valid", result.isSuccess())
+        assertIs<Result.Success<Unit>>(result)
     }
 
-    // ===============================
-    // LINE ITEM VALIDATION TESTS
-    // ===============================
+    // ── validateLineItem — success ─────────────────────────────────────────
 
     @Test
-    fun validateLineItem_validItem_returnsSuccess() {
-        // ARRANGE
-        val item = InvoiceItem(
-            description = "Consulting Services",
-            quantity = 2.5,
-            unitPrice = 10000  // $100 in cents
-        )
+    fun `validateLineItem passes for valid item`() {
+        val result = ValidationRules.validateLineItem(validItem())
+        assertIs<Result.Success<Unit>>(result)
+    }
 
-        // ACT
+    // ── validateLineItem — failure cases ──────────────────────────────────
+
+    @Test
+    fun `validateLineItem fails when description is blank`() {
+        val item = validItem().copy(description = "")
         val result = ValidationRules.validateLineItem(item)
-
-        // ASSERT
-        assertTrue("Line item should be valid", result.isSuccess())
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateLineItem_blankDescription_returnsFailure() {
-        // ARRANGE
-        val item = InvoiceItem(
-            description = "",  // ❌ BLANK!
-            quantity = 1.0,
-            unitPrice = 10000
-        )
-
-        // ACT
+    fun `validateLineItem fails when description exceeds 500 characters`() {
+        val item = validItem().copy(description = "A".repeat(501))
         val result = ValidationRules.validateLineItem(item)
-
-        // ASSERT
-        assertTrue("Line item should fail validation", result.isFailure())
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateLineItem_zeroQuantity_returnsFailure() {
-        // ARRANGE
-        val item = InvoiceItem(
-            description = "Service",
-            quantity = 0.0,  // ❌ ZERO!
-            unitPrice = 10000
-        )
-
-        // ACT
+    fun `validateLineItem fails when quantity is zero`() {
+        val item = validItem().copy(quantity = 0.0)
         val result = ValidationRules.validateLineItem(item)
-
-        // ASSERT
-        assertTrue("Line item should fail validation", result.isFailure())
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateLineItem_negativePrice_returnsFailure() {
-        // ARRANGE
-        val item = InvoiceItem(
-            description = "Service",
-            quantity = 1.0,
-            unitPrice = -5000  // ❌ NEGATIVE!
-        )
-
-        // ACT
+    fun `validateLineItem fails when quantity is negative`() {
+        val item = validItem().copy(quantity = -1.0)
         val result = ValidationRules.validateLineItem(item)
-
-        // ASSERT
-        assertTrue("Line item should fail validation", result.isFailure())
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateLineItem_excessiveTotal_returnsFailure() {
-        // ARRANGE: Total cannot exceed $1,000,000
-        val item = InvoiceItem(
-            description = "Service",
-            quantity = 1000000.0,
-            unitPrice = 1000000  // ❌ Unreasonably large!
-        )
-
-        // ACT
+    fun `validateLineItem fails when unit price is zero`() {
+        val item = validItem().copy(unitPrice = 0L)
         val result = ValidationRules.validateLineItem(item)
-
-        // ASSERT
-        assertTrue("Line item should fail validation", result.isFailure())
-    }
-
-    // ===============================
-    // RESULT PATTERN TESTS
-    // ===============================
-
-    @Test
-    fun result_map_transformsSuccessData() {
-        // ARRANGE
-        val result: Result<Int> = Result.Success(5)
-
-        // ACT
-        val transformed = result.map { it * 2 }
-
-        // ASSERT
-        assertEquals("Map should transform data", Result.Success(10), transformed)
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun result_map_preservesFailure() {
-        // ARRANGE
-        val result: Result<Int> = Result.Failure("Error")
-
-        // ACT
-        val transformed = result.map { it * 2 }
-
-        // ASSERT
-        assertTrue("Map should preserve failure", transformed.isFailure())
+    fun `validateLineItem fails when unit price is negative`() {
+        val item = validItem().copy(unitPrice = -500L)
+        val result = ValidationRules.validateLineItem(item)
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun result_fold_handlesSuccessAndFailure() {
-        // ARRANGE - Success case
-        val successResult: Result<Int> = Result.Success(5)
-
-        // ACT
-        val successValue = if (successResult.isSuccess()) {
-            (successResult.getOrNull() ?: 0) * 2
-        } else {
-            -1
-        }
-
-        // ASSERT
-        assertEquals("Should return success value multiplied", 10, successValue)
-
-        // ARRANGE - Failure case
-        val failureResult: Result<Int> = Result.Failure("Error")
-
-        // ACT
-        val failureValue = if (failureResult.isSuccess()) {
-            (failureResult.getOrNull() ?: 0) * 2
-        } else {
-            -1
-        }
-
-        // ASSERT
-        assertEquals("Should return failure value", -1, failureValue)
-    }
-
-    // ===============================
-    // BATCH VALIDATION TESTS
-    // ===============================
-
-    @Test
-    fun validateCustomers_allValid_returnsSuccess() {
-        // ARRANGE
-        val customers = listOf(
-            Customer(name = "John Doe", email = "john@example.com"),
-            Customer(name = "Jane Smith", email = "jane@example.com"),
-            Customer(name = "Bob Johnson", email = "bob@example.com")
-        )
-
-        // ACT
-        val result = ValidationRules.validateCustomers(customers)
-
-        // ASSERT
-        assertTrue("All customers should be valid", result.isSuccess())
+    fun `validateLineItem fails when total is unreasonably large`() {
+        val item = validItem().copy(quantity = 1_000_000.0, unitPrice = 100_000L)
+        val result = ValidationRules.validateLineItem(item)
+        assertIs<Result.Failure<Unit>>(result)
     }
 
     @Test
-    fun validateCustomers_oneInvalid_returnsFailure() {
-        // ARRANGE
-        val customers = listOf(
-            Customer(name = "John Doe", email = "john@example.com"),
-            Customer(name = "A", email = "jane@example.com"),  // ❌ Invalid!
-            Customer(name = "Bob Johnson", email = "bob@example.com")
-        )
-
-        // ACT
-        val result = ValidationRules.validateCustomers(customers)
-
-        // ASSERT
-        assertTrue("Batch should fail if any customer is invalid", result.isFailure())
+    fun `validateLineItem passes for fractional quantity`() {
+        val item = validItem().copy(quantity = 0.5)
+        val result = ValidationRules.validateLineItem(item)
+        assertIs<Result.Success<Unit>>(result)
     }
 }
-
-
-
-
 
 

@@ -2,4 +2,4 @@
   maxIssues: 0
 config:
   validation: true
-  warningsAsErrors: false
+  warningsAsErrors: true

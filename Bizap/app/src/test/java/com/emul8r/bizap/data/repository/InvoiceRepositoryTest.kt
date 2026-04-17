@@ -258,19 +258,19 @@ class InvoiceRepositoryTest : BaseUnitTest() {
         assertEquals(2L, result2.getOrNull(), "Second invoice ID should be 2")
         assertEquals(3L, result3.getOrNull(), "Third invoice ID should be 3")
 
-        // Verify countInvoicesOnDate was called for each new invoice
-        coVerify(atLeast = 3) { invoiceDao.countInvoicesOnDate(any()) }
+        // Verify getMaxDailySequence was called for each new invoice (repo uses this, not countInvoicesOnDate)
+        coVerify(atLeast = 3) { invoiceDao.getMaxDailySequence(any(), any(), any()) }
     }
 
     @Test
     fun `testEditInvoiceSuccessfully - existing invoice uses UPDATE path without constraint violation`() = runTest {
-        coVerify(atLeast = 3) { invoiceDao.getMaxDailySequence(any(), any(), any()) }
         val businessId = 1L
         val existingInvoiceId = 2L
         val invoice = TestDataFactory.createTestInvoice(id = existingInvoiceId, businessProfileId = businessId)
 
         coEvery { businessProfileRepo.getActiveBusinessId() } returns businessId
-        coVerify(atLeast = 3) { invoiceDao.countInvoicesOnDate(any()) }
+        coEvery { invoiceDao.getMaxDailySequence(any(), any(), any()) } returns 0
+        coEvery { invoiceDao.deleteLineItems(any()) } just Runs
         coEvery { invoiceDao.insertLineItems(any()) } just Runs
         coEvery { invoiceDao.updateInvoice(any()) } just Runs
 

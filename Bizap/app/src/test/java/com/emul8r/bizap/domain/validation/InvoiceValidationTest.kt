@@ -1,222 +1,176 @@
 package com.emul8r.bizap.domain.validation
 
 import com.emul8r.bizap.domain.model.Invoice
-import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.model.InvoiceItem
+import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.model.Result
 import org.junit.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
-import java.time.Instant
 
 /**
- * Unit tests for invoice and line item validation logic in [ValidationRules].
- *
- * Covers customer requirement, invoice number uniqueness concept,
- * date logic, and line item field validation.
+ * Invoice-focused validation tests for [ValidationRules.validateInvoice].
+ * Covers edge cases and business rule correctness.
  */
 class InvoiceValidationTest {
 
-    private val now = Instant.now().toString()
-    private val tomorrow = Instant.now().plusSeconds(86_400L).toString()
+    // ── helpers ────────────────────────────────────────────────────────────
 
-    private fun buildInvoice(
-        customerId: Long? = 1L,
-        customerName: String = "Test Customer",
-        items: List<InvoiceItem> = listOf(
-            InvoiceItem(description = "Service", quantity = 1.0, unitPrice = 10000L)
-        ),
-        totalAmount: Long = 10000L,
-        dateCreated: String = now,
-        dueDate: String = tomorrow,
-        currency: String = "AUD"
-    ) = Invoice(
-        id = 0L,
-        businessProfileId = 1L,
-        customerId = customerId,
-        customerName = customerName,
-        dateCreated = dateCreated,
-        dueDate = dueDate,
-        totalAmount = totalAmount,
-        items = items,
-        isQuote = false,
-        status = InvoiceStatus.DRAFT,
-        currency = currency
+    private fun item(desc: String = "Service", qty: Double = 1.0, price: Long = 10_000L) =
+        InvoiceItem(description = desc, quantity = qty, unitPrice = price)
+
+    private fun baseInvoice(vararg items: InvoiceItem = arrayOf(item())) = Invoice(
+        customerId = 10L,
+        customerName = "Test Client",
+        dateCreated = "2026-01-01T00:00:00Z",
+        dueDate = "2026-02-01T00:00:00Z",
+        totalAmount = 10_000L,
+        currency = "USD",
+        items = items.toList(),
+        status = InvoiceStatus.DRAFT
     )
 
-    // ── customer_Required ─────────────────────────────────────────────────────
+    // ── passing cases ──────────────────────────────────────────────────────
 
     @Test
-    fun `customer_Required - blank customer name fails validation`() {
-        val invoice = buildInvoice(customerName = "")
-        val result = ValidationRules.validateInvoice(invoice)
-        assertTrue(result.isFailure(), "Invoice with blank customer name should fail validation")
+    fun `valid invoice with single item passes`() {
+        assertIs<Result.Success<Unit>>(ValidationRules.validateInvoice(baseInvoice()))
     }
 
     @Test
-    fun `customer_Required - invoice with customer name set passes validation`() {
-        val invoice = buildInvoice(customerName = "Jane Doe")
-        val result = ValidationRules.validateInvoice(invoice)
-        assertTrue(result.isSuccess(), "Invoice with customer name should pass validation")
+    fun `valid invoice with multiple items passes`() {
+        val invoice = baseInvoice(item("Design"), item("Development"), item("Hosting"))
+        assertIs<Result.Success<Unit>>(ValidationRules.validateInvoice(invoice))
     }
 
     @Test
-    fun `customer_Required - null customerId is allowed when customer name is set`() {
-        val invoice = buildInvoice(customerId = null, customerName = "Deleted Customer")
-        val result = ValidationRules.validateInvoice(invoice)
-        assertTrue(result.isSuccess(), "Null customerId with customer name should pass validation")
+    fun `invoice with USD currency passes`() {
+        assertIs<Result.Success<Unit>>(ValidationRules.validateInvoice(baseInvoice()))
     }
 
-    // ── invoiceNumber_Unique ──────────────────────────────────────────────────
+    @Test
+    fun `invoice with EUR currency passes`() {
+        val invoice = baseInvoice().copy(currency = "EUR")
+        assertIs<Result.Success<Unit>>(ValidationRules.validateInvoice(invoice))
+    }
 
     @Test
-    fun `invoiceNumber_Unique - invoice number format includes year and sequence`() {
-        // Invoice number should be formatted as: INV-YYYY-XXXXXX
-        val expectedNumber = "INV-2025-000001"
-        val invoice = buildInvoice().copy(
-            invoiceYear = 2025,
-            invoiceSequence = 1,
-            version = 1,
-            invoiceNumber = expectedNumber
+    fun `invoice with GBP currency passes`() {
+        val invoice = baseInvoice().copy(currency = "GBP")
+        assertIs<Result.Success<Unit>>(ValidationRules.validateInvoice(invoice))
+    }
+
+    // ── item failures ──────────────────────────────────────────────────────
+
+    @Test
+    fun `invoice fails when items list is empty`() {
+        val invoice = baseInvoice().copy(items = emptyList())
+        val result = ValidationRules.validateInvoice(invoice)
+        assertIs<Result.Failure<Unit>>(result)
+    }
+
+    @Test
+    fun `invoice fails when an item has blank description`() {
+        val invoice = baseInvoice(item(desc = ""))
+        val result = ValidationRules.validateInvoice(invoice)
+        assertIs<Result.Failure<Unit>>(result)
+    }
+
+    @Test
+    fun `invoice fails when an item has zero quantity`() {
+        val invoice = baseInvoice(item(qty = 0.0))
+        val result = ValidationRules.validateInvoice(invoice)
+        assertIs<Result.Failure<Unit>>(result)
+    }
+
+    @Test
+    fun `invoice fails when an item has zero price`() {
+        val invoice = baseInvoice(item(price = 0L))
+        val result = ValidationRules.validateInvoice(invoice)
+        assertIs<Result.Failure<Unit>>(result)
+    }
+
+    // ── amount failures ────────────────────────────────────────────────────
+
+    @Test
+    fun `invoice fails when total amount is zero`() {
+        val invoice = baseInvoice().copy(totalAmount = 0L)
+        assertIs<Result.Failure<Unit>>(ValidationRules.validateInvoice(invoice))
+    }
+
+    @Test
+    fun `invoice fails when total amount is negative`() {
+        val invoice = baseInvoice().copy(totalAmount = -1L)
+        assertIs<Result.Failure<Unit>>(ValidationRules.validateInvoice(invoice))
+    }
+
+    // ── date failures ──────────────────────────────────────────────────────
+
+    @Test
+    fun `invoice fails when due date is before invoice date`() {
+        val invoice = baseInvoice().copy(
+            dateCreated = "2026-06-01T00:00:00Z",
+            dueDate = "2026-01-01T00:00:00Z"
         )
-        assertTrue(invoice.invoiceNumber.contains("2025"), "Invoice number should contain year")
-        assertTrue(invoice.invoiceNumber.contains("INV-"), "Invoice number should start with INV-")
-        val number = invoice.invoiceNumber
-        assertTrue(number.contains("v2"), "Version 2 invoice number should contain v2 suffix")
+        assertIs<Result.Failure<Unit>>(ValidationRules.validateInvoice(invoice))
     }
 
-        // Version 2 invoices should have -v2 suffix
-        val expectedNumber = "INV-2025-000001-v2"
-        val invoice = buildInvoice().copy(
-            invoiceYear = 2025,
-            invoiceSequence = 1,
-            version = 2,
-            invoiceNumber = expectedNumber
+    @Test
+    fun `invoice passes when due date equals invoice date`() {
+        val invoice = baseInvoice().copy(
+            dateCreated = "2026-03-15T00:00:00Z",
+            dueDate = "2026-03-15T00:00:00Z"
         )
-        assertTrue(invoice.invoiceNumber.contains("v2"), "Version 2 invoice number should contain v2 suffix")
-        val number = invoice.invoiceNumber
-        assertTrue(number.contains("v2"), "Version 2 invoice number should contain v2 suffix")
-        val invoice = buildInvoice(dateCreated = now, dueDate = tomorrow)
+        assertIs<Result.Success<Unit>>(ValidationRules.validateInvoice(invoice))
+    }
+
+    @Test
+    fun `invoice skips date validation when either date is blank`() {
+        val invoice = baseInvoice().copy(dateCreated = "", dueDate = "")
+        // Date check is skipped when blank — should still pass other rules
+        assertIs<Result.Success<Unit>>(ValidationRules.validateInvoice(invoice))
+    }
+
+    // ── customer name failures ─────────────────────────────────────────────
+
+    @Test
+    fun `invoice fails when customer name is blank`() {
+        val invoice = baseInvoice().copy(customerName = "")
         val result = ValidationRules.validateInvoice(invoice)
-        assertTrue(result.isSuccess(), "Invoice with current date should pass validation")
+        assertIs<Result.Failure<Unit>>(result)
+        assertTrue((result as Result.Failure).error.contains("Customer name"))
     }
 
     @Test
-    fun `date_NotFuture - invoice date in the past is valid`() {
-        val pastDate = Instant.now().minusSeconds(30 * 86_400L).toString()
-        val invoice = buildInvoice(dateCreated = pastDate, dueDate = now)
-        val result = ValidationRules.validateInvoice(invoice)
-        assertTrue(result.isSuccess(), "Invoice with past date should pass validation")
+    fun `invoice fails when customer name is only whitespace`() {
+        val invoice = baseInvoice().copy(customerName = "   ")
+        assertIs<Result.Failure<Unit>>(ValidationRules.validateInvoice(invoice))
     }
 
-    // ── dueDate_AfterInvoiceDate ──────────────────────────────────────────────
+    // ── currency code failures ─────────────────────────────────────────────
 
     @Test
-    fun `dueDate_AfterInvoiceDate - due date after invoice date passes validation`() {
-        val invoice = buildInvoice(dateCreated = now, dueDate = tomorrow)
-        val result = ValidationRules.validateInvoice(invoice)
-        assertTrue(result.isSuccess(), "Due date after invoice date should pass validation")
+    fun `invoice fails when currency code is 2 characters`() {
+        val invoice = baseInvoice().copy(currency = "US")
+        assertIs<Result.Failure<Unit>>(ValidationRules.validateInvoice(invoice))
     }
 
     @Test
-    fun `dueDate_AfterInvoiceDate - due date same as invoice date passes validation`() {
-        val invoice = buildInvoice(dateCreated = now, dueDate = now)
-        val result = ValidationRules.validateInvoice(invoice)
-        assertTrue(result.isSuccess(), "Due date same as invoice date should pass validation")
+    fun `invoice fails when currency code is 4 characters`() {
+        val invoice = baseInvoice().copy(currency = "USDX")
+        assertIs<Result.Failure<Unit>>(ValidationRules.validateInvoice(invoice))
     }
 
     @Test
-    fun `dueDate_AfterInvoiceDate - due date before invoice date fails validation`() {
-        val yesterday = Instant.now().minusSeconds(86_400L).toString()
-        val invoice = buildInvoice(dateCreated = now, dueDate = yesterday)
-        val result = ValidationRules.validateInvoice(invoice)
-        assertTrue(result.isFailure(), "Due date before invoice date should fail validation")
-    }
-
-    // ── lineItem_Description_Required ────────────────────────────────────────
-
-    @Test
-    fun `lineItem_Description_Required - blank item description fails validation`() {
-        val item = InvoiceItem(description = "", quantity = 1.0, unitPrice = 10000L)
-        val result = ValidationRules.validateLineItem(item)
-        assertTrue(result.isFailure(), "Blank item description should fail validation")
+    fun `invoice fails when currency code is blank`() {
+        val invoice = baseInvoice().copy(currency = "")
+        assertIs<Result.Failure<Unit>>(ValidationRules.validateInvoice(invoice))
     }
 
     @Test
-    fun `lineItem_Description_Required - whitespace-only description fails validation`() {
-        val item = InvoiceItem(description = "   ", quantity = 1.0, unitPrice = 10000L)
-        val result = ValidationRules.validateLineItem(item)
-        assertTrue(result.isFailure(), "Whitespace-only description should fail validation")
-    }
-
-    @Test
-    fun `lineItem_Description_Required - valid description passes validation`() {
-        val item = InvoiceItem(description = "Web Development Services", quantity = 1.0, unitPrice = 10000L)
-        val result = ValidationRules.validateLineItem(item)
-        assertTrue(result.isSuccess(), "Valid description should pass validation")
-    }
-
-    @Test
-    fun `lineItem_Description_Required - description at 500 chars limit is valid`() {
-        val item = InvoiceItem(description = "A".repeat(500), quantity = 1.0, unitPrice = 10000L)
-        val result = ValidationRules.validateLineItem(item)
-        assertTrue(result.isSuccess(), "Description at 500 chars should be valid")
-    }
-
-    @Test
-    fun `lineItem_Description_Required - description over 500 chars fails validation`() {
-        val item = InvoiceItem(description = "A".repeat(501), quantity = 1.0, unitPrice = 10000L)
-        val result = ValidationRules.validateLineItem(item)
-        assertTrue(result.isFailure(), "Description over 500 chars should fail validation")
-    }
-
-    // ── lineItem_Quantity_Positive ────────────────────────────────────────────
-
-    @Test
-    fun `lineItem_Quantity_Positive - zero quantity fails validation`() {
-        val item = InvoiceItem(description = "Service", quantity = 0.0, unitPrice = 10000L)
-        val result = ValidationRules.validateLineItem(item)
-        assertTrue(result.isFailure(), "Zero quantity should fail validation")
-    }
-
-    @Test
-    fun `lineItem_Quantity_Positive - negative quantity fails validation`() {
-        val item = InvoiceItem(description = "Service", quantity = -1.0, unitPrice = 10000L)
-        val result = ValidationRules.validateLineItem(item)
-        assertTrue(result.isFailure(), "Negative quantity should fail validation")
-    }
-
-    @Test
-    fun `lineItem_Quantity_Positive - fractional quantity passes validation`() {
-        val item = InvoiceItem(description = "Partial Hour", quantity = 0.5, unitPrice = 20000L)
-        val result = ValidationRules.validateLineItem(item)
-        assertTrue(result.isSuccess(), "Fractional quantity should pass validation")
-    }
-
-    @Test
-    fun `lineItem_Quantity_Positive - positive integer quantity passes validation`() {
-        val item = InvoiceItem(description = "Service", quantity = 3.0, unitPrice = 10000L)
-        val result = ValidationRules.validateLineItem(item)
-        assertTrue(result.isSuccess(), "Positive integer quantity should pass validation")
-    }
-
-    // ── currency code validation ──────────────────────────────────────────────
-
-    @Test
-    fun `currency code - 3 letter ISO code passes validation`() {
-        val invoice = buildInvoice(currency = "USD")
-        val result = ValidationRules.validateInvoice(invoice)
-        assertTrue(result.isSuccess())
-    }
-
-    @Test
-    fun `currency code - invalid length code fails validation`() {
-        val invoice = buildInvoice(currency = "US")
-        val result = ValidationRules.validateInvoice(invoice)
-        assertTrue(result.isFailure(), "2-letter currency code should fail validation")
+    fun `invoice fails when currency code contains numbers`() {
+        val invoice = baseInvoice().copy(currency = "U1D")
+        assertIs<Result.Failure<Unit>>(ValidationRules.validateInvoice(invoice))
     }
 }
-
-
-
 

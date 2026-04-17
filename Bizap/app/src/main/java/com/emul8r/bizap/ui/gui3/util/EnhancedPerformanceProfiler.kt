@@ -126,9 +126,12 @@ class EnhancedPerformanceProfiler(
 
     /**
      * Get minimum frame time from history (in ms).
+     * Only considers valid (written) slots, not the full pre-allocated FloatArray.
      */
     fun getMinFrameTime(): Float {
-        return frameHistory.minOrNull() ?: 0f
+        val count = minOf(totalFrames, frameHistory.size.toLong()).toInt()
+        if (count == 0) return 0f
+        return frameHistory.take(count).minOrNull() ?: 0f
     }
 
     /**
