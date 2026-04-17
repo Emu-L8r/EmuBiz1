@@ -1,4 +1,4 @@
-package com.emul8r.bizap.ui.gui3.screens
+﻿package com.emul8r.bizap.ui.gui3.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,13 +12,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.emul8r.bizap.ui.gui3.components.*
+import com.emul8r.bizap.ui.gui3.components.MatrixButton
+import com.emul8r.bizap.ui.gui3.components.SectionCardMatrix
+import com.emul8r.bizap.ui.gui3.components.DetailRowMatrix
+import com.emul8r.bizap.ui.gui3.components.MatrixStatusBadge
+import com.emul8r.bizap.ui.gui3.components.MatrixBackgroundWrapper
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
 
 /**
@@ -31,7 +37,7 @@ fun ReportsScreenV3(
     businessId: Long,
     navController: NavHostController
 ) {
-    MatrixBackground(intensity = 1.0f) {
+    MatrixBackgroundWrapper(screenType = ScreenType.ANALYTICS) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -55,17 +61,16 @@ fun ReportsScreenV3(
                     colors = matrixTopAppBarColors()
                 )
             },
-            containerColor = MatrixBlack.copy(alpha = 0.8f)
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MatrixBlack)
-                    .verticalScroll(rememberScrollState())
-                    .padding(paddingValues)
-                    .padding(Spacing.lg),
-                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-            ) {
+            containerColor = Color.Transparent
+         ) { paddingValues ->
+             Column(
+                 modifier = Modifier
+                     .fillMaxSize()
+                     .verticalScroll(rememberScrollState())
+                     .padding(paddingValues)
+                     .padding(Spacing.lg),
+                 verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+             ) {
                 // Period Summary
                 SectionCardMatrix(title = "CURRENT PERIOD") {
                     DetailRowMatrix(label = "Period", value = "APR 2026")
@@ -135,4 +140,6 @@ fun ReportsScreenV3(
         }
     }
 }
+
+
 

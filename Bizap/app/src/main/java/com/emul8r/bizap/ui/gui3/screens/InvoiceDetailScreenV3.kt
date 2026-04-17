@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -54,6 +55,7 @@ fun InvoiceDetailScreenV3(
 
     MatrixBackgroundWrapper(screenType = ScreenType.DETAIL) {
         Scaffold(
+            containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = {
@@ -86,7 +88,6 @@ fun InvoiceDetailScreenV3(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MatrixBlack)
                     .padding(paddingValues)
                     .padding(Spacing.lg)
                     .verticalScroll(rememberScrollState()),

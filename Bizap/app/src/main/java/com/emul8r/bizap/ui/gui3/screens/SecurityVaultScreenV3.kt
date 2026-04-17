@@ -49,6 +49,7 @@ import com.emul8r.bizap.ui.gui3.theme.MatrixSurface
 import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
 import timber.log.Timber
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -62,6 +63,7 @@ fun SecurityVaultScreenV3(
 
     MatrixBackgroundWrapper(screenType = ScreenType.UTILITY) {
         Scaffold(
+            containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = {
@@ -88,7 +90,6 @@ fun SecurityVaultScreenV3(
             Column(
                 modifier = androidx.compose.ui.Modifier
                     .fillMaxSize()
-                    .background(MatrixBlack)
                     .padding(paddingValues)
                     .padding(Spacing.lg)
                     .verticalScroll(rememberScrollState()),

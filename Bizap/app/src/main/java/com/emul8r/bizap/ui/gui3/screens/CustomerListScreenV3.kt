@@ -1,4 +1,4 @@
-package com.emul8r.bizap.ui.gui3.screens
+﻿package com.emul8r.bizap.ui.gui3.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,6 +33,7 @@ import com.emul8r.bizap.ui.customers.CustomerListViewModel
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.theme.Spacing
 import timber.log.Timber
 
@@ -62,7 +64,7 @@ fun CustomerListScreenV3(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
 
-    MatrixBackground(intensity = 1.0f) {
+    MatrixBackgroundWrapper(screenType = ScreenType.LIST) {
         Scaffold(
         topBar = {
             TopAppBar(
@@ -113,15 +115,14 @@ fun CustomerListScreenV3(
                 Icon(Icons.Default.Add, contentDescription = "Add Customer", tint = MatrixGreenBright)
             }
         },
-            containerColor = MatrixBlack.copy(alpha = 0.8f)
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MatrixBlack)
-                    .padding(paddingValues)
-            ) {
-            // Search Bar
+        containerColor = Color.Transparent
+     ) { paddingValues ->
+         Column(
+             modifier = Modifier
+                 .fillMaxSize()
+                 .padding(paddingValues)
+         ) {
+             // Search Bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -155,58 +156,58 @@ fun CustomerListScreenV3(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
             )
 
-                // Content
-                when (val state = uiState) {
-                    is CustomerListUiState.Loading -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MatrixBlack),
-                            contentAlignment = Alignment.Center
+            // Content
+            when (val state = uiState) {
+                is CustomerListUiState.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Transparent),  // was MatrixBlack
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = MatrixGreen)
+                    }
+                }
+                is CustomerListUiState.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Transparent)  // was MatrixBlack
+                            .padding(Spacing.lg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(Spacing.lg)
                         ) {
-                            CircularProgressIndicator(color = MatrixGreen)
+                            Text(
+                                "Error loading customers",
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    color = MatrixError
+                                )
+                            )
+                            Text(
+                                state.message,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MatrixGreen.copy(alpha = 0.8f)
+                                )
+                            )
                         }
                     }
-                    is CustomerListUiState.Error -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MatrixBlack)
-                                .padding(Spacing.lg),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-                            ) {
-                                Text(
-                                    "Error loading customers",
-                                    style = MaterialTheme.typography.headlineSmall.copy(
-                                        color = MatrixError
-                                    )
-                                )
-                                Text(
-                                    state.message,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        color = MatrixGreen.copy(alpha = 0.8f)
-                                    )
-                                )
-                            }
+                }
+                is CustomerListUiState.Success -> {
+                    CustomerListContentV3(
+                        customers = state.customers,
+                        searchQuery = searchQuery,
+                        onCustomerClick = { customerId ->
+                            navController.navigate(ScreenV3.CustomerDetail(businessId, customerId))
                         }
-                    }
-                    is CustomerListUiState.Success -> {
-                        CustomerListContentV3(
-                            customers = state.customers,
-                            searchQuery = searchQuery,
-                            onCustomerClick = { customerId ->
-                                navController.navigate(ScreenV3.CustomerDetail(businessId, customerId))
-                            }
-                        )
-                    }
+                    )
                 }
             }
         }
-    }
+    }  // Close Scaffold
+    }  // Close MatrixBackgroundWrapper
 }
 
 @Composable
@@ -227,7 +228,7 @@ private fun CustomerListContentV3(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MatrixBlack),
+                .background(Color.Transparent),  // was MatrixBlack — rain shows through
             contentPadding = PaddingValues(Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
@@ -251,7 +252,7 @@ private fun CustomerCardV3(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        color = MatrixSurface,
+        color = MatrixSurface.copy(alpha = 0.80f),  // was MatrixSurface — semi-transparent card
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(
@@ -333,7 +334,7 @@ private fun EmptyCustomersStateV3() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MatrixBlack)
+            .background(Color.Transparent)  // was MatrixBlack
             .padding(Spacing.lg),
         contentAlignment = Alignment.Center
     ) {

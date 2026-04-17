@@ -1,5 +1,6 @@
 package com.emul8r.bizap.ui.gui3.theme
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -8,6 +9,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -37,6 +39,19 @@ fun MatrixTheme(
 ) {
     println("🎨 MatrixTheme: Applying Matrix typography + color scheme (full Material3 integration)")
 
+    // ONE global pulse for all GUI3 pulsing effects — cards, buttons, badges, scanlines
+    // Cost: 1 InfiniteTransition for the entire GUI3 tree (replaces 18+ per-component transitions)
+    val pulse by rememberInfiniteTransition(label = "matrixGlobalPulse")
+        .animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2200, easing = EaseInOutSine),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "globalPulse"
+        )
+
     val typography = MatrixTypography()
     val colorScheme = MatrixColorScheme.darkColorScheme()
 
@@ -47,7 +62,8 @@ fun MatrixTheme(
         typography = typography
     ) {
         CompositionLocalProvider(
-            LocalTextStyle provides typography.bodyMedium
+            LocalTextStyle provides typography.bodyMedium,
+            LocalMatrixPulse provides pulse          // ← global heartbeat
         ) {
             content()
         }
@@ -55,7 +71,7 @@ fun MatrixTheme(
 }
 
 /**
-        content = content
+ * Matrix Typography
  *
  * Combines monospace fonts for code/numbers with clean sans-serif for body text.
  * Creates visual hierarchy while maintaining the Matrix aesthetic.

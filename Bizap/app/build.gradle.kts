@@ -40,7 +40,7 @@ android {
         versionCode = 3
         versionName = "1.0-stable-golden"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.google.hilt.android.testing.HiltTestRunner"
 
         /*
          * Exchange Rate API Key Configuration

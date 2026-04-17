@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -229,16 +230,15 @@ fun PaymentAnalyticsScreenV3(
                     colors = matrixTopAppBarColors()
                 )
             },
-            containerColor = MatrixBlack.copy(alpha = 0.8f)
-        ) { paddingValues ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MatrixBlack)
-                    .padding(paddingValues)
-                    .padding(Spacing.lg),
-                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-            ) {
+            containerColor = Color.Transparent
+         ) { paddingValues ->
+             LazyColumn(
+                 modifier = Modifier
+                     .fillMaxSize()
+                     .padding(paddingValues)
+                     .padding(Spacing.lg),
+                 verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+             ) {
             // ============= HEADER STATS =============
             item {
                 SectionCardMatrix(title = ">> PAYMENT METRICS") {

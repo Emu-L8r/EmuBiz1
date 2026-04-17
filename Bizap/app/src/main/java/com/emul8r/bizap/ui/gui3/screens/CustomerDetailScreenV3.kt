@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -62,17 +63,16 @@ fun CustomerDetailScreenV3(
                     colors = matrixTopAppBarColors()
                 )
             },
-            containerColor = MatrixBlack.copy(alpha = 0.8f)
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MatrixBlack)
-                    .verticalScroll(rememberScrollState())
-                    .padding(paddingValues)
-                    .padding(Spacing.lg),
-                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-            ) {
+            containerColor = Color.Transparent
+         ) { paddingValues ->
+             Column(
+                 modifier = Modifier
+                     .fillMaxSize()
+                     .verticalScroll(rememberScrollState())
+                     .padding(paddingValues)
+                     .padding(Spacing.lg),
+                 verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+             ) {
                 // Customer Contact Section
                 SectionCardMatrix(title = "CONTACT INFORMATION") {
                     DetailRowMatrix(label = "Customer ID", value = "#$customerId")

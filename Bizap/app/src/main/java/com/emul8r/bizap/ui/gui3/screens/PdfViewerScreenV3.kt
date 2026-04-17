@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,6 +48,7 @@ fun PdfViewerScreenV3(
 
     MatrixBackgroundWrapper(screenType = ScreenType.UTILITY) {
         Scaffold(
+            containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = {
@@ -79,7 +81,6 @@ fun PdfViewerScreenV3(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MatrixBlack)
                     .padding(paddingValues)
                     .padding(Spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(Spacing.lg)

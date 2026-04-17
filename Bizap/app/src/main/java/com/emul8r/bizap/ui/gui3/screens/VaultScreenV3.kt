@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -120,17 +121,16 @@ fun VaultScreenV3(
                     colors = matrixTopAppBarColors()
                 )
             },
-            containerColor = MatrixBlack.copy(alpha = 0.8f)
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MatrixBlack)
-                    .padding(paddingValues)
-                    .padding(Spacing.lg)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-            ) {
+            containerColor = Color.Transparent
+         ) { paddingValues ->
+             Column(
+                 modifier = Modifier
+                     .fillMaxSize()
+                     .padding(paddingValues)
+                     .padding(Spacing.lg)
+                     .verticalScroll(rememberScrollState()),
+                 verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+             ) {
                 MatrixCardPremium(title = ">> VAULT OVERVIEW", isPulsing = true) {
                     when (val state = uiState) {
                         is DocumentVaultUiState.Loading -> {

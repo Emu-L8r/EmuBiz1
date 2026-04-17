@@ -113,5 +113,5 @@ object MatrixColorScheme {
 }
 
 // Dark variant for brand color
-private val MatrixGreenDarkVar = Color(0xFF00AA00)
+internal val MatrixGreenDarkVar = Color(0xFF00AA00)
 

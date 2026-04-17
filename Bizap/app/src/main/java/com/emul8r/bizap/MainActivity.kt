@@ -208,6 +208,20 @@ class MainActivity : ComponentActivity() {
             val appStateViewModel: AppStateViewModel = hiltViewModel()
             val appState by appStateViewModel.appState.collectAsStateWithLifecycle()
 
+            // ✅ FIX: Handle GUI selection intent extra (for direct GUI switching from GUI3)
+            LaunchedEffect(Unit) {
+                val selectedGuiName = intent.getStringExtra("selectedGui")
+                if (selectedGuiName != null) {
+                    try {
+                        val selectedGui = GuiMode.valueOf(selectedGuiName)
+                        appStateViewModel.selectGui(selectedGui)
+                        Timber.d("MainActivity: GUI selection from intent: $selectedGui")
+                    } catch (e: IllegalArgumentException) {
+                        Timber.w("MainActivity: Invalid GUI mode in intent: $selectedGuiName")
+                    }
+                }
+            }
+
             // ✅ FIX: Prioritize SplashScreen render to avoid black screen during DataStore init
             if (appState is AppState.SplashLoading) {
                 SplashScreen()

@@ -31,15 +31,12 @@ jobs:
 
     - name: Run Unit Tests
       run: ./gradlew testDebugUnitTest --continue
-      continue-on-error: true
 
     - name: Run Lint & Code Quality
       run: ./gradlew ktlintCheck detekt
-      continue-on-error: true
 
     - name: Generate Code Coverage Report
       run: ./gradlew jacocoTestDebugUnitTestReport
-      continue-on-error: true
 
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v3

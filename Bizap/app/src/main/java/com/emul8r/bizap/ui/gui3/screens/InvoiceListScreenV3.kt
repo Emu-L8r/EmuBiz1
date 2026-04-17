@@ -1,4 +1,4 @@
-package com.emul8r.bizap.ui.gui3.screens
+﻿package com.emul8r.bizap.ui.gui3.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +29,7 @@ import com.emul8r.bizap.domain.model.Invoice
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
 import com.emul8r.bizap.ui.gui3.theme.*
+import com.emul8r.bizap.ui.gui3.util.ScreenType
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListUiStateV2
 import com.emul8r.bizap.ui.gui2.invoices.InvoiceListViewModelV2
 import com.emul8r.bizap.ui.theme.Spacing
@@ -68,13 +70,13 @@ fun InvoiceListScreenV3(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    MatrixBackground(intensity = 1.0f) {
+    MatrixBackgroundWrapper(screenType = ScreenType.LIST) {
         Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "BIZAP > INVOICES",
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "BIZAP > INVOICES",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontFamily = FontFamily.Monospace,
                             color = MatrixGreenBright,
@@ -111,30 +113,30 @@ fun InvoiceListScreenV3(
                 Icon(Icons.Default.Add, contentDescription = "Create Invoice")
             }
         },
-            containerColor = MatrixBlack.copy(alpha = 0.8f)
-        ) { paddingValues ->
-            when (val state = uiState) {
-                is InvoiceListUiStateV2.Loading -> {
-                    LoadingStateV3(modifier = Modifier.padding(paddingValues))
-                }
-                is InvoiceListUiStateV2.Error -> {
-                    ErrorStateV3(
-                        message = state.message,
-                        onRetry = { /* Retry functionality */ },
-                        modifier = Modifier.padding(paddingValues)
-                    )
-                }
-                is InvoiceListUiStateV2.Success -> {
-                    InvoiceListContentV3(
-                        invoices = state.invoices,
-                        onInvoiceClick = { invoiceId ->
-                            navController.navigate(ScreenV3.InvoiceDetail(businessId, invoiceId))
-                        },
-                        modifier = Modifier.padding(paddingValues)
-                    )
-                }
+        containerColor = Color.Transparent
+    ) { paddingValues ->
+        when (val state = uiState) {
+            is InvoiceListUiStateV2.Loading -> {
+                LoadingStateV3(modifier = Modifier.padding(paddingValues))
+            }
+            is InvoiceListUiStateV2.Error -> {
+                ErrorStateV3(
+                    message = state.message,
+                    onRetry = { /* Retry functionality */ },
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            is InvoiceListUiStateV2.Success -> {
+                InvoiceListContentV3(
+                    invoices = state.invoices,
+                    onInvoiceClick = { invoiceId ->
+                        navController.navigate(ScreenV3.InvoiceDetail(businessId, invoiceId))
+                    },
+                    modifier = Modifier.padding(paddingValues)
+                )
             }
         }
+    }
     }
 }
 
@@ -155,7 +157,7 @@ private fun InvoiceListContentV3(
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .background(MatrixBlack),
+                .background(Color.Transparent),  // was MatrixBlack — rain now shows through
             contentPadding = PaddingValues(Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
@@ -189,7 +191,7 @@ private fun InvoiceCardV3(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        color = MatrixSurface,
+        color = MatrixSurface.copy(alpha = 0.80f),  // was MatrixSurface (fully opaque) — rain peeks through
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(
@@ -282,7 +284,7 @@ private fun LoadingStateV3(modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(MatrixBlack),
+            .background(Color.Transparent),  // was MatrixBlack
         contentPadding = PaddingValues(Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
@@ -401,7 +403,7 @@ private fun EmptyStateV3(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MatrixBlack)
+            .background(Color.Transparent)  // was MatrixBlack — rain shows through
             .padding(Spacing.lg),
         contentAlignment = Alignment.Center
     ) {
@@ -466,7 +468,7 @@ private fun ErrorStateV3(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MatrixBlack)
+            .background(Color.Transparent)  // was MatrixBlack — rain shows through
             .padding(Spacing.lg),
         contentAlignment = Alignment.Center
     ) {
@@ -535,7 +537,3 @@ private fun formatAmountV3(cents: Long): String {
     val centsPart = cents % 100
     return String.format(Locale.US, "$%,d.%02d", dollars, centsPart)
 }
-
-
-
-

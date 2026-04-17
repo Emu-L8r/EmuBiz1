@@ -3,27 +3,45 @@
 package com.emul8r.bizap.ui.gui3.screens
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.automirrored.filled.Help
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -31,8 +49,8 @@ import androidx.navigation.NavHostController
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
 import com.emul8r.bizap.ui.gui3.theme.*
-import com.emul8r.bizap.ui.gui3.util.MatrixCascadeState
 import com.emul8r.bizap.ui.theme.Spacing
+import kotlinx.coroutines.delay
 import timber.log.Timber
 import androidx.compose.foundation.shape.RoundedCornerShape
 
@@ -77,6 +95,16 @@ private fun DashboardScreenV3Content(
     println("🟤B DashboardScreenV3Content START")
     var showOverflowMenu by remember { mutableStateOf(false) }
 
+    // Blinking status dot — 800ms toggle, zero animation overhead
+    var dotVisible by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(800L)
+            dotVisible = !dotVisible
+        }
+    }
+    val dot = if (dotVisible) "●" else "·"
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Background animation layer - FIRST layer, at z=0
         MatrixBackground(
@@ -100,6 +128,7 @@ private fun DashboardScreenV3Content(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Row(
@@ -108,7 +137,7 @@ private fun DashboardScreenV3Content(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "▓▓ MATRIX DASHBOARD ▓▓",
+                        "$dot MATRIX DASHBOARD $dot",
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontFamily = FontFamily.Monospace,
                             color = MatrixGreenBright,
@@ -222,6 +251,37 @@ private fun DashboardScreenV3Content(
                     color = MatrixGreen.copy(alpha = 0.25f),
                     thickness = 1.dp
                 )
+
+                // Terminal node metadata strip — contextual system info, no extra state
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "NODE_ID:BZ-${businessId.toString().padStart(4, '0')}  SYSLINK:ACTIVE",
+                        style = TextStyle(
+                            fontFamily = FontFamily.Monospace,
+                            color = MatrixGreen.copy(alpha = 0.42f),
+                            fontSize = 9.sp, letterSpacing = 1.1.sp
+                        )
+                    )
+                    Text(
+                        text = "SECURE ■  LIVE FEED",
+                        style = TextStyle(
+                            fontFamily = FontFamily.Monospace,
+                            color = MatrixGreen.copy(alpha = 0.42f),
+                            fontSize = 9.sp, letterSpacing = 1.1.sp
+                        )
+                    )
+                }
+
+                // Scrolling status ticker
+                SystemStatusTicker(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 3.dp)
+                )
             }
 
             // ===== SCROLLABLE CONTENT AREA (Pure Box/Column, NO Scaffold) =====
@@ -247,12 +307,15 @@ private fun DashboardScreenV3Content(
 
                 // GUI Switcher (for testing)
                 Spacer(modifier = Modifier.height(Spacing.lg))
+                BottomTerminalArtMatrix()
+
+                Spacer(modifier = Modifier.height(Spacing.lg))
                 GuiSwitcherMatrix(
                     onSwitchToGui1 = onSwitchToGui1,
                     onSwitchToGui2 = onSwitchToGui2
                 )
 
-                Spacer(modifier = Modifier.height(Spacing.xxl))
+                Spacer(modifier = Modifier.height(96.dp))
             }
         }
 
@@ -268,37 +331,143 @@ private fun DashboardScreenV3Content(
     }
 }
 
+// Braille skull/face — rendered alongside money bag in the terminal banner.
+private val SKULL_ASCII = """
+ ⢠⠊⣉⠒⠤⢀⡀          ⡐⢁⠴⢜⢄
+ ⡎⢸  ⠉⠐⠢⢌⠑⢄    ⡸  ⡆    ⠣⠱⡀
+ ⡇⢸        ⣀⠗  ⠉⠉⠁  ⠙⠢⠤⡀⢃⢱
+ ⡇⠘⣄⢀⠔⠉                    ⠈⠁⠘⡄
+ ⢇    ⠁                              ⠘⡄
+ ⢸            ⢀⣀⣀⡀        ⢀⣀⣀⡀  ⢣
+ ⡸        ⢴⣾⡿⠿⠽⠇        ⠘⠛⠛⠛  ⠈⢄
+⠰⡁              ⢠⠒⠢⡀⠈⠒⠊      ⡠⢄  ⡘
+ ⠱⣀          ⢀⠜    ⠇        ⢀⠔⠁  ⡏
+     ⠑⠤⢄⣀⠔⠁    ⡜        ⠊⠁  ⢀⠜""".trimIndent()
+
+// Mushroom cloud / core meltdown — _ used as space placeholder.
+private val MUSHROOM_ASCII = """
++880________________________________
+_++88________________________________
+_++88________________________________
+__+880_________________________++++_
+__+888________________________+888+_
+__++880______________________+888+__
+__++888_____+++88__________+++88__
+__++8888__+++8880++88____+++88___
+__+++8888+++8880++8888__++888____
+___++888++8888+++888888++888_____
+___++88++8888++8888888++888______
+___++++++888888888888888888______
+____++++++88888888888888888______
+____++++++++000888888888888______
+_____+++++++000088888888888______
+______+++++++00088888888888______
+_______+++++++088888888888_______
+_______+++++++088888888888_______
+________+++++++8888888888________
+________+++++++0088888888________
+________++++++0088888888_________
+________+++++0008888888__________""".trimIndent().replace('_', ' ')
+
+// ASCII money-bag art — @ used as $ placeholder to avoid Kotlin string interpolation conflicts.
+// replace('@', '$') restores the original characters at runtime.
+private val MONEY_BAG_ASCII = """
+         @@@@@@@@@@@@@@@@@@@@@@@
+       @@@@   @@@@@@@@@@@@@@@@@@@@@
+      @@@@      @@@@@@@@@@@@@@@@@@@@@@
+    @@@@@        @@@@@@@@@@@@@@@@@@@@@@@
+   @@@@@          @@@@@@@@@@@@@@@@@@@@@@@
+  @@@@@            @@@@@@@@@@@@@@@@@@@@@@@
+ @@@@@@            @@@@@@@@@@@@@@@@@@@@@@@@
+ @@@@@@           @@@@@@@@@@@           @@@@@@
+ @@...@@@@@       @@@.@@@.@@@         @@@@@
+ @@@@@@@@      @@@@   @   @@@@      @@@@@@@@
+ @@@@@@@@@@@@@@@@@   @@@   @@@@@@@@@@@@@@@@@
+ @@@.@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@.o@@
+ @@@  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  @@@
+  @@@  @'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  o@@@
+  '@o  @@  @@'@@@@@@@@@@@@@'@@  @@       o@@
+    @@o@    @@  '@'@@'@@'@@  @@      @   o@@
+     @@@o@  @    @@   @@   @@     @@  o@
+      '@@@@O@    @@    @@   @@     o@@@
+         '@o@@   @@   @@   @@   o@@@
+           '@@@@o@o@o@o@o@o@o@o@@@@""".trimIndent().replace('@', '$')
+
 /**
- * Welcome Banner with Matrix Aesthetic - PULSING PREMIUM CARD
- * ✅ IMMERSION: Responds to cascading background visibility for reactive feel
+ * Welcome Banner — skull art left, ASCII money-bag right.
+ * Scan stripe sweeps across art via global pulse. Tagline types in on first render.
  */
 @Composable
 fun WelcomeMatrixBanner() {
-    // ✅ IMMERSION: Read cascade state for reactive opacity animation
-    val cascadeVisibility = MatrixCascadeState.cascadeVisibility.value
+    val pulse = LocalMatrixPulse.current
 
-    val bannerAlpha by animateFloatAsState(
-        targetValue = 0.8f + (cascadeVisibility * 0.2f),  // Opacity ranges 0.8-1.0 based on cascade
-        animationSpec = tween(300),
-        label = "bannerOpacity"
-    )
-
-    Box(modifier = Modifier.alpha(bannerAlpha)) {
-        MatrixCardPremium(title = ">> WELCOME BACK", isPulsing = true) {
-            Text(
-                text = "The Matrix awaits your command.",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    color = MatrixGreen.copy(alpha = 0.9f)
-                )
-            )
-
-            Text(
-                text = "Follow the green line to manage your invoices.",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MatrixGreen.copy(alpha = 0.7f)
-                )
-            )
+    // Typewriter reveal — runs once, terminates (no ongoing animation cost)
+    val fullMsg = "INVOICING SYSTEM ONLINE // ALL NODES ACTIVE"
+    var revealed by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        for (i in 1..fullMsg.length) {
+            delay(38L)
+            revealed = i
         }
+    }
+    val displayMsg = fullMsg.take(revealed) + if (revealed < fullMsg.length) "█" else ""
+
+    MatrixCardPremium(title = ">> BIZAP TERMINAL", isPulsing = true) {
+        // ASCII art with scan stripe overlaid
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                // Left: braille face
+                Text(
+                    text = SKULL_ASCII,
+                    modifier = Modifier.weight(0.45f),
+                    style = TextStyle(
+                        fontFamily = FontFamily.Monospace,
+                        color = MatrixGreenBright.copy(alpha = 0.80f),
+                        fontSize = 6.sp,
+                        lineHeight = 7.5.sp
+                    )
+                )
+                // Right: money bag
+                Text(
+                    text = MONEY_BAG_ASCII,
+                    modifier = Modifier.weight(0.55f),
+                    style = TextStyle(
+                        fontFamily = FontFamily.Monospace,
+                        color = MatrixGreen.copy(alpha = 0.88f),
+                        fontSize = 6.sp,
+                        lineHeight = 7.5.sp
+                    )
+                )
+            }
+            // Scan stripe — sweeps bidirectionally over art driven by global pulse (no extra transition)
+            Canvas(modifier = Modifier.matchParentSize()) {
+                val sweepY = pulse * size.height
+                val band = 40f
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, Color(0xFF00FF00).copy(alpha = 0.07f), Color.Transparent),
+                        startY = (sweepY - band).coerceAtLeast(0f),
+                        endY = (sweepY + band).coerceAtMost(size.height)
+                    ),
+                    topLeft = Offset(0f, (sweepY - band).coerceAtLeast(0f)),
+                    size = Size(size.width, (band * 2f).coerceAtMost(size.height))
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = displayMsg,
+            style = TextStyle(
+                fontFamily = FontFamily.Monospace,
+                color = MatrixGreenBright.copy(alpha = 0.72f),
+                fontSize = 9.sp,
+                letterSpacing = 1.5.sp
+            )
+        )
     }
 }
 
@@ -320,12 +489,13 @@ fun KeyMetricsMatrix() {
 }
 
 /**
- * Quick Actions Section - EXPANDED FOR PHASE 2.3
- * ✅ Row 1: NEW INVOICE | NEW CUSTOMER (core actions, highlighted)
- * ✅ Row 2: VIEW INVOICES | VIEW CUSTOMERS (navigation)
- * ✅ Row 3: PAYMENTS | ANALYTICS (secondary actions)
- * ✅ Row 4: REPORTS | SECURITY VAULT (management & secure access)
- * ✅ Row 5: TEMPLATES | HELP (quick preset management & support)
+ * Quick Actions Section — vector icons, terminal-cell capsules, category accent colors.
+ *
+ * Color language:
+ *   MatrixGreen   — primary create/document actions
+ *   CyanAccent    — people/network actions
+ *   MatrixWarning — financial/security actions
+ *   MatrixDarkGreen — reporting/utility
  */
 @Composable
 fun QuickActionsMatrix(
@@ -333,202 +503,192 @@ fun QuickActionsMatrix(
     businessId: Long
 ) {
     MatrixCardPremium(title = ">> ACTIONS", isPulsing = false) {
-        // ===== ROW 1: CORE ACTIONS (NEW INVOICE | NEW CUSTOMER) =====
-        // ✅ Highlighted with isHighlight=true, larger visual weight
+
+        // ROW 1: CORE CREATE ACTIONS
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
+            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             GlowingMatrixButton(
-                text = "📋 NEW INVOICE",
+                text = "NEW INVOICE",
+                icon = Icons.Default.Description,
+                accentColor = MatrixGreen,
                 onClick = { navController.navigate(ScreenV3.CreateInvoice(businessId)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight(),
-                isHighlight = true  // ✅ Core action emphasized
+                modifier = Modifier.weight(1f).wrapContentHeight(),
+                isHighlight = true
             )
-
             GlowingMatrixButton(
-                text = "👤 NEW CUSTOMER",
+                text = "NEW CUSTOMER",
+                icon = Icons.Default.PersonAdd,
+                accentColor = CyanAccent,
                 onClick = {
                     Timber.d("GUI3: Navigate to create customer from dashboard")
                     navController.navigate(ScreenV3.CreateCustomer(businessId))
                 },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight(),
-                isHighlight = true  // ✅ Core action emphasized
+                modifier = Modifier.weight(1f).wrapContentHeight(),
+                isHighlight = true
             )
         }
 
-        // ===== ROW 2: NAVIGATION (VIEW INVOICES | VIEW CUSTOMERS) =====
-        // ✅ Standard buttons, equal weight
+        // ROW 2: NAVIGATION
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
+            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             GlowingMatrixButton(
-                text = "📄 INVOICES",
+                text = "INVOICES",
+                icon = Icons.Default.Folder,
+                accentColor = MatrixGreen,
                 onClick = { navController.navigate(ScreenV3.Invoices(businessId)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight()
+                modifier = Modifier.weight(1f).wrapContentHeight()
             )
-
             GlowingMatrixButton(
-                text = "👥 CUSTOMERS",
+                text = "CUSTOMERS",
+                icon = Icons.Default.People,
+                accentColor = CyanAccent,
                 onClick = { navController.navigate(ScreenV3.Customers(businessId)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight()
+                modifier = Modifier.weight(1f).wrapContentHeight()
             )
         }
 
-        // ===== ROW 3: SECONDARY ACTIONS (PAYMENTS | ANALYTICS) =====
-        // ✅ Standard buttons, supporting features
+        // ROW 3: FINANCIAL OPERATIONS
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
+            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             GlowingMatrixButton(
-                text = "💳 PAYMENTS",
+                text = "PAYMENTS",
+                icon = Icons.Default.Payment,
+                accentColor = MatrixWarning,
                 onClick = { navController.navigate(ScreenV3.PaymentTracking(businessId)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight()
+                modifier = Modifier.weight(1f).wrapContentHeight()
             )
-
             GlowingMatrixButton(
-                text = "📊 ANALYTICS",
+                text = "ANALYTICS",
+                icon = Icons.Default.BarChart,
+                accentColor = CyanAccent,
                 onClick = { navController.navigate(ScreenV3.RevenueAnalytics(businessId)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight()
+                modifier = Modifier.weight(1f).wrapContentHeight()
             )
         }
 
-        // ===== ROW 4: MANAGEMENT (REPORTS | SECURITY VAULT) =====
-        // ✅ Advanced features for power users
+        // ROW 4: REPORTING & SECURITY
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
+            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             GlowingMatrixButton(
-                text = "📈 REPORTS",
+                text = "REPORTS",
+                icon = Icons.Default.Assessment,
+                accentColor = MatrixDarkGreen,
                 onClick = { navController.navigate(ScreenV3.Reports(businessId)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight()
+                modifier = Modifier.weight(1f).wrapContentHeight()
             )
-
             GlowingMatrixButton(
-                text = "🔐 SECURITY VAULT",
+                text = "VAULT",
+                icon = Icons.Default.Lock,
+                accentColor = MatrixWarning,
                 onClick = { navController.navigate(ScreenV3.SecurityVault(businessId)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight(),
-                isHighlight = false
+                modifier = Modifier.weight(1f).wrapContentHeight()
             )
         }
 
-        // ===== ROW 5: UTILITIES (TEMPLATES | HELP) =====
-        // ✅ Template management for pre-filled invoice items
+        // ROW 5: UTILITIES
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
+            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             GlowingMatrixButton(
-                text = "🧩 TEMPLATES",
+                text = "TEMPLATES",
+                icon = Icons.Default.Dashboard,
+                accentColor = MatrixDarkGreen,
                 onClick = { navController.navigate(ScreenV3.PrefilledItems(businessId)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight()
+                modifier = Modifier.weight(1f).wrapContentHeight()
             )
-
             GlowingMatrixButton(
-                text = "❓ HELP",
+                text = "HELP",
+                icon = Icons.AutoMirrored.Filled.Help,
+                accentColor = MatrixGreen.copy(alpha = 0.70f),
                 onClick = { navController.navigate(ScreenV3.Help(businessId)) },
-                modifier = Modifier
-                    .weight(1f)
-                    .wrapContentHeight()
+                modifier = Modifier.weight(1f).wrapContentHeight()
             )
         }
     }
 }
 
 /**
- * Recent Activity Section - GLOWING STATUS BADGES
+ * Recent Activity Section — live feed aesthetic.
+ * Timestamps, alternating row brightness, LIVE indicator.
  */
 @Composable
 fun RecentActivityMatrix() {
-    MatrixCardPremium(title = ">> RECENT ACTIVITY", isPulsing = false) {
-        // Activity item 1
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "Invoice #INV-001 created",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MatrixGreen.copy(alpha = 0.8f)
-                )
-            )
-            GlowingStatusBadge(
-                status = "Created",
-                style = MatrixStatusStyle.SUCCESS
-            )
-        }
+    // Blinking LIVE dot inside card
+    var liveDot by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        while (true) { delay(600L); liveDot = !liveDot }
+    }
+    val liveIndicator = if (liveDot) "● LIVE" else "○ LIVE"
 
-        // Activity item 2 - spacing handled by parent Column
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "Payment received from Acme Corp",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MatrixGreen.copy(alpha = 0.8f)
-                )
-            )
-            FormattedAmountMatrix(
-                amount = "+$5,000.00",
-                isPositive = true
-            )
-        }
+    val activityRows = listOf(
+        Triple("[14:22]", "Invoice #INV-001 created", MatrixStatusStyle.SUCCESS to "Created"),
+        Triple("[14:18]", "Payment received — Acme Corp", null to "+\$5,000.00"),
+        Triple("[13:55]", "Invoice #INV-002 overdue", MatrixStatusStyle.ERROR to "Overdue")
+    )
 
-        // Activity item 3 - spacing handled by parent Column
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "Invoice #INV-002 overdue",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MatrixGreen.copy(alpha = 0.8f)
-                )
-            )
-            GlowingStatusBadge(
-                status = "Overdue",
-                style = MatrixStatusStyle.ERROR
-            )
+    MatrixCardPremium(title = ">> RECENT ACTIVITY  $liveIndicator", isPulsing = false) {
+        activityRows.forEachIndexed { i, (time, label, badgeOrAmount) ->
+            val (badgeStyle, badgeText) = badgeOrAmount
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        if (i % 2 == 0) MatrixGreen.copy(alpha = 0.04f) else Color.Transparent,
+                        RoundedCornerShape(4.dp)
+                    )
+                    .padding(vertical = 4.dp, horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = time,
+                        style = TextStyle(
+                            fontFamily = FontFamily.Monospace,
+                            color = MatrixGreen.copy(alpha = 0.45f),
+                            fontSize = 9.sp
+                        )
+                    )
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MatrixGreen.copy(alpha = 0.85f),
+                            fontFamily = FontFamily.Monospace
+                        )
+                    )
+                }
+                if (badgeStyle != null) {
+                    GlowingStatusBadge(status = badgeText, style = badgeStyle)
+                } else {
+                    Text(
+                        text = badgeText,
+                        style = TextStyle(
+                            fontFamily = FontFamily.Monospace,
+                            color = MatrixGreenBright,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    )
+                }
+            }
         }
     }
 }
@@ -536,37 +696,169 @@ fun RecentActivityMatrix() {
 /**
  * GUI Switcher for Testing - GLOWING BUTTONS
  */
+/**
+ * Scrolling terminal-style system status ticker.
+ * Uses its own LinearEasing InfiniteTransition (directional scroll cannot use oscillating global pulse).
+ * Cost: 1 InfiniteTransition per screen it appears on (not per-component).
+ */
+@Composable
+private fun SystemStatusTicker(modifier: Modifier = Modifier) {
+    val scrollOffset by rememberInfiniteTransition(label = "ticker")
+        .animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(22000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "tickerScroll"
+        )
+    val msg = "  ENCRYPT:AES-256  ◈  SYSLINK:ACTIVE  ◈  UPTIME:14D  ◈  NODES:3  ◈  SYNC:OK  ◈  TXNS:1,247  ◈  LATENCY:4ms  ◈  SECURE:YES  ◈  "
+    Box(
+        modifier = modifier
+            .height(13.dp)
+            .clipToBounds()
+    ) {
+        Text(
+            text = msg.repeat(3),
+            modifier = Modifier.offset { IntOffset(x = (-scrollOffset * 1400f).toInt(), y = 0) },
+            style = TextStyle(
+                fontFamily = FontFamily.Monospace,
+                color = MatrixGreen.copy(alpha = 0.36f),
+                fontSize = 9.sp, letterSpacing = 0.7.sp
+            ),
+            maxLines = 1, softWrap = false
+        )
+    }
+}
+
+/**
+ * Core Meltdown art — amber/warning treatment, rare glitch jitter.
+ */
+@Composable
+fun BottomTerminalArtMatrix() {
+    // Rare glitch jitter: random offset for ~50ms every 2-5 seconds
+    var glitchX by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(2000L + (kotlin.random.Random.nextLong(0, 3000)))
+            glitchX = kotlin.random.Random.nextInt(-3, 4)
+            delay(50L)
+            glitchX = 0
+        }
+    }
+
+    MatrixCardPremium(title = ">> CORE MELTDOWN", isPulsing = false, borderColor = MatrixWarning) {
+        // Warning header
+        Text(
+            text = "⚠  ANOMALY DETECTED — SYSTEM INSTABILITY",
+            style = TextStyle(
+                fontFamily = FontFamily.Monospace,
+                color = MatrixError.copy(alpha = 0.85f),
+                fontSize = 9.sp,
+                letterSpacing = 1.sp,
+                fontWeight = FontWeight.Bold
+            )
+        )
+        Text(
+            text = MUSHROOM_ASCII,
+            style = TextStyle(
+                fontFamily = FontFamily.Monospace,
+                color = MatrixWarning.copy(alpha = 0.70f),
+                fontSize = 7.sp,
+                lineHeight = 8.sp
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(x = glitchX.dp)
+        )
+    }
+}
+
+/**
+ * Mode selector tiles — GUI1/2/3 as distinct OS-level operating mode entries.
+ */
 @Composable
 fun GuiSwitcherMatrix(
     onSwitchToGui1: () -> Unit,
     onSwitchToGui2: () -> Unit
 ) {
-    MatrixCardPremium(title = ">> EXPERIENCE SWITCH", isPulsing = false) {
-        // Text label with automatic spacing from MatrixCardPremium's Column
-        Text(
-            "Choose your user experience:",
-            style = MaterialTheme.typography.bodySmall.copy(
-                color = MatrixGreen.copy(alpha = 0.7f)
-            )
+    MatrixCardPremium(title = ">> SELECT OPERATING MODE", isPulsing = false) {
+        ModeTileMatrix(
+            modeName = "GUI1  ·  CLASSIC",
+            descriptor = "LEGACY ACTIVITIES  //  MATERIAL2",
+            status = "STANDBY",
+            isActive = false,
+            onClick = onSwitchToGui1
         )
+        ModeTileMatrix(
+            modeName = "GUI2  ·  MODERN",
+            descriptor = "COMPOSE  //  MATERIAL3",
+            status = "STANDBY",
+            isActive = false,
+            onClick = onSwitchToGui2
+        )
+        ModeTileMatrix(
+            modeName = "GUI3  ·  MATRIX",
+            descriptor = "CYBERPUNK TERMINAL  //  ACTIVE SESSION",
+            status = "ACTIVE",
+            isActive = true,
+            onClick = {}
+        )
+    }
+}
 
-        // Buttons automatically spaced by parent Column (Spacing.md)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-        ) {
-            GlowingMatrixButton(
-                text = "GUI1",
-                onClick = onSwitchToGui1,
-                modifier = Modifier.weight(1f)
+@Composable
+private fun ModeTileMatrix(
+    modeName: String,
+    descriptor: String,
+    status: String,
+    isActive: Boolean,
+    onClick: () -> Unit
+) {
+    val pulse = LocalMatrixPulse.current
+    val tileColor = if (isActive) MatrixGreenBright else MatrixGreen
+    val borderAlpha = if (isActive) 0.45f + pulse * 0.45f else 0.28f
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp)
+            .border(1.dp, tileColor.copy(alpha = borderAlpha), RoundedCornerShape(6.dp))
+            .background(
+                if (isActive) MatrixGreen.copy(alpha = 0.08f) else MatrixBlack.copy(alpha = 0.30f),
+                RoundedCornerShape(6.dp)
             )
-
-            GlowingMatrixButton(
-                text = "GUI2",
-                onClick = onSwitchToGui2,
-                modifier = Modifier.weight(1f)
+            .then(if (!isActive) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = modeName,
+                style = TextStyle(
+                    fontFamily = FontFamily.Monospace,
+                    color = if (isActive) MatrixGreenBright else MatrixGreen.copy(alpha = 0.80f),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+            )
+            Text(
+                text = descriptor,
+                style = TextStyle(
+                    fontFamily = FontFamily.Monospace,
+                    color = MatrixGreen.copy(alpha = 0.50f),
+                    fontSize = 9.sp,
+                    letterSpacing = 0.7.sp
+                )
             )
         }
+        GlowingStatusBadge(
+            status = status,
+            style = if (isActive) MatrixStatusStyle.SUCCESS else MatrixStatusStyle.NEUTRAL
+        )
     }
 }
 

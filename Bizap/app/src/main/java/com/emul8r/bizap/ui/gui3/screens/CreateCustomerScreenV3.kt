@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -62,6 +63,7 @@ fun CreateCustomerScreenV3(
 
     MatrixBackgroundWrapper(screenType = ScreenType.FORM) {
         Scaffold(
+            containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = {
@@ -88,7 +90,6 @@ fun CreateCustomerScreenV3(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MatrixBlack)
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
                     .padding(Spacing.lg),

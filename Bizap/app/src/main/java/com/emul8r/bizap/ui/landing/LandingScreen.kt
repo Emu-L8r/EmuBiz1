@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.R
+import com.emul8r.bizap.BuildConfig
 /**
  * Landing screen that lets the user choose between GUI1 (legacy) and GUI2 (new).
  * Shown only when no GUI preference has been saved yet — or when the user explicitly
@@ -204,76 +205,78 @@ fun LandingScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // GUI3 — Matrix Experience (NEW!)
-                ElevatedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(elevation = 4.dp),
-                    onClick = onSelectGui3,
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = Color(0xFF111111)
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(28.dp)) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "🟢 Matrix Experience",
-                                style = MaterialTheme.typography.headlineSmall.copy(
-                                    fontSize = 22.sp,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = Color(0xFF00DD00),
-                                modifier = Modifier.weight(1f)
-                            )
-                            Badge(
-                                modifier = Modifier.padding(start = 8.dp),
-                                containerColor = Color(0xFF00FF00)
+                // GUI3 — Matrix Experience (NEW!) — Debug only for v1.0
+                if (BuildConfig.DEBUG) {
+                    ElevatedCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(elevation = 4.dp),
+                        onClick = onSelectGui3,
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = Color(0xFF111111)
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(28.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    "NEW",
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.Black
+                                    text = "🟢 Matrix Experience",
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        fontSize = 22.sp,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = Color(0xFF00DD00),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Badge(
+                                    modifier = Modifier.padding(start = 8.dp),
+                                    containerColor = Color(0xFF00FF00)
+                                ) {
+                                    Text(
+                                        "NEW",
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.Black
+                                        )
                                     )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Cyberpunk elegance · Immersive UI · Premium feel",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontSize = 16.sp
+                                ),
+                                color = Color(0xFF00DD00).copy(alpha = 0.85f),
+                                lineHeight = 24.sp
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Button(
+                                onClick = onSelectGui3,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF00DD00),
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text(
+                                    "Enter The Matrix",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    modifier = Modifier.padding(vertical = 8.dp)
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Cyberpunk elegance · Immersive UI · Premium feel",
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontSize = 16.sp
-                            ),
-                            color = Color(0xFF00DD00).copy(alpha = 0.85f),
-                            lineHeight = 24.sp
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Button(
-                            onClick = onSelectGui3,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF00DD00),
-                                contentColor = Color.White
-                            )
-                        ) {
-                            Text(
-                                "Enter The Matrix",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
 
                 // GUI1 — legacy option
                 OutlinedCard(

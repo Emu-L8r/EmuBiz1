@@ -45,6 +45,7 @@ import com.emul8r.bizap.ui.gui3.screens.HelpScreenV3
 import com.emul8r.bizap.ui.gui3.screens.PdfViewerScreenV3
 import com.emul8r.bizap.ui.gui3.screens.SecurityVaultScreenV3
 import com.emul8r.bizap.ui.gui3.screens.VaultScreenV3
+import com.emul8r.bizap.ui.gui3.screens.MatrixDebugPanelScreenV3
 import com.emul8r.bizap.ui.gui3.theme.MatrixTheme
 import com.emul8r.bizap.ui.gui3.theme.MatrixGreen
 import com.emul8r.bizap.ui.gui3.theme.MatrixBlack
@@ -111,22 +112,22 @@ class MatrixGUIMainActivity : AppCompatActivity() {
                         businessId = businessId,
                         onSwitchToGui1 = {
                             Timber.d("Switching to GUI1 from GUI3")
-                            landingViewModel.resetMode()
-                            // Return to MainActivity which will show Landing screen
+                            // Navigate directly to MainActivity with GUI1 selection (no landing screen)
                             startActivity(
                                 Intent(this@MatrixGUIMainActivity, MainActivity::class.java)
                                     .putExtra("businessId", businessId)
+                                    .putExtra("selectedGui", com.emul8r.bizap.ui.landing.GuiMode.GUI1.name)
                                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                             )
                             finish()
                         },
                         onSwitchToGui2 = {
                             Timber.d("Switching to GUI2 from GUI3")
-                            landingViewModel.resetMode()
-                            // Return to MainActivity which will show Landing screen
+                            // Navigate directly to MainActivity with GUI2 selection (no landing screen)
                             startActivity(
                                 Intent(this@MatrixGUIMainActivity, MainActivity::class.java)
                                     .putExtra("businessId", businessId)
+                                    .putExtra("selectedGui", com.emul8r.bizap.ui.landing.GuiMode.GUI2.name)
                                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                             )
                             finish()
@@ -358,13 +359,22 @@ fun MatrixGUINavigation(
              )
          }
 
-         // Security Vault (info-rich GUI3 vault)
-         composable<ScreenV3.SecurityVault> { backStackEntry ->
-             val route: ScreenV3.SecurityVault = backStackEntry.toRoute()
-             SecurityVaultScreenV3(
-                 businessId = route.businessId,
-                 navController = navController
-             )
-         }
-     }
- }
+          // Security Vault (info-rich GUI3 vault)
+          composable<ScreenV3.SecurityVault> { backStackEntry ->
+              val route: ScreenV3.SecurityVault = backStackEntry.toRoute()
+              SecurityVaultScreenV3(
+                  businessId = route.businessId,
+                  navController = navController
+              )
+          }
+
+          // Matrix Debug Panel (debug builds only, Settings → Visual Effects → Debug Panel)
+          composable<ScreenV3.MatrixDebugPanel> { backStackEntry ->
+              val route: ScreenV3.MatrixDebugPanel = backStackEntry.toRoute()
+              MatrixDebugPanelScreenV3(
+                  businessId = route.businessId,
+                  onDismiss = { navController.popBackStack() }
+              )
+          }
+      }
+  }

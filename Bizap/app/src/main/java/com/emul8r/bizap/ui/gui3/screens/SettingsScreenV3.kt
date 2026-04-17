@@ -1,6 +1,5 @@
-package com.emul8r.bizap.ui.gui3.screens
+﻿package com.emul8r.bizap.ui.gui3.screens
 
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,24 +8,29 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dagger.hilt.android.EntryPointAccessors
 import com.emul8r.bizap.data.config.FeatureFlag
-import com.emul8r.bizap.data.config.FeatureFlagManager
-import com.emul8r.bizap.ui.gui3.components.*
+import com.emul8r.bizap.ui.gui3.components.MatrixButton
+import com.emul8r.bizap.ui.gui3.components.SectionCardMatrix
+import com.emul8r.bizap.ui.gui3.components.GlowingMatrixButton
+import com.emul8r.bizap.ui.gui3.components.DetailRowMatrix
+import com.emul8r.bizap.ui.gui3.components.MatrixBackgroundWrapper
 import com.emul8r.bizap.ui.gui3.theme.*
 import com.emul8r.bizap.ui.gui3.navigation.ScreenV3
+import com.emul8r.bizap.ui.gui3.util.ScreenType
+import com.emul8r.bizap.ui.gui3.util.Gui3ServiceEntryPoint
 import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.theme.Spacing
 import kotlinx.coroutines.launch
@@ -54,29 +58,49 @@ fun SettingsScreenV3(
     var invoiceRemindersEnabled by remember { mutableStateOf(true) }
     var overdueAlertsEnabled by remember { mutableStateOf(true) }
 
-    val flagManager: FeatureFlagManager = hiltViewModel()
+    val appContext = LocalContext.current.applicationContext
+    val flagManager = remember(appContext) {
+        EntryPointAccessors.fromApplication(appContext, Gui3ServiceEntryPoint::class.java)
+            .featureFlagManager()
+    }
     val scope = rememberCoroutineScope()
+
+    // ✅ NEW: Inject AppStateViewModel for GUI mode persistence
+    val appStateViewModel = androidx.hilt.navigation.compose.hiltViewModel<com.emul8r.bizap.ui.state.AppStateViewModel>()
 
     val canvasEnabled by flagManager
         .observeFlag(FeatureFlag.MATRIX_CANVAS_RENDERER)
         .collectAsStateWithLifecycle(false)
 
-    MatrixBackground(intensity = 0.8f) {
+    // ✅ NEW: Observe individual effect flags
+    val rainEffectEnabled by flagManager
+        .observeFlag(FeatureFlag.EFFECT_RAIN)
+        .collectAsStateWithLifecycle(true)
+
+    val glitchEffectEnabled by flagManager
+        .observeFlag(FeatureFlag.EFFECT_GLITCH)
+        .collectAsStateWithLifecycle(true)
+
+    val scanlinesEffectEnabled by flagManager
+        .observeFlag(FeatureFlag.EFFECT_SCANLINES)
+        .collectAsStateWithLifecycle(true)
+
+    MatrixBackgroundWrapper(screenType = ScreenType.SETTINGS) {
         Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        ">> SETTINGS",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontFamily = FontFamily.Monospace,
-                            color = MatrixGreenBright,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            letterSpacing = 1.sp
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            ">> SETTINGS",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontFamily = FontFamily.Monospace,
+                                color = MatrixGreenBright,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                letterSpacing = 1.sp
+                            )
                         )
-                    )
-                },
+                    },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -89,17 +113,16 @@ fun SettingsScreenV3(
                 colors = matrixTopAppBarColors()
             )
         },
-        containerColor = MatrixBlack.copy(alpha = 0.8f)
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MatrixBlack)
-                    .verticalScroll(rememberScrollState())
-                    .padding(paddingValues)
-                    .padding(Spacing.lg),
-                verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-            ) {
+        containerColor = Color.Transparent
+     ) { paddingValues ->
+         Column(
+             modifier = Modifier
+                 .fillMaxSize()
+                 .verticalScroll(rememberScrollState())
+                 .padding(paddingValues)
+                 .padding(Spacing.lg),
+             verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+         ) {
             // ============= APPEARANCE SECTION =============
             SectionCardMatrix(title = ">> APPEARANCE") {
                 // GUI Mode Selection
@@ -124,7 +147,15 @@ fun SettingsScreenV3(
                                 selected = selectedGuiMode == GuiMode.GUI1,
                                 onClick = {
                                     selectedGuiMode = GuiMode.GUI1
-                                    onGuiModeChanged(GuiMode.GUI1)
+                                    // ✅ NEW: Use AppStateViewModel to persist + auto-navigate
+                                    appStateViewModel.selectGui(GuiMode.GUI1)
+                                    navController.context.startActivity(
+                                        android.content.Intent(navController.context, com.emul8r.bizap.MainActivity::class.java).apply {
+                                            putExtra("businessId", businessId)
+                                            putExtra("selectedGui", GuiMode.GUI1.name)
+                                            addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                        }
+                                    )
                                 }
                             )
                             .padding(horizontal = Spacing.md),
@@ -135,7 +166,15 @@ fun SettingsScreenV3(
                             selected = selectedGuiMode == GuiMode.GUI1,
                             onClick = {
                                 selectedGuiMode = GuiMode.GUI1
-                                onGuiModeChanged(GuiMode.GUI1)
+                                // ✅ NEW: Use AppStateViewModel to persist + auto-navigate
+                                appStateViewModel.selectGui(GuiMode.GUI1)
+                                navController.context.startActivity(
+                                    android.content.Intent(navController.context, com.emul8r.bizap.MainActivity::class.java).apply {
+                                        putExtra("businessId", businessId)
+                                        putExtra("selectedGui", GuiMode.GUI1.name)
+                                        addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                    }
+                                )
                             },
                             colors = RadioButtonDefaults.colors(
                                 selectedColor = MatrixGreen,
@@ -159,7 +198,15 @@ fun SettingsScreenV3(
                                 selected = selectedGuiMode == GuiMode.GUI2,
                                 onClick = {
                                     selectedGuiMode = GuiMode.GUI2
-                                    onGuiModeChanged(GuiMode.GUI2)
+                                    // ✅ NEW: Use AppStateViewModel to persist + auto-navigate
+                                    appStateViewModel.selectGui(GuiMode.GUI2)
+                                    navController.context.startActivity(
+                                        android.content.Intent(navController.context, com.emul8r.bizap.MainActivity::class.java).apply {
+                                            putExtra("businessId", businessId)
+                                            putExtra("selectedGui", GuiMode.GUI2.name)
+                                            addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                        }
+                                    )
                                 }
                             )
                             .padding(horizontal = Spacing.md),
@@ -170,7 +217,15 @@ fun SettingsScreenV3(
                             selected = selectedGuiMode == GuiMode.GUI2,
                             onClick = {
                                 selectedGuiMode = GuiMode.GUI2
-                                onGuiModeChanged(GuiMode.GUI2)
+                                // ✅ NEW: Use AppStateViewModel to persist + auto-navigate
+                                appStateViewModel.selectGui(GuiMode.GUI2)
+                                navController.context.startActivity(
+                                    android.content.Intent(navController.context, com.emul8r.bizap.MainActivity::class.java).apply {
+                                        putExtra("businessId", businessId)
+                                        putExtra("selectedGui", GuiMode.GUI2.name)
+                                        addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                    }
+                                )
                             },
                             colors = RadioButtonDefaults.colors(
                                 selectedColor = MatrixGreen,
@@ -213,7 +268,7 @@ fun SettingsScreenV3(
                             )
                         )
                         Text(
-                            "Matrix (GUI3) - Premium ✨",
+                            "Matrix (GUI3) - Premium Γ£¿",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = MatrixGreen,
                                 fontWeight = FontWeight.SemiBold
@@ -437,6 +492,7 @@ fun SettingsScreenV3(
                         )
                     )
 
+                    // ✅ NEW: Canvas Renderer Toggle
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -459,25 +515,95 @@ fun SettingsScreenV3(
                         )
                     }
 
-                    // Debug Panel Link (Debug builds only)
-                    val context = LocalContext.current
-                    val isDebugBuild = remember {
-                        try {
-                            context.packageManager.getApplicationInfo(context.packageName, 0).flags and 2 != 0
-                        } catch (e: Exception) {
-                            false
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(Spacing.sm))
 
-                    if (isDebugBuild) {
-                        GlowingMatrixButton(
-                            text = "[DEBUG] OPEN EFFECTS PANEL",
-                            onClick = {
-                                navController.navigate(ScreenV3.MatrixDebugPanel(businessId))
-                            },
-                            modifier = Modifier.fillMaxWidth()
+                    Text(
+                        "Individual Effects",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MatrixGreen.copy(alpha = 0.7f),
+                            fontFamily = FontFamily.Monospace
+                        )
+                    )
+
+                    // ✅ NEW: Digital Rain Toggle
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.md),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Digital Rain",
+                            color = MatrixGreen,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Switch(
+                            checked = rainEffectEnabled,
+                            onCheckedChange = { enabled ->
+                                scope.launch {
+                                    flagManager.setEnabled(FeatureFlag.EFFECT_RAIN, enabled)
+                                }
+                            }
                         )
                     }
+
+                    // ✅ NEW: Glitch Effect Toggle
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.md),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Glitch Effect",
+                            color = MatrixGreen,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Switch(
+                            checked = glitchEffectEnabled,
+                            onCheckedChange = { enabled ->
+                                scope.launch {
+                                    flagManager.setEnabled(FeatureFlag.EFFECT_GLITCH, enabled)
+                                }
+                            }
+                        )
+                    }
+
+                    // ✅ NEW: Scanlines Effect Toggle
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.md),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Scanline Effect",
+                            color = MatrixGreen,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Switch(
+                            checked = scanlinesEffectEnabled,
+                            onCheckedChange = { enabled ->
+                                scope.launch {
+                                    flagManager.setEnabled(FeatureFlag.EFFECT_SCANLINES, enabled)
+                                }
+                            }
+                        )
+                    }
+
+                    // Effects Panel Link
+                    val context = LocalContext.current
+
+                    GlowingMatrixButton(
+                        text = "⚙ EFFECTS PANEL",
+                        onClick = {
+                            navController.navigate(ScreenV3.MatrixDebugPanel(businessId))
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
 
@@ -488,18 +614,18 @@ fun SettingsScreenV3(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        "Access your document vault (Coming Soon)",
+                        "Access your searchable document vault and archive summaries.",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = MatrixGreen.copy(alpha = 0.7f)
                         )
                     )
 
                     GlowingMatrixButton(
-                        text = "📁 OPEN VAULT",
-                        onClick = { /* TODO: Implement in next phase */ },
+                        text = "≡ƒôü OPEN VAULT",
+                        onClick = { navController.navigate(ScreenV3.Vault(businessId)) },
                         modifier = Modifier.fillMaxWidth(),
                         isHighlight = true,
-                        enabled = false  // Disabled for now - vault integration coming
+                        enabled = true
                     )
                 }
             }
@@ -534,8 +660,14 @@ fun SettingsScreenV3(
             }
 
             Spacer(modifier = Modifier.height(Spacing.xxl))
-            }
         }
     }
 }
+
+}
+
+
+
+
+
 

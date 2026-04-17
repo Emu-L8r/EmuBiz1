@@ -125,24 +125,27 @@ fun MatrixBackgroundWrapper(
     val intensity = screenType.animationIntensity
     Timber.d("MatrixBackgroundWrapper: ${screenType.description()}")
 
-    // Background layer with animations (z-index: 0f)
-    MatrixBackground(
-        intensity = intensity,
-        enableGlitch = enableGlitch,
-        modifier = modifier
-            .fillMaxSize()
-            .zIndex(MatrixAnimationConfig.Z_INDEX_BACKGROUND)
-    ) {
-        // Empty - we render content below
-    }
+    // ← PARENT BOX - Critical for proper z-index layering
+    Box(modifier = modifier.fillMaxSize()) {
+        // Background layer with animations (z-index: 0f)
+        MatrixBackground(
+            intensity = intensity,
+            enableGlitch = enableGlitch,
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(MatrixAnimationConfig.Z_INDEX_BACKGROUND)
+        ) {
+            // Empty - animations render here
+        }
 
-    // Content layer (z-index: 1f) - This is where Scaffold and UI elements go
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .zIndex(MatrixAnimationConfig.Z_INDEX_CONTENT)
-    ) {
-        content()
+        // Content layer (z-index: 1f) - This is where Scaffold and UI elements go
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(MatrixAnimationConfig.Z_INDEX_CONTENT)
+        ) {
+            content()
+        }
     }
 }
 

@@ -1,16 +1,22 @@
 package com.emul8r.bizap.ui.gui3.util
 
+import android.content.SharedPreferences
 import android.os.Build
+import androidx.core.content.edit
 import com.emul8r.bizap.utils.FirebaseEventTracker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import timber.log.Timber
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 
 /**
  * Monitors frame time and automatically adapts pipeline density
  * to maintain 60 FPS, even on aging devices.
+ *
+ * ✅ NEW: Also persists manual user adjustments (from Effects Panel sliders)
+ * to SharedPreferences so they survive navigation and app restart.
  *
  * ## Adaptive Strategy
  *
@@ -44,13 +50,24 @@ import javax.inject.Singleton
  */
 @Singleton
 class AdaptivePerformanceManager @Inject constructor(
-    private val eventTracker: FirebaseEventTracker?
+    private val eventTracker: FirebaseEventTracker?,
+    @Named("matrix_effects_prefs") private val prefs: SharedPreferences
 ) {
+    // ✅ Initialize with placeholder, then update in init
     private val _adaptiveConfig = MutableStateFlow(MatrixBackgroundConfig())
     val adaptiveConfig: StateFlow<MatrixBackgroundConfig> = _adaptiveConfig
 
     private var consecutiveJankFrames = 0
     private var totalAdaptations = 0
+
+    init {
+        // ✅ NEW: Load persisted config from SharedPreferences on init
+        val loadedConfig = loadConfigFromPreferences()
+        _adaptiveConfig.value = loadedConfig
+        Timber.d("🔄 Loaded effects config from prefs: density=%.2f glitch=%.2f".format(
+            loadedConfig.rainDensity, loadedConfig.glitchIntensity
+        ))
+    }
 
     companion object {
         private const val JANK_THRESHOLD_MS = 16.67  // 60 FPS target
@@ -58,6 +75,15 @@ class AdaptivePerformanceManager @Inject constructor(
         private const val CONSECUTIVE_JANK_LIMIT = 3  // Trigger adaptation on 3 consecutive
         private const val DENSITY_DECAY = 0.8f  // Reduce density by 20%
         private const val GLITCH_DECAY = 0.7f  // Reduce glitch by 30% (more noticeable)
+
+        // ✅ NEW: SharedPreferences keys with prefix
+        private const val PREFS_PREFIX = "matrix_effects_"
+        private const val KEY_RAIN_DENSITY = "${PREFS_PREFIX}rain_density"
+        private const val KEY_RAIN_SPEED = "${PREFS_PREFIX}rain_speed"
+        private const val KEY_GLITCH_INTENSITY = "${PREFS_PREFIX}glitch_intensity"
+        private const val KEY_SCANLINE_ALPHA = "${PREFS_PREFIX}scanline_alpha"
+        private const val KEY_ENABLE_ADAPTIVE_PERF = "${PREFS_PREFIX}enable_adaptive_perf"
+        private const val KEY_DEBUG_LOGGING = "${PREFS_PREFIX}debug_logging"
     }
 
     /**
@@ -125,6 +151,60 @@ class AdaptivePerformanceManager @Inject constructor(
             oldGlitch = current.glitchIntensity,
             newGlitch = adapted.glitchIntensity
         )
+
+        // ✅ NEW: Persist auto-adapted config to prefs so it survives restart
+        persistConfigToPreferences(adapted)
+    }
+
+    /**
+     * ✅ NEW: Update config with user manual adjustments from Effects Panel.
+     * Persists to SharedPreferences and emits to StateFlow.
+     *
+     * @param config New configuration (from slider adjustments)
+     */
+    fun updateConfig(config: MatrixBackgroundConfig) {
+        _adaptiveConfig.value = config
+        persistConfigToPreferences(config)
+        Timber.i("✅ Effects config saved: density=%.2f glitch=%.2f scanlines=%.3f".format(
+            config.rainDensity, config.glitchIntensity, config.scanlineAlpha
+        ))
+    }
+
+    /**
+     * ✅ NEW: Persist config to SharedPreferences.
+     */
+    private fun persistConfigToPreferences(config: MatrixBackgroundConfig) {
+        try {
+            prefs.edit {
+                putFloat(KEY_RAIN_DENSITY, config.rainDensity)
+                putFloat(KEY_RAIN_SPEED, config.rainSpeed)
+                putFloat(KEY_GLITCH_INTENSITY, config.glitchIntensity)
+                putFloat(KEY_SCANLINE_ALPHA, config.scanlineAlpha)
+                putBoolean(KEY_ENABLE_ADAPTIVE_PERF, config.enableAdaptivePerf)
+                putBoolean(KEY_DEBUG_LOGGING, config.debugLogging)
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to persist effects config to prefs")
+        }
+    }
+
+    /**
+     * ✅ NEW: Load config from SharedPreferences (or defaults if not present).
+     */
+    private fun loadConfigFromPreferences(): MatrixBackgroundConfig {
+        return try {
+            MatrixBackgroundConfig(
+                rainDensity = prefs.getFloat(KEY_RAIN_DENSITY, 0.8f),
+                rainSpeed = prefs.getFloat(KEY_RAIN_SPEED, 1.0f),
+                glitchIntensity = prefs.getFloat(KEY_GLITCH_INTENSITY, 0.5f),
+                scanlineAlpha = prefs.getFloat(KEY_SCANLINE_ALPHA, 0.05f),
+                enableAdaptivePerf = prefs.getBoolean(KEY_ENABLE_ADAPTIVE_PERF, false),
+                debugLogging = prefs.getBoolean(KEY_DEBUG_LOGGING, false)
+            )
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to load effects config from prefs; using defaults")
+            MatrixBackgroundConfig()
+        }
     }
 
     /**
@@ -168,10 +248,12 @@ class AdaptivePerformanceManager @Inject constructor(
      * Reset adaptation state (for session boundaries or testing).
      */
     fun reset() {
-        _adaptiveConfig.value = MatrixBackgroundConfig()
+        val defaultConfig = MatrixBackgroundConfig()
+        _adaptiveConfig.value = defaultConfig
+        persistConfigToPreferences(defaultConfig)
         consecutiveJankFrames = 0
         totalAdaptations = 0
-        Timber.d("Adaptive performance manager reset")
+        Timber.d("🔄 Adaptive performance manager + prefs reset to defaults")
     }
 
     /**
@@ -180,20 +262,19 @@ class AdaptivePerformanceManager @Inject constructor(
      * @return String describing current configuration and jank state
      */
     fun snapshotState(): String = """
-        ╔════ ADAPTIVE PERFORMANCE STATE ════╗
-        ║ Device: ${Build.MODEL}
-        ║ Total Adaptations: $totalAdaptations
-        ║ Consecutive Jank Frames: $consecutiveJankFrames
-        ║ Current Density: ${_adaptiveConfig.value.rainDensity.format(2)}
-        ║ Current Glitch: ${_adaptiveConfig.value.glitchIntensity.format(2)}
-        ║ Current Scanlines: ${_adaptiveConfig.value.scanlineAlpha.format(3)}
-        ║ Significantly Adapted: ${isSignificantlyAdapted()}
-        ╚════════════════════════════════════╝
-    """.trimIndent()
+         ╔════ ADAPTIVE PERFORMANCE STATE ════╗
+         ║ Device: ${Build.MODEL}
+         ║ Total Adaptations: $totalAdaptations
+         ║ Consecutive Jank Frames: $consecutiveJankFrames
+         ║ Current Density: ${_adaptiveConfig.value.rainDensity.format(2)}
+         ║ Current Glitch: ${_adaptiveConfig.value.glitchIntensity.format(2)}
+         ║ Current Scanlines: ${_adaptiveConfig.value.scanlineAlpha.format(3)}
+         ║ Significantly Adapted: ${isSignificantlyAdapted()}
+         ╚════════════════════════════════════╝
+     """.trimIndent()
 }
 
 /**
  * Extension function for clean float formatting.
  */
 internal fun Float.format(digits: Int): String = "%.${digits}f".format(this)
-
