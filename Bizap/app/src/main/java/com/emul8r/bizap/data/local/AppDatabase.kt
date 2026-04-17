@@ -12,6 +12,7 @@ import com.emul8r.bizap.data.local.migration.MIGRATION_AddSignatureField
 import com.emul8r.bizap.data.local.migration.MIGRATION_42_43
 import com.emul8r.bizap.data.local.migrations.MIGRATION_44_45
 import com.emul8r.bizap.data.local.migrations.Migration_45_46
+import com.emul8r.bizap.data.local.database.MIGRATION_46_47
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTimeTypeConverter
@@ -38,8 +39,9 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
  * | 42 | 43 | Add customization layers | migration/Migration_42_43.kt ⚠️ |
  * | 44 | 45 | Add invoice numbering | migrations/Migration_44_45.kt ✅ |
  * | 45 | 46 | Add payment media attachments | migrations/Migration_45_46.kt ✅ |
+ * | 46 | 47 | Add query optimization indices (Phase 2B) | database/Migrations.kt ✅ |
  *
- * **⚠️ Future Action:** Rename the `migration/` folder to `migrations/` and rename
+ * **Current Version:** 47 Rename the `migration/` folder to `migrations/` and rename
  * MIGRATION_* classes to Migration_*_* for consistency (post-launch cleanup).
  *
  * ## Naming Convention
@@ -114,7 +116,7 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
         com.emul8r.bizap.domain.model.InvoiceSettings::class,
         DashboardPreferencesEntity::class
     ],
-    version = 46,  // v45→46: Add payment media attachments for proof-of-payment feature
+    version = 47,  // v46→47: Add query optimization indices (Phase 2B)
     exportSchema = true
 )
 @TypeConverters(
