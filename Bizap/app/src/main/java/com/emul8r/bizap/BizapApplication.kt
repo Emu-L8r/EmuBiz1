@@ -1,6 +1,7 @@
 package com.emul8r.bizap
 
 import android.app.Application
+import android.os.StrictMode
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.*
 import com.emul8r.bizap.data.local.InvoiceDao
@@ -44,6 +45,11 @@ class BizapApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+
+        // 🔍 INITIALIZE STRICTMODE (Detect main thread disk ops in DEBUG)
+        if (BuildConfig.DEBUG) {
+            initializeStrictMode()
+        }
 
         // 🪵 INITIALIZE LOGGING FRAMEWORK (Fast, synchronous)
         initializeLogging()
@@ -95,6 +101,18 @@ class BizapApplication : Application(), Configuration.Provider {
         } catch (e: Exception) {
             Timber.e(e, "❌ Async Initialization Failed")
         }
+    }
+
+    private fun initializeStrictMode() {
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder()
+                .detectDiskReads()
+                .detectDiskWrites()
+                .detectNetwork()
+                .penaltyLog()  // Logs violations, doesn't crash
+                .build()
+        )
+        Timber.d("🔍 StrictMode enabled (DEBUG): Monitoring disk/network operations")
     }
 
     private fun initializeLogging() {
