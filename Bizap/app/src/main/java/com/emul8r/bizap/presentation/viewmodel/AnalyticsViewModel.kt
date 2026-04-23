@@ -175,7 +175,7 @@ class AnalyticsViewModel @Inject constructor(
      */
     val averageDaysToPaymentTrend: StateFlow<List<DaysToPayMetric>> =
         activeBusinessId.flatMapLatest { businessId ->
-            analyticsDao.observeAverageDaysToPayTrend(businessId)
+            analyticsDao.observeAverageDaysToPayTrend(businessId, System.currentTimeMillis() - THIRTY_DAYS_MS)
                 .catch { error ->
                     Timber.e(error, "Error loading average days to payment trend")
                     emit(emptyList())

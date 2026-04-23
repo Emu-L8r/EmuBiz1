@@ -11,6 +11,7 @@ import com.emul8r.bizap.data.local.entities.InvoiceAnalyticsSnapshot
 import com.emul8r.bizap.data.local.entities.InvoiceEntity
 import com.emul8r.bizap.data.model.CustomerRevenue
 import com.emul8r.bizap.data.model.DailyRevenue
+import com.emul8r.bizap.data.model.DaysToPayMetric
 import com.emul8r.bizap.data.model.InvoiceVelocity
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import kotlinx.coroutines.flow.Flow
@@ -39,7 +40,7 @@ interface AnalyticsDao {
         SELECT
             :businessId as businessId,
             ((date / 86400000) * 86400000) as date,
-            COALESCE(SUM(CASE WHEN status IN ('SENT', 'OVERDUE', 'PARTIALLY_PAID', 'PAID') THEN totalAmount ELSE 0 END), 0) as invoicedCents,
+            COALESCE(SUM(totalAmount), 0) as invoicedCents,
             COALESCE(SUM(amountPaid), 0) as paidCents,
             COUNT(*) as invoiceCount,
             COUNT(CASE WHEN status = 'PAID' THEN 1 END) as paidCount
@@ -52,6 +53,9 @@ interface AnalyticsDao {
     """)
     fun observeDailyRevenue(businessId: Long, startMs: Long): Flow<List<DailyRevenue>>
 
+    /**
+     * Customer revenue aggregation for concentration analysis.
+     */
     @Query("""
         SELECT
             customerId,
@@ -65,10 +69,12 @@ interface AnalyticsDao {
         AND isActive = 1
         GROUP BY customerId
         ORDER BY totalRevenueCents DESC
-        LIMIT :limit
     """)
-    fun observeTopCustomers(businessId: Long, limit: Int = 5): Flow<List<CustomerRevenue>>
+    fun observeCustomerRevenue(businessId: Long): Flow<List<CustomerRevenue>>
 
+    /**
+     * Current average days-to-payment across all paid invoices.
+     */
     @Query("""
         SELECT COALESCE(
             AVG(CAST(
@@ -105,30 +111,27 @@ interface AnalyticsDao {
         AND status = 'PAID'
         AND updatedAt > 0
         AND date > 0
+        AND date >= :startMs
         GROUP BY (date / 86400000)
         ORDER BY (date / 86400000) DESC
         LIMIT 30
     """)
-    fun observeAverageDaysToPayTrend(businessId: Long): Flow<List<com.emul8r.bizap.data.model.DaysToPayMetric>>
+    fun observeAverageDaysToPayTrend(businessId: Long, startMs: Long): Flow<List<DaysToPayMetric>>
 
-    @Query("""
-        SELECT COALESCE(SUM(totalAmount - amountPaid), 0)
-        FROM invoices
-        WHERE businessProfileId = :businessId
-        AND status IN ('SENT', 'PARTIALLY_PAID', 'OVERDUE')
-        AND isActive = 1
-    """)
-    fun observeTotalOutstanding(businessId: Long): Flow<Long>
-
+    /**
+     * Total revenue collected (paid + partially paid).
+     */
     @Query("""
         SELECT COALESCE(SUM(amountPaid), 0)
         FROM invoices
         WHERE businessProfileId = :businessId
-        AND status IN ('PAID', 'PARTIALLY_PAID')
         AND isActive = 1
     """)
     fun observeTotalCollected(businessId: Long): Flow<Long>
 
+    /**
+     * Total invoiced revenue for paid/partially-paid invoices.
+     */
     @Query("""
         SELECT COALESCE(SUM(totalAmount), 0)
         FROM invoices
@@ -162,20 +165,13 @@ interface AnalyticsDao {
         AND createdAt >= :startMs
         AND isActive = 1
         GROUP BY (createdAt / 86400000)
-        ORDER BY createdAt DESC
-        LIMIT 30
+        ORDER BY (createdAt / 86400000) DESC
     """)
     fun observeInvoicingVelocity(businessId: Long, startMs: Long): Flow<List<InvoiceVelocity>>
 
-    @Query("""
-        SELECT COUNT(*)
-        FROM invoices
-        WHERE businessProfileId = :businessId
-        AND status = 'DRAFT'
-        AND isActive = 1
-    """)
-    fun observeDraftInvoiceCount(businessId: Long): Flow<Int>
-
+    /**
+     * Count overdue invoices.
+     */
     @Query("""
         SELECT COUNT(*)
         FROM invoices
@@ -189,7 +185,53 @@ interface AnalyticsDao {
         currentTimeMs: Long = System.currentTimeMillis()
     ): Flow<Int>
 
-    // ==================== INVOICE ANALYTICS ====================
+    /**
+     * Total outstanding amount across unpaid invoices.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(totalAmount - amountPaid), 0)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND status IN ('SENT', 'PARTIALLY_PAID', 'OVERDUE')
+        AND isActive = 1
+    """)
+    fun observeTotalOutstanding(businessId: Long): Flow<Long>
+
+    /**
+     * Count of draft invoices.
+     */
+    @Query("""
+        SELECT COUNT(*)
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND status = 'DRAFT'
+        AND isActive = 1
+    """)
+    fun observeDraftInvoiceCount(businessId: Long): Flow<Int>
+
+    /**
+     * Top customers by revenue with limit.
+     */
+    @Query("""
+        SELECT
+            customerId,
+            customerName,
+            COALESCE(SUM(amountPaid), 0) as totalRevenueCents,
+            COUNT(*) as invoiceCount,
+            MAX(dueDate) as lastPaymentDate
+        FROM invoices
+        WHERE businessProfileId = :businessId
+        AND status = 'PAID'
+        AND isActive = 1
+        GROUP BY customerId
+        ORDER BY totalRevenueCents DESC
+        LIMIT :limit
+    """)
+    fun observeTopCustomers(businessId: Long, limit: Int): Flow<List<CustomerRevenue>>
+
+    // ═════════════════════════════════════════════════════════════════
+    // INVOICE ANALYTICS SNAPSHOTS
+    // ═════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertInvoiceSnapshot(snapshot: InvoiceAnalyticsSnapshot)
@@ -206,7 +248,7 @@ interface AnalyticsDao {
     @Query("SELECT * FROM invoice_analytics_snapshots WHERE businessProfileId = :businessId AND status = :status")
     suspend fun getInvoicesByStatus(businessId: Long, status: String): List<InvoiceAnalyticsSnapshot>
 
-    @Query("SELECT SUM(totalAmount) as total FROM invoice_analytics_snapshots WHERE businessProfileId = :businessId AND isPaid = 1")
+    @Query("SELECT COALESCE(SUM(totalAmount), 0.0) FROM invoice_analytics_snapshots WHERE businessProfileId = :businessId AND isPaid = 1")
     suspend fun getTotalPaidRevenue(businessId: Long): Double?
 
     @Query("SELECT COALESCE(SUM(totalAmount), 0) FROM invoice_analytics_snapshots WHERE businessProfileId = :businessId AND isPaid = 1")

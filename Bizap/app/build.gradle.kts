@@ -40,7 +40,7 @@ android {
         versionCode = 3
         versionName = "1.0-stable-golden"
 
-        testInstrumentationRunner = "com.google.hilt.android.testing.HiltTestRunner"
+        testInstrumentationRunner = "dagger.hilt.android.testing.HiltTestRunner"
 
         /*
          * Exchange Rate API Key Configuration
@@ -357,6 +357,7 @@ dependencies {
     testImplementation(libs.androidx.paging.common.ktx)
     testImplementation(libs.robolectric)
     testImplementation(kotlin("test"))
+    testImplementation(kotlin("reflect"))
 
     // Additional test dependencies for Robolectric and Android testing
     testImplementation("androidx.test:core:1.5.0")

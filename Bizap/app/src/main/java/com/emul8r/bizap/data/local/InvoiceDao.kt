@@ -226,14 +226,14 @@ interface InvoiceDao {
     fun observeOutstandingAmount(businessId: Long): Flow<Long>
 
     /**
-     * Revenue trend for last 30 days by currency.
-     * OPTIMIZATION: Uses BETWEEN with millisecond timestamps instead of DATE() function
+     * Revenue trend for last 30 days.
+     * OPTIMIZATION (Phase 2B): Uses BETWEEN with epoch-ms arithmetic instead of DATE()
      * Performance: Before 250ms p99 (full table scan) → After <100ms p99 (uses index)
      */
     @Query("""
         SELECT
-            DATE(date/1000, 'unixepoch') as dateString,
-            COALESCE(SUM(CASE WHEN status IN ('PAID', 'PARTIALLY_PAID') THEN amountPaid ELSE 0 END), 0) as revenue,
+            DATE(date / 1000, 'unixepoch') as dateString,
+            COALESCE(SUM(amountPaid), 0) as revenue,
             COUNT(*) as invoiceCount,
             COUNT(CASE WHEN status = 'PAID' THEN 1 END) as paidCount,
             currencyCode
@@ -241,8 +241,8 @@ interface InvoiceDao {
         WHERE businessProfileId = :businessId
         AND date >= :thirtyDaysAgoMs
         AND date <= :nowMs
-        GROUP BY dateString, currencyCode
-        ORDER BY dateString DESC
+        GROUP BY (date / 86400000), currencyCode
+        ORDER BY date DESC
     """)
     fun observeLast30DaysRevenueTrend(
         businessId: Long,
@@ -250,34 +250,42 @@ interface InvoiceDao {
         nowMs: Long
     ): Flow<List<DailyRevenueTrend>>
 
-    // ==================== HEALTH CHECK QUERIES ====================
-
     @Query("SELECT COUNT(*) FROM invoices")
     suspend fun count(): Int
 
-    @Query("SELECT COUNT(DISTINCT customerId) FROM invoices")
+    @Query("SELECT COUNT(DISTINCT customerId) FROM invoices WHERE isActive = 1")
     suspend fun countDistinctCustomers(): Int
 
-    // ==================== VALIDATION TEST QUERY ====================
+    /**
+     * Aggregate payment metrics directly from the invoices table.
+     * Used by PaymentAnalyticsRepositoryImpl as source of truth.
+     */
+    data class PaymentMetricsResult(
+        val totalInvoices: Int,
+        val paidInvoices: Int,
+        val unpaidInvoices: Int,
+        val totalAmount: Long,
+        val paidAmount: Long,
+        val totalOutstanding: Long,
+        val collectionRate: Double
+    )
 
     @Query("""
         SELECT
             COUNT(*) as totalInvoices,
-            SUM(CASE WHEN status = 'PAID' THEN 1 ELSE 0 END) as paidInvoices,
-            SUM(CASE WHEN status IN ('SENT', 'PARTIALLY_PAID', 'OVERDUE') THEN 1 ELSE 0 END) as unpaidInvoices,
-            SUM(totalAmount) as totalAmount,
-            SUM(amountPaid) as paidAmount,
-            SUM(totalAmount - amountPaid) as totalOutstanding,
-            CASE
-                WHEN SUM(totalAmount) > 0 THEN ROUND((SUM(amountPaid) / CAST(SUM(totalAmount) AS REAL)) * 100.0, 1)
-                ELSE 0.0
-            END as collectionRate
+            COUNT(CASE WHEN status = 'PAID' THEN 1 END) as paidInvoices,
+            COUNT(CASE WHEN status NOT IN ('PAID') THEN 1 END) as unpaidInvoices,
+            COALESCE(SUM(totalAmount), 0) as totalAmount,
+            COALESCE(SUM(amountPaid), 0) as paidAmount,
+            COALESCE(SUM(CASE WHEN status NOT IN ('PAID') THEN (totalAmount - amountPaid) ELSE 0 END), 0) as totalOutstanding,
+            CASE WHEN SUM(totalAmount) > 0
+                THEN (CAST(SUM(amountPaid) AS REAL) / CAST(SUM(totalAmount) AS REAL)) * 100.0
+                ELSE 0.0 END as collectionRate
         FROM invoices
-        WHERE businessProfileId = :businessId
-          AND isActive = 1
-          AND status IN ('PAID', 'PARTIALLY_PAID', 'SENT', 'OVERDUE')
+        WHERE businessProfileId = :businessId AND isActive = 1
     """)
-    suspend fun calculatePaymentMetrics(businessId: Long): CalculatedMetrics?
+    suspend fun calculatePaymentMetrics(businessId: Long): PaymentMetricsResult?
+
 
     @Query("""
         SELECT COALESCE(SUM(totalAmount), 0) / 100.0

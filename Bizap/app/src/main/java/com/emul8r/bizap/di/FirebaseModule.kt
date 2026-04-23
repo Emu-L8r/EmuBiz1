@@ -1,8 +1,10 @@
 package com.emul8r.bizap.di
 
 import android.content.Context
+import com.emul8r.bizap.analytics.AppMonitoring
 import com.emul8r.bizap.utils.FirebaseEventTracker
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
@@ -118,5 +120,21 @@ object FirebaseModule {
         config.setConfigSettingsAsync(settings)
         return config
     }
+
+    /**
+     * Provides [AppMonitoring] — the unified production observability layer.
+     *
+     * Records navigation errors, feature flag changes, performance metrics,
+     * security events, and app lifecycle signals to Firebase Analytics +
+     * Crashlytics. Both dependencies are nullable — app functions without Firebase.
+     *
+     * See: [AppMonitoring] and docs/RUNBOOK.md for alert thresholds.
+     */
+    @Provides
+    @Singleton
+    fun provideAppMonitoring(
+        analytics: FirebaseAnalytics?,
+        crashlytics: FirebaseCrashlytics?
+    ): AppMonitoring = AppMonitoring(analytics, crashlytics)
 }
 

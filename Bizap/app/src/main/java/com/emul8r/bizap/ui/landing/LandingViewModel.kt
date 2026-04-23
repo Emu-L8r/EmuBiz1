@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.emul8r.bizap.analytics.AppMonitoring
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -26,7 +27,8 @@ private val KEY_FIRST_LAUNCH_WARNING_SHOWN = booleanPreferencesKey("first_launch
  */
 @HiltViewModel
 class LandingViewModel @Inject constructor(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val appMonitoring: AppMonitoring
 ) : ViewModel() {
 
     /** Currently selected GUI mode; null while loading from DataStore. */
@@ -49,6 +51,7 @@ class LandingViewModel @Inject constructor(
     /** Persist the user's GUI selection. */
     fun selectMode(mode: GuiMode) {
         Timber.d("LandingViewModel: user selected $mode")
+        appMonitoring.recordGuiSelected(mode.name)
         viewModelScope.launch {
             dataStore.edit { prefs ->
                 prefs[KEY_GUI_MODE] = mode.name

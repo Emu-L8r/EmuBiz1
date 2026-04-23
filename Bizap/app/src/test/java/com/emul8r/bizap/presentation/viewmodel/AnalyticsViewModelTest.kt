@@ -36,7 +36,7 @@ class AnalyticsViewModelTest : BaseUnitTest() {
         every { analyticsDao.observeDailyRevenue(businessId, any()) } returns flowOf(emptyList())
         every { analyticsDao.observeTopCustomers(businessId, any()) } returns flowOf(emptyList())
         every { analyticsDao.observeAverageDaysToPayment(businessId) } returns flowOf(0.0)
-        every { analyticsDao.observeAverageDaysToPayTrend(businessId) } returns flowOf(emptyList())
+        every { analyticsDao.observeAverageDaysToPayTrend(businessId, any()) } returns flowOf(emptyList())
         every { analyticsDao.observeInvoicingVelocity(businessId, any()) } returns flowOf(emptyList())
 
         viewModel = AnalyticsViewModel(analyticsDao, businessContextRepository)
@@ -154,7 +154,7 @@ class AnalyticsViewModelTest : BaseUnitTest() {
         every { analyticsDao.observeDailyRevenue(newBusinessId, any()) } returns flowOf(emptyList())
         every { analyticsDao.observeTopCustomers(newBusinessId, any()) } returns flowOf(emptyList())
         every { analyticsDao.observeAverageDaysToPayment(newBusinessId) } returns flowOf(0.0)
-        every { analyticsDao.observeAverageDaysToPayTrend(newBusinessId) } returns flowOf(emptyList())
+        every { analyticsDao.observeAverageDaysToPayTrend(newBusinessId, any()) } returns flowOf(emptyList())
         every { analyticsDao.observeInvoicingVelocity(newBusinessId, any()) } returns flowOf(emptyList())
 
         val vm = AnalyticsViewModel(analyticsDao, businessContextRepository)

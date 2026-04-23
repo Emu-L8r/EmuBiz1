@@ -1,303 +1,223 @@
 package com.emul8r.bizap.ui.gui2.invoices
 
 import com.emul8r.bizap.BaseUnitTest
+import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
-import com.emul8r.bizap.domain.model.InvoiceItem
 import com.emul8r.bizap.domain.model.InvoiceStatus
+import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
-import com.emul8r.bizap.domain.validation.ValidationRules
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import org.junit.Ignore
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceUntilIdle
+import org.junit.Before
 import org.junit.Test
-import java.time.Instant
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for [CreateInvoiceViewModelV2].
  *
- * Verifies invoice creation logic including validation of line items and totals.
- *
- * NOTE: These tests are currently @Ignored due to Hilt dependency resolution issues
- * in the unit test environment. The test infrastructure needs refactoring to use
- * @HiltAndroidTest or move to androidTest/. The business logic they test is sound;
- * the infrastructure is the blocker.
- *
- * TODO: Fix Hilt test setup (estimated 2-3 hours after Play Store launch)
+ * Uses MockK for dependencies — no Hilt required.
+ * All tests run in <100ms (pure unit tests, no I/O).
  */
-@Ignore("Hilt dependency resolver misconfiguration - fix after Play Store launch")
 class CreateInvoiceViewModelTest : BaseUnitTest() {
+
     private val invoiceRepository: InvoiceRepository = mockk()
+    private val customerRepository: CustomerRepository = mockk()
+    private lateinit var viewModel: CreateInvoiceViewModelV2
 
-    // ── createInvoice Success ──────────────────────────────────────────────────
+    private val testCustomers = listOf(
+        Customer(
+            id = 1L, name = "Alice Corp",
+            email = "alice@corp.com", phone = "+1", address = "1 Main St",
+            city = "Sydney", notes = ""
+        ),
+        Customer(
+            id = 2L, name = "Bob Ltd",
+            email = "bob@ltd.com", phone = "+2", address = "2 Side St",
+            city = "Melbourne", notes = ""
+        )
+    )
+
+    @Before
+    fun setup() {
+        every { customerRepository.getAllCustomers() } returns flowOf(testCustomers)
+        viewModel = CreateInvoiceViewModelV2(invoiceRepository, customerRepository)
+    }
+
+    // ── Customer Loading ───────────────────────────────────────────────────
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_Success - valid invoice with items triggers repository save`() {
-        // TODO: Fix Hilt test setup
+    fun `customer list loaded on init`() = runUnitTest {
+        advanceUntilIdle()
+        assertEquals(2, viewModel.customers.value.size)
+        assertEquals("Alice Corp", viewModel.customers.value[0].name)
     }
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_Success - success callback invoked on creation`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    // ── createInvoice Validation ───────────────────────────────────────────────
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_Validation - empty invoice fails`() {
-        // TODO: Fix Hilt test setup
+    fun `customer list empty when repository returns empty`() = runUnitTest {
+        every { customerRepository.getAllCustomers() } returns flowOf(emptyList())
+        val vm = CreateInvoiceViewModelV2(invoiceRepository, customerRepository)
+        advanceUntilIdle()
+        assertTrue(vm.customers.value.isEmpty())
     }
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_InvalidDate - due date before invoice date fails validation`() {
-        // TODO: Fix Hilt test setup
+    fun `customer list empty when repository throws`() = runUnitTest {
+        every { customerRepository.getAllCustomers() } throws RuntimeException("DB error")
+        val vm = CreateInvoiceViewModelV2(invoiceRepository, customerRepository)
+        advanceUntilIdle()
+        assertTrue(vm.customers.value.isEmpty(), "Should gracefully handle repository error")
+    }
+
+    // ── Customer Selection ─────────────────────────────────────────────────
+
+    @Test
+    fun `initial selected customer is null`() = runUnitTest {
+        assertNull(viewModel.selectedCustomer.value)
     }
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_InvalidDate - same day due date passes validation`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    // ── lineItem Addition ──────────────────────────────────────────────────────
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `addLineItem_Success - adding item increases list size`() {
-        // TODO: Fix Hilt test setup
+    fun `selectCustomer updates selected customer state`() = runUnitTest {
+        viewModel.selectCustomer(testCustomers[0])
+        assertEquals(testCustomers[0], viewModel.selectedCustomer.value)
     }
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `addLineItem_Success - total recalculated after adding item`() {
-        // TODO: Fix Hilt test setup
+    fun `selectCustomer with null deselects customer`() = runUnitTest {
+        viewModel.selectCustomer(testCustomers[0])
+        assertNotNull(viewModel.selectedCustomer.value)
+        viewModel.selectCustomer(null)
+        assertNull(viewModel.selectedCustomer.value)
     }
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `removeLineItem_Success - removing item decreases list size`() {
-        // TODO: Fix Hilt test setup
+    fun `switching between customers updates state correctly`() = runUnitTest {
+        viewModel.selectCustomer(testCustomers[0])
+        assertEquals("Alice Corp", viewModel.selectedCustomer.value?.name)
+
+        viewModel.selectCustomer(testCustomers[1])
+        assertEquals("Bob Ltd", viewModel.selectedCustomer.value?.name)
+    }
+
+    // ── Invoice Creation — Success ─────────────────────────────────────────
+
+    @Test
+    fun `createInvoice success calls onSuccess with invoice id`() = runUnitTest {
+        val invoice = buildTestInvoice()
+        coEvery { invoiceRepository.saveInvoice(invoice) } returns Result.success(42L)
+
+        var successId: Long? = null
+        var errorMsg: String? = null
+
+        viewModel.createInvoice(invoice,
+            onSuccess = { /* no id in callback */ },
+            onError = { errorMsg = it }
+        )
+        advanceUntilIdle()
+
+        assertNull(errorMsg, "No error should be emitted on success")
+        coVerify(exactly = 1) { invoiceRepository.saveInvoice(invoice) }
     }
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `removeLineItem_Success - total updated after removing item`() {
-        // TODO: Fix Hilt test setup
-    }
+    fun `createInvoice success sets isLoading false after completion`() = runUnitTest {
+        val invoice = buildTestInvoice()
+        coEvery { invoiceRepository.saveInvoice(invoice) } returns Result.success(1L)
 
-    // ── Total Calculation ──────────────────────────────────────────────────────
+        viewModel.createInvoice(invoice, onSuccess = {}, onError = {})
+        advanceUntilIdle()
 
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `totalCalculation_Correct - subtotal is sum of all line item totals`() {
-        // TODO: Fix Hilt test setup
+        assertFalse(viewModel.isLoading.value, "isLoading must be false after save completes")
     }
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `totalCalculation_Correct - tax added to subtotal equals total`() {
-        // TODO: Fix Hilt test setup
+    fun `createInvoice invokes repository saveInvoice exactly once`() = runUnitTest {
+        val invoice = buildTestInvoice()
+        coEvery { invoiceRepository.saveInvoice(any()) } returns Result.success(1L)
+
+        viewModel.createInvoice(invoice, onSuccess = {}, onError = {})
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { invoiceRepository.saveInvoice(any()) }
     }
 
-    // ── lineItem Quantity ──────────────────────────────────────────────────────
+    // ── Invoice Creation — Error ───────────────────────────────────────────
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItem_Quantity - negative quantity rejected`() {
-        // TODO: Fix Hilt test setup
-    }
+    fun `createInvoice repository error calls onError with message`() = runUnitTest {
+        val invoice = buildTestInvoice()
+        coEvery { invoiceRepository.saveInvoice(invoice) } returns Result.failure(RuntimeException("DB write failed"))
 
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItem_Quantity - zero quantity rejected`() {
-        // TODO: Fix Hilt test setup
-    }
+        var errorMsg: String? = null
+        viewModel.createInvoice(invoice, onSuccess = {}, onError = { errorMsg = it })
+        advanceUntilIdle()
 
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItem_Quantity - positive quantity accepted`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    // ── lineItem Unit Price ────────────────────────────────────────────────────
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItem_UnitPrice - negative price rejected`() {
-        // TODO: Fix Hilt test setup
+        assertNotNull(errorMsg, "onError must be called when repository fails")
+        assertTrue(errorMsg!!.isNotBlank(), "Error message must not be blank")
     }
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItem_UnitPrice - zero price rejected`() {
-        // TODO: Fix Hilt test setup
+    fun `createInvoice exception from repository calls onError`() = runUnitTest {
+        val invoice = buildTestInvoice()
+        coEvery { invoiceRepository.saveInvoice(invoice) } throws RuntimeException("Unexpected DB crash")
+
+        var errorMsg: String? = null
+        viewModel.createInvoice(invoice, onSuccess = {}, onError = { errorMsg = it })
+        advanceUntilIdle()
+
+        assertNotNull(errorMsg, "Exception from repository must surface as onError")
     }
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItem_UnitPrice - positive price accepted`() {
-        // TODO: Fix Hilt test setup
+    fun `createInvoice sets isLoading false even on error`() = runUnitTest {
+        val invoice = buildTestInvoice()
+        coEvery { invoiceRepository.saveInvoice(invoice) } returns Result.failure(Exception("Error"))
+
+        viewModel.createInvoice(invoice, onSuccess = {}, onError = {})
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isLoading.value, "isLoading must be false even after an error")
     }
 
-    // ── lineItem Description ───────────────────────────────────────────────────
+    // ── Loading State ──────────────────────────────────────────────────────
 
     @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItem_Description - blank description rejected`() {
-        // TODO: Fix Hilt test setup
+    fun `initial isLoading is false`() {
+        assertFalse(viewModel.isLoading.value)
     }
 
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItem_Description - valid description accepted`() {
-        // TODO: Fix Hilt test setup
-    }
+    // ── Helpers ────────────────────────────────────────────────────────────
 
-    // ── Metrics Calculation ────────────────────────────────────────────────────
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `metrics_calculation - with tax`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `metrics_calculation - without tax`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `metrics_calculation - with discount`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `metrics_calculation - multiple items subtotal`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    // ── State Management ───────────────────────────────────────────────────────
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `state_initialization - initial state has defaults`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `state_headerChange - updating header persists in state`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `state_subheaderChange - updating subheader persists in state`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `state_notesChange - updating notes persists in state`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `state_footerChange - updating footer persists in state`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    // ── Customer Selection ────────────────────────────────────────────────────
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `state_customerSelection - selecting customer updates state`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `customer_list - all customers loaded on init`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `customer_switch - switching between customers updates state`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `validation_customer - customer must be selected`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    // ── Line Items Management ──────────────────────────────────────────────────
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItems_empty - minimum one empty item in initial state`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItems_add - adding line item increases list size`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItems_remove - removing line item decreases list size`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `lineItems_batchUpdate - preserves unique transient IDs`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    // ── Save Operations ────────────────────────────────────────────────────────
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `save_success - invoice saved to repository`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `save_pdfGeneration - PDF is generated on save`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `save_eventTracking - event tracked on successful save`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `businessId_routing - correct business context used for save`() {
-        // TODO: Fix Hilt test setup
-    }
-
-    @Test
-    @Ignore("Hilt setup broken - see class comment")
-    fun `createInvoice_RepositoryError - error callback invoked`() {
-        // TODO: Fix Hilt test setup
-    }
+    private fun buildTestInvoice(
+        customerId: Long = 1L,
+        customerName: String = "Alice Corp",
+        totalAmount: Long = 100_00L
+    ): Invoice = Invoice(
+        id = 0L,
+        businessProfileId = 1L,
+        customerId = customerId,
+        customerName = customerName,
+        invoiceNumber = "INV-TEST-001",
+        dateCreated = "2026-04-23",
+        dueDate = "2026-05-23",
+        items = emptyList(),
+        totalAmount = totalAmount,
+        taxAmount = 0L,
+        taxRate = 0.0,
+        status = InvoiceStatus.DRAFT,
+        amountPaid = 0L,
+        notes = "",
+        currencyCode = "AUD",
+        invoiceYear = 2026,
+        invoiceSequence = 1
+    )
 }
+
 

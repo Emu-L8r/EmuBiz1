@@ -123,18 +123,26 @@ class HtmlPdfInvoiceTheme @Inject constructor(
             val htmlWithColors = CssVariableInjector.injectColorVariables(htmlWithEmbeddedCss, settings)
             Timber.d("CSS color variables injected for branding")
 
-            // Step 7: Convert HTML to PDF using iText7
-            val conversionSuccess = try {
-                pdfConverter.convertHtmlToPdf(htmlWithColors, outputPath)
-            } catch (e: Exception) {
-                Timber.e(e, "HTML to PDF conversion failed")
-                return Result.failure(Exception("PDF conversion failed: ${e.message}"))
+            // Step 7: Convert HTML to PDF using iText7 (BLOCKING OPERATION - use Default dispatcher)
+            // ⚠️ CRITICAL: HtmlConverter.convertToPdf() is a blocking I/O operation
+            // Running on Main thread causes "loading screen" to hang indefinitely
+            // Solution: Use withContext(Dispatchers.Default) to run on background thread
+            withContext(Dispatchers.Default) {
+                Timber.d("🔵 Starting HTML→PDF conversion on background thread (${Thread.currentThread().name})")
+                try {
+                    val result = pdfConverter.convertHtmlToPdf(htmlWithColors, outputPath)
+                    // Result.success() means conversion succeeded
+                    if (result.toString().contains("Success")) {
+                        Timber.d("✅ HTML→PDF conversion complete")
+                    } else {
+                        return@withContext  // Will be caught below
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "HTML to PDF conversion failed")
+                    throw e
+                }
             }
 
-            if (!conversionSuccess) {
-                Timber.e("PDF conversion failed")
-                return Result.failure(Exception("PDF conversion failed: unknown reason"))
-            }
 
             // Verify file was created
             val pdfFile = File(outputPath)
@@ -237,6 +245,10 @@ class HtmlPdfInvoiceTheme @Inject constructor(
         private const val TAG = "HtmlPdfInvoiceTheme"
     }
 }
+
+
+
+
 
 
 

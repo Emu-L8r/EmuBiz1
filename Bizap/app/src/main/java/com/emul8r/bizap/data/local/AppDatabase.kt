@@ -39,14 +39,13 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
  * | 42 | 43 | Add customization layers | migration/Migration_42_43.kt ⚠️ |
  * | 44 | 45 | Add invoice numbering | migrations/Migration_44_45.kt ✅ |
  * | 45 | 46 | Add payment media attachments | migrations/Migration_45_46.kt ✅ |
+ *
  * | 46 | 47 | Add query optimization indices (Phase 2B) | database/Migrations.kt ✅ |
- *
+ * **⚠️ Future Action:** Rename the `migration/` folder to `migrations/` and rename
  * **Current Version:** 47 Rename the `migration/` folder to `migrations/` and rename
- * MIGRATION_* classes to Migration_*_* for consistency (post-launch cleanup).
- *
  * ## Naming Convention
  * - **Standardized (New):** `Migration_XX_YY.kt` (file) + `Migration(XX, YY)` (class)
- * - **Legacy (Old):** `Migration_XX_YY.kt` (file) + `Migration(XX, YY)` (class)
+ * **⚠️ Future Action:** Rename the `migration/` folder to `migrations/` and rename
  * - **Transitional (Mixed):** Some descriptive names remain (will be renamed)
  *
  * For new migrations:

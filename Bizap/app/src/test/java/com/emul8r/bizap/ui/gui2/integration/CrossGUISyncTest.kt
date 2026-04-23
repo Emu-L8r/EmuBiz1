@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -25,11 +24,9 @@ import kotlin.test.assertEquals
  * These tests ensure no discrepancy between the two UI layers when reading
  * the same business metrics from the shared Room database.
  *
- * ⚠️ DEFERRED - MockK setup requires deeper investigation
- * Issue: Repository methods return unexpected types for current mock setup
- * TODO: Align mocks with actual repository return types
+ * Verifies revenue and payment consistency between GUI1 and GUI2 repository queries.
+ * Both GUIs read from the same Room database — these tests enforce identical results.
  */
-@Ignore("MockK setup requires investigation - deferred to future sprint")
 class CrossGUISyncTest : BaseUnitTest() {
 
     private val dao: InvoiceDaoV2 = mockk()
@@ -58,6 +55,7 @@ class CrossGUISyncTest : BaseUnitTest() {
         every { dao.observeLast30DaysRevenueTrend(businessId, any(), any()) } returns flowOf(emptyList<DailyRevenueTrendV2>())
         every { dao.observeOverdueAmount(businessId) } returns flowOf(0L)
         every { dao.observeCollectedAmount(businessId) } returns flowOf(totalPaid)
+        every { dao.observeOutstandingAmount(businessId) } returns flowOf(0L)
         every { dao.observeInvoiceCountByStatus(businessId) } returns flowOf(
             listOf(InvoiceStatusCountV2("PAID", 5))
         )
