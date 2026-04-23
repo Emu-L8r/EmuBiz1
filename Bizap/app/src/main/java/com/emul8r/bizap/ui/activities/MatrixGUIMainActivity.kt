@@ -45,6 +45,7 @@ import com.emul8r.bizap.ui.gui3.screens.HelpScreenV3
 import com.emul8r.bizap.ui.gui3.screens.PdfViewerScreenV3
 import com.emul8r.bizap.ui.gui3.screens.SecurityVaultScreenV3
 import com.emul8r.bizap.ui.gui3.screens.VaultScreenV3
+import com.emul8r.bizap.ui.gui3.screens.AppAppearanceScreenV3
 import com.emul8r.bizap.ui.gui3.screens.MatrixDebugPanelScreenV3
 import com.emul8r.bizap.ui.gui3.theme.MatrixTheme
 import com.emul8r.bizap.ui.gui3.theme.MatrixGreen
@@ -374,6 +375,19 @@ fun MatrixGUINavigation(
               MatrixDebugPanelScreenV3(
                   businessId = route.businessId,
                   onDismiss = { navController.popBackStack() }
+              )
+          }
+
+          // App Appearance (Theme, display mode, GUI switching)
+          composable<ScreenV3.AppAppearance> { backStackEntry ->
+              val route: ScreenV3.AppAppearance = backStackEntry.toRoute()
+              AppAppearanceScreenV3(
+                  businessId = route.businessId,
+                  navController = navController,
+                  onThemeSettingsClick = { /* TODO: navigate to ThemeSettings when added to GUI3 */ },
+                  onBusinessProfileClick = { /* TODO: navigate to BusinessProfile when added to GUI3 */ },
+                  onBackupRestoreClick = { /* TODO: navigate to BackupRestore when added to GUI3 */ },
+                  onHelpClick = { navController.navigate(ScreenV3.Help(route.businessId)) }
               )
           }
       }

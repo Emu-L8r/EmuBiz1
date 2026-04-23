@@ -8,21 +8,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
-import com.emul8r.bizap.domain.model.DisplayMode
 import com.emul8r.bizap.domain.model.ThemePreference
 import com.emul8r.bizap.ui.theme.AppTheme
-import com.emul8r.bizap.ui.landing.GuiMode
 import com.emul8r.bizap.ui.activities.MatrixGUIMainActivity
 import timber.log.Timber
 
@@ -87,46 +85,121 @@ fun AppAppearanceScreenV2(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // ── SINGLE APPEARANCE CARD ──────────────────────────────────────
                     item {
-                        ThemeStyleCard(
-                            currentStyle = uiState.themeStyle,
-                            onStyleChange = { viewModel.updateThemeStyle(it) }
-                        )
-                    }
-
-                    item {
-                        ThemePreferenceCard(
-                            currentPreference = uiState.themePreference,
-                            onPreferenceChange = { viewModel.updateThemePreference(it) }
-                        )
-                    }
-
-                    item {
-                        // ── GUI Mode Selection ──
-                        GuiModeCard(
-                            businessId = businessId,
-                            context = context
-                        )
-                    }
-
-                    item {
-                        // ── Theme Customization ──
                         Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Text(
+                                    "Appearance",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                // Interface Style (Classic vs Modern)
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("Interface Style", style = MaterialTheme.typography.labelMedium)
+                                    Text(
+                                        "Classic = Material 2  ·  Modern = Material 3",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        AppTheme.entries.forEach { style ->
+                                            FilterChip(
+                                                selected = uiState.themeStyle == style,
+                                                onClick = { viewModel.updateThemeStyle(style) },
+                                                label = {
+                                                    Text(
+                                                        when (style) {
+                                                            AppTheme.CLASSIC -> "Classic"
+                                                            AppTheme.MODERN -> "Modern"
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                HorizontalDivider()
+
+                                // Light / Dark / Auto
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("Light / Dark Mode", style = MaterialTheme.typography.labelMedium)
+                                    Text(
+                                        "Control brightness across the whole app",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        ThemePreference.entries.forEach { pref ->
+                                            FilterChip(
+                                                selected = uiState.themePreference == pref,
+                                                onClick = { viewModel.updateThemePreference(pref) },
+                                                label = {
+                                                    Text(
+                                                        pref.name.lowercase()
+                                                            .replaceFirstChar { it.uppercase() }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                HorizontalDivider()
+
+                                // Switch Interface (GUI Mode)
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("Switch Interface", style = MaterialTheme.typography.labelMedium)
+                                    Text(
+                                        "Change to a different UI experience",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    GuiModeCard(businessId = businessId, context = context)
+                                }
+                            }
+                        }
+                    }
+
+                    // ── CUSTOM COLORS (link row) ────────────────────────────────────
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onThemeSettingsClick() }
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { onThemeSettingsClick() }
                                     .padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        "Advanced Color Themes",
+                                        "Custom Colors",
                                         style = MaterialTheme.typography.labelLarge
                                     )
                                     Text(
-                                        "Customize colors for your style",
+                                        "Preset themes and color picker",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -140,174 +213,18 @@ fun AppAppearanceScreenV2(
                         }
                     }
 
+                    // ── OTHER SETTINGS ──────────────────────────────────────────────
                     item {
-                        DisplayModeCard(
-                            currentMode = uiState.displayMode,
-                            onModeChange = { viewModel.updateDisplayMode(it) }
-                        )
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "App Settings",
+                            "Other Settings",
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
-
-                    item {
-                        SettingsOptionCard(
-                            title = "Business Profile",
-                            onClick = onBusinessProfileClick
-                        )
-                    }
-
-                    item {
-                        SettingsOptionCard(
-                            title = "Backup & Restore",
-                            onClick = onBackupRestoreClick
-                        )
-                    }
-
-                    item {
-                        SettingsOptionCard(
-                            title = "Help",
-                            onClick = onHelpClick
-                        )
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ThemeStyleCard(
-    currentStyle: AppTheme,
-    onStyleChange: (AppTheme) -> Unit
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                "Theme Style",
-                style = MaterialTheme.typography.labelMedium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Choose between Classic (Material 2) or Modern (Material 3) design",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                AppTheme.entries.forEach { style ->
-                    FilterChip(
-                        selected = currentStyle == style,
-                        onClick = { onStyleChange(style) },
-                        label = {
-                            Text(
-                                when (style) {
-                                    AppTheme.CLASSIC -> "Classic"
-                                    AppTheme.MODERN -> "Modern"
-                                }
-                            )
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ThemePreferenceCard(
-    currentPreference: ThemePreference,
-    onPreferenceChange: (ThemePreference) -> Unit
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                "Theme Mode",
-                style = MaterialTheme.typography.labelMedium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "Control light or dark appearance",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ThemePreference.entries.forEach { pref ->
-                    FilterChip(
-                        selected = currentPreference == pref,
-                        onClick = { onPreferenceChange(pref) },
-                        label = { Text(pref.name) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DisplayModeCard(
-    currentMode: DisplayMode,
-    onModeChange: (DisplayMode) -> Unit
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Text(
-                    "Display Mode",
-                    style = MaterialTheme.typography.labelMedium
-                )
-                // Coming Soon Badge
-                androidx.compose.material3.Surface(
-                    color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
-                ) {
-                    Text(
-                        "Coming Soon",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                DisplayMode.entries.forEach { mode ->
-                    FilterChip(
-                        selected = currentMode == mode,
-                        onClick = { /* Disabled for now */ },
-                        label = { Text(mode.name) },
-                        enabled = false,  // Disable clicking
-                        modifier = Modifier.alpha(0.6f)  // Show as disabled
-                    )
+                    item { SettingsOptionCard(title = "Business Profile", onClick = onBusinessProfileClick) }
+                    item { SettingsOptionCard(title = "Backup & Restore", onClick = onBackupRestoreClick) }
+                    item { SettingsOptionCard(title = "Help", onClick = onHelpClick) }
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
         }

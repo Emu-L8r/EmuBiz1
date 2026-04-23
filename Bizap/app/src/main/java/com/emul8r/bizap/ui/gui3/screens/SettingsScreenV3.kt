@@ -125,6 +125,21 @@ fun SettingsScreenV3(
          ) {
             // ============= APPEARANCE SECTION =============
             SectionCardMatrix(title = ">> APPEARANCE") {
+                // Quick link to dedicated AppAppearance screen
+                GlowingMatrixButton(
+                    text = "⚙  THEME & DISPLAY SETTINGS  →",
+                    onClick = { navController.navigate(ScreenV3.AppAppearance(businessId)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.md))
+                HorizontalDivider(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(MatrixGreen.copy(alpha = 0.2f))
+                )
+                Spacer(modifier = Modifier.height(Spacing.lg))
+
                 // GUI Mode Selection
                 Column(
                     verticalArrangement = Arrangement.spacedBy(Spacing.md),

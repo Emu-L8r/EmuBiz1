@@ -75,6 +75,7 @@ import com.emul8r.bizap.ui.shared.screens.HelpScreen
 import com.emul8r.bizap.presentation.ui.theme.ThemeProvider
 import com.emul8r.bizap.domain.repository.ThemeRepository
 import com.emul8r.bizap.ui.BizapApp
+import com.emul8r.bizap.ui.theme.AppTheme
 import com.emul8r.bizap.ui.ErrorBoundary
 import com.emul8r.bizap.ui.gui2.navigation.GuiV2NavGraph
 import com.emul8r.bizap.ui.notes.NotesScreen
@@ -215,6 +216,15 @@ class MainActivity : ComponentActivity() {
                     try {
                         val selectedGui = GuiMode.valueOf(selectedGuiName)
                         appStateViewModel.selectGui(selectedGui)
+                        // ✅ FIX 3: Sync ThemeManager so NavGraph renders the correct GUI.
+                        // NavGraph switches on themeManager.theme (CLASSIC/MODERN), not GuiMode.
+                        // Without this, switching GUI3 → GUI1 always landed on GUI2 because
+                        // themeManager still held AppTheme.MODERN from the previous session.
+                        when (selectedGui) {
+                            GuiMode.GUI1 -> themeManager.setTheme(AppTheme.CLASSIC)
+                            GuiMode.GUI2 -> themeManager.setTheme(AppTheme.MODERN)
+                            else -> { /* GUI3 is handled by MatrixGUIMainActivity */ }
+                        }
                         Timber.d("MainActivity: GUI selection from intent: $selectedGui")
                     } catch (e: IllegalArgumentException) {
                         Timber.w("MainActivity: Invalid GUI mode in intent: $selectedGuiName")

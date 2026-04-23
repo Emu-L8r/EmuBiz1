@@ -98,12 +98,12 @@ fun DashboardScreenV2(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
-                    // Simple GUI swap button (Material Design 3 styled - no Matrix theme)
+                    // GUI swap button — same SwapHoriz icon as GUI1 (BizapTopAppBar)
                     IconButton(onClick = onSwitchToGui1) {
                         Icon(
-                            imageVector = Icons.Default.Menu,
+                            imageVector = Icons.Default.SwapHoriz,
                             contentDescription = "Switch to Classic",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }

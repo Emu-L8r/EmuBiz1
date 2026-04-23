@@ -1,0 +1,279 @@
+name: Red Flag Alert System
+on:
+  workflow_run:
+    workflows:
+      - Performance Baseline Check
+      - Weekly Health Report
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      alert_type:
+        description: 'Type of alert'
+        required: true
+        default: 'manual'
+        type: choice
+        options:
+          - build_failure
+          - performance_regression
+          - test_failure
+          - scope_creep
+          - navigation_crash
+          - manual
+
+jobs:
+  check-failures:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Determine alert reason
+        id: alert_reason
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" = "failure" ]; then
+            WORKFLOW_NAME=${{ github.event.workflow_run.name }}
+
+            if [[ "$WORKFLOW_NAME" == *"Performance"* ]]; then
+              echo "alert_type=performance_regression" >> $GITHUB_OUTPUT
+              echo "alert_title=🔴 Performance Regression Detected" >> $GITHUB_OUTPUT
+              echo "severity=critical" >> $GITHUB_OUTPUT
+            elif [[ "$WORKFLOW_NAME" == *"Health"* ]]; then
+              echo "alert_type=health_degradation" >> $GITHUB_OUTPUT
+              echo "alert_title=🟡 Health Score Degradation" >> $GITHUB_OUTPUT
+              echo "severity=warning" >> $GITHUB_OUTPUT
+            else
+              echo "alert_type=build_failure" >> $GITHUB_OUTPUT
+              echo "alert_title=🔴 Build Failure" >> $GITHUB_OUTPUT
+              echo "severity=critical" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "alert_type=unknown" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post to Slack (Critical)
+        if: steps.alert_reason.outputs.severity == 'critical'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "${{ steps.alert_reason.outputs.alert_title }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "${{ steps.alert_reason.outputs.alert_title }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Type:*\n${{ steps.alert_reason.outputs.alert_type }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Severity:*\nCRITICAL"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Triggered:*\n<!date^${{ github.event.repository.updated_at }}^{date_short_pretty}|now>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow:*\n${{ github.event.workflow_run.name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "⚠️ *Immediate Action Required*\n\n1. See docs/CONTINGENCY_ACTIONS_MATRIX.md for response playbook\n2. Activate appropriate contingency\n3. Post status update to this channel\n4. If unresolved > 1 hour: Escalate to Dev Lead"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow Run"
+                      },
+                      "url": "${{ github.event.workflow_run.html_url }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Contingency Plan"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/blob/main/docs/CONTINGENCY_ACTIONS_MATRIX.md"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_DEV_ALERTS }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Post to Slack (Warning)
+        if: steps.alert_reason.outputs.severity == 'warning'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "${{ steps.alert_reason.outputs.alert_title }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ steps.alert_reason.outputs.alert_title }} — ${{ steps.alert_reason.outputs.alert_type }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_DEV_ALERTS }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Create GitHub Issue (if Critical)
+        if: steps.alert_reason.outputs.severity == 'critical'
+        uses: actions/create-issue@v2
+        with:
+          title: "${{ steps.alert_reason.outputs.alert_title }} — ${{ github.event.workflow_run.name }}"
+          body: |
+            **Alert Triggered:** ${{ steps.alert_reason.outputs.alert_title }}
+            **Type:** ${{ steps.alert_reason.outputs.alert_type }}
+            **Workflow:** ${{ github.event.workflow_run.name }}
+            **Run:** [#${{ github.event.workflow_run.id }}](${{ github.event.workflow_run.html_url }})
+
+            ## Action Items
+            1. [ ] Investigate root cause (see workflow logs)
+            2. [ ] Follow response in docs/CONTINGENCY_ACTIONS_MATRIX.md
+            3. [ ] Implement fix or contingency
+            4. [ ] Update status in #dev-alerts channel
+            5. [ ] Close this issue once resolved
+
+            ## Response Playbook
+            - **Build Failure:** See CONTINGENCY_ACTIONS_MATRIX.md → Build & Compilation
+            - **Performance Regression:** See CONTINGENCY_ACTIONS_MATRIX.md → Performance
+            - **Test Failure:** See CONTINGENCY_ACTIONS_MATRIX.md → Test Coverage
+
+            **Resolution Target:** Within 2 hours
+
+          labels: |
+            🔴 critical
+            ⏰ urgent
+            🚨 red-flag
+
+      - name: Tag PR with red-flag label
+        if: github.event_name == 'pull_request' && steps.alert_reason.outputs.severity == 'critical'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['🔴 red-flag', '⏰ blocks-launch']
+            })
+
+      - name: Send Slack thread with diagnostic info
+        if: steps.alert_reason.outputs.severity == 'critical'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "Diagnostic context",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Recommended Next Steps:*\n\n1. *Investigate* (< 30 min)\n   - Review workflow logs\n   - Identify root cause\n   - Estimate fix time\n\n2. *Decide* (< 2 hours)\n   - Can you fix it?\n   - Or must you revert?\n   - Or activate contingency?\n\n3. *Execute*\n   - Implement fix OR\n   - Revert commit OR\n   - Follow contingency from decision tree\n\n4. *Report*\n   - Post update to this channel\n   - If unresolved > 2h: Escalate to Dev Lead"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_DEV_ALERTS }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Log alert to file
+        run: |
+          mkdir -p .github/alerts
+          ALERT_LOG=".github/alerts/red-flags.log"
+
+          echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') | ${{ steps.alert_reason.outputs.alert_type }} | ${{ steps.alert_reason.outputs.severity }} | ${{ github.event.workflow_run.name }}" >> "$ALERT_LOG"
+
+          # Keep last 100 alerts
+          tail -100 "$ALERT_LOG" > "${ALERT_LOG}.tmp"
+          mv "${ALERT_LOG}.tmp" "$ALERT_LOG"
+
+          echo "Alert logged to $ALERT_LOG"
+          cat "$ALERT_LOG" | tail -10
+
+      - name: Check alert frequency
+        run: |
+          ALERT_LOG=".github/alerts/red-flags.log"
+
+          if [ -f "$ALERT_LOG" ]; then
+            # Count alerts in last 24 hours
+            ALERTS_24H=$(grep "$(date -u -d '-1 day' +'%Y-%m-%d')" "$ALERT_LOG" | wc -l)
+
+            if [ $ALERTS_24H -gt 5 ]; then
+              echo "⚠️ WARNING: More than 5 RED flags in last 24 hours!"
+              echo "This suggests systematic issues. Consider activating scope reduction decision tree."
+              exit 1
+            fi
+          fi
+
+      - name: Auto-comment on affected PR
+        if: github.event_name == 'pull_request' && steps.alert_reason.outputs.severity == 'critical'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🔴 **Red Flag Alert Triggered**\n\n` +
+                    `This PR triggered a ${process.env.ALERT_SEVERITY} alert:\n` +
+                    `**${{ steps.alert_reason.outputs.alert_title }}**\n\n` +
+                    `⏱️ Resolution target: Within 2 hours\n\n` +
+                    `📋 Response playbook: See docs/CONTINGENCY_ACTIONS_MATRIX.md\n\n` +
+                    `🚨 If unresolved > 1 hour: Escalate to @dev-lead`
+            })
+        continue-on-error: true
+
+  # Optional: Auto-revert if critical
+  maybe-revert:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'failure' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Determine if auto-revert needed
+        id: check_revert
+        run: |
+          # Check if this is a critical failure (not just a warning)
+          # Only revert if performance regression > 50% over baseline
+          # Or if build is completely broken
+          # This is conservative to avoid excessive reverts
+
+          echo "auto_revert=false" >> $GITHUB_OUTPUT
+          echo "Note: Auto-revert disabled. Manual approval required for main branch."
+
+      - name: Skip auto-revert (require manual approval)
+        run: |
+          echo "❌ Auto-revert not triggered"
+          echo "Reason: This PR requires manual review before revert"
+          echo "Contact: @dev-lead to approve revert"
+

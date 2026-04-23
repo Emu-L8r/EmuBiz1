@@ -32,7 +32,6 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
 import java.io.File
 import android.net.Uri
-import com.emul8r.bizap.R
 /**
  * PIN Screen Components Library
  *
@@ -67,12 +66,12 @@ fun DualLogoHeaderWithGradient(
     subtitle: String = "Unlock to continue",
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxWidth().wrapContentHeight()) {
         // IMPROVEMENT #2: Gradient background layer
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(350.dp)
+                .height(300.dp)
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
@@ -192,15 +191,26 @@ fun AnimatedLockIcon(
             }
         }
     }
-    Icon(
-        imageVector = Icons.Default.Lock,
-        contentDescription = "Security Lock",
+    Box(
         modifier = modifier
             .size(size)
-            .scale(scale)
-            .shadow(elevation = 8.dp),
-        tint = tint
-    )
+            .scale(scale),
+        contentAlignment = Alignment.Center
+    ) {
+        // Circular glow/shadow behind icon — avoids rectangular bounding-box artifact
+        Box(
+            modifier = Modifier
+                .size(size * 0.85f)
+                .shadow(elevation = 8.dp, shape = CircleShape, clip = false)
+                .background(Color.Transparent, shape = CircleShape)
+        )
+        Icon(
+            imageVector = Icons.Default.Lock,
+            contentDescription = "Security Lock",
+            modifier = Modifier.size(size),
+            tint = tint
+        )
+    }
 }
 // ============================================================================
 // IMPROVEMENT #4: PIN DOT INDICATOR
@@ -265,16 +275,6 @@ fun PINFormCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Box(modifier = modifier.fillMaxWidth(0.9f)) {
-        // Logo watermark background
-        androidx.compose.foundation.Image(
-            painter = painterResource(R.drawable.company_logo),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(180.dp)
-                .alpha(0.06f),  // Very faint watermark
-            contentScale = ContentScale.Fit
-        )
 
         Card(
             modifier = Modifier

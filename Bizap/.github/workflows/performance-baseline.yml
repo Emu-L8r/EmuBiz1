@@ -1,0 +1,148 @@
+name: Performance Baseline Check
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Run performance tests
+        run: |
+          echo "🔍 Running startup performance tests..."
+          ./gradlew test -k "StartupPerformanceTest" --no-configuration-cache -i 2>&1 | tee perf_output.log
+        continue-on-error: true
+
+      - name: Extract startup metrics
+        run: |
+          echo "📊 Extracting startup metrics..."
+
+          # Extract cold start time for Pixel 6a
+          PIXEL_6A_TIME=$(grep -oP "Pixel 6a.*?(\d+)ms" perf_output.log | grep -oP "\d+(?=ms)" | head -1 || echo "0")
+          echo "PIXEL_6A_TIME=${PIXEL_6A_TIME}" >> $GITHUB_ENV
+
+          # Extract cold start time for Moto G7
+          MOTO_G7_TIME=$(grep -oP "Moto G7.*?(\d+)ms" perf_output.log | grep -oP "\d+(?=ms)" | head -1 || echo "0")
+          echo "MOTO_G7_TIME=${MOTO_G7_TIME}" >> $GITHUB_ENV
+
+          # Extract frame jank percentage
+          FRAME_JANK=$(grep -oP "Frame jank:.*?(\d+(?:\.\d+)?)%" perf_output.log | grep -oP "\d+(?:\.\d+)?(?=%)" | head -1 || echo "0")
+          echo "FRAME_JANK=${FRAME_JANK}" >> $GITHUB_ENV
+
+          echo "✅ Metrics extracted"
+
+      - name: Check against baseline
+        run: |
+          echo "🎯 Checking against baselines..."
+
+          PIXEL_6A_BASELINE=600
+          MOTO_G7_BASELINE=900
+          JANK_BASELINE=5
+
+          PIXEL_6A_TIME=${PIXEL_6A_TIME:-0}
+          MOTO_G7_TIME=${MOTO_G7_TIME:-0}
+          FRAME_JANK=${FRAME_JANK:-0}
+
+          echo "Pixel 6a:  ${PIXEL_6A_TIME}ms (baseline: ${PIXEL_6A_BASELINE}ms)"
+          echo "Moto G7:   ${MOTO_G7_TIME}ms (baseline: ${MOTO_G7_BASELINE}ms)"
+          echo "Frame Jank: ${FRAME_JANK}% (baseline: ${JANK_BASELINE}%)"
+
+          # Convert to numbers for comparison
+          PIXEL_6A_INT=$(printf "%.0f" ${PIXEL_6A_TIME})
+          MOTO_G7_INT=$(printf "%.0f" ${MOTO_G7_TIME})
+          FRAME_JANK_INT=$(printf "%.0f" ${FRAME_JANK})
+
+          REGRESSIONS=0
+
+          if [ $PIXEL_6A_INT -gt $PIXEL_6A_BASELINE ]; then
+            echo "🔴 REGRESSION: Pixel 6a ${PIXEL_6A_INT}ms > baseline ${PIXEL_6A_BASELINE}ms"
+            REGRESSIONS=$((REGRESSIONS + 1))
+          else
+            echo "🟢 PASS: Pixel 6a ${PIXEL_6A_INT}ms < baseline ${PIXEL_6A_BASELINE}ms"
+          fi
+
+          if [ $MOTO_G7_INT -gt $MOTO_G7_BASELINE ]; then
+            echo "🔴 REGRESSION: Moto G7 ${MOTO_G7_INT}ms > baseline ${MOTO_G7_BASELINE}ms"
+            REGRESSIONS=$((REGRESSIONS + 1))
+          else
+            echo "🟢 PASS: Moto G7 ${MOTO_G7_INT}ms < baseline ${MOTO_G7_BASELINE}ms"
+          fi
+
+          if [ $(echo "$FRAME_JANK_INT > $JANK_BASELINE" | bc) -eq 1 ]; then
+            echo "🔴 REGRESSION: Frame jank ${FRAME_JANK}% > baseline ${JANK_BASELINE}%"
+            REGRESSIONS=$((REGRESSIONS + 1))
+          else
+            echo "🟢 PASS: Frame jank ${FRAME_JANK}% < baseline ${JANK_BASELINE}%"
+          fi
+
+          echo "REGRESSIONS=$REGRESSIONS" >> $GITHUB_ENV
+
+      - name: Report results
+        run: |
+          echo "📋 Performance Check Summary"
+          echo "=============================="
+          echo "Pixel 6a startup:  ${PIXEL_6A_TIME}ms (baseline: 600ms)"
+          echo "Moto G7 startup:   ${MOTO_G7_TIME}ms (baseline: 900ms)"
+          echo "Frame jank:        ${FRAME_JANK}% (baseline: 5%)"
+          echo ""
+          echo "Regressions found: ${REGRESSIONS}"
+
+          if [ $REGRESSIONS -gt 0 ]; then
+            echo "❌ Performance regression detected!"
+            exit 1
+          else
+            echo "✅ All performance checks passed!"
+            exit 0
+          fi
+
+      - name: Comment on PR (if regression)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🔴 **Performance Regression Detected**\n\n` +
+                    `- Pixel 6a: ${process.env.PIXEL_6A_TIME}ms (baseline: 600ms)\n` +
+                    `- Moto G7: ${process.env.MOTO_G7_TIME}ms (baseline: 900ms)\n` +
+                    `- Frame Jank: ${process.env.FRAME_JANK}% (baseline: 5%)\n\n` +
+                    `Please investigate and profile this change.\n` +
+                    `See docs/CONTINGENCY_ACTIONS_MATRIX.md for response playbook.`
+            })
+
+  # Bonus: Upload metrics for tracking
+  upload-metrics:
+    needs: performance
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Store metrics
+        run: |
+          mkdir -p performance-metrics
+          echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> performance-metrics/meta.txt
+          echo "branch=${{ github.ref }}" >> performance-metrics/meta.txt
+          echo "commit=${{ github.sha }}" >> performance-metrics/meta.txt
+
+      - name: Upload metrics artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-metrics-${{ github.run_id }}
+          path: performance-metrics/
+          retention-days: 30
+

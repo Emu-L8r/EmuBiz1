@@ -1,0 +1,277 @@
+name: Weekly Health Report
+on:
+  schedule:
+    # Every Monday at 9:00 AM UTC (2:00 AM PT)
+    - cron: '0 9 * * MON'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Full history for trend analysis
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Run tests
+        run: |
+          echo "🧪 Running test suite..."
+          ./gradlew test --no-configuration-cache 2>&1 | tee test_output.log
+        continue-on-error: true
+
+      - name: Extract test metrics
+        run: |
+          echo "📊 Extracting test metrics..."
+
+          # Count passed/failed tests
+          TOTAL_TESTS=$(grep -oP 'Test run: \K[\d, ]*(?= tests)' test_output.log | tail -1 || echo "0")
+          PASSED=$(grep -oP 'passed' test_output.log | wc -l)
+          FAILED=$(grep -oP 'failed' test_output.log | wc -l)
+
+          # Calculate pass rate
+          if [ $((PASSED + FAILED)) -gt 0 ]; then
+            PASS_RATE=$((100 * PASSED / (PASSED + FAILED)))
+          else
+            PASS_RATE=0
+          fi
+
+          echo "TOTAL_TESTS=$TOTAL_TESTS" >> $GITHUB_ENV
+          echo "PASSED=$PASSED" >> $GITHUB_ENV
+          echo "FAILED=$FAILED" >> $GITHUB_ENV
+          echo "PASS_RATE=$PASS_RATE" >> $GITHUB_ENV
+
+      - name: Run build check
+        run: |
+          echo "🏗️  Checking build..."
+          ./gradlew clean build --no-configuration-cache 2>&1 | tee build_output.log
+        continue-on-error: true
+
+      - name: Extract build metrics
+        run: |
+          echo "📊 Extracting build metrics..."
+
+          # Extract build time
+          BUILD_TIME=$(grep -oP "Build completed in \K[0-9]+\.[0-9]+s" build_output.log | tail -1 || echo "unknown")
+
+          # Count warnings
+          WARNINGS=$(grep -iE "warning:" build_output.log | wc -l)
+
+          # Check success
+          if grep -q "BUILD SUCCESSFUL" build_output.log; then
+            BUILD_STATUS="success"
+          else
+            BUILD_STATUS="failed"
+          fi
+
+          echo "BUILD_TIME=$BUILD_TIME" >> $GITHUB_ENV
+          echo "WARNINGS=$WARNINGS" >> $GITHUB_ENV
+          echo "BUILD_STATUS=$BUILD_STATUS" >> $GITHUB_ENV
+
+      - name: Determine health status
+        run: |
+          echo "🎯 Calculating health metrics..."
+
+          # Score each category (0-100)
+          # Build: 100 if success, warnings < 5; 50 if warnings > 5; 0 if failed
+          if [ "$BUILD_STATUS" = "success" ] && [ $WARNINGS -lt 5 ]; then
+            BUILD_SCORE=90
+          elif [ "$BUILD_STATUS" = "success" ] && [ $WARNINGS -lt 10 ]; then
+            BUILD_SCORE=70
+          else
+            BUILD_SCORE=40
+          fi
+
+          # Tests: Pass rate
+          TESTS_SCORE=$PASS_RATE
+
+          # Overall health (rough estimate)
+          OVERALL_HEALTH=$(( (BUILD_SCORE * 15 + TESTS_SCORE * 85) / 100 ))
+
+          # Determine status
+          if [ $OVERALL_HEALTH -ge 88 ]; then
+            STATUS="🟢 GO"
+            RISK_LEVEL="GREEN"
+          elif [ $OVERALL_HEALTH -ge 80 ]; then
+            STATUS="🟡 AT-RISK"
+            RISK_LEVEL="YELLOW"
+          else
+            STATUS="🔴 STOP"
+            RISK_LEVEL="RED"
+          fi
+
+          echo "BUILD_SCORE=$BUILD_SCORE" >> $GITHUB_ENV
+          echo "TESTS_SCORE=$TESTS_SCORE" >> $GITHUB_ENV
+          echo "OVERALL_HEALTH=$OVERALL_HEALTH" >> $GITHUB_ENV
+          echo "STATUS=$STATUS" >> $GITHUB_ENV
+          echo "RISK_LEVEL=$RISK_LEVEL" >> $GITHUB_ENV
+
+      - name: Generate report file
+        run: |
+          WEEK_START=$(date -d "Monday" +%Y-%m-%d)
+          WEEK_END=$(date -d "Sunday" +%Y-%m-%d)
+          REPORT_FILE="docs/health-checkpoints/WEEKLY_HEALTH_REPORT_$(date +%Y%m%d).md"
+          mkdir -p docs/health-checkpoints
+
+          cat > "$REPORT_FILE" << 'EOF'
+          # Weekly Health Checkpoint — $(date +%B %d, %Y)
+          **Week:** $WEEK_START through $WEEK_END
+          **Generated:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          **Overall Health Score:** $OVERALL_HEALTH/100
+          **Trajectory:** 📊 Stable
+          **Risk Level:** $RISK_LEVEL
+          **Status:** $STATUS
+
+          ---
+
+          ## Checkpoint Summary
+
+          | Metric | Target | Actual | Status |
+          |--------|--------|--------|--------|
+          | Build Time | <2 min | $BUILD_TIME | 🟢 |
+          | Build Success | 100% | $BUILD_STATUS | $( [ "$BUILD_STATUS" = "success" ] && echo "🟢" || echo "🔴" ) |
+          | ProGuard Warnings | <5 | $WARNINGS | $( [ $WARNINGS -lt 5 ] && echo "🟢" || echo "🟡" ) |
+          | Test Pass Rate | ≥98% | $PASS_RATE% | $( [ $PASS_RATE -ge 95 ] && echo "🟢" || echo "🟡" ) |
+          | Tests Passed | N/A | $PASSED / $((PASSED + FAILED)) | 🟢 |
+
+          ---
+
+          ## Notes
+
+          Automated weekly health checkpoint generated by CI/CD.
+
+          **For manual detailed analysis:**
+          1. See docs/WEEKLY_HEALTH_CHECKPOINT_TEMPLATE.md for full template
+          2. Fill in remaining metrics manually
+          3. Post comprehensive report as PR comment
+
+          **If any metric is RED:**
+          1. See docs/CONTINGENCY_ACTIONS_MATRIX.md
+          2. Activate appropriate contingency
+          3. Post update to #dev-alerts channel
+
+          ---
+
+          **Status:** ✅ Auto-generated
+          **Owner:** CI/CD (GitHub Actions)
+          **Manual Verification:** Required (see template)
+          EOF
+
+          echo "REPORT_FILE=$REPORT_FILE" >> $GITHUB_ENV
+          cat "$REPORT_FILE"
+
+      - name: Create PR with report
+        uses: peter-evans/create-pull-request@v4
+        with:
+          commit-message: "Weekly health checkpoint — $(date +%Y-%m-%d)"
+          title: "📋 Weekly Health Report — $(date +%B %d, %Y)"
+          body: |
+            ## Weekly Health Checkpoint
+
+            **Generated:** $(date -u)
+
+            ### Summary
+            - **Overall Health:** ${{ env.OVERALL_HEALTH }}/100
+            - **Build Status:** ${{ env.BUILD_STATUS }}
+            - **Test Pass Rate:** ${{ env.PASS_RATE }}%
+            - **Risk Level:** ${{ env.RISK_LEVEL }}
+
+            ### Action Required
+            1. Review health metrics in attached report
+            2. Fill in manual metrics using WEEKLY_HEALTH_CHECKPOINT_TEMPLATE.md
+            3. Determine Go/At-Risk/Stop status
+            4. If RED flags: Follow CONTINGENCY_ACTIONS_MATRIX.md
+
+            See docs/RISK_MITIGATION_PLAN_MASTER.md for full context.
+
+          branch: health-report-$(date +%Y%m%d)
+          delete-branch: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post to Slack (if RED)
+        if: env.RISK_LEVEL == 'RED' || env.RISK_LEVEL == 'YELLOW'
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "${{ env.STATUS }} **Health Alert — Week $(date +%V)**",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "${{ env.STATUS }} Weekly Health Report"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Overall Health:*\n${{ env.OVERALL_HEALTH }}/100"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Risk Level:*\n${{ env.RISK_LEVEL }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Build:*\n${{ env.BUILD_STATUS }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Tests:*\n${{ env.PASS_RATE }}%"
+                    }
+                  ]
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "📋 *Action Required*: Review PR with detailed report and follow CONTINGENCY_ACTIONS_MATRIX.md if needed.\n\n<https://github.com/${{ github.repository }}/pulls|View PR>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_DEV_ALERTS }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  # Email notification (optional)
+  send-email:
+    needs: generate-report
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Send email summary
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "[Bizap] Weekly Health Report — $(date +%B %d, %Y)"
+          to: dev-team@bizap.local
+          from: ci@bizap.local
+          body: |
+            Weekly health checkpoint generated.
+
+            Overall Health: ${{ env.OVERALL_HEALTH }}/100
+            Risk Level: ${{ env.RISK_LEVEL }}
+            Status: ${{ env.STATUS }}
+
+            See PR for detailed metrics and take action if RED.
+        continue-on-error: true
+
