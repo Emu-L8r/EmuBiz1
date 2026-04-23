@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.emul8r.bizap.BaseUnitTest
+import com.emul8r.bizap.analytics.AppMonitoring
 import io.mockk.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -38,12 +39,14 @@ import kotlin.test.assertNotNull
 class NavigationTest : BaseUnitTest() {
     private lateinit var dataStore: DataStore<Preferences>
     private lateinit var mockPreferences: Preferences
+    private lateinit var appMonitoring: AppMonitoring
 
     @Before
     fun setUp() {
         setupBase()  // Call parent setup first
         dataStore = mockk()
         mockPreferences = mockk()
+        appMonitoring = mockk(relaxed = true)
         // Setup dataStore.data to return emptyPreferences by default
         every { dataStore.data } returns flowOf(emptyPreferences())
     }
@@ -102,7 +105,7 @@ class NavigationTest : BaseUnitTest() {
         // Arrange — DataStore returns preferences with no "gui_mode" entry
         val emptyPrefs = emptyPreferences()
         every { dataStore.data } returns flowOf(emptyPrefs)
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         // Act
         val result = viewModel.selectedMode.first()
         // Assert — null signals "first launch, show landing screen"
@@ -115,7 +118,7 @@ class NavigationTest : BaseUnitTest() {
         val prefs = mockk<Preferences>(relaxed = true)
         every { prefs[any<Preferences.Key<String>>()] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         testDispatcher.scheduler.advanceUntilIdle()
         try {
             val result = viewModel.selectedMode.first()
@@ -130,7 +133,7 @@ class NavigationTest : BaseUnitTest() {
         val prefs = mockk<Preferences>(relaxed = true)
         every { prefs[any<Preferences.Key<String>>()] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         testDispatcher.scheduler.advanceUntilIdle()
         try {
             val result = viewModel.selectedMode.first()
@@ -145,7 +148,7 @@ class NavigationTest : BaseUnitTest() {
         val prefs = mockk<Preferences>(relaxed = true)
         every { prefs[any<Preferences.Key<String>>()] } returns "GUI3"
         every { dataStore.data } returns flowOf(prefs)
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         testDispatcher.scheduler.advanceUntilIdle()
         try {
             val result = viewModel.selectedMode.first()
@@ -160,7 +163,7 @@ class NavigationTest : BaseUnitTest() {
         val prefs = mockk<Preferences>()
         every { prefs[stringPreferencesKey("gui_mode")] } returns "LEGACY_V1"
         every { dataStore.data } returns flowOf(prefs)
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         val result = viewModel.selectedMode.first()
         // Unrecognised values are treated as "no selection" → null
         assertNull(result)
@@ -171,7 +174,7 @@ class NavigationTest : BaseUnitTest() {
     fun `selectMode GUI1 calls dataStore edit`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
         coEvery { dataStore.updateData(any()) } returns emptyPreferences()
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         viewModel.selectMode(GuiMode.GUI1)
         testDispatcher.scheduler.advanceUntilIdle()
     }
@@ -180,7 +183,7 @@ class NavigationTest : BaseUnitTest() {
     fun `selectMode GUI2 calls dataStore edit`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
         coEvery { dataStore.updateData(any()) } returns emptyPreferences()
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         viewModel.selectMode(GuiMode.GUI2)
         testDispatcher.scheduler.advanceUntilIdle()
     }
@@ -189,7 +192,7 @@ class NavigationTest : BaseUnitTest() {
     fun `selectMode GUI3 calls dataStore edit`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
         coEvery { dataStore.updateData(any()) } returns emptyPreferences()
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         viewModel.selectMode(GuiMode.GUI3)
         testDispatcher.scheduler.advanceUntilIdle()
     }

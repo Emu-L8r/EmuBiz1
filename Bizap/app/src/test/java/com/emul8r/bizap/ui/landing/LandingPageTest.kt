@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.emul8r.bizap.BaseUnitTest
+import com.emul8r.bizap.analytics.AppMonitoring
 import io.mockk.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -28,10 +29,12 @@ import org.junit.Test
  */
 class LandingPageTest : BaseUnitTest() {
     private lateinit var dataStore: DataStore<Preferences>
+    private lateinit var appMonitoring: AppMonitoring
     @Before
     fun setUp() {
         setupBase()  // Call parent setup first
         dataStore = mockk()
+        appMonitoring = mockk(relaxed = true)
         // Setup dataStore.data to return emptyPreferences by default
         every { dataStore.data } returns flowOf(emptyPreferences())
     }
@@ -69,7 +72,7 @@ class LandingPageTest : BaseUnitTest() {
     @Test
     fun `loading state is null on first emission before DataStore reads`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         val result = viewModel.selectedMode.first()
         assertNull("Initial emission should be null (loading/unset)", result)
     }
@@ -79,7 +82,7 @@ class LandingPageTest : BaseUnitTest() {
         val prefs = mockk<Preferences>(relaxed = true)
         every { prefs[any<Preferences.Key<*>>()] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         testDispatcher.scheduler.advanceUntilIdle()
         // Just verify it doesn't hang or throw
         assertTrue(true)
@@ -90,7 +93,7 @@ class LandingPageTest : BaseUnitTest() {
     fun `selecting GUI1 persists selection via DataStore`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
         coEvery { dataStore.updateData(any()) } returns emptyPreferences()
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         viewModel.selectMode(GuiMode.GUI1)
         testDispatcher.scheduler.advanceUntilIdle()
     }
@@ -100,8 +103,8 @@ class LandingPageTest : BaseUnitTest() {
         val prefs = mockk<Preferences>(relaxed = true)
         every { prefs[any<Preferences.Key<*>>()] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
-        val viewModel = LandingViewModel(dataStore)
-        val viewModel2 = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
+        val viewModel2 = LandingViewModel(dataStore, appMonitoring)
         testDispatcher.scheduler.advanceUntilIdle()
         // Just verify it doesn't crash - state is complex
         assertTrue(true)
@@ -113,7 +116,7 @@ class LandingPageTest : BaseUnitTest() {
         val prefs = mockk<Preferences>(relaxed = true)
         every { prefs[any<Preferences.Key<String>>()] } returns "GUI1"
         every { dataStore.data } returns flowOf(prefs)
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         testDispatcher.scheduler.advanceUntilIdle()
         // Verify it doesn't crash
         assertTrue(true)
@@ -124,7 +127,7 @@ class LandingPageTest : BaseUnitTest() {
         val prefs = mockk<Preferences>(relaxed = true)
         every { prefs[any<Preferences.Key<String>>()] } returns "GUI2"
         every { dataStore.data } returns flowOf(prefs)
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         testDispatcher.scheduler.advanceUntilIdle()
         // Verify it doesn't crash
         assertTrue(true)
@@ -134,7 +137,7 @@ class LandingPageTest : BaseUnitTest() {
     @Test
     fun `selectMode does not return a value that would break callers`() {
         every { dataStore.data } returns flowOf(emptyPreferences())
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         // selectMode is a fire-and-forget function (Unit return type).
         // Verify the API contract at compile-time: calling it does not throw synchronously.
         viewModel.selectMode(GuiMode.GUI1)
@@ -148,7 +151,7 @@ class LandingPageTest : BaseUnitTest() {
     fun `resetMode clears persisted selection so landing screen is shown again`() = runTest {
         every { dataStore.data } returns flowOf(emptyPreferences())
         coEvery { dataStore.updateData(any()) } returns emptyPreferences()
-        val viewModel = LandingViewModel(dataStore)
+        val viewModel = LandingViewModel(dataStore, appMonitoring)
         viewModel.resetMode()
         testDispatcher.scheduler.advanceUntilIdle()
     }
