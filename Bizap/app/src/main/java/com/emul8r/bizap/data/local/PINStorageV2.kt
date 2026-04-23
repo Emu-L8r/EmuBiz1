@@ -181,22 +181,33 @@ class PINStorageV2 @Inject constructor(
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private fun generateSalt(): String {
-        val bytes = ByteArray(SALT_BYTES)
-        SecureRandom().nextBytes(bytes)
-        return Base64.encodeToString(bytes, Base64.NO_WRAP)
+        return try {
+            val bytes = ByteArray(SALT_BYTES)
+            SecureRandom().nextBytes(bytes)
+            Base64.encodeToString(bytes, Base64.NO_WRAP)
+        } catch (e: Exception) {
+            Timber.e(e, "🔴 CRITICAL: Salt generation failed - security exception")
+            throw SecurityException("PIN salt generation failed - cannot establish secure storage", e)
+        }
     }
 
     private fun hashPIN(pin: String, saltBase64: String): String {
-        val saltBytes = Base64.decode(saltBase64, Base64.NO_WRAP)
-        val digest = MessageDigest.getInstance(HASH_ALGORITHM)
-        digest.update(saltBytes)
-        val hash = digest.digest(pin.toByteArray(Charsets.UTF_8))
-        return Base64.encodeToString(hash, Base64.NO_WRAP)
+        return try {
+            val saltBytes = Base64.decode(saltBase64, Base64.NO_WRAP)
+            val digest = MessageDigest.getInstance(HASH_ALGORITHM)
+            digest.update(saltBytes)
+            val hash = digest.digest(pin.toByteArray(Charsets.UTF_8))
+
+            if (hash.isEmpty()) {
+                throw SecurityException("PIN hashing produced empty hash - security violation")
+            }
+
+            Base64.encodeToString(hash, Base64.NO_WRAP)
+        } catch (e: SecurityException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "🔴 CRITICAL: PIN hashing failed - security exception")
+            throw SecurityException("PIN hashing failed - cannot establish secure storage", e)
+        }
     }
 }
-
-
-
-
-
-
