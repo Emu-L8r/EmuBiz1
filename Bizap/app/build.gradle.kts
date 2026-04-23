@@ -377,6 +377,10 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+
+    // Encryption & Database Testing (Phase 1)
+    androidTestImplementation("androidx.room:room-testing:2.6.1")
+    androidTestImplementation("net.zetetic:sqlcipher-android:4.14.0@aar")
     androidTestImplementation(libs.androidx.room.testing)
 
     // Kotlin Test Library
