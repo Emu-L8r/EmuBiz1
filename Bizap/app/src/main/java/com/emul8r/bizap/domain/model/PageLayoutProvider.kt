@@ -131,13 +131,19 @@ td, th { word-wrap: break-word; }
 
 ${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:16px;font-style:italic;color:#555555;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
-<!-- LINE ITEMS TABLE -->
-<table width="100%" style="border-collapse:collapse;margin-bottom:4px;">
+<!-- LINE ITEMS TABLE with fixed column widths -->
+<table width="100%" style="border-collapse:collapse;table-layout:fixed;margin-bottom:4px;">
+  <colgroup>
+    <col style="width:54%;"/>
+    <col style="width:10%;"/>
+    <col style="width:18%;"/>
+    <col style="width:18%;"/>
+  </colgroup>
   <tr style="background-color:$primary;color:#ffffff;">
     <th style="padding:12px 14px;text-align:left;font-size:10pt;">Description</th>
-    <th style="padding:12px 14px;text-align:center;font-size:10pt;width:10%;">Qty</th>
-    <th style="padding:12px 14px;text-align:right;font-size:10pt;width:18%;">Unit Price</th>
-    <th style="padding:12px 14px;text-align:right;font-size:10pt;width:18%;">Total</th>
+    <th style="padding:12px 14px;text-align:center;font-size:10pt;">Qty</th>
+    <th style="padding:12px 14px;text-align:right;font-size:10pt;">Unit Price</th>
+    <th style="padding:12px 14px;text-align:right;font-size:10pt;">Total</th>
   </tr>
   $itemRows
   <tr><td colspan="4" style="padding:0;"></td></tr>
@@ -324,13 +330,21 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-<!-- LINE ITEMS TABLE (COMPACT) -->
-<table width="100%" style="border-collapse:collapse;margin-bottom:4px;">
+${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:12px;font-style:italic;color:#555555;line-height:1.6;font-size:9pt;">${escapeHtml(snapshot.header)}</p>""" else ""}
+
+<!-- LINE ITEMS TABLE (COMPACT) with fixed column widths -->
+<table width="100%" style="border-collapse:collapse;table-layout:fixed;margin-bottom:4px;">
+  <colgroup>
+    <col style="width:60%;"/>
+    <col style="width:8%;"/>
+    <col style="width:16%;"/>
+    <col style="width:16%;"/>
+  </colgroup>
   <tr style="background-color:$primary;color:#ffffff;">
     <th style="padding:10px 12px;text-align:left;font-size:9pt;">Description</th>
-    <th style="padding:10px 12px;text-align:center;font-size:9pt;width:8%;">Qty</th>
-    <th style="padding:10px 12px;text-align:right;font-size:9pt;width:16%;">Unit Price</th>
-    <th style="padding:10px 12px;text-align:right;font-size:9pt;width:16%;">Total</th>
+    <th style="padding:10px 12px;text-align:center;font-size:9pt;">Qty</th>
+    <th style="padding:10px 12px;text-align:right;font-size:9pt;">Unit Price</th>
+    <th style="padding:10px 12px;text-align:right;font-size:9pt;">Total</th>
   </tr>
   $itemRows
   <tr><td colspan="4" style="padding:0;"></td></tr>
@@ -516,13 +530,19 @@ td, th { word-wrap: break-word; }
 
 ${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:24px;font-style:italic;color:#555555;line-height:2.0;">${escapeHtml(snapshot.header)}</p>""" else ""}
 
-<!-- SPACIOUS LINE ITEMS TABLE: 16px row padding, 12pt font -->
-<table width="100%" style="border-collapse:collapse;margin-bottom:4px;">
+<!-- SPACIOUS LINE ITEMS TABLE: 16px row padding, 12pt font with fixed column widths -->
+<table width="100%" style="border-collapse:collapse;table-layout:fixed;margin-bottom:4px;">
+  <colgroup>
+    <col style="width:54%;"/>
+    <col style="width:10%;"/>
+    <col style="width:18%;"/>
+    <col style="width:18%;"/>
+  </colgroup>
   <tr style="background-color:$primary;color:#ffffff;">
     <th style="padding:16px 18px;text-align:left;font-size:12pt;">Description</th>
-    <th style="padding:16px 18px;text-align:center;font-size:12pt;width:10%;">Qty</th>
-    <th style="padding:16px 18px;text-align:right;font-size:12pt;width:18%;">Unit Price</th>
-    <th style="padding:16px 18px;text-align:right;font-size:12pt;width:18%;">Total</th>
+    <th style="padding:16px 18px;text-align:center;font-size:12pt;">Qty</th>
+    <th style="padding:16px 18px;text-align:right;font-size:12pt;">Unit Price</th>
+    <th style="padding:16px 18px;text-align:right;font-size:12pt;">Total</th>
   </tr>
   $itemRows
   <tr><td colspan="4" style="padding:8px 0;"></td></tr>

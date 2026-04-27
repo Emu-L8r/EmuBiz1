@@ -1,23 +1,29 @@
 package com.emul8r.bizap.ui.gui3.screens
 
+import android.graphics.pdf.PdfRenderer
+import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.background
-
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.compose.foundation.Image
 import com.emul8r.bizap.ui.gui3.components.*
 import com.emul8r.bizap.ui.gui3.theme.*
 import com.emul8r.bizap.ui.gui3.util.ScreenType
@@ -115,41 +121,53 @@ fun PdfViewerScreenV3(
                     }
                 }
 
-                // PDF Viewer Placeholder
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                        .background(MatrixBlack)
-                        .border(1.dp, MatrixGreen.copy(alpha = 0.5f))
-                        .padding(Spacing.lg),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                // PDF Viewer
+                if (isFileExists) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(400.dp)
+                            .background(MatrixBlack)
+                            .border(1.dp, MatrixGreen.copy(alpha = 0.5f))
                     ) {
-                        Text(
-                            if (isFileExists) "📄 PDF Preview" else "⚠️ File Not Found",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontFamily = FontFamily.Monospace,
-                                color = if (isFileExists) MatrixGreen else MatrixWarning,
-                                fontWeight = FontWeight.Bold
+                        PdfViewerWithPages(
+                            pdfPath = pdfPath,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp)
+                            .background(MatrixBlack)
+                            .border(1.dp, MatrixGreen.copy(alpha = 0.5f))
+                            .padding(Spacing.lg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                "⚠️ File Not Found",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    color = MatrixWarning,
+                                    fontWeight = FontWeight.Bold
+                                )
                             )
-                        )
-                        Spacer(modifier = Modifier.height(Spacing.md))
-                        Text(
-                            if (isFileExists)
-                                "PDF library integration coming soon\nPlaceholder for AndroidPdfViewer"
-                            else
+                            Spacer(modifier = Modifier.height(Spacing.md))
+                            Text(
                                 "The requested PDF file could not be located.\nCheck the file path and try again.",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontFamily = FontFamily.Monospace,
-                                color = MatrixGreen.copy(alpha = 0.7f),
-                                fontSize = 11.sp
-                            ),
-                            modifier = Modifier.padding(Spacing.md)
-                        )
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    color = MatrixGreen.copy(alpha = 0.7f),
+                                    fontSize = 11.sp
+                                ),
+                                modifier = Modifier.padding(Spacing.md)
+                            )
+                        }
                     }
                 }
 
@@ -196,4 +214,167 @@ fun PdfViewerScreenV3(
     }
 }
 
+/**
+ * PDF Viewer using Android's built-in PdfRenderer
+ *
+ * Renders PDF pages to Bitmaps and displays them in a scrollable column.
+ * Provides native PDF rendering without external dependencies.
+ *
+ * **Architecture:**
+ * - Uses PdfRenderer (API 21+) for hardware-accelerated PDF rendering
+ * - Renders pages lazily as user scrolls
+ * - Each page rendered to a Bitmap at screen resolution
+ * - Memory-efficient: only visible pages rendered
+ */
+@Composable
+fun PdfViewerWithPages(
+    pdfPath: String,
+    modifier: Modifier = Modifier
+) {
+    val pdfFile = File(pdfPath)
+    var pageCount by remember { mutableStateOf(0) }
+    var error by remember { mutableStateOf<String?>(null) }
 
+    LaunchedEffect(pdfPath) {
+        try {
+            val pfd = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
+            val renderer = PdfRenderer(pfd)
+            pageCount = renderer.pageCount
+            Timber.d("✅ PDF loaded: $pageCount pages")
+            renderer.close()
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to load PDF")
+            error = "Failed to load PDF: ${e.message}"
+            pageCount = 0
+        }
+    }
+
+    if (error != null) {
+        Box(
+            modifier = modifier
+                .background(MatrixBlack)
+                .padding(Spacing.lg),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                error ?: "Error loading PDF",
+                color = MatrixWarning,
+                fontFamily = FontFamily.Monospace
+            )
+        }
+    } else if (pageCount > 0) {
+        LazyColumn(
+            modifier = modifier
+                .background(MatrixBlack)
+                .fillMaxWidth()
+        ) {
+            items(pageCount) { pageIndex ->
+                PdfPageRenderer(
+                    pdfPath = pdfPath,
+                    pageIndex = pageIndex,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.sm)
+                )
+            }
+        }
+    } else {
+        Box(
+            modifier = modifier
+                .background(MatrixBlack),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "Loading PDF...",
+                color = MatrixGreen,
+                fontFamily = FontFamily.Monospace
+            )
+        }
+    }
+}
+
+/**
+ * Renders a single PDF page to a Bitmap and displays it.
+ */
+@Composable
+fun PdfPageRenderer(
+    pdfPath: String,
+    pageIndex: Int,
+    modifier: Modifier = Modifier
+) {
+    var bitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var renderError by remember { mutableStateOf<String?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(pdfPath, pageIndex) {
+        try {
+            val pdfFile = File(pdfPath)
+            val pfd = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
+            val renderer = PdfRenderer(pfd)
+
+            if (pageIndex < renderer.pageCount) {
+                val page = renderer.openPage(pageIndex)
+
+                // Render at screen density for crisp display
+                val density = context.resources.displayMetrics.density
+                val width = (page.width * density).toInt()
+                val height = (page.height * density).toInt()
+
+                val renderedBitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+                page.render(renderedBitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+
+                bitmap = renderedBitmap
+                page.close()
+                Timber.d("✅ Rendered page $pageIndex (${width}x${height}px)")
+            }
+            renderer.close()
+        } catch (e: Exception) {
+            Timber.e(e, "❌ Failed to render page $pageIndex")
+            renderError = "Failed to render page: ${e.message}"
+        }
+    }
+
+    if (renderError != null) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(MatrixBlack)
+                .border(1.dp, MatrixWarning),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                renderError ?: "Render error",
+                color = MatrixWarning,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 10.sp
+            )
+        }
+    } else if (bitmap != null) {
+        Image(
+            bitmap = bitmap!!.asImageBitmap(),
+            contentDescription = "PDF Page ${pageIndex + 1}",
+            modifier = modifier
+                .fillMaxWidth()
+                .background(MatrixBlack)
+                .border(1.dp, MatrixGreen.copy(alpha = 0.3f)),
+            contentScale = ContentScale.FillWidth
+        )
+    } else {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(MatrixBlack)
+                .border(1.dp, MatrixGreen.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "Rendering page...",
+                color = MatrixGreen,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 10.sp
+            )
+        }
+    }
+}
