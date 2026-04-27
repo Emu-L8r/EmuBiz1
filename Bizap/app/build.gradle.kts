@@ -37,8 +37,8 @@ android {
         applicationId = "com.emul8r.bizap"
         minSdk = 26  // Android 8.0+ (required for SQLCipher hardware-backed keystore)
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.0-stable-golden"
+        versionCode = 4
+        versionName = "0.9.3-Gold-Stable-Testing"
 
         testInstrumentationRunner = "dagger.hilt.android.testing.HiltTestRunner"
 
