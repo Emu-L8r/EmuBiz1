@@ -4,6 +4,8 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.emul8r.bizap.data.local.dao.InvoiceDaoV2
 import com.emul8r.bizap.data.local.entities.DailyRevenueTrendV2
 import com.emul8r.bizap.data.local.entities.InvoiceStatusCountV2
+import com.emul8r.bizap.domain.model.BusinessProfile
+import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -23,17 +25,17 @@ import io.mockk.every
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 abstract class BaseUnitTest {
-    
+
     @get:Rule
     val instantTaskExecutorRule: TestRule = InstantTaskExecutorRule()
-    
+
     protected val testDispatcher = StandardTestDispatcher()
-    
+
     @Before
     fun setupBase() {
         Dispatchers.setMain(testDispatcher)
     }
-    
+
     @After
     fun tearDownBase() {
         Dispatchers.resetMain()
@@ -121,6 +123,45 @@ abstract class BaseUnitTest {
     ) {
         stubRevenueMetrics(dao, businessId, mtd, ytd, weekly, totalPaid, trend, overdue)
         stubPaymentMetrics(dao, businessId, outstanding, collected, statusCounts, overdueCount, averageDaysToPayment)
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // BUSINESS PROFILE STUBBING HELPER
+    // Prevents VerifyError from un-stubbed Flow properties on relaxed mocks.
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Shared test fixture for a valid business profile.
+     * Use wherever a BusinessProfileRepository mock needs an activeProfile stub.
+     */
+    val testBusinessProfile = BusinessProfile(
+        id = 1L,
+        businessName = "Test Business Pty Ltd",
+        email = "test@business.com",
+        abn = "12 345 678 901",
+        isTaxRegistered = false,
+        defaultTaxRate = 0.10f
+    )
+
+    /**
+     * Stub [BusinessProfileRepository.activeProfile] to emit [testBusinessProfile].
+     *
+     * Call this in setUp() whenever a ViewModel under test calls
+     * `businessProfileRepository.activeProfile.first()` or collects it as a Flow.
+     *
+     * Prevents VerifyError caused by relaxed mocks returning un-typed stubs for Flow properties.
+     *
+     * Usage:
+     *   stubBusinessProfile(businessProfileRepository)
+     *
+     * With custom profile:
+     *   stubBusinessProfile(businessProfileRepository, testBusinessProfile.copy(isTaxRegistered = true))
+     */
+    protected fun stubBusinessProfile(
+        repo: BusinessProfileRepository,
+        profile: BusinessProfile = testBusinessProfile
+    ) {
+        every { repo.activeProfile } returns flowOf(profile)
     }
 }
 

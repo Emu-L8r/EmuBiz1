@@ -1,12 +1,14 @@
 package com.emul8r.bizap.ui.auth
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.domain.model.AuthState
 import com.emul8r.bizap.domain.service.AuthenticationManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -106,19 +108,14 @@ class AuthViewModel @Inject constructor(
     /**
      * Re-evaluates authentication state.
      *
-     * **Behavior:**
-     * - Calls authManager.checkSessionValidity()
-     * - Updates authState with current validity
-     * - Called automatically on init
-     * - Can be called manually to refresh state
-     *
-     * **When to call:**
-     * - After user completes PIN setup
-     * - After user logs in
-     * - When session might have expired
-     * - During app lifecycle events
+     * Stays a plain `fun` so all call sites (composables, lifecycle observers) are
+     * unchanged. Internally launches a [viewModelScope] coroutine so the now-suspend
+     * [AuthenticationManager.checkSessionValidity] is called off the main thread,
+     * eliminating the previous runBlocking-on-Dispatchers.Main DiskRead violation.
      */
     fun refreshAuthState() {
-        _authState.value = authManager.checkSessionValidity()
+        viewModelScope.launch {
+            _authState.value = authManager.checkSessionValidity()
+        }
     }
 }

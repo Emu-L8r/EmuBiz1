@@ -167,13 +167,9 @@ class OfflineQueueServiceSuite4Test {
         assertNotNull("status", operation.status)
         assertNotNull("retryCount", operation.retryCount)
 
-        // Assert: Data types correct
-        assertTrue("operationType is String", operation.operationType is String)
-        assertTrue("entityId is Long", operation.entityId is Long)
-        assertTrue("entityData is String", operation.entityData is String)
-        assertTrue("businessProfileId is Long", operation.businessProfileId is Long)
-        assertTrue("status is String", operation.status is String)
-        assertTrue("retryCount is Int", operation.retryCount is Int)
+        // Assert: Type checking (Kotlin type system guarantees these)
+        // operationType: String, entityId: Long, entityData: String,
+        // businessProfileId: Long, status: String, retryCount: Int
 
         // Assert: Primary key is auto-generated (0 before insert)
         assertEquals("id is 0 before insert (auto-generated)", 0L, operation.id)

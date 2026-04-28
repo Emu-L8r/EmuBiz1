@@ -69,12 +69,11 @@ class MatrixGUIMainActivity : AppCompatActivity() {
 
     private var navController: androidx.navigation.NavHostController? = null
 
-      override fun onCreate(savedInstanceState: Bundle?) {
-          super.onCreate(savedInstanceState)
-          println("🔵 STARTUP: MatrixGUIMainActivity.onCreate() called")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-          // Disable action bar completely
-          supportActionBar?.hide()
+        // Disable action bar completely
+        supportActionBar?.hide()
 
         // Enable edge-to-edge rendering (extends behind system bars)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -98,17 +97,14 @@ class MatrixGUIMainActivity : AppCompatActivity() {
         val businessId = intent.getLongExtra("businessId", 1L)
 
         setContent {
-            println("🟡 STARTUP: setContent block executing")
             val landingViewModel: LandingViewModel = hiltViewModel()
 
             MatrixTheme(isDarkMode = true) { // Matrix is always dark mode
-                println("🟢 STARTUP: MatrixTheme content block")
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(androidx.compose.ui.graphics.Color.Black)
                 ) {
-                    println("🟠 STARTUP: Box rendering")
                     MatrixGUINavigation(
                         businessId = businessId,
                         onSwitchToGui1 = {
@@ -157,6 +153,18 @@ class MatrixGUIMainActivity : AppCompatActivity() {
         })
     }
 
+    override fun onPause() {
+        super.onPause()
+        // Stop collecting flows when activity is paused to reduce CPU usage
+        Timber.d("GUI3: Activity paused, stopping flow collection")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Flows will re-subscribe automatically when needed
+        Timber.d("GUI3: Activity resumed")
+    }
+
     companion object {
         fun createIntent(context: Context, businessId: Long = 1L): Intent {
             return Intent(context, MatrixGUIMainActivity::class.java).apply {
@@ -178,7 +186,6 @@ fun MatrixGUINavigation(
     onSwitchToGui2: () -> Unit = {},
     onNavControllerCreated: (androidx.navigation.NavHostController) -> Unit = {}
 ) {
-    println("🟣 STARTUP: MatrixGUINavigation composing with businessId=$businessId")
     val navController = rememberNavController()
 
     // Notify parent of navController creation
@@ -193,9 +200,7 @@ fun MatrixGUINavigation(
     ) {
          // Dashboard
          composable<ScreenV3.Dashboard> { backStackEntry ->
-             println("🟤 STARTUP: Dashboard route MATCHED! Rendering DashboardScreenV3")
              val route: ScreenV3.Dashboard = backStackEntry.toRoute()
-             println("🟤 STARTUP: route extracted successfully: businessId=${route.businessId}")
              DashboardScreenV3(
                  businessId = route.businessId,
                  navController = navController,

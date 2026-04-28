@@ -2,6 +2,8 @@ package com.emul8r.bizap
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -63,8 +65,8 @@ import com.emul8r.bizap.ui.navigation.getTitleResId
 import com.emul8r.bizap.ui.navigation.NavGraph
 import com.emul8r.bizap.ui.revenue.RevenueDashboardScreen
 import com.emul8r.bizap.ui.risk.RiskDashboardScreen
-import com.emul8r.bizap.ui.invoice.analytics.PaymentAnalyticsScreen
-import com.emul8r.bizap.ui.invoice.analytics.PaymentAnalyticsViewModel
+import com.emul8r.bizap.ui.analytics.PaymentAnalyticsScreen
+import com.emul8r.bizap.ui.analytics.PaymentAnalyticsViewModel
 import com.emul8r.bizap.ui.settings.backup.BackupRestoreScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileScreen
 import com.emul8r.bizap.ui.settings.BusinessProfileViewModel
@@ -309,11 +311,16 @@ class MainActivity : ComponentActivity() {
                                                         onClick = {
                                                             scope.launch {
                                                                 Timber.d("⏳ Auto-populate disabled - using correct Invoice model")
-                                                                android.widget.Toast.makeText(
-                                                                    this@MainActivity,
-                                                                    "⏳ Auto-populate feature temporarily disabled\nPlease use the app normally or create test data manually",
-                                                                    android.widget.Toast.LENGTH_LONG
-                                                                ).show()
+                                                                // ✅ FIX: Wrap Toast with Handler.post() to avoid StrictMode DiskRead violation
+                                                                // Toast.makeText() reads SharedPreferences on Samsung/Knox devices
+                                                                // Handler.post() defers execution, avoiding main-thread disk I/O
+                                                                Handler(Looper.getMainLooper()).post {
+                                                                    android.widget.Toast.makeText(
+                                                                        this@MainActivity,
+                                                                        "⏳ Auto-populate feature temporarily disabled\nPlease use the app normally or create test data manually",
+                                                                        android.widget.Toast.LENGTH_LONG
+                                                                    ).show()
+                                                                }
                                                             }
                                                         },
                                                         modifier = Modifier.fillMaxWidth(),
@@ -626,13 +633,11 @@ fun MainScreen(onSwitchGui: () -> Unit = {}) {
                 composable<Screen.PaymentAnalytics> { backStackEntry ->
                     val route: Screen.PaymentAnalytics = backStackEntry.toRoute()
                     val viewModel: PaymentAnalyticsViewModel = hiltViewModel()
+                    val uiState by viewModel.paymentMetrics.collectAsStateWithLifecycle()
 
-                    // ✅ FIX 3: Apply business context if passed from navigation
-                    LaunchedEffect(route.businessId) {
-                        route.businessId?.let { viewModel.setBusinessId(it) }
-                    }
-
-                    PaymentAnalyticsScreen()
+                    PaymentAnalyticsScreen(
+                        uiState = uiState
+                    )
                 }
                 composable<Screen.BackupRestore> { BackupRestoreScreen(onBack = { navController.popBackStack() }) }
                 composable<Screen.DunningNotices> { DunningNoticesScreen(onBackClick = { navController.popBackStack() }) }

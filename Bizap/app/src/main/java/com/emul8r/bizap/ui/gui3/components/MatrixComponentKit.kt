@@ -571,7 +571,7 @@ fun MatrixDivider(
     modifier: Modifier = Modifier,
     alpha: Float = 0.3f
 ) {
-    Divider(
+    HorizontalDivider(
         modifier = modifier.fillMaxWidth(),
         color = MatrixGreen.copy(alpha = alpha),
         thickness = 1.dp

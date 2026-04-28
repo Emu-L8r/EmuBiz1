@@ -92,7 +92,7 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
 
             // Check if both are non-null before comparing
             if (calculated != null && metricsRow != null) {
-                @Suppress("SENSELESS_COMPARISON")  // Compiler false positive - null check is necessary for safety
+                // Safe to use non-null values here
                 val snapshotCollectionRate = if (metricsRow.totalAmount > 0.0) {
                     ((metricsRow.paidAmount / metricsRow.totalAmount) * 100.0).coerceIn(0.0, 100.0)
                 } else 0.0

@@ -225,6 +225,18 @@ object InvoiceSpacingConfig {
     // ==================== HELPER FUNCTIONS ====================
 
     /**
+     * ✅ PHASE 2 FEATURE #4: SPACING PROFILES
+     * Apply spacing multiplier based on selected profile
+     * Returns a multiplier (0.75x for TIGHT, 1.0x for NORMAL, 1.25x for GENEROUS, 1.5x for PREMIUM)
+     */
+    fun getSpacingMultiplier(spacingProfile: com.emul8r.bizap.domain.model.SpacingProfile): Float = when (spacingProfile) {
+        com.emul8r.bizap.domain.model.SpacingProfile.TIGHT -> 0.75f       // Compact: 75% of standard spacing
+        com.emul8r.bizap.domain.model.SpacingProfile.NORMAL -> 1.0f       // Standard: 100% (default)
+        com.emul8r.bizap.domain.model.SpacingProfile.GENEROUS -> 1.25f    // Spacious: 125% of standard
+        com.emul8r.bizap.domain.model.SpacingProfile.PREMIUM -> 1.5f      // Luxury: 150% of standard
+    }
+
+    /**
      * Convert grid units to pixels
      * @param gridUnits Number of 8px grid units
      * @return Pixel value
@@ -263,4 +275,3 @@ object InvoiceSpacingConfig {
     fun getAvailableHeight(currentY: Float): Float =
         PAGE_HEIGHT - MARGIN_BOTTOM - currentY
 }
-

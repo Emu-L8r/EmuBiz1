@@ -71,17 +71,12 @@ fun DashboardScreenV3(
     onSwitchToGui1: () -> Unit = {},
     onSwitchToGui2: () -> Unit = {}
 ) {
-    println("🟤A DashboardScreenV3 @Composable function body START - businessId=$businessId")
-    Timber.d("🟤 DashboardScreenV3 @Composable function body START - businessId=$businessId")
-
     DashboardScreenV3Content(
         businessId = businessId,
         navController = navController,
         onSwitchToGui1 = onSwitchToGui1,
         onSwitchToGui2 = onSwitchToGui2
     )
-
-    println("🟤 DashboardScreenV3 COMPOSABLE FUNCTION ENDING")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,7 +87,6 @@ private fun DashboardScreenV3Content(
     onSwitchToGui1: () -> Unit,
     onSwitchToGui2: () -> Unit
 ) {
-    println("🟤B DashboardScreenV3Content START")
     var showOverflowMenu by remember { mutableStateOf(false) }
 
     // Blinking status dot — 800ms toggle, zero animation overhead
@@ -105,15 +99,27 @@ private fun DashboardScreenV3Content(
     }
     val dot = if (dotVisible) "●" else "·"
 
+    // ✅ FIX: Defer MatrixBackground initialization to prevent 36-frame skip
+    // The enhanced rain engine causes 600ms of jank during initial render
+    // By delaying it to the next frame, we let content render first
+    var shouldRenderBackground by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        // Defer background animation to frame 2+ (after initial UI render)
+        delay(100)  // ~1.6 frames at 60 FPS
+        shouldRenderBackground = true
+        Timber.d("✅ MatrixBackground initialization deferred and now rendering")
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Background animation layer - FIRST layer, at z=0
-        MatrixBackground(
-            intensity = 1.2f,
-            modifier = Modifier
-                .fillMaxSize()
-                .zIndex(0f)
-        ) {
-            println("🟤C MatrixBackground rendering")
+        // ✅ NEW: Only render after initial frame to prevent UI thread blocking
+        if (shouldRenderBackground) {
+            MatrixBackground(
+                intensity = 1.2f,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(0f)
+            ) {}
         }
 
         // CONTENT LAYER: Pure Box-based layout (NO Material3 Scaffold)

@@ -128,16 +128,16 @@ class AuthenticationManagerTest {
     // ── checkSessionValidity ──────────────────────────────────────────────────
 
     @Test
-    fun `checkSessionValidity returns NotInitialized when no PIN set`() {
-        every { authRepo.isPINSet() } returns false
+    fun `checkSessionValidity returns NotInitialized when no PIN set`() = runTest {
+        coEvery { authRepo.isPINSet() } returns false
 
         val state = manager.checkSessionValidity()
         assertIs<AuthState.NotInitialized>(state)
     }
 
     @Test
-    fun `checkSessionValidity returns Authenticated when session is valid`() {
-        every { authRepo.isPINSet() } returns true
+    fun `checkSessionValidity returns Authenticated when session is valid`() = runTest {
+        coEvery { authRepo.isPINSet() } returns true
         every { authRepo.isSessionValid() } returns true
 
         val state = manager.checkSessionValidity()
@@ -145,8 +145,8 @@ class AuthenticationManagerTest {
     }
 
     @Test
-    fun `checkSessionValidity returns SessionExpired when session timed out`() {
-        every { authRepo.isPINSet() } returns true
+    fun `checkSessionValidity returns SessionExpired when session timed out`() = runTest {
+        coEvery { authRepo.isPINSet() } returns true
         every { authRepo.isSessionValid() } returns false
 
         val state = manager.checkSessionValidity()

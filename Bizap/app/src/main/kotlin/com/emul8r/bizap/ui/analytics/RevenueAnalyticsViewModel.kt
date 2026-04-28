@@ -3,9 +3,10 @@ package com.emul8r.bizap.ui.analytics
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import com.emul8r.bizap.util.ContextBlockLogger
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.InvoiceRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,6 +40,7 @@ class RevenueAnalyticsViewModel @Inject constructor(
     }
 
     private fun loadRevenueMetrics() {
+        val startMs = ContextBlockLogger.logStart("ANALYTICS", "Computing revenue metrics")
         viewModelScope.launch {
             try {
                 val now = System.currentTimeMillis()
@@ -129,10 +131,10 @@ class RevenueAnalyticsViewModel @Inject constructor(
                     thisYearRevenue = thisYearRevenue,
                     trend = trend
                 )
-
                 _revenueMetrics.value = RevenueMetricsState.Success(metrics)
                 Timber.d("✅ Revenue metrics loaded: total=$totalRevenue, trend=$trend%")
             } catch (e: Exception) {
+                ContextBlockLogger.logFailure("ANALYTICS", startMs, "Revenue metrics loading", e)
                 Timber.e(e, "Failed to load revenue metrics")
                 _revenueMetrics.value = RevenueMetricsState.Error(e.message ?: "Unknown error")
             }

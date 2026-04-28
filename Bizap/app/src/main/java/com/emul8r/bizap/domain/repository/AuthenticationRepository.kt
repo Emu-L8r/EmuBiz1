@@ -8,7 +8,7 @@ import com.emul8r.bizap.domain.model.AuthState
 interface AuthenticationRepository {
 
     /** Returns true if a PIN has been configured for this app installation. */
-    fun isPINSet(): Boolean
+    suspend fun isPINSet(): Boolean
 
     /**
      * Stores a new PIN (hashed). Used on first launch.

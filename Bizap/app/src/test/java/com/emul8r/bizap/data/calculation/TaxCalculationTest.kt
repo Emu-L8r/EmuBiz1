@@ -89,8 +89,9 @@ class TaxCalculationTest {
 
     @Test
     fun `calculateTax_EdgeCases - fractional cents are truncated not rounded`() {
+        // $333.33 × 10pct = $33.333 → truncated to $33.33 in cents
         // $333.33 × 10% = $33.333 → truncated to $33.33 in cents
-        val subtotal = 33333L
+        val subtotal = 33333L  // $333.33
         val taxRate = 0.10
         val tax = calculateTax(subtotal, taxRate)
         // 3333.3 cents → 3333 cents

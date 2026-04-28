@@ -17,7 +17,9 @@ import com.emul8r.bizap.domain.usecase.CalculateInvoiceMetricsUseCase
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
 import com.emul8r.bizap.domain.test.TestDataProvider
 import com.emul8r.bizap.domain.validation.ValidationRules
+import com.emul8r.bizap.domain.util.toSnapshot
 import com.emul8r.bizap.utils.FirebaseEventTracker
+import com.emul8r.bizap.util.ContextBlockLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -409,12 +411,11 @@ class CreateInvoiceViewModel @Inject constructor(
 
     fun onSaveClicked() {
         viewModelScope.launch {
-            Timber.d("═══════════════════════════════════════════════════════════════════════════")
-            Timber.d("🎬 CreateInvoiceViewModel.onSaveClicked() - STARTING INVOICE SAVE FLOW")
-            Timber.d("═══════════════════════════════════════════════════════════════════════════")
+            val startMs = ContextBlockLogger.logStart("INVOICE", "Creating and saving invoice")
+
             _uiState.update { it.copy(isSaving = true) }
             try {
-                Timber.d("🔵 STEP 1: INVOICE SAVE STARTED")
+                // ...existing code...
                 val state = _uiState.value
                 val customer = state.selectedCustomer ?: throw Exception("Please select a customer")
                 Timber.d("✅ STEP 2: Customer selected: ${customer.name} (ID=${customer.id})")
@@ -548,45 +549,34 @@ class CreateInvoiceViewModel @Inject constructor(
                 Timber.d("   footer='${state.footer}' (length=${state.footer.length})")
                 Timber.d("   notes='${state.notes}' (length=${state.notes.length})")
 
+                // ✅ FIX: Use unified settings-to-snapshot mapper (SnapshotMappers.kt)
+                // This ensures ALL 60+ settings fields are properly mapped with correct defaults
+                val snapshot = invoiceSettings?.toSnapshot(invoiceWithId, businessProfile)
+                    ?.let { baseSnapshot ->
+                        // Apply invoice-specific customizations (from form UI, not settings)
+                        baseSnapshot.copy(
+                            header = state.header.ifBlank { baseSnapshot.header },
+                            subheader = state.subheader.ifBlank { baseSnapshot.subheader },
+                            footerText = state.footer.ifBlank { baseSnapshot.footerText },
+                            notes = state.notes.ifBlank { baseSnapshot.notes },
+                            currencyCode = state.selectedCurrencyCode
+                        )
+                    }
+                    ?: run {
+                        Timber.w("⚠️ Invoice settings not loaded, using default snapshot")
+                        com.emul8r.bizap.domain.util.createDefaultSnapshot(invoiceWithId, businessProfile)
+                            .copy(
+                                header = state.header,
+                                subheader = state.subheader,
+                                footerText = state.footer,
+                                notes = state.notes,
+                                currencyCode = state.selectedCurrencyCode
+                            )
+                    }
+
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceWithId,
-                    snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
-                        invoiceId = invoiceWithId.id,
-                        invoiceNumber = invoiceWithId.invoiceNumber,
-                        customerName = invoiceWithId.customerName,
-                        customerAddress = invoiceWithId.customerAddress,
-                        customerEmail = invoiceWithId.customerEmail ?: "",
-                        date = invoiceWithId.dateCreated.toEpochMillis(),
-                        dueDate = invoiceWithId.dueDate.toEpochMillis(),
-                        items = invoiceWithId.items.map {
-                            val itemTotal = (it.unitPrice * it.quantity).toLong()  // Cents
-                            com.emul8r.bizap.domain.model.LineItemSnapshot(
-                                description = it.description,
-                                quantity = it.quantity,
-                                unitPrice = it.unitPrice,
-                                total = itemTotal
-                            )
-                        },
-                        subtotal = metrics.subtotal,
-                        taxRate = taxRate,
-                        taxAmount = metrics.taxAmount,
-                        totalAmount = invoiceWithId.totalAmount,
-                        businessName = businessProfile.businessName,
-                        businessAbn = businessProfile.abn,
-                        businessEmail = businessProfile.email,
-                        businessPhone = businessProfile.phone,
-                        businessAddress = businessProfile.address,
-                        logoBase64 = businessProfile.logoBase64,
-                        currencyCode = state.selectedCurrencyCode,
-                        header = state.header,
-                        subheader = state.subheader,
-                        footerText = state.footer,
-                        notes = state.notes,
-                        bankAccountName = businessProfile.accountName ?: "",
-                        bankAccountNumber = businessProfile.accountNumber ?: "",
-                        bankBsb = businessProfile.bsbNumber ?: "",
-                        bankName = businessProfile.bankName ?: ""
-                    ),
+                    snapshot = snapshot,
                     isQuote = false,
                     overwriteExisting = true,
                     theme = selectedTheme  // FIX: Cause #1 - Pass theme parameter!
@@ -602,9 +592,7 @@ class CreateInvoiceViewModel @Inject constructor(
                             Timber.d("   Which will call onCreate() → navController.popBackStack()")
                         }
                     }
-                    Timber.d("═══════════════════════════════════════════════════════════════════════════")
-                    Timber.d("✅ INVOICE SAVE COMPLETE - SUCCESS ✅")
-                    Timber.d("═══════════════════════════════════════════════════════════════════════════")
+                    ContextBlockLogger.logComplete("INVOICE", startMs, "Invoice created and saved", warnThresholdMs = 2000L)
                 } else {
                     val error = result.exceptionOrNull() ?: Exception("Failed to generate PDF")
                     Timber.e(error, "❌ PDF generation failed")
@@ -612,15 +600,7 @@ class CreateInvoiceViewModel @Inject constructor(
                 }
 
             } catch (e: Exception) {
-                Timber.e("═══════════════════════════════════════════════════════════════════════════")
-                Timber.e("❌ INVOICE SAVE FAILED ❌")
-                Timber.e("═══════════════════════════════════════════════════════════════════════════")
-                Timber.e(e, "Exception: ${e.message}")
-                Timber.e("Stack trace:")
-                e.stackTraceToString().split("\n").forEach { line ->
-                    Timber.e("  $line")
-                }
-                Timber.e("═══════════════════════════════════════════════════════════════════════════")
+                ContextBlockLogger.logFailure("INVOICE", startMs, "Invoice creation", e)
                 _uiState.update { it.copy(error = e.message, isSaving = false) }
             }
         }

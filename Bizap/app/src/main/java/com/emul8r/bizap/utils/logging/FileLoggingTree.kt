@@ -1,6 +1,12 @@
 package com.emul8r.bizap.utils.logging
 
 import android.content.Context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
 import java.text.SimpleDateFormat
@@ -13,7 +19,9 @@ import java.util.*
  * Captures all logs to file for debugging and error tracking without external services.
  *
  * **Features:**
- * - Writes all log levels to file
+ * - Writes all log levels to file **off the main thread** via a [Channel] + IO coroutine.
+ *   Previously used synchronous [File.appendText] on the calling thread, which caused
+ *   50–300 ms StrictMode DiskWrite violations on every log call.
  * - Automatically rotates logs when file exceeds size limit
  * - Includes timestamps with each log entry
  * - Works completely offline
@@ -24,11 +32,19 @@ import java.util.*
  * // In Application.onCreate()
  * val fileTree = FileLoggingTree(context)
  * Timber.plant(fileTree)
+ *
+ * // In Application.onTerminate() / process exit (optional cleanup)
+ * fileTree.close()
  * ```
  *
  * **Viewing Logs:**
  * - Access via `FileLoggingTree.getLogFile(context)`
  * - Read as text: `logFile.readText()`
+ *
+ * **Overflow policy:**
+ * Channel capacity is 512 entries. Under extreme burst load [trySend] silently drops
+ * entries rather than blocking the caller. Crashlytics independently captures crashes,
+ * so no critical diagnostics are lost.
  */
 class FileLoggingTree(private val context: Context) : Timber.Tree() {
 
@@ -36,35 +52,65 @@ class FileLoggingTree(private val context: Context) : Timber.Tree() {
     private val maxFileSizeBytes = 5 * 1024 * 1024  // 5 MB
     private val dateFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
 
+    // Background IO scope — one consumer drains the channel sequentially.
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    /**
+     * Bounded channel: [trySend] never blocks the main thread. Lines exceeding
+     * capacity are silently dropped (logged to stderr only) rather than stalling UI.
+     */
+    private val logChannel = Channel<String>(capacity = 512)
+
     init {
-        // Rotate logs if file is too large
-        if (logFile.exists() && logFile.length() > maxFileSizeBytes) {
-            rotateLogFile()
+        // Start a single background consumer for the channel.
+        scope.launch {
+            for (line in logChannel) {
+                try {
+                    logFile.appendText(line)
+                    // Rotation check runs in the background consumer — never on main thread.
+                    if (logFile.length() > maxFileSizeBytes) {
+                        rotateLogFile()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+
+        // Rotate on startup if a previous run left an oversized file.
+        scope.launch {
+            if (logFile.exists() && logFile.length() > maxFileSizeBytes) {
+                rotateLogFile()
+            }
         }
     }
 
+    /**
+     * Called by Timber on every log event — **must never block the main thread**.
+     * Formats the line and enqueues it via [Channel.trySend]; returns immediately.
+     */
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-        try {
-            val timestamp = dateFormat.format(Date())
-            val level = getPriorityLabel(priority)
-            val logLine = "[$timestamp] [$level] [$tag] $message\n"
+        val timestamp = dateFormat.format(Date())
+        val level = getPriorityLabel(priority)
+        val sb = StringBuilder("[$timestamp] [$level] [$tag] $message\n")
+        t?.let { sb.append("${it.stackTraceToString()}\n") }
 
-            // Append to file
-            logFile.appendText(logLine)
-
-            // Also log exception/stack trace if present
-            t?.let {
-                logFile.appendText("${it.stackTraceToString()}\n")
-            }
-
-            // Rotate if file is getting too large
-            if (logFile.length() > maxFileSizeBytes) {
-                rotateLogFile()
-            }
-        } catch (e: Exception) {
-            // Silently fail if we can't write logs (don't want file logging to crash the app)
-            e.printStackTrace()
+        // trySend is lock-free and non-blocking; drops silently if channel is full.
+        val result = logChannel.trySend(sb.toString())
+        if (result.isFailure) {
+            // Channel full — log to stderr only (avoid re-entrancy into Timber).
+            System.err.println("FileLoggingTree: channel full, dropping log line")
         }
+    }
+
+    /**
+     * Cancels the background IO scope and closes the channel.
+     * Call from Application.onTerminate() or a process-exit hook if desired.
+     * Safe to call multiple times.
+     */
+    fun close() {
+        logChannel.close()
+        scope.cancel()
     }
 
     private fun getPriorityLabel(priority: Int): String = when (priority) {

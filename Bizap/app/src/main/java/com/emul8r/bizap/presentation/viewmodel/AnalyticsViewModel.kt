@@ -112,10 +112,11 @@ class AnalyticsViewModel @Inject constructor(
                     Timber.e(error, "Error loading cash flow trend")
                     emit(emptyList())
                 }
+                .distinctUntilChanged()
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.Eagerly,
+                started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
             )
 
@@ -144,10 +145,11 @@ class AnalyticsViewModel @Inject constructor(
                     Timber.e(error, "Error loading top customers")
                     emit(emptyList())
                 }
+                .distinctUntilChanged()
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.Eagerly,
+                started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
             )
 
@@ -163,10 +165,11 @@ class AnalyticsViewModel @Inject constructor(
                     Timber.e(error, "Error loading average days to payment")
                     emit(0.0)
                 }
+                .distinctUntilChanged()
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.Eagerly,
+                started = SharingStarted.WhileSubscribed(5000),
                 initialValue = 0.0
             )
 
@@ -180,10 +183,11 @@ class AnalyticsViewModel @Inject constructor(
                     Timber.e(error, "Error loading average days to payment trend")
                     emit(emptyList())
                 }
+                .distinctUntilChanged()
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.Eagerly,
+                started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
             )
 
@@ -197,10 +201,11 @@ class AnalyticsViewModel @Inject constructor(
                     Timber.e(error, "Error loading invoicing velocity")
                     emit(emptyList())
                 }
+                .distinctUntilChanged()
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.Eagerly,
+                started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
             )
 
@@ -214,10 +219,11 @@ class AnalyticsViewModel @Inject constructor(
                     Timber.e(error, "Error loading total revenue")
                     emit(0L)
                 }
+                .distinctUntilChanged()
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.Eagerly,
+                started = SharingStarted.WhileSubscribed(5000),
                 initialValue = 0L
             )
 
@@ -231,10 +237,11 @@ class AnalyticsViewModel @Inject constructor(
                     Timber.e(error, "Error loading total outstanding")
                     emit(0L)
                 }
+                .distinctUntilChanged()
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.Eagerly,
+                started = SharingStarted.WhileSubscribed(5000),
                 initialValue = 0L
             )
 
@@ -248,10 +255,11 @@ class AnalyticsViewModel @Inject constructor(
                     Timber.e(error, "Error loading draft invoice count")
                     emit(0)
                 }
+                .distinctUntilChanged()
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.Eagerly,
+                started = SharingStarted.WhileSubscribed(5000),
                 initialValue = 0
             )
 
@@ -265,10 +273,11 @@ class AnalyticsViewModel @Inject constructor(
                     Timber.e(error, "Error loading overdue invoice count")
                     emit(0)
                 }
+                .distinctUntilChanged()
         }
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.Eagerly,
+                started = SharingStarted.WhileSubscribed(5000),
                 initialValue = 0
             )
 
@@ -324,9 +333,10 @@ class AnalyticsViewModel @Inject constructor(
             AnalyticsUiState.Error(e.message ?: "Unknown error")
         }
         }
+        .distinctUntilChanged()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly,
+            started = SharingStarted.WhileSubscribed(5000),
             initialValue = AnalyticsUiState.Loading
         )
 

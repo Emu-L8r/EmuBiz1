@@ -2,7 +2,6 @@ package com.emul8r.bizap.data.network
 
 import android.content.Context
 import android.net.wifi.WifiManager
-import android.telephony.SignalStrength
 import android.telephony.TelephonyManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -50,24 +49,29 @@ class SignalQualityMonitor @Inject constructor(
 
     /**
      * Emits NetworkQuality based on current WiFi/Cellular signal strength.
-     * Polls every 2 seconds (note: frequent polling can impact battery, but 2s is reasonable).
+     * Polls every 2 seconds. Logs only when quality or RSSI value actually changes,
+     * eliminating the every-2s spam previously caused by an unconditional Timber.d
+     * inside getWiFiQuality().
      */
     val networkQuality: Flow<NetworkQuality> = flow {
         var lastQuality: NetworkQuality? = null
+        var lastRssi: Int? = null
 
         while (true) {
             val quality = determineQuality()
+            val currentRssi = getCurrentRssi()
 
-            // Log when quality changes (not every 2 seconds)
-            if (quality != lastQuality) {
+            if (quality != lastQuality || currentRssi != lastRssi) {
                 val emoji = when (quality) {
                     NetworkQuality.EXCELLENT -> "📶"
                     NetworkQuality.GOOD -> "📡"
                     NetworkQuality.POOR -> "⚠️"
                     NetworkQuality.UNKNOWN -> "❓"
                 }
-                Timber.i("$emoji Signal quality changed: $lastQuality → ${quality.name} (${describeQuality(quality)})")
+                val rssiStr = if (currentRssi != null) " (RSSI: ${currentRssi}dBm)" else ""
+                Timber.i("$emoji Signal quality changed: $lastQuality → ${quality.name}$rssiStr (${describeQuality(quality)})")
                 lastQuality = quality
+                lastRssi = currentRssi
             }
 
             emit(quality)
@@ -103,6 +107,17 @@ class SignalQualityMonitor @Inject constructor(
     }
 
     /**
+     * Returns raw WiFi RSSI in dBm, or null if unavailable.
+     * Used solely for change-detection in the flow; does not log.
+     */
+    @Suppress("NewApi", "DEPRECATION")
+    private fun getCurrentRssi(): Int? = try {
+        wifiManager.connectionInfo?.rssi
+    } catch (_: Exception) {
+        null
+    }
+
+    /**
      * Determine quality from WiFi RSSI (Received Signal Strength Indicator).
      *
      * RSSI is measured in dBm (decibels relative to 1 milliwatt).
@@ -112,19 +127,18 @@ class SignalQualityMonitor @Inject constructor(
      */
     private fun getWiFiQuality(): NetworkQuality {
         return try {
-            @Suppress("NewApi", "DEPRECATION")  // Safe on Android 31+; connectionInfo deprecated but needed for RSSI
+            @Suppress("NewApi", "DEPRECATION")
             val connectionInfo = wifiManager.connectionInfo ?: return NetworkQuality.UNKNOWN
             val rssi = connectionInfo.rssi
 
-            val quality = when {
+            when {
                 rssi >= -50 -> NetworkQuality.EXCELLENT   // Very strong
                 rssi >= -70 -> NetworkQuality.GOOD         // Normal
                 rssi >= -80 -> NetworkQuality.POOR         // Weak
                 else -> NetworkQuality.POOR                // Very weak
             }
-
-            Timber.d("📊 WiFi RSSI: ${rssi}dBm → ${quality.name}")
-            quality
+            // Timber.d removed — was firing unconditionally every 2s regardless of change.
+            // RSSI is now included in the quality-changed log emitted by the flow above.
         } catch (e: Exception) {
             Timber.w(e, "Could not read WiFi RSSI")
             NetworkQuality.UNKNOWN
@@ -141,19 +155,19 @@ class SignalQualityMonitor @Inject constructor(
      */
     private fun getCellularQuality(): NetworkQuality {
         return try {
-            // Try modern API first (Android 31+)
-            val signalStrength = telephonyManager.signalStrength
-            if (signalStrength != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                val level = signalStrength.level  // 0-4 (bars)
-                return when (level) {
-                    4 -> NetworkQuality.EXCELLENT
-                    3 -> NetworkQuality.GOOD
-                    1, 2 -> NetworkQuality.POOR
-                    0 -> NetworkQuality.POOR
-                    else -> NetworkQuality.GOOD  // Default to safe middle
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                val signalStrength = telephonyManager.signalStrength
+                if (signalStrength != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                    val level = signalStrength.level
+                    return when (level) {
+                        4 -> NetworkQuality.EXCELLENT
+                        3 -> NetworkQuality.GOOD
+                        1, 2 -> NetworkQuality.POOR
+                        0 -> NetworkQuality.POOR
+                        else -> NetworkQuality.GOOD
+                    }
                 }
             }
-
             NetworkQuality.UNKNOWN
         } catch (e: Exception) {
             Timber.w(e, "Could not read cellular signal level")
@@ -171,6 +185,3 @@ class SignalQualityMonitor @Inject constructor(
         NetworkQuality.UNKNOWN -> "Unknown (cannot determine)"
     }
 }
-
-
-

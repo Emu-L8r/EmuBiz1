@@ -179,7 +179,7 @@ fun InvoiceDetailScreenV3(
                                                 viewModel.closeDialog()
                                                 navController.navigate(com.emul8r.bizap.ui.gui3.navigation.ScreenV3.Vault(businessId))
                                             }) {
-                                                Text("Go to Vault")
+                                                Text("View in Vault")
                                             }
                                             TextButton(onClick = { viewModel.closeDialog() }) {
                                                 Text("Done")

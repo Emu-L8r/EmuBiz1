@@ -101,9 +101,11 @@ class AuthenticationManager @Inject constructor(
      * - [AuthState.SessionExpired] — session timed out, re-login required
      * - [AuthState.LockedOut] — still in lockout window
      *
-     * **Note:** Now includes error handling for DataStore operations.
+     * **Note:** Suspend function — must be called from a coroutine. This eliminates
+     * the previous runBlocking bridge in AuthenticationRepositoryImpl that was
+     * blocking Dispatchers.Main during the startup auth sequence.
      */
-    fun checkSessionValidity(): AuthState {
+    suspend fun checkSessionValidity(): AuthState {
         return try {
             when {
                 !authRepository.isPINSet() -> AuthState.NotInitialized

@@ -55,6 +55,7 @@ local.properties
 !DETAILED_TECHNICAL_SCORECARD_APRIL2026.md
 !DOUBLE_GOLD_TEST_STANDARD_AUDIT_COMPLETE.md
 !PRE_DEVICE_TESTING_CHECKLIST.md
+!docs/testing/EMULATOR_SMOKE_TEST_MASTER_PROMPT.md
 
 # Build and log files (use /docs directory)
 *.log

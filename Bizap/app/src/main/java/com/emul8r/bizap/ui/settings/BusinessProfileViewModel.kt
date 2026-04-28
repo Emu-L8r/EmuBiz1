@@ -37,7 +37,7 @@ class BusinessProfileViewModel @Inject constructor(
     val profileState: StateFlow<BusinessProfile> = repository.activeProfile
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly,  // Eagerly to ensure state is always available
+            started = SharingStarted.WhileSubscribed(5000),
             initialValue = BusinessProfile()
         )
 

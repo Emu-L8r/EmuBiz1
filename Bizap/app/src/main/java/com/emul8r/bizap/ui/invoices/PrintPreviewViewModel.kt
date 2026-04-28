@@ -13,6 +13,9 @@ import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.domain.model.BusinessProfile
 import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
+import com.emul8r.bizap.di.UserIdProvider
+import com.emul8r.bizap.domain.util.toSnapshot
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +40,8 @@ class InvoicePdfViewModel @Inject constructor(
     private val invoiceRepo: InvoiceRepository,
     private val pdfService: InvoicePdfService,
     private val businessProfileRepo: BusinessProfileRepository,
+    private val invoiceSettingsRepo: InvoiceSettingsRepository,
+    private val userIdProvider: UserIdProvider,
     private val documentManager: DocumentManager
 ) : ViewModel() {
 
@@ -62,43 +67,21 @@ class InvoicePdfViewModel @Inject constructor(
                 val profile = businessProfileRepo.activeProfile.first()
                     ?: throw IllegalStateException("No active business profile found")
 
-                // Build snapshot for PDF generation
-                val snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
-                    invoiceId = invoice.id,
-                    invoiceNumber = invoice.invoiceNumber,
-                    customerName = invoice.customerName,
-                    customerAddress = invoice.customerAddress,
-                    customerEmail = invoice.customerEmail ?: "",
-                    date = invoice.dateCreated.toEpochMillis(),
-                    dueDate = invoice.dueDate.toEpochMillis(),
-                    items = invoice.items.map {
-                        val itemTotal = (it.unitPrice * it.quantity).toLong()
-                        com.emul8r.bizap.domain.model.LineItemSnapshot(
-                            it.description,
-                            it.quantity,
-                            it.unitPrice,
-                            itemTotal
-                        )
-                    },
-                    subtotal = invoice.totalAmount - invoice.taxAmount,
-                    taxRate = invoice.taxRate,
-                    taxAmount = invoice.taxAmount,
-                    totalAmount = invoice.totalAmount,
-                    businessName = profile.businessName,
-                    businessAbn = profile.abn,
-                    businessEmail = profile.email,
-                    businessPhone = profile.phone,
-                    businessAddress = profile.address,
-                    logoBase64 = profile.logoBase64,
-                    header = invoice.header ?: "",
-                    subheader = invoice.subheader ?: "",
-                    footerText = invoice.footer ?: "",
-                    notes = invoice.notes ?: "",
-                    bankAccountName = profile.accountName ?: "",
-                    bankAccountNumber = profile.accountNumber ?: "",
-                    bankBsb = profile.bsbNumber ?: "",
-                    bankName = profile.bankName ?: ""
-                )
+                // ✅ ROUND 3: Fetch InvoiceSettings for compliance fields
+                val userId = userIdProvider.getCurrentUserId()
+                val settings = invoiceSettingsRepo.getSettings(userId)
+                    ?: throw IllegalStateException("No invoice settings found for user: $userId")
+
+                // ✅ FIX: Use unified settings-to-snapshot mapper (SnapshotMappers.kt)
+                // This ensures ALL 60+ settings fields are properly mapped with correct defaults
+                val snapshot = settings.toSnapshot(invoice, profile)
+                    .copy(
+                        header = invoice.header ?: "",
+                        subheader = invoice.subheader ?: "",
+                        footerText = invoice.footer ?: "",
+                        notes = invoice.notes ?: "",
+                        isQuote = isQuote
+                    )
 
                 Timber.d("📝 Generated invoice snapshot for ${invoice.customerName}")
 
