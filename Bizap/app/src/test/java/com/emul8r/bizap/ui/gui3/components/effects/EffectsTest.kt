@@ -1,8 +1,9 @@
 package com.emul8r.bizap.ui.gui3.components.effects
 
 import com.emul8r.bizap.BaseUnitTest
-import com.emul8r.bizap.ui.gui3.util.GlitchEffect
+import com.emul8r.bizap.ui.gui3.util.MatrixEffect
 import com.emul8r.bizap.ui.gui3.util.MatrixBackgroundConfig
+import com.emul8r.bizap.ui.gui3.util.GlitchEffect
 import com.emul8r.bizap.ui.gui3.util.RainParticleEffect
 import com.emul8r.bizap.ui.gui3.util.ScanlineEffect
 import org.junit.Test
