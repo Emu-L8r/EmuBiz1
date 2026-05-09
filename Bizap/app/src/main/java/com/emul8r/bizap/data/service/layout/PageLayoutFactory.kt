@@ -32,6 +32,7 @@ object PageLayoutFactory {
             PageLayout.CARDS -> ClassicPageLayout()
             PageLayout.MINIMAL_TABLES -> ClassicPageLayout()
             PageLayout.FOCUSED -> ClassicPageLayout()
+            PageLayout.ADVANCED_PAGINATED -> ClassicPageLayout()  // Uses AdvancedPageLayout in PDF generation
         }
     }
 
@@ -44,6 +45,7 @@ object PageLayoutFactory {
         PageLayout.CARDS -> "CARDS"
         PageLayout.MINIMAL_TABLES -> "MINIMAL_TABLES"
         PageLayout.FOCUSED -> "FOCUSED"
+        PageLayout.ADVANCED_PAGINATED -> "ADVANCED_PAGINATED"
     }
 }
 

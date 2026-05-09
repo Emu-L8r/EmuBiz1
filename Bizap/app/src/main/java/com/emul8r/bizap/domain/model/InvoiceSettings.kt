@@ -309,15 +309,37 @@ enum class PdfEngine {
  * - MINIMAL_TABLES: Ultra-clean table layout with minimal borders and lines
  * - FOCUSED: Single-column layout with emphasis on totals and key metrics
  */
-enum class PageLayout(val emoji: String, val displayName: String, val description: String) {
-    CLASSIC("📋", "Classic", "Traditional invoice layout - header, details, items, totals, footer"),
-    MODERN("🎯", "Modern", "Compact side-by-side grid layout - efficient and professional"),
-    SPACIOUS("✨", "Spacious", "Premium layout with generous spacing - elegant and luxurious"),
-    COMPACT("📊", "Compact", "Executive tight layout - fits many items per page"),
-    SIDEBAR("📑", "Sidebar", "Business branding on left panel - modern and distinctive"),
-    CARDS("🎨", "Cards", "Line items as cards - visually engaging and interactive-feel"),
-    MINIMAL_TABLES("⚪", "Minimal", "Ultra-clean tables with minimal borders - minimalist elegance"),
-    FOCUSED("🎯", "Focused", "Single column with emphasis on totals - financial clarity")
+/**
+ * Page Layout enum for PDF invoice generation.
+ *
+ * Defines 9 distinct page layout styles for professional invoices.
+ * Each layout has a maximum item capacity before requiring pagination.
+ *
+ * - CLASSIC: Traditional invoice layout - header, details, items, totals, footer
+ * - MODERN: Compact side-by-side grid layout - efficient and professional
+ * - SPACIOUS: Premium layout with generous spacing - elegant and luxurious
+ * - COMPACT: Executive tight layout - fits many items per page
+ * - SIDEBAR: Business branding on left panel - modern and distinctive
+ * - CARDS: Line items as cards - visually engaging and interactive-feel
+ * - MINIMAL_TABLES: Ultra-clean tables with minimal borders - minimalist elegance
+ * - FOCUSED: Single column with emphasis on totals - financial clarity
+ * - ADVANCED_PAGINATED: Automatically paginates with smart headers for 12+ items
+ */
+enum class PageLayout(
+    val emoji: String,
+    val displayName: String,
+    val description: String,
+    val maxItemsPerPage: Int = 15 // Phase 3D: Max items before auto-pagination
+) {
+    CLASSIC("📋", "Classic", "Traditional invoice layout - header, details, items, totals, footer", 20),
+    MODERN("🎯", "Modern", "Compact side-by-side grid layout - efficient and professional", 15),
+    SPACIOUS("✨", "Spacious", "Premium layout with generous spacing - elegant and luxurious", 12),
+    COMPACT("📊", "Compact", "Executive tight layout - fits many items per page", 25),
+    SIDEBAR("📑", "Sidebar", "Business branding on left panel - modern and distinctive", 18),
+    CARDS("🎨", "Cards", "Line items as cards - visually engaging and interactive-feel", 8),
+    MINIMAL_TABLES("⚪", "Minimal", "Ultra-clean tables with minimal borders - minimalist elegance", 20),
+    FOCUSED("🎯", "Focused", "Single column with emphasis on totals - financial clarity", 10),
+    ADVANCED_PAGINATED("📄", "Multi-Page Auto", "Automatically paginates with smart headers for 12+ items", Int.MAX_VALUE)
 }
 
 /**
@@ -618,12 +640,13 @@ enum class DividerStyle {
 /**
  * Total box visual style options.
  * SUBTLE_BACKGROUND: Light background color
+ * PROMINENT_BORDER: Colored border with no fill
  * ACCENT_BORDER: Colored border with no fill
  * BOLD_HIGHLIGHT: Strong colored background
  * GRADIENT_BACKGROUND: Gradient fill matching primary/accent
  */
 enum class TotalBoxStyle {
-    SUBTLE_BACKGROUND, ACCENT_BORDER, BOLD_HIGHLIGHT, GRADIENT_BACKGROUND
+    SUBTLE_BACKGROUND, PROMINENT_BORDER, ACCENT_BORDER, BOLD_HIGHLIGHT, GRADIENT_BACKGROUND
 }
 
 /**

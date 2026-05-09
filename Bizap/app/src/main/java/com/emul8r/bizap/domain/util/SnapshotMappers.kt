@@ -111,7 +111,6 @@ fun InvoiceSettings.toSnapshot(
         paymentTermsDays = this.paymentTermsDays,
         taxHandling = this.taxHandling,
         defaultPaymentNotes = this.defaultPaymentNotes,
-        footerMessage = this.footerMessage,
         companyWebsite = this.companyWebsite,
 
         // ─────────────────────────────────────────────────────────────────

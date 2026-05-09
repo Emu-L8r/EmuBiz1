@@ -13,6 +13,7 @@ import com.emul8r.bizap.data.local.migration.MIGRATION_42_43
 import com.emul8r.bizap.data.local.migrations.MIGRATION_44_45
 import com.emul8r.bizap.data.local.migrations.Migration_45_46
 import com.emul8r.bizap.data.local.database.MIGRATION_46_47
+import com.emul8r.bizap.data.local.database.MIGRATION_47_48
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTimeTypeConverter
@@ -41,8 +42,8 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
  * | 45 | 46 | Add payment media attachments | migrations/Migration_45_46.kt ✅ |
  *
  * | 46 | 47 | Add query optimization indices (Phase 2B) | database/Migrations.kt ✅ |
- * **⚠️ Future Action:** Rename the `migration/` folder to `migrations/` and rename
- * **Current Version:** 47 Rename the `migration/` folder to `migrations/` and rename
+ * | 47 | 48 | Finalize invoice_settings schema (Phase 3F) | database/Migration_47_48.kt ✅ |
+ * **Current Version:** 48
  * ## Naming Convention
  * - **Standardized (New):** `Migration_XX_YY.kt` (file) + `Migration(XX, YY)` (class)
  * **⚠️ Future Action:** Rename the `migration/` folder to `migrations/` and rename
@@ -115,7 +116,7 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
         com.emul8r.bizap.domain.model.InvoiceSettings::class,
         DashboardPreferencesEntity::class
     ],
-    version = 47,  // v46→47: Add query optimization indices (Phase 2B)
+    version = 48,  // v47→48: Finalize invoice_settings schema (Phase 3F)
     exportSchema = true
 )
 @TypeConverters(

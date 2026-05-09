@@ -20,6 +20,8 @@ import com.emul8r.bizap.data.local.migration.MIGRATION_42_43
 import com.emul8r.bizap.data.local.migrations.MIGRATION_38_39
 import com.emul8r.bizap.data.local.migrations.MIGRATION_44_45
 import com.emul8r.bizap.data.local.migrations.Migration_45_46
+import com.emul8r.bizap.data.local.database.MIGRATION_46_47
+import com.emul8r.bizap.data.local.database.MIGRATION_47_48
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -78,7 +80,9 @@ object DatabaseModule {
             MIGRATION_41_42,                   // Add discount_amount column; create InvoiceFTS virtual table
             MIGRATION_42_43,                   // Add customization layers (color scheme, spacing, visual accents); delete old invoices
             MIGRATION_44_45,                   // Add invoice numbering columns (dailySequence, invoiceYear, invoiceNumber)
-            Migration_45_46                    // Add payment media attachments for proof-of-payment feature
+            Migration_45_46,                   // Add payment media attachments for proof-of-payment feature
+            MIGRATION_46_47,                   // Add query optimization indices (Phase 2B)
+            MIGRATION_47_48                    // Finalize invoice_settings schema (Phase 3F)
         )
 
         // ✅ PRODUCTION SAFE: Only allow destructive fallback in DEBUG builds

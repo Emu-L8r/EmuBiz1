@@ -833,6 +833,11 @@ class InvoicePdfService @Inject constructor(
                     color = Color.parseColor("#F0F7FF")  // Very light blue background
                     style = Paint.Style.FILL
                 }
+                TotalBoxStyle.PROMINENT_BORDER -> Paint().apply {
+                    color = Color.TRANSPARENT
+                    style = Paint.Style.STROKE
+                    strokeWidth = 3f
+                }
                 TotalBoxStyle.ACCENT_BORDER -> Paint().apply {
                     color = Color.TRANSPARENT
                     style = Paint.Style.STROKE
@@ -854,8 +859,8 @@ class InvoicePdfService @Inject constructor(
                 highlightBoxPaint
             )
 
-            // Draw accent border if ACCENT_BORDER style
-            if (snapshot.totalBoxStyle == TotalBoxStyle.ACCENT_BORDER) {
+            // Draw accent border if ACCENT_BORDER or PROMINENT_BORDER style
+            if (snapshot.totalBoxStyle == TotalBoxStyle.ACCENT_BORDER || snapshot.totalBoxStyle == TotalBoxStyle.PROMINENT_BORDER) {
                 val borderPaint = Paint().apply {
                     color = colors.primary
                     strokeWidth = 2f

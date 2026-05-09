@@ -56,18 +56,9 @@ fun CreateInvoiceScreenV2(
         viewModel.setBusinessId(businessId)
     }
 
-    // ✅ Handle save success with GUI2 navigation callback
-    LaunchedEffect(uiState.saveSuccess) {
-        if (uiState.saveSuccess) {
-            Timber.d("✅ CreateInvoiceScreenV2: Save successful - calling onCreate()")
-            try {
-                onCreate()
-                Timber.d("✅ CreateInvoiceScreenV2: onCreate() called - navigating back to list")
-            } catch (e: Exception) {
-                Timber.e(e, "❌ CreateInvoiceScreenV2: onCreate() threw exception!")
-            }
-        }
-    }
+    // ✅ NOTE: Save success navigation is handled by UnifiedCreateInvoicePage.
+    // We pass onCreate() as onInvoiceSaved callback to avoid double-pop navigation bug.
+    // DO NOT add LaunchedEffect(uiState.saveSuccess) here - it causes double-callback!
 
     // Scaffold with GUI2-style top bar (save button in top bar)
     Scaffold(

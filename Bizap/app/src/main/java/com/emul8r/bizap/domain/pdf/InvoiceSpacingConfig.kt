@@ -236,29 +236,6 @@ object InvoiceSpacingConfig {
         com.emul8r.bizap.domain.model.SpacingProfile.PREMIUM -> 1.5f      // Luxury: 150% of standard
     }
 
-    /**
-     * Convert grid units to pixels
-     * @param gridUnits Number of 8px grid units
-     * @return Pixel value
-     */
-    fun gridToPx(gridUnits: Int): Float = gridUnits * GRID_UNIT
-
-    /**
-     * Convert pixels to grid units (rounds)
-     * @param pixels Pixel value
-     * @return Grid units (rounded)
-     */
-    fun pxToGrid(pixels: Float): Int = (pixels / GRID_UNIT).toInt()
-
-    /**
-     * Check if content would exceed available page height
-     * @param currentY Current Y position
-     * @param contentHeight Height of content to be added
-     * @return True if would exceed bottom margin
-     */
-    fun wouldExceedPage(currentY: Float, contentHeight: Float): Boolean {
-        return (currentY + contentHeight) > (PAGE_HEIGHT - MARGIN_BOTTOM)
-    }
 
     /**
      * Get total height needed for header sections (header + bill to/invoice details)
@@ -275,3 +252,5 @@ object InvoiceSpacingConfig {
     fun getAvailableHeight(currentY: Float): Float =
         PAGE_HEIGHT - MARGIN_BOTTOM - currentY
 }
+
+

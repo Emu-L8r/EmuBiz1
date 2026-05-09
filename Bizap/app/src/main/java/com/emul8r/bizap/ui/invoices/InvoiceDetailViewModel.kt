@@ -288,17 +288,20 @@ class InvoiceDetailViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val businessProfile = businessProfileRepository.activeProfile.first()
-                val snapshot = buildSnapshot(invoiceData, businessProfile)
 
-                // 🔧 FIX: Load invoice settings to get the selected theme
+                // ✅ PHASE 2: Load invoice settings to pass all customization options to PDF generation
                 val invoiceSettings = try {
                     invoiceSettingsRepository.getSettings("current_user")
                 } catch (e: Exception) {
-                    Timber.w(e, "Failed to load invoice settings, using default theme")
+                    Timber.w(e, "Failed to load invoice settings, using defaults")
                     null
                 }
                 val selectedTheme = invoiceSettings?.selectedTheme
                 Timber.d("📄 Loaded theme for PDF generation: ${selectedTheme?.name ?: "NULL (will use default)"}")
+                Timber.d("✅ PHASE 2: Loaded customization settings - color: ${invoiceSettings?.selectedColorScheme?.name}, spacing: ${invoiceSettings?.selectedSpacingProfile?.name}")
+
+                // ✅ PHASE 2: Pass settings to buildSnapshot to include customization fields
+                val snapshot = buildSnapshot(invoiceData, businessProfile, invoiceSettings)
 
                 val quoteResult = generateAndSaveInvoiceUseCase(
                     invoice = invoiceData,
@@ -408,7 +411,11 @@ class InvoiceDetailViewModel @Inject constructor(
         }
     }
 
-    private fun buildSnapshot(invoice: Invoice, business: com.emul8r.bizap.domain.model.BusinessProfile): InvoiceSnapshot {
+    private fun buildSnapshot(
+        invoice: Invoice,
+        business: com.emul8r.bizap.domain.model.BusinessProfile,
+        invoiceSettings: com.emul8r.bizap.domain.model.InvoiceSettings?
+    ): InvoiceSnapshot {
         return InvoiceSnapshot(
             invoiceId = invoice.id,
             invoiceNumber = invoice.invoiceNumber,
@@ -440,7 +447,54 @@ class InvoiceDetailViewModel @Inject constructor(
             bankAccountName = business.accountName ?: "",
             bankAccountNumber = business.accountNumber ?: "",
             bankBsb = business.bsbNumber ?: "",
-            bankName = business.bankName ?: ""
+            bankName = business.bankName ?: "",
+            // ✅ PHASE 2: Customization settings from InvoiceSettings
+            selectedColorScheme = invoiceSettings?.selectedColorScheme ?: com.emul8r.bizap.domain.model.ColorScheme.PROFESSIONAL,
+            selectedSpacingProfile = invoiceSettings?.selectedSpacingProfile ?: com.emul8r.bizap.domain.model.SpacingProfile.NORMAL,
+            selectedTypography = invoiceSettings?.selectedTypography ?: com.emul8r.bizap.domain.model.Typography.MODERN,
+            selectedLocale = invoiceSettings?.selectedLocale ?: com.emul8r.bizap.domain.model.InvoiceLocale.AUSTRALIAN,
+            highlightTotals = invoiceSettings?.highlightTotals ?: true,
+            totalBoxStyle = invoiceSettings?.totalBoxStyle ?: com.emul8r.bizap.domain.model.TotalBoxStyle.SUBTLE_BACKGROUND,
+            enableAlternatingRowColors = invoiceSettings?.enableAlternatingRowColors ?: true,
+            enableDividers = invoiceSettings?.enableDividers ?: true,
+            dividerStyle = invoiceSettings?.dividerStyle ?: com.emul8r.bizap.domain.model.DividerStyle.SOLID,
+            enableGradientHeader = invoiceSettings?.enableGradientHeader ?: true,
+            headerGradientEndColor = invoiceSettings?.headerGradientEndColor ?: "#FF9F43",
+            enableStatusBadges = invoiceSettings?.enableStatusBadges ?: true,
+            badgeStyle = invoiceSettings?.badgeStyle ?: com.emul8r.bizap.domain.model.BadgeStyle.ROUNDED_FILLED,
+            enableBackgroundPattern = invoiceSettings?.enableBackgroundPattern ?: false,
+            backgroundPatternType = invoiceSettings?.backgroundPatternType ?: com.emul8r.bizap.domain.model.BackgroundPattern.WAVES,
+            patternOpacity = invoiceSettings?.patternOpacity ?: 0.08f,
+            enableWatermarkText = invoiceSettings?.enableWatermarkText ?: false,
+            watermarkText = invoiceSettings?.watermarkText ?: "",
+            watermarkOpacity = invoiceSettings?.watermarkOpacity ?: 0.1f,
+            enableMotto = invoiceSettings?.enableMotto ?: false,
+            mottoText = invoiceSettings?.mottoText ?: "",
+            mottoFontSize = invoiceSettings?.mottoFontSize ?: 10f,
+            mottoColor = invoiceSettings?.mottoColor ?: "#666666",
+            enableSignatureArea = invoiceSettings?.enableSignatureArea ?: false,
+            signatureLabel = invoiceSettings?.signatureLabel ?: "Authorized By:",
+            signatureLineLengthMm = invoiceSettings?.signatureLineLengthMm ?: 40f,
+            enableQrCode = invoiceSettings?.enableQrCode ?: false,
+            qrCodeContent = invoiceSettings?.qrCodeContent ?: "",
+            qrCodeSizeMm = invoiceSettings?.qrCodeSizeMm ?: 20f,
+            qrCodePosition = invoiceSettings?.qrCodePosition ?: com.emul8r.bizap.domain.model.QrCodePosition.BOTTOM_RIGHT,
+            enablePaymentIcons = invoiceSettings?.enablePaymentIcons ?: false,
+            acceptedPaymentMethodsJson = invoiceSettings?.acceptedPaymentMethodsJson ?: "[]",
+            paymentIconsSize = invoiceSettings?.paymentIconsSize ?: 16f,
+            enableLogo = invoiceSettings?.enableLogo ?: false,
+            logoUri = invoiceSettings?.logoUri ?: "",
+            logoWidthMm = invoiceSettings?.logoWidthMm ?: 30f,
+            logoHeightMm = invoiceSettings?.logoHeightMm ?: 30f,
+            logoPosition = invoiceSettings?.logoPosition ?: com.emul8r.bizap.domain.model.LogoPosition.TOP_LEFT,
+            visualAccentsJson = invoiceSettings?.visualAccentsJson ?: "",
+            alternateRowColor = invoiceSettings?.alternateRowColor ?: "#F5F5F5",
+            dividerColor = invoiceSettings?.dividerColor ?: "#CCCCCC",
+            dividerThicknessPx = invoiceSettings?.dividerThicknessPx ?: 1f,
+            cornerRadiusDp = invoiceSettings?.cornerRadiusDp ?: 8f,
+            shadowIntensity = invoiceSettings?.shadowIntensity ?: 0.15f,
+            primaryColor = invoiceSettings?.primaryColor ?: "#6B4C9A",
+            secondaryColor = invoiceSettings?.secondaryColor ?: "#f5f5f5"
         )
     }
 
@@ -450,7 +504,16 @@ class InvoiceDetailViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val businessProfile = businessProfileRepository.activeProfile.first()
-                val snapshot = buildSnapshot(invoiceData, businessProfile)
+
+                // ✅ PHASE 2: Load settings for print as well
+                val invoiceSettings = try {
+                    invoiceSettingsRepository.getSettings("current_user")
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to load invoice settings for print, using defaults")
+                    null
+                }
+
+                val snapshot = buildSnapshot(invoiceData, businessProfile, invoiceSettings)
 
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceData,
