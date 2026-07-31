@@ -10,12 +10,13 @@ import com.emul8r.bizap.domain.model.DocumentStatus
 import com.emul8r.bizap.data.repository.gui2.PaymentRepositoryV2
 import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
 import com.emul8r.bizap.di.UserIdProvider
-import com.emul8r.bizap.domain.model.InvoiceSnapshot
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.BusinessProfileRepository
 import com.emul8r.bizap.domain.repository.DocumentRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.service.PdfGenerationService
+import com.emul8r.bizap.domain.util.createDefaultSnapshot
+import com.emul8r.bizap.domain.util.toSnapshot
 import com.emul8r.bizap.ui.gui2.navigation.ScreenV2
 import com.emul8r.bizap.utils.CentsFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -117,19 +118,6 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                 paymentError = null,
                 statusUpdateError = null
             )
-        }
-    }
-
-    /**
-     * Convert ISO-8601 date string to epoch milliseconds.
-     */
-    private fun String?.toEpochMillis(): Long {
-        return try {
-            if (this.isNullOrBlank()) 0L
-            else java.time.Instant.parse(this).toEpochMilli()
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to parse date string: $this")
-            0L
         }
     }
 
@@ -279,52 +267,6 @@ class InvoiceDetailViewModelV2 @Inject constructor(
 
                 Timber.d("InvoiceDetailViewModelV2: Business profile loaded: ${businessProfile.businessName}")
 
-                // Calculate subtotal from items
-                val subtotal = invoice.items.sumOf { (it.unitPrice * it.quantity).toLong() }
-
-                // Create invoice snapshot with REAL business data
-                val snapshot = InvoiceSnapshot(
-                    invoiceId = invoice.id,
-                    invoiceNumber = invoice.invoiceNumber,
-                    displayName = invoice.displayName,
-                    customerName = invoice.customerName,
-                    customerAddress = invoice.customerAddress,
-                    customerEmail = invoice.customerEmail,
-                    date = invoice.dateCreated.toEpochMillis(),
-                    dueDate = invoice.dueDate.toEpochMillis(),
-                    items = invoice.items.map { item ->
-                        com.emul8r.bizap.domain.model.LineItemSnapshot(
-                            description = item.description,
-                            quantity = item.quantity,
-                            unitPrice = item.unitPrice,
-                            total = (item.unitPrice * item.quantity).toLong()
-                        )
-                    },
-                    subtotal = subtotal,
-                    taxRate = invoice.taxRate,
-                    taxAmount = invoice.taxAmount,
-                    totalAmount = invoice.totalAmount,
-                    businessName = businessProfile.businessName,
-                    businessAbn = businessProfile.abn ?: "",
-                    businessEmail = businessProfile.email ?: "",
-                    businessPhone = businessProfile.phone ?: "",
-                    businessAddress = businessProfile.address ?: "",
-                    logoBase64 = businessProfile.logoBase64,
-                    currencyCode = "AUD",
-                    // Standardized naming (Phase 2.0.3)
-                    header = invoice.header ?: "",
-                    subheader = invoice.subheader ?: "",
-                    footerText = invoice.footer ?: "",
-                    notes = invoice.notes ?: "",
-                    bankAccountName = businessProfile.accountName ?: "",
-                    bankAccountNumber = businessProfile.accountNumber ?: "",
-                    bankBsb = businessProfile.bsbNumber ?: "",
-                    bankName = businessProfile.bankName ?: "",
-                    invoiceStatus = invoice.status.name
-                )
-
-                Timber.d("InvoiceDetailViewModelV2: Invoice snapshot created successfully")
-
                 // Load invoice settings
                 val userId = userIdProvider.getCurrentUserId()
                 Timber.d("InvoiceDetailViewModelV2: Loading settings for userId: $userId")
@@ -351,6 +293,12 @@ class InvoiceDetailViewModelV2 @Inject constructor(
                 }
                 val selectedTheme = invoiceSettings?.selectedTheme
                 Timber.d("InvoiceDetailViewModelV2: Theme for PDF: ${selectedTheme?.name ?: "NULL (will use default)"}")
+
+                val snapshot = (invoiceSettings?.toSnapshot(invoice, businessProfile)
+                    ?: createDefaultSnapshot(invoice, businessProfile))
+                    .copy(invoiceStatus = invoice.status.name)
+
+                Timber.d("InvoiceDetailViewModelV2: Invoice snapshot created successfully")
 
                 // Generate both quote and invoice
                 val quoteResult = runCatching {
