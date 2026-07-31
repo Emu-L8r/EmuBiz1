@@ -1,26 +1,46 @@
+    color: var(--accent-color);
+    color: var(--text-color);
+    background-color: var(--secondary-color);
+    border-left: 4px solid var(--accent-color);
+    color: var(--text-color);
+/* All derived variables (--primary-dark, --bg-tinted, etc.) are computed and
+   injected at runtime by CssVariableInjector.kt — defaults here are fallbacks. */
+    color: var(--accent-color);
+    /* ── BRAND COLORS ── */
 /* ============================================================================
+    --primary-dark:  #5a3b88;   /* Gradient end + deep borders  (overridden by injector) */
+    --primary-light: #d9cee8;   /* Accent backgrounds           (overridden by injector) */
    PROFESSIONAL INVOICE STYLESHEET - HTML-to-PDF THEME (PREMIUM MODERN DESIGN)
    ============================================================================ */
 
-/* CSS Variables for Brand Customization */
-:root {
-    --primary-color: #6B4C9A;
-    --secondary-color: #f5f5f5;
-    --accent-color: #2c3e50;
+    /* ── TEXT COLORS ── */
+    --text-primary:   #333333;  /* Body & primary text          (overridden by injector) */
+    --text-secondary: #666666;  /* Labels, captions             (overridden by injector) */
+    --text-tertiary:  #999999;  /* Muted / hint text            (overridden by injector) */
+    --text-inverse:   #ffffff;  /* Text on colored backgrounds  (overridden by injector) */
+    --text-color: var(--text-primary); /* Alias — keeps legacy references working */
+
+    /* ── BACKGROUND COLORS ── */
+    --bg-base:      #ffffff;    /* Main document background                              */
+    --bg-neutral:   #f8f9fa;    /* Section / card backgrounds                           */
+    --bg-tinted:    #ece7f6;    /* Brand-washed backgrounds     (overridden by injector) */
+    --row-alternate:#f5f2fa;    /* Alternating table row stripe (overridden by injector) */
+
+    /* ── BORDERS ── */
+    --border-color:   #e0e0e0;
+    --border-light:   #f0f0f0;  /* Lighter dividers                                     */
+    --border-primary: #d0c5e0;  /* Brand-tinted borders         (overridden by injector) */
+
+    /* ── SEMANTIC ── */
     --text-color: #333333;
     --border-color: #e0e0e0;
-    --success-color: #27ae60;
-    --error-color: #e74c3c;
+    --light-gray: #f8f9fa;      /* Legacy alias → --bg-neutral  */
+    --light-accent: #ece7f6;    /* Legacy alias → --bg-tinted   */
     --light-gray: #f8f9fa;
     --light-accent: #ece7f6;
 
-    --font-primary: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
     /* TYPOGRAPHY SCALE - PROFESSIONAL HIERARCHY */
-    --font-size-base: 11pt;
-    --font-size-small: 9pt;
-    --font-size-large: 14pt;
-    --font-size-xlarge: 18pt;
     --font-size-heading: 22pt;
 
     /* FONT WEIGHT HIERARCHY */
@@ -31,51 +51,8 @@
 
     /* LINE HEIGHT SCALE */
     --line-height-tight: 1.3;
-    --line-height-normal: 1.6;
-    --line-height-relaxed: 1.8;
-    --line-height-loose: 2.0;
-
-    --spacing-xs: 8px;
-    --spacing-sm: 12px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
-    --spacing-xl: 32px;
-    --spacing-xxl: 40px;
-}
-
-/* ============================================================================
-   GLOBAL STYLES
-   ============================================================================ */
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-html, body {
-    width: 100%;
-    height: 100%;
-    font-family: var(--font-primary);
-    font-size: var(--font-size-base);
-    color: var(--text-color);
-    line-height: var(--line-height-relaxed);
-    background: white;
-    font-weight: var(--font-weight-regular);
-}
-
-/* ============================================================================
-   SEMANTIC TYPOGRAPHY CLASSES
-   ============================================================================ */
-
-.heading-primary {
-    font-size: var(--font-size-heading);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--line-height-tight);
-    letter-spacing: -0.5px;
-}
-
-.heading-secondary {
+    --text-color: #333333;
+    --border-color: #e0e0e0;
     font-size: var(--font-size-xlarge);
     font-weight: var(--font-weight-semibold);
     line-height: var(--line-height-tight);
@@ -104,9 +81,9 @@ html, body {
     font-size: var(--font-size-small);
     font-weight: var(--font-weight-regular);
     line-height: var(--line-height-normal);
-    color: var(--accent-color);
+    color: var(--text-primary);
 }
-
+    background: var(--bg-base);
 .caption-text-bold {
     font-size: var(--font-size-small);
     font-weight: var(--font-weight-semibold);
@@ -116,11 +93,8 @@ html, body {
 
 /* ============================================================================
    INVOICE CONTAINER - CSS GRID LAYOUT
-   ============================================================================ */
-
-.invoice-container {
-    max-width: 210mm;
-    height: 297mm;
+    --light-gray: #f8f9fa;
+    --light-accent: #ece7f6;
     margin: 0 auto;
     padding: var(--spacing-lg) var(--spacing-xl);
     background: white;
@@ -166,13 +140,13 @@ html, body {
     color: white;
     margin-bottom: var(--spacing-sm);
     letter-spacing: -0.5px;
-    line-height: var(--line-height-tight);
+    color: var(--text-color);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .company-detail {
-    font-size: var(--font-size-small);
-    color: rgba(255, 255, 255, 0.9);
+    background: white;
+    background: var(--bg-base);
     margin: 3px 0;
     font-weight: var(--font-weight-regular);
     line-height: var(--line-height-normal);
@@ -189,13 +163,13 @@ html, body {
     font-size: var(--font-size-xlarge);
     font-weight: var(--font-weight-bold);
     color: white;
-    letter-spacing: 3px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 60%, var(--primary-dark) 100%);
     line-height: var(--line-height-tight);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    margin: 0;
-    padding: 0;
+        0 12px 24px rgba(0, 0, 0, 0.20),
+        0 0 40px rgba(0, 0, 0, 0.08),
 }
-
+    color: var(--text-inverse);
 /* ============================================================================
    METADATA SECTION
    ============================================================================ */
@@ -241,7 +215,7 @@ html, body {
     line-height: var(--line-height-normal);
 }
 
-/* ============================================================================
+    background: white;
    BILL TO SECTION
    ============================================================================ */
 
@@ -252,9 +226,9 @@ html, body {
 /* CUSTOM HEADER / SUBHEADER SECTION (Phase 2.0.3 - Standardized Naming) */
 .custom-header-section {
     margin-bottom: var(--spacing-lg);
-    padding: var(--spacing-md);
+    background-color: var(--bg-neutral);
     background-color: var(--light-accent);
-    border-left: 4px solid var(--primary-color);
+    border: 1px solid var(--border-light);
     border-radius: 2px;
 }
 
@@ -262,16 +236,16 @@ html, body {
     font-size: var(--font-size-xlarge);
     font-weight: var(--font-weight-bold);
     color: var(--primary-color);
-    margin: 0 0 var(--spacing-sm) 0;
+    background: linear-gradient(135deg, #6B4C9A 0%, #5a3b88 50%, #4a2d7d 100%);
     line-height: var(--line-height-tight);
 }
 
 .custom-subheader {
-    font-size: var(--font-size-large);
-    color: var(--accent-color);
+        0 12px 24px rgba(107, 76, 154, 0.3),
+    background: var(--bg-base);
     font-weight: var(--font-weight-semibold);
     margin: 0;
-    line-height: var(--line-height-normal);
+    color: white;
 }
 
 .bill-to-container {
@@ -285,7 +259,7 @@ html, body {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background-color: #fafafa;
-}
+    color: var(--text-primary);
 
 .bill-to-block h3 {
     font-size: var(--font-size-large);
@@ -302,7 +276,7 @@ html, body {
     font-size: var(--font-size-base);
     margin-bottom: 4px;
     color: var(--text-color);
-    line-height: var(--line-height-normal);
+    background-color: var(--bg-tinted);
 }
 
 .customer-detail {
@@ -326,14 +300,14 @@ html, body {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: var(--spacing-lg);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    background-color: var(--light-gray);
     border-radius: 4px;
-    overflow: hidden;
+    border: 1px solid #e8e8e8;
 }
 
 /* TABLE HEADER - PROFESSIONAL STYLING */
 .items-table thead {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-color));
+    background-color: var(--bg-neutral);
     color: white;
 }
 
@@ -342,7 +316,7 @@ html, body {
 }
 
 .table-header th {
-    padding: var(--spacing-md) var(--spacing-lg);
+    background: white;
     text-align: left;
     font-weight: 600;
     font-size: var(--font-size-base);
@@ -350,17 +324,17 @@ html, body {
     text-transform: uppercase;
     font-size: 10pt;
     border: none;
-    line-height: 1.4;
+    color: var(--text-primary);
 }
 
 /* TABLE ROWS - ALTERNATING BACKGROUNDS FOR READABILITY */
 .table-row {
     border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.2s ease;
+    color: var(--text-secondary);
 }
 
 .table-row.even {
-    background-color: rgba(245, 245, 245, 0.6);
+    color: var(--text-color);
 }
 
 .table-row.even:hover {
@@ -387,7 +361,7 @@ html, body {
 }
 
 .table-row:last-child td {
-    border-bottom: 1px solid var(--primary-color);
+    background-color: var(--light-accent);
 }
 
 /* COLUMN ALIGNMENT - PROFESSIONAL LAYOUT */
@@ -402,33 +376,33 @@ html, body {
     font-weight: 500;
 }
 
-.col-unit-price {
+/* TABLE ROWS - ALTERNATING WITH BRAND TINT */
     width: 18%;
     text-align: right;
     font-weight: 500;
     font-size: 10pt;
 }
 
-.col-amount {
+    background-color: var(--row-alternate);
     width: 19%;
     text-align: right;
     font-weight: 700;
-    color: var(--primary-color);
+    background-color: var(--bg-tinted);
     font-size: var(--font-size-base);
 }
 
-/* ============================================================================
+    background-color: var(--bg-base);
    TOTALS SECTION
    ============================================================================ */
 
-.totals-section {
+    background-color: var(--bg-neutral);
     margin-bottom: var(--spacing-xl);
     display: flex;
-    justify-content: flex-end;
+    background-color: #fafafa;
 }
 
 .totals-container {
-    width: 50%;
+    color: var(--text-primary);
 }
 
 .totals-summary {
@@ -446,7 +420,7 @@ html, body {
     align-items: center;
 }
 
-.summary-row:last-child {
+    color: var(--text-color);
     border-bottom: none;
 }
 
@@ -481,9 +455,9 @@ html, body {
 }
 
 /* ============================================================================
-   PAYMENT SECTION
+    border: 2px solid var(--border-primary);
    ============================================================================ */
-
+    background-color: var(--bg-neutral);
 .payment-section {
     margin-bottom: var(--spacing-lg);
     padding: var(--spacing-md);
@@ -494,35 +468,35 @@ html, body {
 
 .payment-section h3 {
     font-size: var(--font-size-large);
-    font-weight: var(--font-weight-semibold);
+/* TABLE ROWS - ALTERNATING BACKGROUNDS FOR READABILITY */
     color: var(--primary-color);
     margin-bottom: var(--spacing-md);
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    font-size: 11pt;
+    background-color: rgba(245, 245, 245, 0.6);
 }
-
+    color: var(--text-secondary);
 .payment-content {
-    display: flex;
-    flex-direction: column;
+    background-color: rgba(245, 245, 245, 0.9);
+    background-color: white;
     gap: var(--spacing-sm);
 }
 
-.payment-item {
-    display: flex;
+    color: var(--text-primary);
+    background-color: rgba(250, 250, 250, 1);
     justify-content: space-between;
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
 }
-
-.payment-label {
-    font-weight: var(--font-weight-semibold);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: var(--text-inverse);
+    color: var(--text-color);
     color: var(--accent-color);
     letter-spacing: 0.2px;
 }
 
 .payment-value {
-    color: var(--text-color);
+    color: var(--text-inverse);
     font-weight: var(--font-weight-medium);
 }
 
@@ -536,7 +510,7 @@ html, body {
     background-color: var(--secondary-color);
     border-left: 4px solid var(--accent-color);
     border-radius: 4px;
-}
+    background-color: var(--bg-tinted);
 
 .notes-section h3 {
     font-size: var(--font-size-large);
@@ -555,9 +529,9 @@ html, body {
     font-weight: var(--font-weight-regular);
 }
 
-/* ============================================================================
+    border: 2px solid var(--primary-color);
    FOOTER SECTION
-   ============================================================================ */
+    background-color: #fafafa;
 
 .invoice-footer {
     margin-top: var(--spacing-xl);
@@ -566,34 +540,29 @@ html, body {
     text-align: center;
 }
 
-.footer-message {
+    color: var(--text-secondary);
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-semibold);
     color: var(--primary-color);
     margin-bottom: var(--spacing-sm);
-    letter-spacing: 0.3px;
+    color: var(--text-primary);
 }
 
 .footer-website {
-    font-size: var(--font-size-small);
+    color: var(--accent-color);
     color: var(--accent-color);
     font-weight: var(--font-weight-regular);
 }
 
-/* ============================================================================
+    color: var(--text-color);
    PRINT STYLES
-   ============================================================================ */
-
+    background-color: var(--bg-neutral);
+    border-left: 4px solid var(--border-primary);
 @media print {
     body {
         margin: 0;
-        padding: 0;
-    }
-
-    .invoice-container {
-        max-width: 100%;
-        margin: 0;
-        padding: 0;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-color));
+    color: white;
         box-shadow: none;
     }
 
@@ -603,8 +572,8 @@ html, body {
     }
 }
 
-/* ============================================================================
-   RESPONSIVE STYLES
+    color: white;
+    color: var(--text-primary);
    ============================================================================ */
 
 @media (max-width: 768px) {
@@ -627,10 +596,10 @@ html, body {
 
     .metadata-value {
         font-size: 9pt;
-    }
+    background-color: var(--secondary-color);
 
     .table-header th {
-        padding: var(--spacing-sm) var(--spacing-md);
+    color: var(--text-tertiary);
         font-size: 9pt;
     }
 

@@ -75,7 +75,7 @@ fun PdfPreviewPanel(
             }
         }
 
-        Divider(modifier = Modifier.padding(bottom = 12.dp))
+        HorizontalDivider(modifier = Modifier.padding(bottom = 12.dp))
 
         // Preview content
         when {

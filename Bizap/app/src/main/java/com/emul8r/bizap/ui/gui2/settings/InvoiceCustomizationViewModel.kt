@@ -5,7 +5,13 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emul8r.bizap.data.repository.InvoiceSettingsRepository
+import com.emul8r.bizap.data.service.pdf.PdfMetrics
 import com.emul8r.bizap.data.service.pdf.PdfPreviewManager
+import com.emul8r.bizap.data.service.pdf.PdfQualityService
+import com.emul8r.bizap.data.service.pdf.PdfQualityWarning
+import com.emul8r.bizap.data.service.pdf.PdfSettingsResolver
+import com.emul8r.bizap.data.service.pdf.ResolvedPdfSettings
+import com.emul8r.bizap.data.service.pdf_layouts.ModernLayout
 import com.emul8r.bizap.domain.model.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -39,6 +45,8 @@ class InvoiceCustomizationViewModel @Inject constructor(
     private val invoiceSettingsRepository: InvoiceSettingsRepository,
     private val dataStore: DataStore<Preferences>,
     private val pdfPreviewManager: PdfPreviewManager,
+    private val pdfQualityService: PdfQualityService,
+    private val pdfSettingsResolver: PdfSettingsResolver,
     @Named("current_user_id") private val currentUserId: String
 ) : ViewModel() {
 
@@ -62,6 +70,22 @@ class InvoiceCustomizationViewModel @Inject constructor(
     private val _previewPdf = MutableStateFlow<File?>(null)
     val previewPdf: StateFlow<File?> = _previewPdf.asStateFlow()
 
+    // Phase 3C: Preview HTML for WebView display (CRITICAL FIX FOR PREVIEW NOT UPDATING)
+    private val _previewHtml = MutableStateFlow<String?>(null)
+    val previewHtml: StateFlow<String?> = _previewHtml.asStateFlow()
+
+    // ─────────────────────────────────────────────────────────────────
+    // PHASE 3.5: QUALITY SERVICE INTEGRATION
+    // ─────────────────────────────────────────────────────────────────
+    private val _qualityScore = MutableStateFlow(1.0f)
+    val qualityScore: StateFlow<Float> = _qualityScore.asStateFlow()
+
+    private val _qualityWarnings = MutableStateFlow<List<PdfQualityWarning>>(emptyList())
+    val qualityWarnings: StateFlow<List<PdfQualityWarning>> = _qualityWarnings.asStateFlow()
+
+    private val _pdfMetrics = MutableStateFlow<PdfMetrics?>(null)
+    val pdfMetrics: StateFlow<PdfMetrics?> = _pdfMetrics.asStateFlow()
+
     // Phase 3B+3C: Settings that affect PDF preview
     private val _selectedColorScheme = MutableStateFlow(ColorScheme.PROFESSIONAL)
     val selectedColorScheme: StateFlow<ColorScheme> = _selectedColorScheme.asStateFlow()
@@ -80,6 +104,36 @@ class InvoiceCustomizationViewModel @Inject constructor(
 
     private val _visualAccents = MutableStateFlow(VisualAccents.default())
     val visualAccents: StateFlow<VisualAccents> = _visualAccents.asStateFlow()
+
+    // ─────────────────────────────────────────────────────────────────
+    // PHASE 3.5: ADVANCED SETTINGS CONTROLS (WIN #5)
+    // ─────────────────────────────────────────────────────────────────
+    // Spacing controls
+    private val _headerPadding = MutableStateFlow(16f)
+    val headerPadding: StateFlow<Float> = _headerPadding.asStateFlow()
+
+    private val _itemSpacing = MutableStateFlow(8f)
+    val itemSpacing: StateFlow<Float> = _itemSpacing.asStateFlow()
+
+    private val _footerPadding = MutableStateFlow(16f)
+    val footerPadding: StateFlow<Float> = _footerPadding.asStateFlow()
+
+    // Typography controls
+    private val _fontSize = MutableStateFlow(11f)
+    val fontSize: StateFlow<Float> = _fontSize.asStateFlow()
+
+    private val _lineHeight = MutableStateFlow(1.4f)
+    val lineHeight: StateFlow<Float> = _lineHeight.asStateFlow()
+
+    // Visual effects toggles
+    private val _enableGradient = MutableStateFlow(true)
+    val enableGradient: StateFlow<Boolean> = _enableGradient.asStateFlow()
+
+    private val _enableShadow = MutableStateFlow(true)
+    val enableShadow: StateFlow<Boolean> = _enableShadow.asStateFlow()
+
+    private val _enableRounded = MutableStateFlow(false)
+    val enableRounded: StateFlow<Boolean> = _enableRounded.asStateFlow()
 
     // ─────────────────────────────────────────────────────────────────
     // PHASE 1: SMART SETTINGS GROUPING (WIN #1)
@@ -314,6 +368,12 @@ class InvoiceCustomizationViewModel @Inject constructor(
         intelligentDebounce(SettingChangeType.TOGGLE_DIVIDERS)
     }
 
+    fun toggleBrandWatermark(enabled: Boolean) {
+        _invoiceSettings.value = _invoiceSettings.value?.copy(enableBrandWatermark = enabled)
+        updateChangeTracker()
+        intelligentDebounce(SettingChangeType.TOGGLE_DIVIDERS)  // Reuse closest type
+    }
+
     fun updateFooterText(text: String) {
         _invoiceSettings.value = _invoiceSettings.value?.copy(footerMessage = text)
         updateChangeTracker()
@@ -338,10 +398,133 @@ class InvoiceCustomizationViewModel @Inject constructor(
                     // In a real implementation, convert HTML to PDF for preview
                     // For now, store the HTML result
                     Timber.d("✅ PDF preview generated (${previewHtml?.length ?: 0} bytes)")
+                    _previewHtml.value = previewHtml // Update the HTML state flow
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to generate PDF preview")
                 _errorMessage.value = "Preview generation failed: ${e.message}"
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // PHASE 3.5: ADVANCED SETTINGS MUTATORS (WIN #5)
+    // ─────────────────────────────────────────────────────────────────
+
+    fun updateSpacing(section: String, value: Float) {
+        when (section) {
+            "header" -> _headerPadding.value = value
+            "item" -> _itemSpacing.value = value
+            "footer" -> _footerPadding.value = value
+        }
+        Timber.d("Spacing updated: $section = $value")
+        triggerPreviewGeneration()
+    }
+
+    fun updateFontSize(size: Float) {
+        _fontSize.value = size.coerceIn(8f, 16f)
+        Timber.d("Font size updated to: ${_fontSize.value}")
+        triggerPreviewGeneration()
+    }
+
+    fun updateLineHeight(height: Float) {
+        _lineHeight.value = height.coerceIn(1.0f, 1.8f)
+        Timber.d("Line height updated to: ${_lineHeight.value}")
+        triggerPreviewGeneration()
+    }
+
+    fun toggleEffect(feature: String, enabled: Boolean) {
+        when (feature) {
+            "gradient" -> _enableGradient.value = enabled
+            "shadow" -> _enableShadow.value = enabled
+            "rounded" -> _enableRounded.value = enabled
+            "showBorders" -> {
+                val updated = _visualAccents.value.copy(showBorders = enabled)
+                _visualAccents.value = updated
+                _invoiceSettings.value = _invoiceSettings.value?.copy(
+                    visualAccentsJson = updated.toJsonString()
+                )
+            }
+            "showDividers" -> {
+                val updated = _visualAccents.value.copy(showDividers = enabled)
+                _visualAccents.value = updated
+                _invoiceSettings.value = _invoiceSettings.value?.copy(
+                    visualAccentsJson = updated.toJsonString()
+                )
+            }
+        }
+        Timber.d("Visual effect toggled: $feature = $enabled")
+        triggerPreviewGeneration()
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // PHASE 3.5: QUALITY METRICS CALCULATION
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Update quality metrics based on current settings.
+     * Called when Quality tab is entered or settings change.
+     */
+    fun updateQualityMetrics() {
+        viewModelScope.launch {
+            try {
+                val settings = _invoiceSettings.value ?: return@launch
+                Timber.d("Calculating quality metrics for settings...")
+
+                // For now, calculate quality score directly from InvoiceSettings
+                // In a production scenario, we'd resolve to ResolvedPdfSettings first
+                // but that requires business profile data which may not be available in this context
+
+                // Create a simple validation by examining key settings
+                val warnings = mutableListOf<PdfQualityWarning>()
+
+                // Check for common issues
+                if (settings.footerMessage.isEmpty()) {
+                    warnings.add(
+                        PdfQualityWarning(
+                            message = "Footer message is empty",
+                            suggestion = "Add a professional footer message for better invoices",
+                            severity = com.emul8r.bizap.data.service.pdf.PdfQualitySeverity.INFO,
+                            code = "EMPTY_FOOTER"
+                        )
+                    )
+                }
+
+                if (!settings.enableDividers) {
+                    warnings.add(
+                        PdfQualityWarning(
+                            message = "Dividers are disabled",
+                            suggestion = "Enable dividers for better invoice readability",
+                            severity = com.emul8r.bizap.data.service.pdf.PdfQualitySeverity.INFO,
+                            code = "NO_DIVIDERS"
+                        )
+                    )
+                }
+
+                // Calculate score based on warnings (simple algorithm)
+                var score = 1.0f
+                score -= warnings.count { it.severity == com.emul8r.bizap.data.service.pdf.PdfQualitySeverity.WARNING } * 0.08f
+                score -= warnings.count { it.severity == com.emul8r.bizap.data.service.pdf.PdfQualitySeverity.INFO } * 0.03f
+                score = score.coerceIn(0.0f, 1.0f)
+
+                // Estimate metrics
+                val pageCount = (15 + 9) / 10  // Simple estimate: 15 items, 10 per page
+                val metrics = PdfMetrics(
+                    estimatedPageCount = pageCount,
+                    estimatedFileSizeMb = 0.5f + (pageCount * 0.15f),
+                    estimatedRenderTimeMs = (pageCount * 200),
+                    itemsPerPage = 10,
+                    timestamp = System.currentTimeMillis()
+                )
+
+                _qualityWarnings.value = warnings
+                _qualityScore.value = score
+                _pdfMetrics.value = metrics
+
+                Timber.d("✅ Quality metrics updated: score=$score, warnings=${warnings.size}, metrics=$metrics")
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to update quality metrics")
+                _errorMessage.value = "Quality calculation failed: ${e.message}"
             }
         }
     }

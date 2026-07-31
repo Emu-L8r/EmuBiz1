@@ -120,13 +120,12 @@ class CssGenerator @Inject constructor(
         HtmlInvoiceStyle.SASS_PROFESSIONAL -> getSassProfessionalTemplate()
         HtmlInvoiceStyle.REFINED -> getRefinedTemplate()
         HtmlInvoiceStyle.PROFESSIONAL_PLUS -> getProfessionalPlusTemplate()
+        HtmlInvoiceStyle.CLEAN_PROFESSIONAL -> getModernTemplate()  // Base CSS; visual styling is inline in template
     }
 
     /**
-     * PHASE 1 IMPROVEMENTS: Page breaks, spacing, footer positioning
      *
      * These CSS improvements were added in Phase 1 and ensure:
-     * - Proper page breaking (page-break-inside: avoid on sections)
      * - Flex layout for automatic footer positioning
      * - A4 page sizing (11 inches)
      * - Professional spacing throughout

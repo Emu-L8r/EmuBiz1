@@ -1,10 +1,12 @@
 package com.emul8r.bizap.ui.gui2.settings.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -12,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emul8r.bizap.domain.model.PdfPreset
-import com.emul8r.bizap.domain.model.PresetCategory
 
 /**
  * Grid display of PDF preset templates for one-click application.
@@ -45,7 +46,10 @@ fun PresetTemplatesGrid(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(presets) { preset ->
-                PresetCard(preset) { onPresetSelected(preset) }
+                PresetCard(
+                    preset = preset,
+                    onClick = { onPresetSelected(preset) }
+                )
             }
         }
     }
@@ -71,7 +75,7 @@ private fun PresetCard(
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Emoji + Category
+            // Emoji + Category badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -93,7 +97,7 @@ private fun PresetCard(
                 )
             }
 
-            // Preset Name
+            // Preset name
             Text(
                 preset.name,
                 style = MaterialTheme.typography.labelLarge,
@@ -101,7 +105,7 @@ private fun PresetCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Preset Description
+            // Preset description
             Text(
                 preset.description,
                 style = MaterialTheme.typography.bodySmall,
@@ -110,7 +114,7 @@ private fun PresetCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Apply Button
+            // Apply button
             Button(
                 onClick = onClick,
                 modifier = Modifier
@@ -148,7 +152,10 @@ fun PresetTemplatesHorizontal(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             presets.forEach { preset ->
-                CompactPresetCard(preset) { onPresetSelected(preset) }
+                CompactPresetCard(
+                    preset = preset,
+                    onClick = { onPresetSelected(preset) }
+                )
             }
         }
     }
@@ -185,4 +192,3 @@ private fun CompactPresetCard(
         }
     }
 }
-

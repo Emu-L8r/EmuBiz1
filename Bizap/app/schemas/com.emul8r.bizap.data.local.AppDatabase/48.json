@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 48,
-    "identityHash": "cf710c32332b4df4d9bafa38f9bb8a94",
+    "identityHash": "66c8f3413143e6be7d080b54c17f02d7",
     "entities": [
       {
         "tableName": "business_profiles",
@@ -254,7 +254,7 @@
       },
       {
         "tableName": "invoices",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `businessProfileId` INTEGER NOT NULL, `customerId` INTEGER, `customerName` TEXT NOT NULL, `customerAddress` TEXT NOT NULL, `customerEmail` TEXT, `date` INTEGER NOT NULL, `totalAmount` INTEGER NOT NULL, `isQuote` INTEGER NOT NULL, `status` TEXT NOT NULL, `header` TEXT, `subheader` TEXT, `notes` TEXT, `footer` TEXT, `photoUris` TEXT, `pdfUri` TEXT, `dueDate` INTEGER NOT NULL, `taxRate` REAL NOT NULL, `taxAmount` INTEGER NOT NULL, `companyLogoPath` TEXT, `updatedAt` INTEGER NOT NULL, `amountPaid` INTEGER NOT NULL, `parentInvoiceId` INTEGER, `version` INTEGER NOT NULL, `dailySequence` INTEGER NOT NULL, `invoiceYear` INTEGER NOT NULL, `invoiceSequence` INTEGER NOT NULL, `currencyCode` TEXT NOT NULL, `templateId` TEXT, `templateSnapshot` TEXT, `customFieldValues` TEXT, `invoiceNumber` TEXT NOT NULL, `isActive` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `dailyCounter` INTEGER NOT NULL, `displayName` TEXT NOT NULL, `discountAmount` INTEGER NOT NULL, FOREIGN KEY(`customerId`) REFERENCES `customers`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `businessProfileId` INTEGER NOT NULL, `customerId` INTEGER, `customerName` TEXT NOT NULL, `customerAddress` TEXT NOT NULL, `customerEmail` TEXT, `customerPhone` TEXT, `date` INTEGER NOT NULL, `totalAmount` INTEGER NOT NULL, `isQuote` INTEGER NOT NULL, `status` TEXT NOT NULL, `header` TEXT, `subheader` TEXT, `notes` TEXT, `footer` TEXT, `photoUris` TEXT, `pdfUri` TEXT, `dueDate` INTEGER NOT NULL, `taxRate` REAL NOT NULL, `taxAmount` INTEGER NOT NULL, `companyLogoPath` TEXT, `updatedAt` INTEGER NOT NULL, `amountPaid` INTEGER NOT NULL, `parentInvoiceId` INTEGER, `version` INTEGER NOT NULL, `dailySequence` INTEGER NOT NULL, `invoiceYear` INTEGER NOT NULL, `invoiceSequence` INTEGER NOT NULL, `currencyCode` TEXT NOT NULL, `templateId` TEXT, `templateSnapshot` TEXT, `customFieldValues` TEXT, `invoiceNumber` TEXT NOT NULL, `isActive` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `dailyCounter` INTEGER NOT NULL, `displayName` TEXT NOT NULL, `discountAmount` INTEGER NOT NULL, FOREIGN KEY(`customerId`) REFERENCES `customers`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -289,6 +289,12 @@
           {
             "fieldPath": "customerEmail",
             "columnName": "customerEmail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "customerPhone",
+            "columnName": "customerPhone",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -2967,7 +2973,7 @@
       },
       {
         "tableName": "invoice_settings",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `selected_theme` TEXT NOT NULL, `selected_pdf_engine` TEXT NOT NULL, `selected_page_layout` TEXT NOT NULL, `selected_typography` TEXT NOT NULL, `selected_locale` TEXT NOT NULL, `selected_html_style` TEXT NOT NULL, `selected_canvas_template` TEXT NOT NULL, `selected_color_scheme` TEXT NOT NULL, `selected_spacing_profile` TEXT NOT NULL, `visual_accents_json` TEXT NOT NULL, `enable_gradient_header` INTEGER NOT NULL, `header_gradient_end_color` TEXT NOT NULL, `enable_rounded_corners` INTEGER NOT NULL, `corner_radius_dp` REAL NOT NULL, `enable_shadows` INTEGER NOT NULL, `shadow_intensity` REAL NOT NULL, `enable_alternating_row_colors` INTEGER NOT NULL, `alternate_row_color` TEXT NOT NULL, `enable_dividers` INTEGER NOT NULL, `divider_style` TEXT NOT NULL, `divider_color` TEXT NOT NULL, `divider_thickness_px` REAL NOT NULL, `highlight_totals` INTEGER NOT NULL, `total_box_style` TEXT NOT NULL, `enable_status_badges` INTEGER NOT NULL, `badge_style` TEXT NOT NULL, `enable_background_pattern` INTEGER NOT NULL, `background_pattern_type` TEXT NOT NULL, `pattern_opacity` REAL NOT NULL, `enable_watermark_text` INTEGER NOT NULL, `watermark_text` TEXT NOT NULL, `watermark_opacity` REAL NOT NULL, `enable_logo` INTEGER NOT NULL, `logo_uri` TEXT NOT NULL, `logo_width_mm` REAL NOT NULL, `logo_height_mm` REAL NOT NULL, `logo_position` TEXT NOT NULL, `enable_motto` INTEGER NOT NULL, `motto_text` TEXT NOT NULL, `motto_font_size` REAL NOT NULL, `motto_color` TEXT NOT NULL, `enable_payment_icons` INTEGER NOT NULL, `accepted_payment_methods_json` TEXT NOT NULL, `payment_icons_size` REAL NOT NULL, `enable_signature_area` INTEGER NOT NULL, `signature_label` TEXT NOT NULL, `signature_line_length_mm` REAL NOT NULL, `enable_qr_code` INTEGER NOT NULL, `qr_code_content` TEXT NOT NULL, `qr_code_size_mm` REAL NOT NULL, `qr_code_position` TEXT NOT NULL, `company_motto` TEXT NOT NULL, `company_website` TEXT NOT NULL, `company_social_media_json` TEXT NOT NULL, `preview_with_placeholder` INTEGER NOT NULL, `show_business_abn` INTEGER NOT NULL, `show_customer_phone` INTEGER NOT NULL, `show_status_watermark` INTEGER NOT NULL, `show_page_numbers` INTEGER NOT NULL, `show_signature_field` INTEGER NOT NULL, `primary_color` TEXT NOT NULL, `secondary_color` TEXT NOT NULL, `accent_color` TEXT NOT NULL, `font_family` TEXT, `payment_terms_days` INTEGER NOT NULL, `default_payment_notes` TEXT NOT NULL, `footer_message` TEXT NOT NULL, `invoice_number_prefix` TEXT NOT NULL, `tax_rate` REAL NOT NULL, `tax_name` TEXT NOT NULL, `tax_handling` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`user_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `selected_theme` TEXT NOT NULL, `selected_pdf_engine` TEXT NOT NULL, `selected_page_layout` TEXT NOT NULL, `selected_typography` TEXT NOT NULL, `selected_locale` TEXT NOT NULL, `selected_html_style` TEXT NOT NULL, `selected_canvas_template` TEXT NOT NULL, `selected_color_scheme` TEXT NOT NULL, `selected_spacing_profile` TEXT NOT NULL, `visual_accents_json` TEXT NOT NULL, `enable_gradient_header` INTEGER NOT NULL, `header_gradient_end_color` TEXT NOT NULL, `enable_rounded_corners` INTEGER NOT NULL, `corner_radius_dp` REAL NOT NULL, `enable_shadows` INTEGER NOT NULL, `shadow_intensity` REAL NOT NULL, `enable_alternating_row_colors` INTEGER NOT NULL, `alternate_row_color` TEXT NOT NULL, `enable_dividers` INTEGER NOT NULL, `divider_style` TEXT NOT NULL, `divider_color` TEXT NOT NULL, `divider_thickness_px` REAL NOT NULL, `highlight_totals` INTEGER NOT NULL, `total_box_style` TEXT NOT NULL, `enable_status_badges` INTEGER NOT NULL, `badge_style` TEXT NOT NULL, `enable_background_pattern` INTEGER NOT NULL, `background_pattern_type` TEXT NOT NULL, `pattern_opacity` REAL NOT NULL, `enable_brand_watermark` INTEGER NOT NULL, `enable_watermark_text` INTEGER NOT NULL, `watermark_text` TEXT NOT NULL, `watermark_opacity` REAL NOT NULL, `enable_logo` INTEGER NOT NULL, `logo_uri` TEXT NOT NULL, `logo_width_mm` REAL NOT NULL, `logo_height_mm` REAL NOT NULL, `logo_position` TEXT NOT NULL, `enable_motto` INTEGER NOT NULL, `motto_text` TEXT NOT NULL, `motto_font_size` REAL NOT NULL, `motto_color` TEXT NOT NULL, `enable_payment_icons` INTEGER NOT NULL, `accepted_payment_methods_json` TEXT NOT NULL, `payment_icons_size` REAL NOT NULL, `enable_signature_area` INTEGER NOT NULL, `signature_label` TEXT NOT NULL, `signature_line_length_mm` REAL NOT NULL, `enable_qr_code` INTEGER NOT NULL, `qr_code_content` TEXT NOT NULL, `qr_code_size_mm` REAL NOT NULL, `qr_code_position` TEXT NOT NULL, `company_motto` TEXT NOT NULL, `company_website` TEXT NOT NULL, `company_social_media_json` TEXT NOT NULL, `preview_with_placeholder` INTEGER NOT NULL, `show_business_abn` INTEGER NOT NULL, `show_customer_phone` INTEGER NOT NULL, `show_status_watermark` INTEGER NOT NULL, `show_page_numbers` INTEGER NOT NULL, `show_signature_field` INTEGER NOT NULL, `primary_color` TEXT NOT NULL, `secondary_color` TEXT NOT NULL, `accent_color` TEXT NOT NULL, `font_family` TEXT, `payment_terms_days` INTEGER NOT NULL, `default_payment_notes` TEXT NOT NULL, `footer_message` TEXT NOT NULL, `invoice_number_prefix` TEXT NOT NULL, `tax_rate` REAL NOT NULL, `tax_name` TEXT NOT NULL, `tax_handling` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`user_id`))",
         "fields": [
           {
             "fieldPath": "userId",
@@ -3147,6 +3153,12 @@
             "fieldPath": "patternOpacity",
             "columnName": "pattern_opacity",
             "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enableBrandWatermark",
+            "columnName": "enable_brand_watermark",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -3483,7 +3495,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cf710c32332b4df4d9bafa38f9bb8a94')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '66c8f3413143e6be7d080b54c17f02d7')"
     ]
   }
 }

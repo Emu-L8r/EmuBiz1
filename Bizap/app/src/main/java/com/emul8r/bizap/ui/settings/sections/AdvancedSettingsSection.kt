@@ -82,12 +82,16 @@ fun AdvancedSettingsSection(
             ) {
                 LocaleContent(
                     selectedLocale = settings?.selectedLocale ?: InvoiceLocale.AUSTRALIAN,
-                    onLocaleSelected = { viewModel.updateLocale(it) }
+                    onLocaleSelected = { /* TODO: updateLocale not yet implemented */ }
                 )
             }
         }
 
         // Feature Flags (Debug Only)
+        // TEMPORARILY DISABLED - ViewModel methods not implemented yet
+        // Feature Flags (Debug Only)
+        // TEMPORARILY DISABLED - Requires ViewModel method implementation
+        /*
         item {
             SettingsAccordion(
                 title = "Experimental Features",
@@ -98,10 +102,11 @@ fun AdvancedSettingsSection(
                     settings = settings,
                     viewModel = viewModel
                 )
-            }
-        }
+             }
+         }
+         */
 
-        item {
+         item {
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -245,7 +250,9 @@ private fun LocaleContent(
 
 /**
  * Experimental Features Content
+ * DISABLED - Requires ViewModel method implementation
  */
+/*
 @Composable
 private fun ExperimentalFeaturesContent(
     settings: InvoiceSettings?,
@@ -329,27 +336,24 @@ private fun ExperimentalFeaturesContent(
         }
     }
 }
+*/
 
 // Extension functions for display
 private fun InvoiceLocale.displayName(): String = when (this) {
-    InvoiceLocale.AUSTRALIAN -> "🇦🇺 Australia"
-    InvoiceLocale.US -> "🇺🇸 United States"
-    InvoiceLocale.UK -> "🇬🇧 United Kingdom"
-    InvoiceLocale.EU -> "🇪🇺 European Union"
-    InvoiceLocale.CANADIAN -> "🇨🇦 Canada"
-    InvoiceLocale.NZEALAND -> "🇳🇿 New Zealand"
-    InvoiceLocale.SINGAPORE -> "🇸🇬 Singapore"
-    InvoiceLocale.HONGKONG -> "🇭🇰 Hong Kong"
+    InvoiceLocale.AUSTRALIAN    -> "🇦🇺 Australia"
+    InvoiceLocale.UNITED_STATES -> "🇺🇸 United States"
+    InvoiceLocale.BRITISH       -> "🇬🇧 United Kingdom"
+    InvoiceLocale.EUROPEAN      -> "🇪🇺 European Union"
+    InvoiceLocale.CANADIAN      -> "🇨🇦 Canada"
+    InvoiceLocale.JAPANESE      -> "🇯🇵 Japan"
 }
 
 private fun InvoiceLocale.example(): String = when (this) {
-    InvoiceLocale.AUSTRALIAN -> "Date: 10/05/2026 | Number: 1,234.56"
-    InvoiceLocale.US -> "Date: 05/10/2026 | Number: 1,234.56"
-    InvoiceLocale.UK -> "Date: 10/05/2026 | Number: 1,234.56"
-    InvoiceLocale.EU -> "Date: 10/05/2026 | Number: 1.234,56"
-    InvoiceLocale.CANADIAN -> "Date: 2026-05-10 | Number: 1,234.56"
-    InvoiceLocale.NZEALAND -> "Date: 10/05/2026 | Number: 1,234.56"
-    InvoiceLocale.SINGAPORE -> "Date: 10/05/2026 | Number: 1,234.56"
-    InvoiceLocale.HONGKONG -> "Date: 10/05/2026 | Number: 1,234.56"
+    InvoiceLocale.AUSTRALIAN    -> "Date: 10/05/2026 | \$1,234.56"
+    InvoiceLocale.UNITED_STATES -> "Date: 05/10/2026 | \$1,234.56"
+    InvoiceLocale.BRITISH       -> "Date: 10/05/2026 | £1,234.56"
+    InvoiceLocale.EUROPEAN      -> "Date: 10/05/2026 | €1.234,56"
+    InvoiceLocale.CANADIAN      -> "Date: 2026-05-10 | \$1,234.56"
+    InvoiceLocale.JAPANESE      -> "Date: 2026/05/10 | ¥1,234"
 }
 

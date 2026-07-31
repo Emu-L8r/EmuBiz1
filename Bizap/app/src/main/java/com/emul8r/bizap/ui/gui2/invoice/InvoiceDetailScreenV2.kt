@@ -426,4 +426,3 @@ private fun formatDateString(isoDateString: String?): String {
         isoDateString ?: ""
     }
 }
-

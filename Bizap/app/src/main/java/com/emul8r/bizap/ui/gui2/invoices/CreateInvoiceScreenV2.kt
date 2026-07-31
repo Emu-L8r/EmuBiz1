@@ -3,6 +3,7 @@ package com.emul8r.bizap.ui.gui2.invoices
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -44,6 +45,7 @@ fun CreateInvoiceScreenV2(
     businessId: Long,
     onCreate: () -> Unit,
     onBack: () -> Unit,
+    onCreateCustomer: (() -> Unit)? = null,
     viewModel: CreateInvoiceViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -71,6 +73,21 @@ fun CreateInvoiceScreenV2(
                     }
                 },
                 actions = {
+                    // "+ Customer" shortcut button
+                    onCreateCustomer?.let {
+                        OutlinedButton(
+                            onClick = it,
+                            modifier = Modifier.padding(end = 4.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.PersonAdd,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("+ Customer", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
                     // GUI2 Save button in top bar (tablet-friendly)
                     Button(
                         onClick = {

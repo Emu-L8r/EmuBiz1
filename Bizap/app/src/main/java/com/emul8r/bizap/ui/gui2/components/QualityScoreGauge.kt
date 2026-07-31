@@ -117,7 +117,7 @@ fun QualityScoreGauge(
 
         // Progress bar
         LinearProgressIndicator(
-            progress = score,
+            progress = { score },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)

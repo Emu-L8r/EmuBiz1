@@ -1,0 +1,111 @@
+# gradle.properties.template
+#
+# Copy this file to gradle.properties and fill in your values
+# IMPORTANT: Never commit gradle.properties with real secrets to Git!
+# Use local.properties for sensitive values instead
+#
+# For CI/CD (GitHub Actions): Use repository secrets
+# See: docs/RELEASE_SIGNING_SETUP.md and docs/EXCHANGE_RATE_API_SETUP.md
+
+# ═══════════════════════════════════════════════════════════════════════════
+# JVM Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# Allocate more memory for large projects
+org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Gradle Configuration Cache
+# ═══════════════════════════════════════════════════════════════════════════
+# Improves incremental build performance by 30-40%
+org.gradle.configuration-cache=true
+org.gradle.configuration-cache.problems=warn
+
+# Exclude test tasks from configuration cache (stability)
+org.gradle.configuration-cache.excluded-tasks=testDebugUnitTest,testReleaseUnitTest,testDebugAndroidTest,testReleaseAndroidTest
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Build Performance
+# ═══════════════════════════════════════════════════════════════════════════
+# Use 4 workers for parallel task execution (adjust based on CPU cores)
+org.gradle.workers.max=4
+
+# Enable Gradle build cache
+org.gradle.caching=true
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Android Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# Use AndroidX
+android.useAndroidX=true
+android.nonTransitiveRClass=true
+
+# Suppress unsupported Gradle warnings for higher SDK versions
+android.suppressUnsupportedCompileSdk=35
+
+# Kotlin code style (official = no braces on single-line)
+kotlin.code.style=official
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Annotation Processing (Hilt, Room, KSP)
+# ═══════════════════════════════════════════════════════════════════════════
+# Enable incremental KSP processing for faster builds
+# Disable if you see Hilt generation errors: ksp.incremental=false
+ksp.incremental=true
+
+# ═══════════════════════════════════════════════════════════════════════════
+# R8/ProGuard Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# Enable full-mode code shrinking (removes unused code)
+android.r8.fullMode=true
+
+# Enable optimized resource shrinking
+android.r8.optimizedResourceShrinking=false
+
+# Strict keep rules enforcement
+android.r8.strictFullModeForKeepRules=false
+
+# ═══════════════════════════════════════════════════════════════════════════
+# OPTIONAL: API Keys & Secrets (Development Only)
+# ═══════════════════════════════════════════════════════════════════════════
+# WARNING: NEVER commit real API keys to Git!
+# For development:
+#   1. Copy this file to gradle.properties
+#   2. Fill in your development keys
+#   3. Make sure .gitignore includes gradle.properties (with secrets)
+#
+# For CI/CD: Use environment variables or GitHub Secrets
+# See: docs/EXCHANGE_RATE_API_SETUP.md
+
+# Exchange Rate API Key (optional, app works without it)
+# Get free key from: https://www.exchangerate-api.com/
+# EXCHANGE_RATE_API_KEY=your_key_here
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Release Signing (Development Testing Only)
+# ═══════════════════════════════════════════════════════════════════════════
+# WARNING: NEVER commit real signing credentials to Git!
+#
+# For development: Uncomment and fill in values for local testing
+#   ./gradlew assembleRelease
+#
+# For production CI/CD: Use GitHub Secrets (see RELEASE_SIGNING_SETUP.md)
+#
+# KEYSTORE_PATH=/path/to/your/release-key.jks
+# KEYSTORE_PASSWORD=your_keystore_password
+# KEY_ALIAS=your_key_alias
+# KEY_PASSWORD=your_key_password
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Miscellaneous Android Settings
+# ═══════════════════════════════════════════════════════════════════════════
+android.defaults.buildfeatures.resvalues=true
+android.sdk.defaultTargetSdkToCompileSdkIfUnset=false
+android.enableAppCompileTimeRClass=false
+android.usesSdkInManifest.disallowed=false
+android.uniquePackageNames=false
+android.dependency.useConstraints=true
+android.builtInKotlin=false
+android.newDsl=false
+android.enableIncrementalBuilds=false
+
+

@@ -1,6 +1,7 @@
 package com.emul8r.bizap.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -18,13 +20,10 @@ import androidx.compose.ui.unit.sp
 import com.emul8r.bizap.domain.model.HtmlInvoiceStyle
 
 /**
- * Invoice Style Preview - Shows a visual sample of what each PDF style looks like
+ * Invoice Style Preview - Shows a visual sample of what each PDF style looks like.
  *
- * This helps users understand the differences between styles:
- * - MODERN: Purple gradient, contemporary
- * - MINIMAL: Black & white, elegant
- * - CORPORATE: Blue gradient, formal
- * - CREATIVE: Orange/teal, vibrant
+ * Displays a mini mock-up of the invoice header, sample line items, and a totals
+ * row, along with a details card describing the style's characteristics.
  */
 @Composable
 fun InvoiceStylePreview(
@@ -54,13 +53,13 @@ fun InvoiceStylePreview(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                // Preview Box
+                // Mini invoice preview
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)
                         .background(Color.White)
-                        .border(1.dp, MaterialTheme.colorScheme.outline),
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RectangleShape),
                     contentAlignment = Alignment.TopStart
                 ) {
                     StylePreviewContent(style)
@@ -68,7 +67,6 @@ fun InvoiceStylePreview(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Description
                 Text(
                     style.description,
                     style = MaterialTheme.typography.bodyMedium,
@@ -77,7 +75,6 @@ fun InvoiceStylePreview(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Style Details
                 StyleDetailsCard(style)
             }
         },
@@ -91,78 +88,36 @@ fun InvoiceStylePreview(
 
 @Composable
 private fun StylePreviewContent(style: HtmlInvoiceStyle) {
-    val (headerColor, fontFamily, layoutStyle) = when (style) {
-        HtmlInvoiceStyle.MODERN -> Triple(
-            Color(0xFF6B4C9A),
-            FontFamily.SansSerif,
-            "Contemporary gradient header"
-        )
-
-        HtmlInvoiceStyle.MINIMAL -> Triple(
-            Color(0xFF1a1a1a),
-            FontFamily.Default,
-            "Clean, minimal lines"
-        )
-
-        HtmlInvoiceStyle.CORPORATE -> Triple(
-            Color(0xFF003366),
-            FontFamily.Serif,
-            "Formal, traditional style"
-        )
-
-        HtmlInvoiceStyle.CREATIVE -> Triple(
-            Color(0xFFFF6B35),
-            FontFamily.SansSerif,
-            "Vibrant, modern gradient"
-        )
-
-        HtmlInvoiceStyle.PREMIUM_PROFESSIONAL -> Triple(
-            Color(0xFF1C1C2E),
-            FontFamily.SansSerif,
-            "Dark navy with blue accent"
-        )
-
-        HtmlInvoiceStyle.WARM_APPROACHABLE -> Triple(
-            Color(0xFFF59E0B),
-            FontFamily.SansSerif,
-            "Warm amber, friendly layout"
-        )
-
-        HtmlInvoiceStyle.SASS_PROFESSIONAL -> Triple(
-            Color(0xFF0A2540),
-            FontFamily.SansSerif,
-            "Professional SASS-compiled styles"
-        )
-
-        HtmlInvoiceStyle.REFINED -> Triple(
-            Color(0xFF6B4C9A),
-            FontFamily.SansSerif,
-            "Canvas grid match with purple theme"
-        )
-
-        HtmlInvoiceStyle.PROFESSIONAL_PLUS -> Triple(
-            Color(0xFF1A1A2E),
-            FontFamily.SansSerif,
-            "Sidebar branding, signature line"
-        )
+    // Destructure header color + font for each style — rendering happens below
+    val (headerColor, fontFamily) = when (style) {
+        HtmlInvoiceStyle.MODERN               -> Pair(Color(0xFF6B4C9A), FontFamily.SansSerif)
+        HtmlInvoiceStyle.MINIMAL              -> Pair(Color(0xFF1a1a1a), FontFamily.Default)
+        HtmlInvoiceStyle.CORPORATE            -> Pair(Color(0xFF003366), FontFamily.Serif)
+        HtmlInvoiceStyle.CREATIVE             -> Pair(Color(0xFFFF6B35), FontFamily.SansSerif)
+        HtmlInvoiceStyle.PREMIUM_PROFESSIONAL -> Pair(Color(0xFF1C1C2E), FontFamily.SansSerif)
+        HtmlInvoiceStyle.WARM_APPROACHABLE    -> Pair(Color(0xFFF59E0B), FontFamily.SansSerif)
+        HtmlInvoiceStyle.SASS_PROFESSIONAL    -> Pair(Color(0xFF0A2540), FontFamily.SansSerif)
+        HtmlInvoiceStyle.REFINED              -> Pair(Color(0xFF6B4C9A), FontFamily.SansSerif)
+        HtmlInvoiceStyle.PROFESSIONAL_PLUS    -> Pair(Color(0xFF1A1A2E), FontFamily.SansSerif)
+        HtmlInvoiceStyle.CLEAN_PROFESSIONAL   -> Pair(Color(0xFF003366), FontFamily.SansSerif)
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(12.dp)
+            .padding(8.dp)
     ) {
-        // Header
+        // Header bar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(60.dp)
                 .background(headerColor)
-                .padding(8.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
-                "INVOICE",
+                text = "INVOICE",
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -172,100 +127,94 @@ private fun StylePreviewContent(style: HtmlInvoiceStyle) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Content samples
-        repeat(3) {
+        // Sample line items
+        repeat(3) { i ->
             Text(
-                "├─ Sample invoice line ${'$'}${(it + 1) * 100}.00",
+                text = "├─ Sample invoice line \$${(i + 1) * 100}.00",
                 fontSize = 10.sp,
                 fontFamily = fontFamily,
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Footer line
-        HorizontalDivider(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-        )
+        HorizontalDivider()
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            "Total: \$300.00",
+            text = "Total: \$300.00",
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
-            fontFamily = fontFamily
+            fontFamily = fontFamily,
+            modifier = Modifier.padding(horizontal = 4.dp)
         )
     }
 }
 
 @Composable
 private fun StyleDetailsCard(style: HtmlInvoiceStyle) {
-    val details = when (style) {
+    val details: Map<String, String> = when (style) {
         HtmlInvoiceStyle.MODERN -> mapOf(
             "Header" to "Purple gradient",
-            "Font" to "Modern sans-serif (Segoe UI)",
-            "Vibe" to "Contemporary, professional",
+            "Font"   to "Modern sans-serif (Segoe UI)",
+            "Vibe"   to "Contemporary, professional",
             "Best For" to "Tech startups, modern businesses"
         )
-
         HtmlInvoiceStyle.MINIMAL -> mapOf(
             "Header" to "Black border line",
-            "Font" to "Classic sans-serif (Arial)",
-            "Vibe" to "Clean, elegant, no-nonsense",
+            "Font"   to "Classic sans-serif (Arial)",
+            "Vibe"   to "Clean, elegant, no-nonsense",
             "Best For" to "Consulting, legal, professional services"
         )
-
         HtmlInvoiceStyle.CORPORATE -> mapOf(
             "Header" to "Navy blue gradient",
-            "Font" to "Formal serif (Georgia, Times New Roman)",
-            "Vibe" to "Traditional, trustworthy, formal",
+            "Font"   to "Formal serif (Georgia, Times New Roman)",
+            "Vibe"   to "Traditional, trustworthy, formal",
             "Best For" to "Finance, enterprises, government"
         )
-
         HtmlInvoiceStyle.CREATIVE -> mapOf(
             "Header" to "Orange gradient with rounded corners",
-            "Font" to "Modern sans-serif with color accents",
-            "Vibe" to "Vibrant, energetic, startup vibe",
+            "Font"   to "Modern sans-serif with color accents",
+            "Vibe"   to "Vibrant, energetic, startup vibe",
             "Best For" to "Creative agencies, startups, marketing"
         )
-
         HtmlInvoiceStyle.PREMIUM_PROFESSIONAL -> mapOf(
             "Header" to "Dark navy with blue accent bar",
-            "Font" to "Modern sans-serif (Segoe UI)",
-            "Vibe" to "Premium, minimalist, high-contrast",
+            "Font"   to "Modern sans-serif (Segoe UI)",
+            "Vibe"   to "Premium, minimalist, high-contrast",
             "Best For" to "Premium services, consulting, B2B"
         )
-
         HtmlInvoiceStyle.WARM_APPROACHABLE -> mapOf(
             "Header" to "Warm cream with amber accent",
-            "Font" to "Friendly sans-serif (Segoe UI)",
-            "Vibe" to "Warm, approachable, friendly",
+            "Font"   to "Friendly sans-serif (Segoe UI)",
+            "Vibe"   to "Warm, approachable, friendly",
             "Best For" to "Small business, trades, personal services"
         )
-
         HtmlInvoiceStyle.SASS_PROFESSIONAL -> mapOf(
             "Header" to "Deep navy blue with professional layout",
-            "Font" to "Modern sans-serif (Segoe UI)",
-            "Vibe" to "Professional, compiled SASS styles",
+            "Font"   to "Modern sans-serif (Segoe UI)",
+            "Vibe"   to "Professional, compiled SASS styles",
             "Best For" to "Enterprise, professional services, B2B"
         )
-
         HtmlInvoiceStyle.REFINED -> mapOf(
             "Header" to "Purple gradient, 60px height",
-            "Font" to "Modern sans-serif (Segoe UI)",
-            "Vibe" to "Grid-matched with Canvas, professional",
+            "Font"   to "Modern sans-serif (Segoe UI)",
+            "Vibe"   to "Grid-matched with Canvas, professional",
             "Best For" to "Businesses wanting consistent styling"
         )
-
         HtmlInvoiceStyle.PROFESSIONAL_PLUS -> mapOf(
             "Header" to "Dark charcoal sidebar with teal accent bar",
-            "Font" to "Modern sans-serif (Arial/Segoe UI)",
-            "Vibe" to "Premium, modern, structured — highest quality template",
+            "Font"   to "Modern sans-serif (Arial/Segoe UI)",
+            "Vibe"   to "Premium, modern, structured — highest quality template",
             "Best For" to "Premium services, B2B, enterprise"
+        )
+        HtmlInvoiceStyle.CLEAN_PROFESSIONAL -> mapOf(
+            "Header" to "Flat navy — readable, no gradient",
+            "Font"   to "Modern sans-serif (Segoe UI)",
+            "Vibe"   to "Reference-quality: left accent lines, gold totals, generous whitespace",
+            "Best For" to "Any business wanting a polished, professional look"
         )
     }
 
@@ -277,26 +226,25 @@ private fun StyleDetailsCard(style: HtmlInvoiceStyle) {
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             details.forEach { (label, value) ->
-                Text(
-                    label,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 2.dp)
-                )
-                Text(
-                    value,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp)
+                ) {
+                    Text(
+                        text = "$label: ",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.widthIn(min = 56.dp)
+                    )
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }
 }
-
-@Composable
-fun Modifier.border(width: androidx.compose.ui.unit.Dp, color: Color) =
-    this.then(
-        Modifier.background(color).padding(0.dp)
-    )
-

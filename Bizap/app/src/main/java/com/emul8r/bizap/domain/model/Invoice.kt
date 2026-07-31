@@ -22,6 +22,7 @@ data class Invoice(
     val customerName: String = "",
     val customerAddress: String = "",
     val customerEmail: String? = null,
+    val customerPhone: String? = null,
 
     // Amount Fields (in cents)
     val totalAmount: Long = 0L,

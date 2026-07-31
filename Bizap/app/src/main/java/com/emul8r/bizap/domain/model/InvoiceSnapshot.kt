@@ -10,6 +10,7 @@ data class InvoiceSnapshot(
     val customerName: String,
     val customerAddress: String,
     val customerEmail: String?,
+    val customerPhone: String? = null,
     val date: Long,
     val dueDate: Long,
     val items: List<LineItemSnapshot>,
@@ -38,11 +39,11 @@ data class InvoiceSnapshot(
     val taxHandling: TaxHandling = TaxHandling.EXCLUSIVE,
     val defaultPaymentNotes: String = "",
     val companyWebsite: String = "",
-    val alternateRowColor: String = "#F5F5F5",
+    val alternateRowColor: String = "#FAFAFA",  // Very subtle zebra — not a spreadsheet grid
     val dividerColor: String = "#CCCCCC",
     val dividerThicknessPx: Float = 1f,
     val enableAlternatingRowColors: Boolean = true,
-    val enableDividers: Boolean = true,
+    val enableDividers: Boolean = false,  // Default off — clean table without grid lines
     val isQuote: Boolean = false,
     val primaryColor: String = "#6B4C9A",
     val secondaryColor: String = "#f5f5f5",
@@ -69,7 +70,7 @@ data class InvoiceSnapshot(
     val badgeStyle: BadgeStyle = BadgeStyle.ROUNDED_FILLED,
     val dividerStyle: DividerStyle = DividerStyle.SOLID,
     val enableGradientHeader: Boolean = true,
-    val headerGradientEndColor: String = "#FF9F43",
+    val headerGradientEndColor: String = "#1B3260",  // Deep navy depth-fade (not orange clash)
     val enableLogo: Boolean = false,
     val logoUri: String = "",
     val logoWidthMm: Float = 30f,
@@ -84,7 +85,9 @@ data class InvoiceSnapshot(
     val paymentIconsSize: Float = 16f,
     val enableBackgroundPattern: Boolean = false,
     val backgroundPatternType: BackgroundPattern = BackgroundPattern.WAVES,
-    val patternOpacity: Float = 0.08f
+    val patternOpacity: Float = 0.08f,
+    // BRAND WATERMARK (background logo image, centred at half-page size)
+    val enableBrandWatermark: Boolean = true
 )
 data class LineItemSnapshot(
     val description: String,

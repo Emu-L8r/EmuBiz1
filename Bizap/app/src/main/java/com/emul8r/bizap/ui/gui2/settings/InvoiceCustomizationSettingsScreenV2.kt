@@ -1,4 +1,4 @@
-package com.emul8r.bizap.ui.gui2.settings
+﻿package com.emul8r.bizap.ui.gui2.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -116,9 +116,9 @@ fun InvoiceCustomizationSettingsScreenV2(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // ──────────────────────────────────────────────────────
+                // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
                 // PHASE 1: PRESET SELECTOR (WIN #4)
-                // ──────────────────────────────────────────────────────
+                // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
                 PresetSelector(
                     onPresetSelected = { preset ->
                         // Apply preset to all settings
@@ -243,9 +243,68 @@ fun InvoiceCustomizationSettingsScreenV2(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ──────────────────────────────────────────────────────
+                // ═══════════════════════════════════════════════════════════
+                // QUICK WIN #1: LIVE PDF PREVIEW
+                // Shows real-time preview of invoice with current customizations
+                // ═══════════════════════════════════════════════════════════
+
+                Text(
+                    "📋 PDF Preview",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+
+                // Trigger preview generation when settings change
+                val previewHtml by viewModel.previewHtml.collectAsStateWithLifecycle()
+
+                LaunchedEffect(footerText, selectedPageLayout, selectedColorScheme) {
+                    Timber.d("🎨 Settings changed, triggering PDF preview...")
+                    viewModel.triggerPreviewGeneration()
+                }
+
+                // Display preview HTML in a scrollable surface
+                if (previewHtml != null) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 200.dp, max = 400.dp)
+                            .padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text(
+                            text = previewHtml!!.take(800) + if (previewHtml!!.length > 800) "\n... (preview truncated)" else "",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp)
+                                .verticalScroll(rememberScrollState()),
+                            maxLines = 20
+                        )
+                    }
+                } else {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 100.dp)
+                            .padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // ═══════════════════════════════════════════════════════════
                 // PHASE 3B: New Customization Sections
-                // ──────────────────────────────────────────────────────
+                // ═══════════════════════════════════════════════════════════
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 

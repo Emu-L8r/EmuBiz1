@@ -148,9 +148,7 @@ class PdfCustomizationService @Inject constructor(
     fun validateSettings(settings: PdfCustomizationSettings): String? {
         return when {
             settings.colorScheme.primaryHex.isBlank() -> "Color scheme missing primary color"
-            settings.spacingProfile == null -> "Spacing profile not set"
-            settings.totalBoxStyle == null -> "Total box style not set"
-            else -> null
+            else -> null  // spacingProfile and totalBoxStyle are non-nullable, always present
         }
     }
 

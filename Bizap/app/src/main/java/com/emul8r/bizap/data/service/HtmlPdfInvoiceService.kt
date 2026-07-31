@@ -84,19 +84,19 @@ class HtmlPdfInvoiceService(
      * Removes placeholder/garbage data and ensures professional appearance.
      */
     private fun validateAndCleanInvoiceData(snapshot: InvoiceSnapshot): InvoiceSnapshot {
-        return snapshot.copy(
-            businessName    = validateBusinessName(snapshot.businessName),
-            businessAbn     = validateAndFormatAbn(snapshot.businessAbn),
-            businessEmail   = validateEmail(snapshot.businessEmail),
-            businessPhone   = validatePhone(snapshot.businessPhone),
-            customerName    = validateCustomerName(snapshot.customerName),
-            customerAddress = validateAddress(snapshot.customerAddress),
-            header          = validateheader(snapshot.header),
-            subheader       = validateheader(snapshot.subheader),
-            notes           = validateNotes(snapshot.notes),
-            footerText      = validateFooterText(snapshot.footerText)
-        )
-    }
+         return snapshot.copy(
+             businessName    = validateBusinessName(snapshot.businessName),
+             businessAbn     = validateAndFormatAbn(snapshot.businessAbn),
+             businessEmail   = validateEmail(snapshot.businessEmail),
+             businessPhone   = validatePhone(snapshot.businessPhone),
+             customerName    = validateCustomerName(snapshot.customerName),
+             customerAddress = validateAddress(snapshot.customerAddress),
+             header      = validateHeaderText(snapshot.header),
+             subheader   = validateHeaderText(snapshot.subheader),
+             notes           = validateNotes(snapshot.notes),
+             footerText      = validateFooterText(snapshot.footerText)
+         )
+     }
 
     private fun validateBusinessName(name: String): String = when {
         name.isEmpty() -> ""
@@ -147,7 +147,7 @@ class HtmlPdfInvoiceService(
         else -> address.trim()
     }
 
-    private fun validateheader(text: String): String =
+    private fun validateHeaderText(text: String): String =
         if (text.isEmpty() || text.contains(GARBAGE_PATTERN, ignoreCase = true)) "" else text.trim()
 
     private fun validateNotes(text: String): String =
@@ -208,6 +208,7 @@ class HtmlPdfInvoiceService(
             HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> generatePremiumProfessionalTemplate(clean, isQuote)
             HtmlInvoiceStyle.WARM_APPROACHABLE     -> generateWarmApproachableTemplate(clean, isQuote)
             HtmlInvoiceStyle.SASS_PROFESSIONAL     -> generateSassProfessionalTemplate(clean, isQuote)
+            HtmlInvoiceStyle.CLEAN_PROFESSIONAL    -> generateModernTemplate(clean, isQuote)  // Fallback for now
             HtmlInvoiceStyle.REFINED               -> generateModernTemplate(clean, isQuote)  // Fallback
             HtmlInvoiceStyle.PROFESSIONAL_PLUS     -> generateModernTemplate(clean, isQuote)  // Fallback
         }
@@ -450,7 +451,6 @@ td, th { word-wrap: break-word; }
   <td style="padding:24px 24px;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:20pt;font-weight:bold;color:#ffffff;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#d4c5e8;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:10px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#e0d8f0;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#e0d8f0;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -465,31 +465,37 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-<!-- INVOICE META + BILL TO -->
+<!-- BILL FROM + BILL TO SECTION -->
 <table width="100%" style="margin-bottom:30px;page-break-inside:avoid;">
 <tr>
   <td width="50%" style="vertical-align:top;padding-right:12px;">
     <table width="100%" style="background-color:$lightPurple;border-left:4px solid $primary;min-height:100px;">
-      <tr><td colspan="2" style="padding:12px 14px;font-weight:bold;font-size:11pt;color:$primary;">INVOICE DETAILS</td></tr>
-      <tr><td style="padding:10px 14px;font-weight:bold;width:45%;line-height:1.8;">Invoice #</td><td style="padding:10px 14px;line-height:1.8;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
-      <tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">Date</td><td style="padding:10px 14px;line-height:1.8;">${formatDate(snapshot.date)}</td></tr>
-      <tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">Due Date</td><td style="padding:10px 14px;line-height:1.8;">${formatDate(snapshot.dueDate)}</td></tr>
-      <tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">Currency</td><td style="padding:10px 14px;line-height:1.8;">${escapeHtml(snapshot.currencyCode)}</td></tr>
-      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">Status</td><td style="padding:10px 14px;line-height:1.8;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
+      <tr><td colspan="2" style="padding:12px 14px;font-weight:bold;font-size:11pt;color:$primary;">BILL FROM</td></tr>
+      ${if (snapshot.businessName.isNotBlank()) """<tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">${escapeHtml(snapshot.businessName)}</td></tr>""" else ""}
+      ${if (snapshot.businessAddress.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">${addressLines(snapshot.businessAddress)}</td></tr>""" else ""}
+      ${if (snapshot.businessEmail.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">${escapeHtml(snapshot.businessEmail)}</td></tr>""" else ""}
+      ${if (snapshot.businessPhone.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">Phone: ${escapeHtml(snapshot.businessPhone)}</td></tr>""" else ""}
+      ${if (snapshot.businessAbn.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">ABN: ${escapeHtml(snapshot.businessAbn)}</td></tr>""" else ""}
     </table>
   </td>
   <td width="50%" style="vertical-align:top;padding-left:12px;">
     <table width="100%" style="background-color:#fafafa;border-left:4px solid #aaaaaa;min-height:100px;">
-      <tr><td style="padding:12px 14px;font-weight:bold;font-size:11pt;color:$primary;">BILL TO</td></tr>
+      <tr><td colspan="2" style="padding:12px 14px;font-weight:bold;font-size:11pt;color:$primary;">BILL TO</td></tr>
       ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:10px 14px;font-weight:bold;font-size:11pt;line-height:1.8;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
       ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
       ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
+      ${if (!snapshot.customerPhone.isNullOrBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">Phone: ${escapeHtml(snapshot.customerPhone)}</td></tr>""" else ""}
+      <tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">Invoice #: ${escapeHtml(snapshot.invoiceNumber)}</td></tr>
+      <tr><td style="padding:10px 14px;line-height:1.8;">Date: ${formatDate(snapshot.date)}</td></tr>
+      <tr><td style="padding:10px 14px;line-height:1.8;">Due: ${formatDate(snapshot.dueDate)}</td></tr>
     </table>
   </td>
 </tr>
 </table>
 
-${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:24px;margin-top:10px;font-style:italic;color:#555555;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
+<!-- ADDITIONAL INFORMATION SECTION (Header/Subheader from form) -->
+${buildHeaderSubheaderSection(snapshot, "#f9f9f9", primary)}
+
 
 <!-- LINE ITEMS TABLE -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:24px;page-break-inside:avoid;">
@@ -507,10 +513,10 @@ ${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:24px;margin-top:1
 $paymentSection
 $notesSection
 
-${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:30px;text-align:center;font-size:9pt;color:#888888;border-top:1px solid #dddddd;padding-top:16px;line-height:1.8;">${escapeHtml(snapshot.footerText)}</p>""" else ""}
-
 </body></html>"""
     }
+
+    // Templates 2 duplicate removed - keeping only one implementation
 
     // -------------------------------------------------------------------------
     // Template 2: MINIMAL (Near-Black #1a1a1a)
@@ -518,6 +524,7 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:30px;text-align:
 
     private fun generateMinimalTemplate(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
         val primary = "#1a1a1a"
+        val lightPurple = "#f0f0f0"  // Light gray for minimal theme
         val docType = if (isQuote) "QUOTE" else "INVOICE"
         val itemRows = buildItemsRows(snapshot, "#ffffff", "#f9f9f9", "#1a1a1a")
         val totalRows = buildTotalsRows(snapshot, "#555555", "#1a1a1a", "#ffffff")
@@ -544,7 +551,6 @@ td, th { word-wrap: break-word; }
   <td style="padding:0 0 20px 0;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:19pt;font-weight:bold;color:#1a1a1a;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#666666;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:8px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#555555;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#555555;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -559,37 +565,45 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-<!-- INVOICE META + BILL TO -->
+<!-- BILL FROM + BILL TO SECTION -->
 <table width="100%" style="margin-bottom:30px;page-break-inside:avoid;">
 <tr>
-  <td width="50%" style="vertical-align:top;padding-right:16px;">
-    <div style="font-weight:bold;font-size:10pt;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1a1a1a;padding-bottom:8px;">Invoice Details</div>
-    <table width="100%">
-      <tr><td style="padding:10px 0;font-weight:bold;width:45%;line-height:1.8;">Invoice #</td><td style="padding:10px 0;line-height:1.8;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
-      <tr><td style="padding:10px 0;font-weight:bold;line-height:1.8;">Date</td><td style="padding:10px 0;line-height:1.8;">${formatDate(snapshot.date)}</td></tr>
-      <tr><td style="padding:10px 0;font-weight:bold;line-height:1.8;">Due Date</td><td style="padding:10px 0;line-height:1.8;">${formatDate(snapshot.dueDate)}</td></tr>
-      <tr><td style="padding:10px 0;font-weight:bold;line-height:1.8;">Currency</td><td style="padding:10px 0;line-height:1.8;">${escapeHtml(snapshot.currencyCode)}</td></tr>
-      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:10px 0;font-weight:bold;line-height:1.8;">Status</td><td style="padding:10px 0;line-height:1.8;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
+  <td width="50%" style="vertical-align:top;padding-right:12px;">
+    <table width="100%" style="background-color:$lightPurple;border-left:4px solid $primary;min-height:100px;">
+      <tr><td colspan="2" style="padding:12px 14px;font-weight:bold;font-size:11pt;color:$primary;">BILL FROM</td></tr>
+      ${if (snapshot.businessName.isNotBlank()) """<tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">${escapeHtml(snapshot.businessName)}</td></tr>""" else ""}
+      ${if (snapshot.businessAddress.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">${addressLines(snapshot.businessAddress)}</td></tr>""" else ""}
+      ${if (snapshot.businessEmail.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">${escapeHtml(snapshot.businessEmail)}</td></tr>""" else ""}
+      ${if (snapshot.businessPhone.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">Phone: ${escapeHtml(snapshot.businessPhone)}</td></tr>""" else ""}
+      ${if (snapshot.businessAbn.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">ABN: ${escapeHtml(snapshot.businessAbn)}</td></tr>""" else ""}
     </table>
   </td>
-  <td width="50%" style="vertical-align:top;padding-left:16px;">
-    <div style="font-weight:bold;font-size:10pt;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1a1a1a;padding-bottom:8px;">Bill To</div>
-    ${if (snapshot.customerName.isNotBlank()) """<div style="font-weight:bold;font-size:11pt;line-height:1.8;">${escapeHtml(snapshot.customerName)}</div>""" else ""}
-    ${if (snapshot.customerAddress.isNotBlank()) """<div style="font-size:9pt;color:#555555;margin-top:6px;line-height:1.8;">${addressLines(snapshot.customerAddress)}</div>""" else ""}
-    ${if (!snapshot.customerEmail.isNullOrBlank()) """<div style="font-size:9pt;color:#555555;margin-top:4px;line-height:1.8;">${escapeHtml(snapshot.customerEmail)}</div>""" else ""}
+  <td width="50%" style="vertical-align:top;padding-left:12px;">
+    <table width="100%" style="background-color:#fafafa;border-left:4px solid #aaaaaa;min-height:100px;">
+      <tr><td colspan="2" style="padding:12px 14px;font-weight:bold;font-size:11pt;color:$primary;">BILL TO</td></tr>
+      ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:10px 14px;font-weight:bold;font-size:11pt;line-height:1.8;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
+      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
+      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
+      ${if (!snapshot.customerPhone.isNullOrBlank()) """<tr><td style="padding:10px 14px;font-size:9pt;line-height:1.8;">Phone: ${escapeHtml(snapshot.customerPhone)}</td></tr>""" else ""}
+      <tr><td style="padding:10px 14px;font-weight:bold;line-height:1.8;">Invoice #: ${escapeHtml(snapshot.invoiceNumber)}</td></tr>
+      <tr><td style="padding:10px 14px;line-height:1.8;">Date: ${formatDate(snapshot.date)}</td></tr>
+      <tr><td style="padding:10px 14px;line-height:1.8;">Due: ${formatDate(snapshot.dueDate)}</td></tr>
+    </table>
   </td>
 </tr>
 </table>
 
-${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:24px;margin-top:10px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
+<!-- ADDITIONAL INFORMATION SECTION (Header/Subheader from form) -->
+${buildHeaderSubheaderSection(snapshot, "#f9f9f9", primary)}
+
 
 <!-- LINE ITEMS TABLE -->
-<table width="100%" style="margin-bottom:24px;page-break-inside:avoid;">
-  <tr style="background-color:#1a1a1a;color:#ffffff;">
-    <th style="padding:12px 14px;text-align:left;">Description</th>
-    <th style="padding:12px 14px;text-align:center;width:10%;">Qty</th>
-    <th style="padding:12px 14px;text-align:right;width:18%;">Unit Price</th>
-    <th style="padding:12px 14px;text-align:right;width:18%;">Total</th>
+<table width="100%" style="border-collapse:collapse;margin-bottom:24px;page-break-inside:avoid;">
+  <tr style="background-color:$primary;color:#ffffff;">
+    <th style="padding:12px 14px;text-align:left;font-size:10pt;">Description</th>
+    <th style="padding:12px 14px;text-align:center;font-size:10pt;width:10%;">Qty</th>
+    <th style="padding:12px 14px;text-align:right;font-size:10pt;width:18%;">Unit Price</th>
+    <th style="padding:12px 14px;text-align:right;font-size:10pt;width:18%;">Total</th>
   </tr>
   $itemRows
   <tr><td colspan="4" style="padding:0;"></td></tr>
@@ -599,8 +613,6 @@ ${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:24px;margin-top:1
 $paymentSection
 $notesSection
 
-${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:30px;text-align:center;font-size:9pt;color:#888888;border-top:1px solid #cccccc;padding-top:16px;line-height:1.8;">${escapeHtml(snapshot.footerText)}</p>""" else ""}
-
 </body></html>"""
     }
 
@@ -608,10 +620,11 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:30px;text-align:
     // Template 3: CORPORATE (Navy #003366)
     // -------------------------------------------------------------------------
 
-    private fun generateCorporateTemplate(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
-        val primary = "#003366"
-        val offWhite = "#F5F5F5"
-        val docType = if (isQuote) "QUOTE" else "INVOICE"
+     private fun generateCorporateTemplate(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
+         val primary = "#003366"
+         val deepBlue = "#003366"  // Consistent with primary
+         val offWhite = "#F5F5F5"
+         val docType = if (isQuote) "QUOTE" else "INVOICE"
         val itemRows = buildItemsRows(snapshot, "#ffffff", offWhite, primary)
         val totalRows = buildTotalsRows(snapshot, "#003366", primary, "#ffffff")
         val paymentSection = buildPaymentSection(snapshot, primary, primary)
@@ -637,7 +650,6 @@ td, th { word-wrap: break-word; }
   <td style="padding:22px 24px;vertical-align:middle;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:19pt;font-weight:bold;color:#ffffff;margin-top:4px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#c5d9ed;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
   </td>
   <td style="padding:22px 24px;text-align:right;vertical-align:middle;">
     <div style="font-size:20pt;font-weight:bold;letter-spacing:4px;color:#ffffff;">$docType</div>
@@ -659,46 +671,61 @@ td, th { word-wrap: break-word; }
 </table>
 
 <!-- INVOICE META + BILL TO -->
-<table width="100%" style="margin-bottom:20px;border:1px solid #dddddd;">
+<table width="100%" style="margin-bottom:20px;">
 <tr>
-  <td width="50%" style="vertical-align:top;padding:16px 18px;border-right:1px solid #dddddd;">
-    <div style="font-weight:bold;font-size:11pt;color:$primary;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;">Invoice Information</div>
-    <table width="100%">
-      <tr><td style="padding:8px 0;font-weight:bold;width:45%;color:#444444;line-height:1.8;">Invoice No.</td><td style="padding:8px 0;line-height:1.8;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
-      <tr><td style="padding:8px 0;font-weight:bold;color:#444444;line-height:1.8;">Invoice Date</td><td style="padding:8px 0;line-height:1.8;">${formatDate(snapshot.date)}</td></tr>
-      <tr><td style="padding:8px 0;font-weight:bold;color:#444444;line-height:1.8;">Due Date</td><td style="padding:8px 0;line-height:1.8;">${formatDate(snapshot.dueDate)}</td></tr>
-      <tr><td style="padding:8px 0;font-weight:bold;color:#444444;line-height:1.8;">Currency</td><td style="padding:8px 0;line-height:1.8;">${escapeHtml(snapshot.currencyCode)}</td></tr>
-      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:8px 0;font-weight:bold;color:#444444;line-height:1.8;">Status</td><td style="padding:8px 0;line-height:1.8;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
+  <td width="50%" style="vertical-align:top;padding-right:12px;">
+    <table width="100%" style="border-left:4px solid $primary;background-color:#f5f5f5;">
+      <tr><td colspan="2" style="padding:10px 14px;font-weight:bold;font-size:11pt;color:$primary;">INVOICE DETAILS</td></tr>
+      <tr><td style="padding:8px 14px;font-weight:bold;width:45%;color:#444444;line-height:1.8;">Invoice #</td><td style="padding:8px 14px;line-height:1.8;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
+      <tr><td style="padding:8px 14px;font-weight:bold;line-height:1.8;">Date</td><td style="padding:8px 14px;line-height:1.8;">${formatDate(snapshot.date)}</td></tr>
+      <tr><td style="padding:8px 14px;font-weight:bold;line-height:1.8;">Due Date</td><td style="padding:8px 14px;line-height:1.8;">${formatDate(snapshot.dueDate)}</td></tr>
+      <tr><td style="padding:8px 14px;font-weight:bold;line-height:1.8;">Currency</td><td style="padding:8px 14px;line-height:1.8;">${escapeHtml(snapshot.currencyCode)}</td></tr>
+      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:8px 14px;font-weight:bold;line-height:1.8;">Status</td><td style="padding:8px 14px;line-height:1.8;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
     </table>
   </td>
-  <td width="50%" style="vertical-align:top;padding:16px 18px;">
-    <div style="font-weight:bold;font-size:11pt;color:$primary;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;">Billed To</div>
-    ${if (snapshot.customerName.isNotBlank()) """<div style="font-weight:bold;font-size:12pt;line-height:1.8;">${escapeHtml(snapshot.customerName)}</div>""" else ""}
-    ${if (snapshot.customerAddress.isNotBlank()) """<div style="font-size:9pt;color:#555555;margin-top:6px;line-height:1.8;">${addressLines(snapshot.customerAddress)}</div>""" else ""}
-    ${if (!snapshot.customerEmail.isNullOrBlank()) """<div style="font-size:9pt;color:#555555;margin-top:4px;line-height:1.8;">${escapeHtml(snapshot.customerEmail)}</div>""" else ""}
+  <td width="50%" style="vertical-align:top;padding-left:12px;">
+    <table width="100%" style="border-left:4px solid $primary;background-color:#eaf3ff;">
+      <tr><td style="padding:10px 14px;font-weight:bold;font-size:11pt;color:$primary;">BILL TO</td></tr>
+      ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:8px 14px;font-weight:bold;font-size:12pt;line-height:1.8;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
+      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:8px 14px;font-size:9pt;color:#555555;line-height:1.8;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
+      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:8px 14px;font-size:9pt;color:#555555;line-height:1.8;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
+    </table>
   </td>
 </tr>
 </table>
 
-${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:16px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
+<!-- HEADER / SUBHEADER SECTION (Additional Info) -->
+${buildHeaderSubheaderSection(snapshot, "#f5f5f5", deepBlue)}
 
 <!-- LINE ITEMS TABLE -->
-<table width="100%" style="border:1px solid #dddddd;margin-bottom:4px;">
-  <tr style="background-color:$primary;color:#ffffff;">
-    <th style="padding:12px 14px;text-align:left;">Description</th>
-    <th style="padding:12px 14px;text-align:center;width:10%;">Qty</th>
-    <th style="padding:12px 14px;text-align:right;width:18%;">Unit Price</th>
-    <th style="padding:12px 14px;text-align:right;width:18%;">Amount</th>
+<table width="100%" style="border-collapse:collapse;margin-bottom:0;">
+  <tr style="background-color:#0A2540;color:#FFFFFF;">
+    <th style="padding:10px 12px;text-align:left;font-size:9.5pt;letter-spacing:0.5px;">DESCRIPTION</th>
+    <th style="padding:10px 12px;text-align:center;font-size:9.5pt;width:9%;">QTY</th>
+    <th style="padding:10px 12px;text-align:right;font-size:9.5pt;width:17%;">UNIT PRICE</th>
+    <th style="padding:10px 12px;text-align:right;font-size:9.5pt;width:17%;">TOTAL</th>
   </tr>
   $itemRows
-  <tr style="border-top:2px solid $primary;"><td colspan="4" style="padding:0;"></td></tr>
-  $totalRows
+  <tr>
+    <td colspan="3" style="padding:9px 14px;text-align:right;color:#6B7280;font-size:9.5pt;">Subtotal</td>
+    <td style="padding:9px 14px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
+  </tr>
+  <tr>
+    <td colspan="3" style="padding:9px 14px;text-align:right;color:#6B7280;font-size:9.5pt;">Tax (${(snapshot.taxRate * 100).toInt()}%)</td>
+    <td style="padding:9px 14px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
+  </tr>
+</table>
+
+<!-- PROMINENT TOTAL DUE SECTION -->
+<table width="100%" style="background-color:$deepBlue;margin-top:0;margin-bottom:14px;">
+<tr>
+  <td style="padding:14px 20px;color:#BFDBFE;font-size:11pt;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">TOTAL DUE</td>
+  <td style="padding:14px 20px;text-align:right;color:#FFFFFF;font-size:22pt;font-weight:bold;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</td>
+</tr>
 </table>
 
 $paymentSection
 $notesSection
-
-${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:20px;text-align:center;font-size:9pt;color:#888888;border-top:1px solid #cccccc;padding-top:12px;line-height:1.8;">${escapeHtml(snapshot.footerText)}</p>""" else ""}
 
 </body></html>"""
     }
@@ -736,7 +763,6 @@ td, th { word-wrap: break-word; }
   <td width="55%" style="background-color:$deepBlue;padding:24px 24px;vertical-align:middle;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:19pt;font-weight:bold;color:#ffffff;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#a8c9e8;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:8px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#b0c8e0;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#b0c8e0;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -776,25 +802,38 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:16px;font-size:9pt;color:#555555;font-style:italic;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
+<!-- HEADER / SUBHEADER SECTION (Additional Info) -->
+${buildHeaderSubheaderSection(snapshot, "#f5f5f5", deepBlue)}
 
 <!-- LINE ITEMS TABLE -->
-<table width="100%" style="margin-bottom:4px;">
-  <tr style="background-color:$orange;color:#ffffff;">
-    <th style="padding:12px 14px;text-align:left;font-size:10pt;">Description</th>
-    <th style="padding:12px 14px;text-align:center;font-size:10pt;width:10%;">Qty</th>
-    <th style="padding:12px 14px;text-align:right;font-size:10pt;width:18%;">Unit Price</th>
-    <th style="padding:12px 14px;text-align:right;font-size:10pt;width:18%;">Total</th>
+<table width="100%" style="border-collapse:collapse;margin-bottom:0;">
+  <tr style="background-color:#0A2540;color:#FFFFFF;">
+    <th style="padding:10px 12px;text-align:left;font-size:9.5pt;letter-spacing:0.5px;">DESCRIPTION</th>
+    <th style="padding:10px 12px;text-align:center;font-size:9.5pt;width:9%;">QTY</th>
+    <th style="padding:10px 12px;text-align:right;font-size:9.5pt;width:17%;">UNIT PRICE</th>
+    <th style="padding:10px 12px;text-align:right;font-size:9.5pt;width:17%;">TOTAL</th>
   </tr>
   $itemRows
-  <tr><td colspan="4" style="padding:0;"></td></tr>
-  $totalRows
+  <tr>
+    <td colspan="3" style="padding:9px 14px;text-align:right;color:#6B7280;font-size:9.5pt;">Subtotal</td>
+    <td style="padding:9px 14px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
+  </tr>
+  <tr>
+    <td colspan="3" style="padding:9px 14px;text-align:right;color:#6B7280;font-size:9.5pt;">Tax (${(snapshot.taxRate * 100).toInt()}%)</td>
+    <td style="padding:9px 14px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
+  </tr>
+</table>
+
+<!-- PROMINENT TOTAL DUE SECTION -->
+<table width="100%" style="background-color:$deepBlue;margin-top:0;margin-bottom:14px;">
+<tr>
+  <td style="padding:14px 20px;color:#BFDBFE;font-size:11pt;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">TOTAL DUE</td>
+  <td style="padding:14px 20px;text-align:right;color:#FFFFFF;font-size:22pt;font-weight:bold;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</td>
+</tr>
 </table>
 
 $paymentSection
 $notesSection
-
-${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:20px;text-align:center;font-size:9pt;color:#888888;border-top:1px solid #dddddd;padding-top:12px;line-height:1.8;">${escapeHtml(snapshot.footerText)}</p>""" else ""}
 
 </body></html>"""
     }
@@ -835,11 +874,11 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:20px;text-align:
         } else "Tax"
         val subtotalRows = """
             <tr>
-                <td colspan="3" style="padding:7px 12px;text-align:right;color:#64748B;font-size:9.5pt;">Subtotal</td>
+                <td colspan="3" style="padding:7px 12px;text-align:right;font-size:9.5pt;color:#1E293B;">Subtotal</td>
                 <td style="padding:7px 12px;text-align:right;font-size:9.5pt;color:#1E293B;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
             </tr>
             <tr>
-                <td colspan="3" style="padding:7px 12px;text-align:right;color:#64748B;font-size:9.5pt;">$taxLabel</td>
+                <td colspan="3" style="padding:7px 12px;text-align:right;font-size:9.5pt;color:#1E293B;">$taxLabel</td>
                 <td style="padding:7px 12px;text-align:right;font-size:9.5pt;color:#1E293B;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
             </tr>
         """.trimIndent()
@@ -850,7 +889,7 @@ ${if (snapshot.footerText.isNotBlank()) """<p style="margin-top:20px;text-align:
         val notesSection = if (snapshot.notes.isNotBlank()) """
             <table width="100%" style="border-collapse:collapse;margin-top:14px;">
                 <tr><td style="padding:10px 12px;background-color:#F1F5F9;font-weight:bold;font-size:10pt;color:$navy;border-left:4px solid $blue;">NOTES</td></tr>
-                <tr><td style="padding:8px 12px;font-size:9.5pt;line-height:1.6;word-wrap:break-word;color:#475569;">${escapeHtml(snapshot.notes)}</td></tr>
+                <tr><td style="padding:10px 12px;font-size:9.5pt;line-height:1.6;word-wrap:break-word;color:#475569;">${escapeHtml(snapshot.notes)}</td></tr>
             </table>
         """.trimIndent() else ""
 
@@ -875,7 +914,7 @@ td, th { word-wrap: break-word; }
   <td style="padding:18px 20px;vertical-align:middle;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:18pt;font-weight:700;color:#FFFFFF;line-height:1.2;margin-bottom:6px;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:11pt;color:#94A3B8;margin-top:4px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:9pt;color:#94A3B8;margin-top:4px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
   </td>
   <td style="padding:18px 20px;text-align:right;vertical-align:middle;">
     <div style="font-size:26pt;font-weight:700;letter-spacing:3px;color:#FFFFFF;">$docType</div>
@@ -894,50 +933,62 @@ td, th { word-wrap: break-word; }
   <td width="50%" style="vertical-align:top;padding-right:10px;">
     <table width="100%" style="background-color:$lightBlue;border-left:3px solid $blue;">
       <tr><td colspan="2" style="padding:8px 12px;font-weight:bold;font-size:10pt;color:$navy;text-transform:uppercase;letter-spacing:0.5px;">&#x1F4CB; Invoice Details</td></tr>
-      <tr><td style="padding:6px 12px;font-weight:bold;width:44%;font-size:9.5pt;color:#64748B;">Invoice #</td><td style="padding:6px 12px;font-size:9.5pt;color:#1E293B;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
-      <tr style="background-color:#DBEAFE;"><td style="padding:6px 12px;font-weight:bold;font-size:9.5pt;color:#64748B;">Date</td><td style="padding:6px 12px;font-size:9.5pt;color:#1E293B;">${formatDate(snapshot.date)}</td></tr>
-      <tr><td style="padding:6px 12px;font-weight:bold;font-size:9.5pt;color:#64748B;">Due Date</td><td style="padding:6px 12px;font-size:9.5pt;color:#1E293B;">${formatDate(snapshot.dueDate)}</td></tr>
-      <tr style="background-color:#DBEAFE;"><td style="padding:6px 12px;font-weight:bold;font-size:9.5pt;color:#64748B;">Currency</td><td style="padding:6px 12px;font-size:9.5pt;color:#1E293B;">${escapeHtml(snapshot.currencyCode)}</td></tr>
-      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:6px 12px;font-weight:bold;font-size:9.5pt;color:#64748B;">Status</td><td style="padding:6px 12px;font-size:9.5pt;color:#1E293B;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
+      <tr><td style="padding:6px 12px;font-weight:bold;width:44%;color:#64748B;">Invoice #</td><td style="padding:6px 12px;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:bold;color:#64748B;">Date</td><td style="padding:6px 12px;">${formatDate(snapshot.date)}</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:bold;color:#64748B;">Due Date</td><td style="padding:6px 12px;">${formatDate(snapshot.dueDate)}</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:bold;color:#64748B;">Currency</td><td style="padding:6px 12px;">${escapeHtml(snapshot.currencyCode)}</td></tr>
+      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:6px 12px;font-weight:bold;color:#64748B;">Status</td><td style="padding:6px 12px;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
     </table>
   </td>
   <td width="50%" style="vertical-align:top;padding-left:10px;">
     <table width="100%" style="background-color:#F8FAFC;border-left:3px solid #CBD5E1;">
       <tr><td style="padding:8px 12px;font-weight:bold;font-size:10pt;color:$navy;text-transform:uppercase;letter-spacing:0.5px;">&#x1F464; Bill To</td></tr>
       ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:6px 12px;font-weight:bold;font-size:11pt;color:#1E293B;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
-      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:6px 12px;font-size:9.5pt;color:#475569;line-height:1.6;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
-      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:6px 12px;font-size:9.5pt;color:#475569;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
+      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:4px 12px 6px 12px;font-size:9pt;color:#555555;line-height:1.6;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
+      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:4px 12px 6px 12px;font-size:9pt;color:#555555;line-height:1.6;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
     </table>
   </td>
 </tr>
 </table>
 
-${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:10px;font-style:italic;color:#64748B;font-size:9.5pt;line-height:1.6;">${escapeHtml(snapshot.header)}</p>""" else ""}
+<!-- HEADER / SUBHEADER SECTION (Additional Info) -->
+${buildHeaderSubheaderSection(snapshot, "#f5f5f5", blue)}
 
-<!-- LINE ITEMS TABLE (tight rows) -->
+<!-- LINE ITEMS TABLE (Phase 2: refined column widths and spacing) -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:0;">
-  <tr style="background-color:$navy;color:#FFFFFF;">
-    <th style="padding:10px 12px;text-align:left;font-size:9.5pt;letter-spacing:0.5px;">DESCRIPTION</th>
-    <th style="padding:10px 12px;text-align:center;font-size:9.5pt;width:9%;">QTY</th>
-    <th style="padding:10px 12px;text-align:right;font-size:9.5pt;width:17%;">UNIT PRICE</th>
-    <th style="padding:10px 12px;text-align:right;font-size:9.5pt;width:17%;">TOTAL</th>
+  <tr style="background-color:#0A2540;color:#FFFFFF;">
+    <th style="padding:11px 14px;text-align:left;font-size:9.5pt;letter-spacing:0.5px;">DESCRIPTION</th>
+    <th style="padding:11px 14px;text-align:center;font-size:9.5pt;width:9%;">QTY</th>
+    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;">UNIT PRICE</th>
+    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;">AMOUNT</th>
   </tr>
   $itemRows
-  $subtotalRows
+  <!-- Subtotal / Tax rows -->
+  <tr>
+    <td colspan="3" style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#6B7280;">Subtotal</td>
+    <td style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
+  </tr>
+  <tr style="background-color:#F3F4F6;">
+    <td colspan="3" style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#6B7280;">Tax (${(snapshot.taxRate * 100).toInt()}%)</td>
+    <td style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
+  </tr>
 </table>
 
-<!-- PROMINENT TOTAL DUE SECTION -->
-<table width="100%" style="background-color:$blue;margin-top:0;margin-bottom:14px;">
+<!-- TOTAL DUE BAND -->
+<table width="100%" style="background-color:#1F2937;margin-bottom:16px;">
 <tr>
-  <td style="padding:14px 20px;color:#BFDBFE;font-size:11pt;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">TOTAL DUE</td>
-  <td style="padding:14px 20px;text-align:right;color:#FFFFFF;font-size:22pt;font-weight:bold;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</td>
+  <td width="65%" style="padding:14px 20px;"></td>
+  <td style="padding:14px 20px;text-align:right;">
+    <div style="font-size:9pt;font-weight:700;color:#9CA3B8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Due</div>
+    <div style="font-size:22pt;font-weight:700;color:#FFD700;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</div>
+  </td>
 </tr>
 </table>
 
 $paymentSection
 $notesSection
 
-<!-- Phase 2: Signature section -->
+<!-- Phase 2: Signature section (toggleable) -->
 $signatureSection
 
 <!-- Phase 2: Professional multi-column footer -->
@@ -946,17 +997,17 @@ $footer
 </body></html>"""
     }
 
-
     // -------------------------------------------------------------------------
     // Template 6: WARM APPROACHABLE (Amber #F59E0B + Dark #1F2937)
     // -------------------------------------------------------------------------
 
-    private fun generateWarmApproachableTemplate(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
-        val amber = "#F59E0B"
-        val darkBrown = "#1F2937"
-        val warmCream = "#FFFBEB"
-        val lightAmber = "#FEF3C7"
-        val docType = if (isQuote) "QUOTE" else "INVOICE"
+     private fun generateWarmApproachableTemplate(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
+         val primary = "#1F2937"  // Dark brown/gray for text
+         val amber = "#F59E0B"
+         val darkBrown = "#1F2937"
+         val warmCream = "#FFFBEB"
+         val lightAmber = "#FEF3C7"
+         val docType = if (isQuote) "QUOTE" else "INVOICE"
         val logoHtml = if (!snapshot.logoBase64.isNullOrBlank())
             """<img src="data:image/png;base64,${snapshot.logoBase64}" style="max-height:55px;max-width:110px;margin-bottom:8px;" alt="logo"/>"""
         else ""
@@ -1016,7 +1067,7 @@ $footer
         return """<!DOCTYPE html>
 <html><head><meta charset="UTF-8"/>
 <style>
-@page { margin: 12mm 14mm 12mm 14mm; }
+@page { margin: 12mm 14mm 12mm; }
 body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; font-size: 10pt; color: #1F2937; margin: 0; padding: 0; line-height: 1.6; }
 table { border-collapse: collapse; }
 td, th { word-wrap: break-word; }
@@ -1054,52 +1105,53 @@ td, th { word-wrap: break-word; }
   <td width="50%" style="vertical-align:top;padding-right:10px;">
     <table width="100%" style="background-color:$lightAmber;border-left:3px solid $amber;">
       <tr><td colspan="2" style="padding:8px 12px;font-weight:bold;font-size:10pt;color:$darkBrown;text-transform:uppercase;letter-spacing:0.5px;">&#x1F4CB; Invoice Details</td></tr>
-      <tr><td style="padding:6px 12px;font-weight:bold;width:44%;font-size:9.5pt;color:#6B7280;">Invoice #</td><td style="padding:6px 12px;font-size:9.5pt;color:#1F2937;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
-      <tr style="background-color:#FDE68A;"><td style="padding:6px 12px;font-weight:bold;font-size:9.5pt;color:#6B7280;">Date</td><td style="padding:6px 12px;font-size:9.5pt;color:#1F2937;">${formatDate(snapshot.date)}</td></tr>
-      <tr><td style="padding:6px 12px;font-weight:bold;font-size:9.5pt;color:#6B7280;">Due Date</td><td style="padding:6px 12px;font-size:9.5pt;color:#1F2937;">${formatDate(snapshot.dueDate)}</td></tr>
-      <tr style="background-color:#FDE68A;"><td style="padding:6px 12px;font-weight:bold;font-size:9.5pt;color:#6B7280;">Currency</td><td style="padding:6px 12px;font-size:9.5pt;color:#1F2937;">${escapeHtml(snapshot.currencyCode)}</td></tr>
-      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:6px 12px;font-weight:bold;font-size:9.5pt;color:#6B7280;">Status</td><td style="padding:6px 12px;font-size:9.5pt;color:#1F2937;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
+      <tr><td style="padding:6px 12px;font-weight:bold;width:44%;color:#64748B;">Invoice #</td><td style="padding:6px 12px;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:bold;color:#64748B;">Date</td><td style="padding:6px 12px;">${formatDate(snapshot.date)}</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:bold;color:#64748B;">Due Date</td><td style="padding:6px 12px;">${formatDate(snapshot.dueDate)}</td></tr>
+      <tr><td style="padding:6px 12px;font-weight:bold;color:#64748B;">Currency</td><td style="padding:6px 12px;">${escapeHtml(snapshot.currencyCode)}</td></tr>
+      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:6px 12px;font-weight:bold;color:#64748B;">Status</td><td style="padding:6px 12px;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
     </table>
   </td>
   <td width="50%" style="vertical-align:top;padding-left:10px;">
     <table width="100%" style="background-color:#FAFBFC;border-left:3px solid #D6D3D1;">
-      <tr><td style="padding:8px 12px;font-weight:bold;font-size:10pt;color:$darkBrown;text-transform:uppercase;letter-spacing:0.5px;">&#x1F464; Bill To</td></tr>
-      ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:6px 12px;font-weight:bold;font-size:11pt;color:$darkBrown;line-height:1.2;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
-      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:4px 12px 6px 12px;font-size:9pt;color:#555555;line-height:1.6;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
-      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:4px 12px 6px 12px;font-size:9pt;color:#555555;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
+      <tr><td style="padding:10px 14px;font-weight:bold;font-size:11pt;color:$primary;">BILL TO</td></tr>
+      ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:8px 14px;font-weight:bold;font-size:12pt;line-height:1.8;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
+      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:4px 14px 6px 14px;font-size:9pt;color:#555555;line-height:1.6;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
+      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:4px 14px 6px 14px;font-size:9pt;color:#555555;line-height:1.6;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
     </table>
   </td>
 </tr>
 </table>
 
-${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:10px;font-style:italic;color:#78716C;font-size:9.5pt;line-height:1.6;">${escapeHtml(snapshot.header)}</p>""" else ""}
+<!-- HEADER / SUBHEADER SECTION (Additional Info) -->
+${buildHeaderSubheaderSection(snapshot, "#f5f5f5", amber)}
 
-<!-- LINE ITEMS TABLE -->
+<!-- LINE ITEMS TABLE (Phase 2: refined column widths and spacing) -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:0;">
-  <tr style="background-color:$amber;color:#FFFFFF;">
-    <th style="padding:10px 12px;text-align:left;font-size:9.5pt;letter-spacing:0.5px;">DESCRIPTION</th>
-    <th style="padding:10px 12px;text-align:center;font-size:9.5pt;width:9%;">QTY</th>
-    <th style="padding:10px 12px;text-align:right;font-size:9.5pt;width:17%;">UNIT PRICE</th>
-    <th style="padding:10px 12px;text-align:right;font-size:9.5pt;width:17%;">TOTAL</th>
+  <tr style="background-color:#0A2540;color:#FFFFFF;">
+    <th style="padding:11px 14px;text-align:left;font-size:9.5pt;letter-spacing:0.5px;">DESCRIPTION</th>
+    <th style="padding:11px 14px;text-align:center;font-size:9.5pt;width:9%;">QTY</th>
+    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;">UNIT PRICE</th>
+    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;">AMOUNT</th>
   </tr>
   $itemRows
   <!-- Subtotal / Tax rows -->
   <tr>
-    <td colspan="3" style="padding:8px 12px;text-align:right;font-size:9.5pt;color:#6B7280;">Subtotal</td>
-    <td style="padding:8px 12px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
+    <td colspan="3" style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#6B7280;">Subtotal</td>
+    <td style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
   </tr>
   <tr style="background-color:#F3F4F6;">
-    <td colspan="3" style="padding:8px 12px;text-align:right;font-size:9.5pt;color:#6B7280;">$taxLabel</td>
-    <td style="padding:8px 12px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
+    <td colspan="3" style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#6B7280;">Tax (${(snapshot.taxRate * 100).toInt()}%)</td>
+    <td style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
   </tr>
 </table>
 
-<!-- TOTAL DUE BAND — amber on dark background -->
-<table width="100%" style="background-color:#2D2D2D;margin-bottom:16px;">
+<!-- TOTAL DUE BAND -->
+<table width="100%" style="background-color:#1F2937;margin-bottom:16px;">
 <tr>
   <td width="65%" style="padding:14px 20px;"></td>
   <td style="padding:14px 20px;text-align:right;">
-    <div style="font-size:9pt;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Due</div>
+    <div style="font-size:9pt;font-weight:700;color:#9CA3B8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Due</div>
     <div style="font-size:22pt;font-weight:700;color:#FFD700;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</div>
   </td>
 </tr>
@@ -1108,7 +1160,7 @@ ${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:10px;font-style:i
 $paymentSection
 $notesSection
 
-<!-- Phase 2: Signature section (warm amber styling) -->
+<!-- Phase 2: Signature section (toggleable) -->
 $signatureSection
 
 <!-- Phase 2: Professional multi-column footer -->
@@ -1117,22 +1169,22 @@ $footer
 </body></html>"""
     }
 
-
     // -------------------------------------------------------------------------
     // Template 7: SASS PROFESSIONAL (Deep Navy #0A2540 + Electric Blue #0066FF)
     // Generated via SassStyleEngine — the highest-fidelity template.
     // -------------------------------------------------------------------------
 
-    private fun generateSassProfessionalTemplate(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
-        val tokens = SassTokens.sassprofessional()
-        val engine = SassStyleEngine(tokens)
-        val compiledCss = engine.compile()
+     private fun generateSassProfessionalTemplate(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
+         val tokens = SassTokens.sassprofessional()
+         val engine = SassStyleEngine(tokens)
+         val compiledCss = engine.compile()
 
-        val primary    = tokens.colorPrimary        // #0A2540
-        val accent     = tokens.colorAccent         // #0066FF
-        val surface    = tokens.colorSurface        // #F7F9FC
-        val textMuted  = tokens.colorTextMuted      // #6B7280
-        val border     = tokens.colorBorder         // #E2E8F0
+         val primary    = tokens.colorPrimary        // #0A2540
+         val accent     = tokens.colorAccent         // #0066FF
+         val amber      = "#F59E0B"                  // Fallback amber for consistency
+         val surface    = tokens.colorSurface        // #F7F9FC
+         val textMuted  = tokens.colorTextMuted      // #6B7280
+         val border     = tokens.colorBorder         // #E2E8F0
 
         val docType = if (isQuote) "QUOTE" else "INVOICE"
         val watermark = buildStatusWatermark(snapshot.invoiceStatus)
@@ -1198,7 +1250,7 @@ $compiledCss
 <tr>
   <td style="padding:22px 24px;vertical-align:middle;">
     $logoHtml
-    ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:18pt;font-weight:700;color:#FFFFFF;margin-top:${if (logoHtml.isNotBlank()) "8px" else "0"};line-height:1.2;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
+    ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:18pt;font-weight:700;color:#FFFFFF;line-height:1.2;margin-bottom:6px;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
     ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:10pt;color:#94A3B8;margin-top:4px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:8px;font-size:8.5pt;color:#CBD5E1;line-height:1.6;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div>${addressLines(snapshot.businessAddress)}</div>""" else ""}
@@ -1224,33 +1276,34 @@ $compiledCss
   <td width="50%" style="vertical-align:top;padding-right:10px;">
     <table width="100%" style="background-color:$surface;border-left:4px solid $accent;">
       <tr><td colspan="2" style="padding:10px 14px;font-weight:700;font-size:10pt;color:$primary;">&#x1F4CB; INVOICE DETAILS</td></tr>
-      <tr><td style="padding:8px 14px;font-weight:700;width:44%;color:$textMuted;font-size:9pt;">Invoice #</td><td style="padding:8px 14px;font-size:9pt;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
-      <tr style="background-color:#EFF6FF;"><td style="padding:8px 14px;font-weight:700;color:$textMuted;font-size:9pt;">Date</td><td style="padding:8px 14px;font-size:9pt;">${formatDate(snapshot.date)}</td></tr>
-      <tr><td style="padding:8px 14px;font-weight:700;color:$textMuted;font-size:9pt;">Due Date</td><td style="padding:8px 14px;font-size:9pt;">${formatDate(snapshot.dueDate)}</td></tr>
-      <tr style="background-color:#EFF6FF;"><td style="padding:8px 14px;font-weight:700;color:$textMuted;font-size:9pt;">Currency</td><td style="padding:8px 14px;font-size:9pt;">${escapeHtml(snapshot.currencyCode)}</td></tr>
-      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:8px 14px;font-weight:700;color:$textMuted;font-size:9pt;">Status</td><td style="padding:8px 14px;font-size:9pt;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
+      <tr><td style="padding:8px 14px;font-weight:700;width:44%;color:#64748B;">Invoice #</td><td style="padding:8px 14px;">${escapeHtml(snapshot.invoiceNumber)}</td></tr>
+      <tr><td style="padding:8px 14px;font-weight:700;color:#64748B;">Date</td><td style="padding:8px 14px;">${formatDate(snapshot.date)}</td></tr>
+      <tr><td style="padding:8px 14px;font-weight:700;color:#64748B;">Due Date</td><td style="padding:8px 14px;">${formatDate(snapshot.dueDate)}</td></tr>
+      <tr><td style="padding:8px 14px;font-weight:700;color:#64748B;">Currency</td><td style="padding:8px 14px;">${escapeHtml(snapshot.currencyCode)}</td></tr>
+      ${if (snapshot.invoiceStatus.isNotBlank()) """<tr><td style="padding:8px 14px;font-weight:700;color:#64748B;">Status</td><td style="padding:8px 14px;">${escapeHtml(snapshot.invoiceStatus)}</td></tr>""" else ""}
     </table>
   </td>
   <td width="50%" style="vertical-align:top;padding-left:10px;">
-    <table width="100%" style="background-color:#FAFBFC;border-left:4px solid $border;">
-      <tr><td style="padding:10px 14px;font-weight:700;font-size:10pt;color:$primary;">&#x1F464; BILL TO</td></tr>
-      ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:8px 14px;font-weight:700;font-size:11pt;line-height:1.2;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
-      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:4px 14px 6px 14px;font-size:9pt;color:#555555;line-height:1.6;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
-      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:4px 14px 6px 14px;font-size:9pt;color:#555555;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
+    <table width="100%" style="background-color:#FAFBFC;border-left:4px solid #D6D3D1;">
+      <tr><td style="padding:10px 14px;font-weight:bold;font-size:11pt;color:$primary;">BILL TO</td></tr>
+      ${if (snapshot.customerName.isNotBlank()) """<tr><td style="padding:8px 14px;font-weight:bold;font-size:12pt;line-height:1.8;">${escapeHtml(snapshot.customerName)}</td></tr>""" else ""}
+      ${if (snapshot.customerAddress.isNotBlank()) """<tr><td style="padding:8px 14px;font-size:9pt;color:#555555;line-height:1.8;">${addressLines(snapshot.customerAddress)}</td></tr>""" else ""}
+      ${if (!snapshot.customerEmail.isNullOrBlank()) """<tr><td style="padding:8px 14px;font-size:9pt;color:#555555;line-height:1.8;">${escapeHtml(snapshot.customerEmail)}</td></tr>""" else ""}
     </table>
   </td>
 </tr>
 </table>
 
-${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:12px;font-style:italic;color:#78716C;font-size:9.5pt;line-height:1.6;">${escapeHtml(snapshot.header)}</p>""" else ""}
+<!-- HEADER / SUBHEADER SECTION (Additional Info) -->
+${buildHeaderSubheaderSection(snapshot, "#f5f5f5", amber)}
 
 <!-- LINE ITEMS TABLE (Phase 2: refined column widths and spacing) -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:0;">
   <tr style="background-color:#0A2540;color:#FFFFFF;">
     <th style="padding:11px 14px;text-align:left;font-size:9.5pt;letter-spacing:0.5px;">DESCRIPTION</th>
-    <th style="padding:11px 14px;text-align:center;font-size:9.5pt;width:9%;letter-spacing:0.5px;">QTY</th>
-    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;letter-spacing:0.5px;">UNIT PRICE</th>
-    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;letter-spacing:0.5px;">AMOUNT</th>
+    <th style="padding:11px 14px;text-align:center;font-size:9.5pt;width:9%;">QTY</th>
+    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;">UNIT PRICE</th>
+    <th style="padding:11px 14px;text-align:right;font-size:9.5pt;width:17%;">AMOUNT</th>
   </tr>
   $itemRows
   <!-- Subtotal / Tax rows -->
@@ -1259,7 +1312,7 @@ ${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:12px;font-style:i
     <td style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.subtotal, snapshot.currencyCode)}</td>
   </tr>
   <tr style="background-color:#F3F4F6;">
-    <td colspan="3" style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#6B7280;">$taxLabel</td>
+    <td colspan="3" style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#6B7280;">Tax (${(snapshot.taxRate * 100).toInt()}%)</td>
     <td style="padding:8px 14px;text-align:right;font-size:9.5pt;color:#1F2937;">${formatMoney(snapshot.taxAmount, snapshot.currencyCode)}</td>
   </tr>
 </table>
@@ -1269,7 +1322,7 @@ ${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:12px;font-style:i
 <tr>
   <td width="65%" style="padding:14px 20px;"></td>
   <td style="padding:14px 20px;text-align:right;">
-    <div style="font-size:9pt;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Due</div>
+    <div style="font-size:9pt;font-weight:700;color:#9CA3B8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Due</div>
     <div style="font-size:22pt;font-weight:700;color:#FFD700;">${formatMoney(snapshot.totalAmount, snapshot.currencyCode)}</div>
   </td>
 </tr>
@@ -1321,6 +1374,24 @@ $footer
 
         return file
     }
+
+     private fun buildHeaderSubheaderSection(snapshot: InvoiceSnapshot, backgroundColor: String, borderColor: String): String {
+         Timber.d("📋 buildHeaderSubheaderSection called: header='${snapshot.header}' (len=${snapshot.header.length}), subheader='${snapshot.subheader}' (len=${snapshot.subheader.length})")
+         if (snapshot.header.isBlank() && snapshot.subheader.isBlank()) {
+             Timber.d("📋 Both header and subheader are blank, returning empty section")
+             return ""
+         }
+         Timber.d("📋 Rendering Additional Information section")
+         return """
+             <table width="100%" style="border-collapse:collapse;margin:20px 0 20px 0;padding:0;page-break-inside:avoid;">
+                 <tr>
+                     <td style="background-color:$backgroundColor;padding:14px 16px;font-weight:bold;font-size:11pt;color:$borderColor;border-left:5px solid $borderColor;letter-spacing:0.5px;text-transform:uppercase;width:100%;">📋 Additional Information</td>
+                 </tr>
+                 ${if (snapshot.header.isNotBlank()) """<tr><td style="padding:12px 16px;font-size:10pt;line-height:1.8;word-wrap:break-word;color:#444444;background-color:white;border-bottom:1px solid #e8e8e8;">${escapeHtml(snapshot.header)}</td></tr>""" else ""}
+                 ${if (snapshot.subheader.isNotBlank()) """<tr><td style="padding:12px 16px;font-size:10pt;line-height:1.8;word-wrap:break-word;color:#444444;background-color:white;">${escapeHtml(snapshot.subheader)}</td></tr>""" else ""}
+             </table>
+         """.trimIndent()
+     }
 }
 
 

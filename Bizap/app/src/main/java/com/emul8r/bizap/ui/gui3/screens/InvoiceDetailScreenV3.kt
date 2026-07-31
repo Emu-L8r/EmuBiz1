@@ -289,19 +289,6 @@ private fun InvoiceDetailContentV3(
                 .padding(Spacing.md),
             horizontalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
-            GlowingMatrixButton(
-                text = "EDIT",
-                onClick = {
-                    navController.navigate(
-                        com.emul8r.bizap.ui.gui3.navigation.ScreenV3.EditInvoice(
-                            businessId = businessId,
-                            invoiceId = invoice.id
-                        )
-                    )
-                },
-                modifier = Modifier.weight(1f),
-                isHighlight = true
-            )
 
             GlowingMatrixButton(
                 text = "DELETE",

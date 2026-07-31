@@ -111,15 +111,7 @@ class PdfSettingsResolver @Inject constructor(
             errors.add("Primary color is empty")
         }
 
-        // Validate spacing
-        if (settings.spacingProfile == null) {
-            errors.add("Spacing profile not set")
-        }
-
-        // Validate layout
-        if (settings.layout == null) {
-            errors.add("Layout not set")
-        }
+        // spacingProfile and layout are non-nullable with defaults, no validation needed
 
         return if (errors.isEmpty()) {
             ValidationResult.Success

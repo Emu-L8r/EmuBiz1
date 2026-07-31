@@ -26,6 +26,7 @@ object PlaceholderInvoiceGenerator {
             customerName = "Smith & Associates, Inc.",
             customerAddress = "456 Customer Street\nNew York, NY 10001\nUSA",
             customerEmail = "billing@smith.com",
+            customerPhone = "+1 (555) 987-6543",
             date = now,
             dueDate = thirtyDaysLater,
             items = listOf(
@@ -95,6 +96,7 @@ object PlaceholderInvoiceGenerator {
             customerName = "Test Customer",
             customerAddress = "Test Address",
             customerEmail = "test@example.com",
+            customerPhone = null,
             date = now,
             dueDate = thirtyDaysLater,
             items = listOf(

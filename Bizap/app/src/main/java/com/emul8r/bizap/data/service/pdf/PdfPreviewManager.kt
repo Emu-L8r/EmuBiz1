@@ -18,7 +18,11 @@ import javax.inject.Singleton
  *
  * Generates live previews as user changes settings, with intelligent debouncing
  * to avoid regenerating too frequently.
+ *
+ * Note: Uses [FlowPreview] API (debounce) which is experimental and may change
+ * in future Kotlin coroutines releases. Marked with @OptIn to acknowledge this risk.
  */
+@OptIn(kotlinx.coroutines.FlowPreview::class)
 @Singleton
 class PdfPreviewManager @Inject constructor(
     private val pdfSettingsResolver: PdfSettingsResolver,

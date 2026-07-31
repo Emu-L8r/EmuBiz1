@@ -224,7 +224,7 @@ fun SettingRow(
  */
 @Composable
 fun SettingsDivider(modifier: Modifier = Modifier) {
-    Divider(
+    HorizontalDivider(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),

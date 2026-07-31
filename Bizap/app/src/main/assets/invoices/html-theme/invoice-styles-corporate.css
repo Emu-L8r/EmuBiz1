@@ -5,8 +5,8 @@
 /* CSS Variables for Brand Customization */
 :root {
     --primary-color: #003366;
-    --secondary-color: #f0f4f8;
-    --accent-color: #334455;
+    --primary-dark:  #002244;
+    --primary-light: #c5d5e8;
     --text-color: #222222;
     --border-color: #ccddee;
     --success-color: #27ae60;
@@ -16,30 +16,25 @@
 
     --font-primary: 'Georgia', 'Times New Roman', serif;
 
+    /* TEXT COLORS (overridden at runtime by CssVariableInjector) */
+    --text-primary:   #222222;
+    --text-secondary: #556677;
+    --text-tertiary:  #889aaa;
+    --text-inverse:   #ffffff;
+
+    /* BACKGROUND COLORS (overridden at runtime by CssVariableInjector) */
+    --bg-base:       #ffffff;
+    --bg-neutral:    #f5f7fa;
+    --bg-tinted:     #e8f1f8;
+    --row-alternate: #eef3f9;
+
+    /* BORDERS */
+    --border-light:   #ddeeff;
+    --border-primary: #aac4dd;
+
+    --text-color: var(--text-primary); /* alias — keeps legacy references working */
+
     /* TYPOGRAPHY SCALE - CORPORATE HIERARCHY */
-    --font-size-base: 11pt;
-    --font-size-small: 9pt;
-    --font-size-large: 13pt;
-    --font-size-xlarge: 16pt;
-    --font-size-heading: 20pt;
-
-    /* FONT WEIGHT HIERARCHY */
-    --font-weight-regular: 400;
-    --font-weight-medium: 500;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
-
-    /* LINE HEIGHT SCALE */
-    --line-height-tight: 1.3;
-    --line-height-normal: 1.6;
-    --line-height-relaxed: 1.8;
-    --line-height-loose: 2.0;
-
-    --spacing-xs: 8px;
-    --spacing-sm: 12px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
-    --spacing-xl: 32px;
     --spacing-xxl: 40px;
 }
 
@@ -83,9 +78,9 @@ html, body {
 /* ============================================================================
    HEADER SECTION - CORPORATE STYLE
    ============================================================================ */
-
+    color: var(--text-primary);
 .invoice-header {
-    display: flex;
+    background: var(--bg-base);
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: var(--spacing-xl);
@@ -98,11 +93,11 @@ html, body {
     border-left: 8px solid #001133;
     color: white;
 }
-
-.header-content {
+    background: var(--bg-base);
+    color: var(--text-color);
     display: flex;
     justify-content: space-between;
-    width: 100%;
+    background: white;
     gap: var(--spacing-xl);
 }
 
@@ -115,13 +110,13 @@ html, body {
     font-weight: var(--font-weight-bold);
     color: white;
     margin-bottom: var(--spacing-sm);
-    letter-spacing: 1px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 60%, var(--primary-dark) 100%);
     line-height: var(--line-height-tight);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
+        0 4px 8px rgba(0, 0, 0, 0.18),
 
-.company-detail {
-    font-size: var(--font-size-small);
+    border-left: 8px solid var(--primary-dark);
+    color: var(--text-inverse);
     color: rgba(255, 255, 255, 0.85);
     margin: 2px 0;
     font-weight: var(--font-weight-regular);
@@ -143,14 +138,13 @@ html, body {
     line-height: var(--line-height-tight);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     margin: 0;
-    padding: 0;
+    background: linear-gradient(135deg, #002244 0%, #003366 50%, #004488 100%);
 }
 
 /* ============================================================================
-   METADATA SECTION
-   ============================================================================ */
-
-.invoice-metadata {
+        0 4px 8px rgba(0, 51, 102, 0.2),
+    border-left: 8px solid #001133;
+    color: white;
     margin-bottom: var(--spacing-xl);
     padding: var(--spacing-lg);
     background-color: var(--secondary-color);
@@ -195,7 +189,7 @@ html, body {
    BILL TO SECTION
    ============================================================================ */
 
-.bill-to-section {
+    background: var(--bg-base);
     margin-bottom: var(--spacing-xl);
 }
 
@@ -223,7 +217,7 @@ html, body {
 }
 
 .customer-name {
-    font-weight: var(--font-weight-semibold);
+    background: white;
     font-size: var(--font-size-base);
     margin-bottom: 4px;
     color: var(--text-color);
@@ -311,19 +305,19 @@ html, body {
     word-break: break-word;
 }
 
-.table-row:last-child td {
+    background-color: var(--row-alternate);
     border-bottom: 2px solid var(--primary-color);
 }
 
-/* COLUMN ALIGNMENT */
+    background-color: var(--bg-tinted);
 .col-description {
     width: 50%;
     font-weight: 500;
-}
+    background-color: var(--bg-base);
 
 .col-quantity {
     width: 13%;
-    text-align: center;
+    background-color: var(--bg-neutral);
     font-weight: 500;
 }
 
@@ -353,18 +347,18 @@ html, body {
 }
 
 .totals-container {
-    width: 50%;
+    background-color: var(--secondary-color);
 }
 
 .totals-summary {
-    border: 1px solid var(--border-color);
+    background-color: var(--light-accent);
     border-radius: 2px;
-    background-color: var(--secondary-color);
+    background-color: white;
     overflow: hidden;
 }
 
 .summary-row {
-    display: flex;
+    background-color: var(--secondary-color);
     justify-content: space-between;
     padding: var(--spacing-md) var(--spacing-lg);
     border-bottom: 1px solid var(--border-color);
@@ -416,15 +410,15 @@ html, body {
     border-left: 3px solid var(--primary-color);
     border-radius: 2px;
 }
-
-.payment-section h3 {
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: var(--text-inverse);
     font-size: var(--font-size-large);
     font-weight: var(--font-weight-semibold);
     color: var(--primary-color);
     margin-bottom: var(--spacing-md);
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    font-size: 11pt;
+    color: var(--text-inverse);
 }
 
 .payment-content {
@@ -440,9 +434,8 @@ html, body {
     line-height: var(--line-height-normal);
 }
 
-.payment-label {
-    font-weight: var(--font-weight-semibold);
-    color: var(--accent-color);
+    background: linear-gradient(90deg, var(--primary-color), #004488);
+    color: white;
     letter-spacing: 0.2px;
 }
 
@@ -451,7 +444,7 @@ html, body {
     font-weight: var(--font-weight-medium);
 }
 
-/* ============================================================================
+    color: white;
    NOTES SECTION
    ============================================================================ */
 

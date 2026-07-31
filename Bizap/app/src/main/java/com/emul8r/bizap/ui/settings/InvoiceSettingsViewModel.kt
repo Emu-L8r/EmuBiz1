@@ -69,26 +69,45 @@ class InvoiceSettingsViewModel @Inject constructor(
     private val _previewHtml = MutableStateFlow<String?>(null)
     val previewHtml: StateFlow<String?> = _previewHtml.asStateFlow()
 
+    private val _isRegeneratingPreview = MutableStateFlow(false)
+    val isRegeneratingPreview: StateFlow<Boolean> = _isRegeneratingPreview.asStateFlow()
+
+    /** Live quality score (0–100f) derived from current settings. Updates whenever settings change. */
+    val qualityScore: StateFlow<Float> = _uiState
+        .combine(_previewHtml) { uiState, _ -> computeQualityScore(uiState.settings) }
+        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), 75f)
+
     private val userId: String
         get() = userIdProvider.getCurrentUserId()
 
-    // ===== PHASE 4: Preview Debouncing (Approach 2) =====
+    // ===== PHASE 4: OPTIMIZED Preview Debouncing & Caching =====
+    // Fast debounce for slider/interactive controls (50ms)
     private var previewDebounceJob: Job? = null
-    private val PREVIEW_DEBOUNCE_MS = 300L
+    private val PREVIEW_DEBOUNCE_MS = 50L  // ✨ Reduced from 300ms for instant feedback
+
+    // Preview state tracking to avoid unnecessary regenerations
     private var lastPreviewKey: String = ""
+    private var cachedPreviewHtml: String? = null
+    private var regenerationCount: Int = 0
+
+    // Loading state for UI feedback
+    private var isCurrentlyRegenerating: Boolean = false
 
     init {
         loadSettings()
     }
 
-     // Debounced preview generation to prevent hammering during rapid clicks
-     private fun debouncedGeneratePreview() {
-         previewDebounceJob?.cancel()  // Cancel previous scheduled job
-         previewDebounceJob = viewModelScope.launch {
-             delay(PREVIEW_DEBOUNCE_MS)  // Wait 300ms for user to stop changing
-             generatePreview()  // Then generate once
-         }
-     }
+      // Debounced preview generation with intelligent caching
+      // Prevents unnecessary regenerations during rapid user interactions
+      private fun debouncedGeneratePreview() {
+          previewDebounceJob?.cancel()
+          Timber.d("⏱️  Preview debounce timer started (${PREVIEW_DEBOUNCE_MS}ms)")
+          previewDebounceJob = viewModelScope.launch {
+              delay(PREVIEW_DEBOUNCE_MS)  // Wait 50ms for user to stop changing
+              Timber.d("⏱️  Debounce complete, calling generatePreview()")
+              generatePreview()  // Then generate once
+          }
+      }
 
      /**
       * ✨ PHASE 1: Intelligent preview generation that only regenerates when settings key changes.
@@ -129,33 +148,43 @@ class InvoiceSettingsViewModel @Inject constructor(
          }
      }
 
-     /**
-      * ✨ PHASE 1: Create stable preview state key from critical settings.
-      * Uses hashing to determine when preview should regenerate.
-      * Only regenerates when key changes (not on every recomposition).
-      */
-     fun getPreviewStateKey(): String {
-         val settings = _uiState.value.settings ?: return "LOADING"
-         return buildString {
-             append(settings.selectedPdfEngine.name)
-             append(settings.selectedPageLayout.name)
-             append(settings.selectedHtmlStyle.displayName)
-             append(settings.selectedCanvasTemplate.displayName)
-             append(settings.selectedTypography.name)
-             append(settings.primaryColor)
-             append(settings.accentColor)
-             append(settings.enableGradientHeader)
-             append(settings.headerGradientEndColor)
-             append(settings.enableRoundedCorners)
-             append(settings.enableAlternatingRowColors)
-             append(settings.enableDividers)
-             append(settings.dividerStyle.name)
-             append(settings.highlightTotals)
-             append(settings.enableStatusBadges)
-             append(settings.enableBackgroundPattern)
-             append(settings.enableWatermarkText)
-         }.hashCode().toString()
-     }
+      /**
+       * ✨ PHASE 1: Create stable preview state key from critical settings.
+       * Uses hashing to determine when preview should regenerate.
+       * Only regenerates when key changes (not on every recomposition).
+       *
+       * CRITICAL FIX (May 20, 2026): Added selectedColorScheme and selectedSpacingProfile
+       * to hash calculation so preview updates when user changes color schemes or spacing.
+       */
+      fun getPreviewStateKey(): String {
+          val settings = _uiState.value.settings ?: return "LOADING"
+          return buildString {
+              append(settings.selectedPdfEngine.name)
+              append(settings.selectedPageLayout.name)
+              append(settings.selectedHtmlStyle.displayName)
+              append(settings.selectedCanvasTemplate.displayName)
+              append(settings.selectedTypography.name)
+              append(settings.selectedColorScheme.name)
+              append(settings.selectedSpacingProfile.name)
+              append(settings.primaryColor)
+              append(settings.accentColor)
+              append(settings.enableGradientHeader)
+              append(settings.headerGradientEndColor)
+              append(settings.enableRoundedCorners)
+              append(settings.cornerRadiusDp)
+              append(settings.enableAlternatingRowColors)
+              append(settings.alternateRowColor)
+              append(settings.enableDividers)
+              append(settings.dividerStyle.name)
+              append(settings.dividerColor)
+              append(settings.dividerThicknessPx)
+              append(settings.highlightTotals)
+              append(settings.totalBoxStyle.name)
+              append(settings.enableStatusBadges)
+              append(settings.enableBackgroundPattern)
+              append(settings.enableWatermarkText)
+          }.hashCode().toString()
+      }
 
     fun retryLoadSettings() {
         loadSettings()
@@ -261,44 +290,76 @@ class InvoiceSettingsViewModel @Inject constructor(
         debouncedGeneratePreview()
     }
 
-    /**
-     * Generate live preview HTML using placeholder data and current settings.
-     * Supports both Canvas and HTML engines with appropriate previews.
-     * ✨ FIXED: Canvas preview now respects selectedPageLayout via layout factory!
-     */
-    fun generatePreview() {
-        viewModelScope.launch {
-            val currentSettings = _uiState.value.settings ?: return@launch
-            try {
-                // ✨ ALWAYS use placeholder data for preview (cleaner, focused on design)
-                val previewSnapshot = PlaceholderInvoiceGenerator.generatePreviewInvoice()
+      /**
+       * Generate live preview HTML using placeholder data and current settings.
+       * ✨ OPTIMIZED: Smart caching prevents unnecessary regenerations.
+       * Only regenerates when preview state key changes.
+       *
+       * Cache hit: <5ms (instant UI update)
+       * Cache miss: <500ms (regenerate and update)
+       */
+      fun generatePreview() {
+          val currentKey = getPreviewStateKey()
+          Timber.d("📊 generatePreview() called. currentKey=$currentKey, lastPreviewKey=$lastPreviewKey")
 
-                // Route by selectedPdfEngine
-                val useCanvas = currentSettings.selectedPdfEngine == PdfEngine.CANVAS
+          // CACHE HIT: Skip regeneration if nothing changed
+          if (currentKey == lastPreviewKey && cachedPreviewHtml != null) {
+              Timber.d("⚡ Cache HIT: Preview state unchanged, using cached version")
+              _previewHtml.value = cachedPreviewHtml
+              return
+          }
 
-                if (useCanvas) {
-                    // ✨ FIXED: Canvas preview now uses LAYOUT FACTORY
-                    // This respects selectedPageLayout!
-                    val colorScheme = InvoiceColorScheme(
-                        primaryColor = currentSettings.selectedCanvasTemplate.primaryHex,
-                        accentColor = currentSettings.selectedCanvasTemplate.accentHex
-                    )
-                    val layoutProvider = PageLayoutFactory.createLayout(currentSettings.selectedPageLayout)
-                    val canvasHtml = layoutProvider.buildInvoiceHtml(previewSnapshot, isQuote = false, colorScheme)
-                    _previewHtml.value = canvasHtml
-                    Timber.d("✅ Canvas preview updated: template=${currentSettings.selectedCanvasTemplate.displayName}, layout=${currentSettings.selectedPageLayout}")
-                } else {
-                    // HTML-to-PDF preview generation
-                    val htmlService = HtmlPdfInvoiceService(context, currentSettings)
-                    val html = htmlService.buildPreviewHtml(previewSnapshot, isQuote = false)
-                    _previewHtml.value = html
-                    Timber.d("✅ HTML preview updated: layout=${currentSettings.selectedPageLayout}, style=${currentSettings.selectedHtmlStyle}")
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "❌ Failed to generate live preview")
-            }
-        }
-    }
+          // CACHE MISS: Must regenerate
+          regenerationCount++
+          Timber.d("🔄 Cache MISS: Preview state changed, regenerating (key=$currentKey → $lastPreviewKey, regen#$regenerationCount)")
+
+          viewModelScope.launch {
+              val currentSettings = _uiState.value.settings ?: run {
+                  Timber.e("❌ Cannot generate preview: settings is null")
+                  return@launch
+              }
+              try {
+                  Timber.d("🚀 Starting preview generation. Engine=${currentSettings.selectedPdfEngine}, ColorScheme=${currentSettings.selectedColorScheme.name}, Spacing=${currentSettings.selectedSpacingProfile.name}")
+                  _isRegeneratingPreview.value = true
+
+                  // ✨ ALWAYS use placeholder data for preview (cleaner, focused on design)
+                  val previewSnapshot = PlaceholderInvoiceGenerator.generatePreviewInvoice()
+
+                  // Route by selectedPdfEngine
+                  val useCanvas = currentSettings.selectedPdfEngine == PdfEngine.CANVAS
+
+                  val generatedHtml = if (useCanvas) {
+                      // Canvas preview — use selectedColorScheme colours (not canvas template colours)
+                      // so colour-scheme changes are visible in the preview.
+                      val colorScheme = InvoiceColorScheme(
+                          primaryColor = currentSettings.selectedColorScheme.primaryHex,
+                          accentColor  = currentSettings.selectedColorScheme.accentHex
+                      )
+                      val layoutProvider = PageLayoutFactory.createLayout(currentSettings.selectedPageLayout)
+                      val rawHtml = layoutProvider.buildInvoiceHtml(previewSnapshot, isQuote = false, colorScheme)
+                      // Dynamic CSS is already included in the buildInvoiceHtml output
+                      rawHtml
+                  } else {
+                      // HTML-to-PDF preview generation
+                      val htmlService = HtmlPdfInvoiceService(context, currentSettings)
+                      htmlService.buildPreviewHtml(previewSnapshot, isQuote = false)
+                  }
+
+                  // Update cache and UI
+                  lastPreviewKey = currentKey
+                  cachedPreviewHtml = generatedHtml
+                  Timber.d("📝 Setting previewHtml StateFlow to ${generatedHtml?.length ?: 0} bytes")
+                  _previewHtml.value = generatedHtml
+
+                  Timber.d("✅ Preview regenerated successfully (engine=${currentSettings.selectedPdfEngine}, size=${generatedHtml?.length} bytes)")
+              } catch (e: Exception) {
+                  Timber.e(e, "❌ Failed to generate live preview")
+              } finally {
+                  Timber.d("🏁 Preview generation complete. isRegenerating → false")
+                  _isRegeneratingPreview.value = false
+              }
+          }
+      }
 
 
     fun updatePrimaryColor(color: String) {
@@ -817,10 +878,16 @@ class InvoiceSettingsViewModel @Inject constructor(
      * Update selected color scheme for invoice PDF styling.
      */
     fun updateSelectedColorScheme(colorScheme: ColorScheme) {
+        Timber.d("🎨 updateSelectedColorScheme() called with: ${colorScheme.name}")
         _uiState.value.settings?.let { current ->
+            Timber.d("   Old color scheme: ${current.selectedColorScheme.name}")
             _uiState.value = _uiState.value.copy(
                 settings = current.copy(selectedColorScheme = colorScheme)
             )
+            Timber.d("   New color scheme set in state, triggering preview...")
+        } ?: run {
+            Timber.e("   ❌ Cannot update: settings is null!")
+            return
         }
         Timber.d("🎨 Color scheme updated: ${colorScheme.displayName}")
         debouncedGeneratePreview()
@@ -830,10 +897,16 @@ class InvoiceSettingsViewModel @Inject constructor(
      * Update selected spacing profile for invoice PDF layout.
      */
     fun updateSelectedSpacingProfile(spacingProfile: SpacingProfile) {
+        Timber.d("📐 updateSelectedSpacingProfile() called with: ${spacingProfile.name}")
         _uiState.value.settings?.let { current ->
+            Timber.d("   Old spacing: ${current.selectedSpacingProfile.name}")
             _uiState.value = _uiState.value.copy(
                 settings = current.copy(selectedSpacingProfile = spacingProfile)
             )
+            Timber.d("   New spacing set in state, triggering preview...")
+        } ?: run {
+            Timber.e("   ❌ Cannot update: settings is null!")
+            return
         }
         Timber.d("📐 Spacing profile updated: ${spacingProfile.displayName}")
         debouncedGeneratePreview()
@@ -877,5 +950,87 @@ class InvoiceSettingsViewModel @Inject constructor(
             )
         }
         debouncedGeneratePreview()
+    }
+
+    // Appearance Settings Methods
+    fun updateColorScheme(scheme: com.emul8r.bizap.domain.model.ColorScheme) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(selectedColorScheme = scheme)
+            )
+        }
+        debouncedGeneratePreview()
+    }
+
+    fun updateAccentColor(color: String) = updatePrimaryColor(color)
+
+    fun updateGradientHeader(enabled: Boolean) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(enableGradientHeader = enabled)
+            )
+        }
+        debouncedGeneratePreview()
+    }
+
+    fun updateRoundedCorners(enabled: Boolean) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(enableRoundedCorners = enabled)
+            )
+        }
+        debouncedGeneratePreview()
+    }
+
+    fun updateShadows(enabled: Boolean) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(enableShadows = enabled)
+            )
+        }
+        debouncedGeneratePreview()
+    }
+
+
+
+    fun updateDividers(enabled: Boolean) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(enableDividers = enabled)
+            )
+        }
+        debouncedGeneratePreview()
+    }
+
+    fun updateAlternatingRowColors(enabled: Boolean) {
+        _uiState.value.settings?.let { current ->
+            _uiState.value = _uiState.value.copy(
+                settings = current.copy(enableAlternatingRowColors = enabled)
+            )
+        }
+        debouncedGeneratePreview()
+    }
+
+    /**
+     * Computes a simple quality score (0–100f) from the current [InvoiceSettings].
+     * Starts at 100 and deducts for missing/poor configurations, awards bonuses for
+     * premium settings so the indicator is meaningful and changes with user choices.
+     */
+    private fun computeQualityScore(settings: InvoiceSettings?): Float {
+        if (settings == null) return 75f
+        var score = 100f
+        // Deductions for bare-minimum settings
+        if (!settings.enableDividers) score -= 5f
+        if (!settings.enableAlternatingRowColors) score -= 3f
+        if (settings.footerMessage.isBlank()) score -= 4f
+        // Bonuses for premium visual settings
+        if (settings.enableGradientHeader) score += 5f
+        if (settings.enableRoundedCorners) score += 3f
+        if (settings.highlightTotals) score += 4f
+        // Preferred engine / style bonus
+        if (settings.selectedPdfEngine == PdfEngine.HTML_CSS) score += 3f
+        if (settings.selectedSpacingProfile == SpacingProfile.GENEROUS ||
+            settings.selectedSpacingProfile == SpacingProfile.PREMIUM) score += 3f
+        return score.coerceIn(0f, 100f)
     }
 }

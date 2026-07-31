@@ -1,6 +1,7 @@
 package com.emul8r.bizap.ui.settings.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -37,18 +38,22 @@ fun PreviewPanel(
     quality: Float = 75f,
     modifier: Modifier = Modifier
 ) {
+    Timber.d("🎬 PreviewPanel rendering: previewHtml=${previewHtml?.take(30)}..., isRegenerating=$isRegenerating")
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
     ) {
         if (previewHtml != null && !isRegenerating) {
+            Timber.d("🎬 PreviewPanel: Showing WebView (${previewHtml.length} bytes)")
             // Main preview content
             PreviewWebView(previewHtml = previewHtml)
         } else if (isRegenerating) {
+            Timber.d("🎬 PreviewPanel: Showing LoadingPreview")
             // Loading state
             LoadingPreview()
         } else {
+            Timber.d("🎬 PreviewPanel: Showing EmptyPreview")
             // Empty state
             EmptyPreview()
         }
@@ -73,6 +78,7 @@ private fun PreviewWebView(
                 settings.apply {
                     mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                     domStorageEnabled = false
+                    @Suppress("DEPRECATION")
                     databaseEnabled = false
                     @Suppress("DEPRECATION")
                     savePassword = false
@@ -234,4 +240,3 @@ fun QualityScoreCompact(
         }
     }
 }
-

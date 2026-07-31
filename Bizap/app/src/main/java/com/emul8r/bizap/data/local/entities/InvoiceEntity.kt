@@ -34,6 +34,7 @@ data class InvoiceEntity(
     val customerName: String = "",
     val customerAddress: String = "",
     val customerEmail: String? = null,
+    val customerPhone: String? = null,
     val date: Long,
     val totalAmount: Long,              // Store as cents (e.g., 14999 = $149.99)
     val isQuote: Boolean,

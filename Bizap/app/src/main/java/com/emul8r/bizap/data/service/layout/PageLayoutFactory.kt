@@ -16,10 +16,21 @@ import timber.log.Timber
  * Routes invoice rendering to the correct layout implementation.
  * Each layout defines how content is organized on the page.
  *
- * Supported layouts:
+ * Supported layouts (4 full implementations):
  * - CLASSIC: Traditional layout with full spacing
  * - MODERN: Compact grid-based layout
  * - SPACIOUS: Premium spacious layout with generous spacing
+ * - COMPACT: Minimal spacing, maximum content density
+ *
+ * Stub layouts (currently use ClassicPageLayout as fallback):
+ * - SIDEBAR: Reserved for future sidebar layout implementation
+ * - CARDS: Reserved for future card-grid layout implementation
+ * - MINIMAL_TABLES: Reserved for future table-only layout
+ * - FOCUSED: Reserved for future focus mode (single-item view)
+ * - ADVANCED_PAGINATED: Used with AdvancedPageLayout in PDF generation
+ *
+ * NOTE: Users can select any layout, but stubs will display as CLASSIC until fully implemented.
+ * To implement a stub: create the PageLayoutProvider class and add to createLayout() below.
  */
 object PageLayoutFactory {
     fun createLayout(layout: PageLayout): PageLayoutProvider {
@@ -28,10 +39,14 @@ object PageLayoutFactory {
             PageLayout.MODERN -> ModernPageLayout()
             PageLayout.SPACIOUS -> SpaciousPageLayout()
             PageLayout.COMPACT -> CompactPageLayout()
-            PageLayout.SIDEBAR -> ClassicPageLayout()  // Default to Classic for unsupported layouts
-            PageLayout.CARDS -> ClassicPageLayout()
-            PageLayout.MINIMAL_TABLES -> ClassicPageLayout()
-            PageLayout.FOCUSED -> ClassicPageLayout()
+            // ⚠️ STUB LAYOUTS (Phase 4.0 implementation targets)
+            // These layouts currently fallback to ClassicPageLayout.
+            // When implementing, create the corresponding PageLayoutProvider class
+            // and replace the fallback below with the new implementation.
+            PageLayout.SIDEBAR -> ClassicPageLayout()  // TODO: Implement SidebarPageLayout()
+            PageLayout.CARDS -> ClassicPageLayout()    // TODO: Implement CardsPageLayout()
+            PageLayout.MINIMAL_TABLES -> ClassicPageLayout()  // TODO: Implement MinimalTablesPageLayout()
+            PageLayout.FOCUSED -> ClassicPageLayout()  // TODO: Implement FocusedPageLayout()
             PageLayout.ADVANCED_PAGINATED -> ClassicPageLayout()  // Uses AdvancedPageLayout in PDF generation
         }
     }
@@ -73,11 +88,23 @@ class PageLayoutManager {
 
     /**
      * Extract color scheme from InvoiceSettings for use in layouts.
+     * Maps the selectedColorScheme enum to the corresponding hex colors.
+     * This ensures color scheme changes in the UI are reflected in preview and PDF output.
      */
     fun extractColorScheme(settings: com.emul8r.bizap.domain.model.InvoiceSettings): InvoiceColorScheme {
+        // Map ColorScheme enum to hex pair (primary + accent)
+        val (primaryHex, accentHex) = when (settings.selectedColorScheme) {
+            com.emul8r.bizap.domain.model.ColorScheme.PROFESSIONAL -> "#003366" to "#FFC107"
+            com.emul8r.bizap.domain.model.ColorScheme.VIBRANT      -> "#6B4C9A" to "#FF9F43"
+            com.emul8r.bizap.domain.model.ColorScheme.MINIMAL      -> "#1a1a1a" to "#666666"
+            com.emul8r.bizap.domain.model.ColorScheme.WARM         -> "#D97706" to "#78350F"
+            com.emul8r.bizap.domain.model.ColorScheme.TECH         -> "#0F172A" to "#06B6D4"
+            com.emul8r.bizap.domain.model.ColorScheme.NATURE       -> "#15803D" to "#92400E"
+        }
+
         return InvoiceColorScheme(
-            primaryColor = settings.primaryColor,
-            accentColor = settings.accentColor,
+            primaryColor = primaryHex,
+            accentColor = accentHex,
             lightBackground = settings.secondaryColor,
             textDark = "#333333",  // Default dark text
             textLight = "#666666",  // Default light text

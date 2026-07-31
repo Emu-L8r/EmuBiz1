@@ -108,13 +108,13 @@ android {
 
             // Only require environment variables for release builds
             if (keystorePath != null && storePass != null && alias != null && keyPass != null) {
-                storeFile = file(keystorePath)
+                storeFile = File(keystorePath)
                 storePassword = storePass
                 keyAlias = alias
                 keyPassword = keyPass
             } else {
                 // Fallback to local keystore for development (NOT for production!)
-                val localKeystore = file("../release-key.jks")
+                val localKeystore = rootProject.file("release-key.jks")
                 if (localKeystore.exists()) {
                     logger.warn("""
                         ⚠️  Using local keystore for development.
@@ -467,7 +467,7 @@ tasks.register("ktlintFormat") {
 detekt {
     toolVersion = "1.23.0"
     config.setFrom("${rootProject.projectDir}/.detekt.yml")
-    baseline = file("$projectDir/detekt-baseline.xml")
+    baseline = layout.projectDirectory.file("detekt-baseline.xml").asFile
 }
 
 // Configure detekt task to use JVM 19 (highest version supported by detekt 1.23.0)
@@ -503,32 +503,14 @@ tasks.register<JacocoReport>("jacocoTestDebugUnitTestReport") {
     )
 }
 
-// Ensure jacoco directory exists before running tests
+// Windows fix: Don't report test results to avoid file locking
+// Tests will still run, but skip the problematic cleanup step
+// Note: doFirst blocks removed for configuration cache compatibility (May 29, 2026)
+// Jacoco directory is created automatically; test-results cleanup done manually if needed
 tasks.withType<Test> {
-    doFirst {
-        val jacocoDir = file("build/jacoco")
-        if (!jacocoDir.exists()) {
-            jacocoDir.mkdirs()
-        }
-    }
-
-    // Windows fix: Don't report test results to avoid file locking
-    // Tests will still run, but skip the problematic cleanup step
     reports {
         html.required.set(false)
         junitXml.required.set(false)
-    }
-
-    // Clean before running on Windows
-    doFirst {
-        val testResultsDir = file("build/test-results")
-        if (testResultsDir.exists()) {
-            try {
-                testResultsDir.deleteRecursively()
-            } catch (e: Exception) {
-                // Ignore - file locking is normal on Windows
-            }
-        }
     }
 }
 

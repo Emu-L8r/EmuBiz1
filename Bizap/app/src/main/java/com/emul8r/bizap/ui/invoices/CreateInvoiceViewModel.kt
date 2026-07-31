@@ -144,8 +144,17 @@ class CreateInvoiceViewModel @Inject constructor(
             invoiceSettingsRepository.getSettingsFlow(currentUserId).onEach { settings ->
                 settings?.let { s ->
                     _uiState.update { state ->
+                        // Pre-fill notes with default payment notes from settings if not already set
+                        val defaultNotes = if (state.notes.isBlank()) {
+                            s.footerMessage.ifBlank {
+                                "Thank you for your business. Please remit payment by the due date."
+                            }
+                        } else {
+                            state.notes
+                        }
                         state.copy(
-                            footer = s.footerMessage
+                            footer = s.footerMessage,
+                            notes = defaultNotes
                             // NOTE: companyName now comes from BusinessProfile
                         )
                     }
@@ -542,37 +551,48 @@ class CreateInvoiceViewModel @Inject constructor(
                 Timber.d("🔵 STEP 10b: Starting PDF generation with theme...")
                 Timber.d("   About to call generateAndSaveInvoiceUseCase with theme=${selectedTheme?.name ?: "NULL"}")
 
-                // 📊 DEBUG: Log header/subheader values before PDF generation
-                Timber.d("📋 DEBUG - Snapshot Customization Fields:")
-                Timber.d("   header='${state.header}' (length=${state.header.length})")
-                Timber.d("   subheader='${state.subheader}' (length=${state.subheader.length})")
-                Timber.d("   footer='${state.footer}' (length=${state.footer.length})")
-                Timber.d("   notes='${state.notes}' (length=${state.notes.length})")
+                 // 📊 DEBUG: Log header/subheader values before PDF generation
+                 Timber.d("📋 DEBUG - Snapshot Customization Fields BEFORE snapshot creation:")
+                 Timber.d("   header='${state.header}' (length=${state.header.length})")
+                 Timber.d("   subheader='${state.subheader}' (length=${state.subheader.length})")
+                 Timber.d("   footer='${state.footer}' (length=${state.footer.length})")
+                 Timber.d("   notes='${state.notes}' (length=${state.notes.length})")
 
-                // ✅ FIX: Use unified settings-to-snapshot mapper (SnapshotMappers.kt)
-                // This ensures ALL 60+ settings fields are properly mapped with correct defaults
-                val snapshot = invoiceSettings?.toSnapshot(invoiceWithId, businessProfile)
-                    ?.let { baseSnapshot ->
-                        // Apply invoice-specific customizations (from form UI, not settings)
-                        baseSnapshot.copy(
-                            header = state.header.ifBlank { baseSnapshot.header },
-                            subheader = state.subheader.ifBlank { baseSnapshot.subheader },
-                            footerText = state.footer.ifBlank { baseSnapshot.footerText },
-                            notes = state.notes.ifBlank { baseSnapshot.notes },
-                            currencyCode = state.selectedCurrencyCode
-                        )
-                    }
-                    ?: run {
-                        Timber.w("⚠️ Invoice settings not loaded, using default snapshot")
-                        com.emul8r.bizap.domain.util.createDefaultSnapshot(invoiceWithId, businessProfile)
-                            .copy(
-                                header = state.header,
-                                subheader = state.subheader,
-                                footerText = state.footer,
-                                notes = state.notes,
-                                currencyCode = state.selectedCurrencyCode
-                            )
-                    }
+                 // ✅ FIX: Use unified settings-to-snapshot mapper (SnapshotMappers.kt)
+                 // This ensures ALL 60+ settings fields are properly mapped with correct defaults
+                 val snapshot = invoiceSettings?.toSnapshot(invoiceWithId, businessProfile)
+                     ?.let { baseSnapshot ->
+                         Timber.d("📋 DEBUG - Base snapshot from settings:")
+                         Timber.d("   header='${baseSnapshot.header}' (length=${baseSnapshot.header.length})")
+                         Timber.d("   subheader='${baseSnapshot.subheader}' (length=${baseSnapshot.subheader.length})")
+                         // Apply invoice-specific customizations (from form UI, not settings)
+                         baseSnapshot.copy(
+                             header = state.header.ifBlank { baseSnapshot.header },
+                             subheader = state.subheader.ifBlank { baseSnapshot.subheader },
+                             footerText = state.footer.ifBlank { baseSnapshot.footerText },
+                             notes = state.notes.ifBlank { baseSnapshot.notes },
+                             currencyCode = state.selectedCurrencyCode
+                         ).also { finalSnapshot ->
+                             Timber.d("📋 DEBUG - Final snapshot AFTER applying customizations:")
+                             Timber.d("   header='${finalSnapshot.header}' (length=${finalSnapshot.header.length})")
+                             Timber.d("   subheader='${finalSnapshot.subheader}' (length=${finalSnapshot.subheader.length})")
+                         }
+                     }
+                     ?: run {
+                         Timber.w("⚠️ Invoice settings not loaded, using default snapshot")
+                         com.emul8r.bizap.domain.util.createDefaultSnapshot(invoiceWithId, businessProfile)
+                             .copy(
+                                 header = state.header,
+                                 subheader = state.subheader,
+                                 footerText = state.footer,
+                                 notes = state.notes,
+                                 currencyCode = state.selectedCurrencyCode
+                             ).also { finalSnapshot ->
+                                 Timber.d("📋 DEBUG - Default snapshot AFTER customizations:")
+                                 Timber.d("   header='${finalSnapshot.header}' (length=${finalSnapshot.header.length})")
+                                 Timber.d("   subheader='${finalSnapshot.subheader}' (length=${finalSnapshot.subheader.length})")
+                             }
+                     }
 
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceWithId,

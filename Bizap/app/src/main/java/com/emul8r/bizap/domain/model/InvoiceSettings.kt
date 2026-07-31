@@ -74,7 +74,7 @@ data class InvoiceSettings(
     @ColumnInfo(name = "enable_gradient_header")
     val enableGradientHeader: Boolean = true,
     @ColumnInfo(name = "header_gradient_end_color")
-    val headerGradientEndColor: String = "#FF9F43",
+    val headerGradientEndColor: String = "",   // blank = auto-compute lighter tint of primary (prevents cross-hue gradient)
 
     // SHAPE & SHADOW OPTIONS
     @ColumnInfo(name = "enable_rounded_corners")
@@ -119,6 +119,10 @@ data class InvoiceSettings(
     val backgroundPatternType: BackgroundPattern = BackgroundPattern.WAVES,
     @ColumnInfo(name = "pattern_opacity")
     val patternOpacity: Float = 0.08f,
+
+    // BRAND WATERMARK (centred half-size background logo image)
+    @ColumnInfo(name = "enable_brand_watermark")
+    val enableBrandWatermark: Boolean = true,
 
     // WATERMARK OPTIONS
     @ColumnInfo(name = "enable_watermark_text")
@@ -372,10 +376,10 @@ enum class CanvasInvoiceTemplate(
 ) {
     MODERN(
         displayName = "Modern (Artistic)",
-        description = "Purple + Orange vibrant design with artistic styling",
-        colorScheme = "Purple & Orange",
-        primaryHex = "#6B4C9A",
-        accentHex = "#FF9F43"
+        description = "Slate-navy + steel-blue professional design",
+        colorScheme = "Navy & Steel",
+        primaryHex = "#2E4A7A",
+        accentHex = "#5B7FA6"
     ),
     PROFESSIONAL(
         displayName = "Professional (Formal)",
@@ -462,16 +466,38 @@ enum class PresetColor(val hexCode: String, val displayName: String) {
  * - PROFESSIONAL_PLUS: Sidebar branding, signature line, geometric accents —
  *   the highest quality Phase 1 template with modern professional design
  */
-enum class HtmlInvoiceStyle(val displayName: String, val description: String, val styleFile: String) {
-    MODERN("Modern (Premium)", "Professional modern design with purple gradient", "invoice-styles.css"),
-    MINIMAL("Minimalist (Clean)", "Clean, elegant design with minimal styling", "invoice-styles-minimal.css"),
-    CORPORATE("Corporate (Formal)", "Formal business design with serif typography", "invoice-styles-corporate.css"),
-    CREATIVE("Creative (Startup)", "Vibrant, modern design perfect for startups", "invoice-styles-creative.css"),
-    PREMIUM_PROFESSIONAL("Premium Professional", "Modern minimalist design with dark header and blue accents", "invoice-styles-premium.css"),
-    WARM_APPROACHABLE("Warm Approachable", "Friendly design with warm colors and approachable typography", "invoice-styles-warm.css"),
-    SASS_PROFESSIONAL("SASS Professional ✨", "SASS-engine compiled: deep navy header, electric-blue accents, tight grid layout", "invoice-styles-sass.css"),
-    REFINED("REFINED (Canvas Match)", "HTML template matching Canvas grid system exactly with purple gradient", "invoice-styles-refined.css"),
-    PROFESSIONAL_PLUS("Professional Plus ⭐", "Sidebar branding, signature line, geometric accents — highest quality template", "invoice-styles-professional-plus.css");
+/**
+ * [fallbackStyleFile] is the CSS asset to load if [styleFile] is missing from assets.
+ * The 5 styles that don't yet have dedicated CSS files fall back to the nearest
+ * existing style. REFINED falls back to MODERN because it shares the same purple
+ * theme and its CSS deliberately avoids CSS variables (iText7 compatibility).
+ */
+enum class HtmlInvoiceStyle(
+    val displayName: String,
+    val description: String,
+    val styleFile: String,
+    val fallbackStyleFile: String = styleFile   // defaults to self (no fallback needed)
+) {
+    MODERN("Modern (Premium)", "Professional modern design with purple gradient",
+        styleFile = "invoice-styles.css"),
+    MINIMAL("Minimalist (Clean)", "Clean, elegant design with minimal styling",
+        styleFile = "invoice-styles-minimal.css"),
+    CORPORATE("Corporate (Formal)", "Formal business design with serif typography",
+        styleFile = "invoice-styles-corporate.css"),
+    CREATIVE("Creative (Startup)", "Vibrant, modern design perfect for startups",
+        styleFile = "invoice-styles-creative.css"),
+    PREMIUM_PROFESSIONAL("Premium Professional", "Modern minimalist design with dark header and blue accents",
+        styleFile = "invoice-styles-premium.css",         fallbackStyleFile = "invoice-styles.css"),
+    WARM_APPROACHABLE("Warm Approachable", "Friendly design with warm colors and approachable typography",
+        styleFile = "invoice-styles-warm.css",            fallbackStyleFile = "invoice-styles-creative.css"),
+    SASS_PROFESSIONAL("SASS Professional ✨", "SASS-engine compiled: deep navy header, electric-blue accents, tight grid layout",
+        styleFile = "invoice-styles-sass.css",            fallbackStyleFile = "invoice-styles-corporate.css"),
+    REFINED("REFINED (Canvas Match)", "HTML template matching Canvas grid system exactly with purple gradient",
+        styleFile = "invoice-styles-refined.css",         fallbackStyleFile = "invoice-styles.css"),
+    PROFESSIONAL_PLUS("Professional Plus ⭐", "Sidebar branding, signature line, geometric accents — highest quality template",
+        styleFile = "invoice-styles-professional-plus.css", fallbackStyleFile = "invoice-styles.css"),
+    CLEAN_PROFESSIONAL("Clean Professional 🏆", "Accent-only color — flat readable header, left accent lines, gold totals, generous whitespace",
+        styleFile = "invoice-styles-clean.css",           fallbackStyleFile = "invoice-styles-minimal.css");
 
     companion object {
         fun getDefault() = MODERN
@@ -594,9 +620,9 @@ enum class SpacingProfile(val emoji: String, val displayName: String, val descri
  * borders, shadows, dividers, highlights, and gradients across the invoice.
  */
 data class VisualAccents(
-    val showBorders: Boolean = true,           // Show/hide borders around sections
+    val showBorders: Boolean = false,          // Show/hide borders around sections (off by default — cleaner look)
     val showShadows: Boolean = true,           // Show/hide drop shadows on cards
-    val showDividers: Boolean = true,          // Show/hide horizontal divider lines
+    val showDividers: Boolean = false,         // Show/hide horizontal divider lines (off by default — no grid)
     val highlightTotals: Boolean = true,       // Highlight totals section with accent color
     val useGradients: Boolean = false          // Use gradient backgrounds on headers
 ) {

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
 import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.*
@@ -55,13 +56,18 @@ fun InvoiceSettingsScreen(
         uiState.settings?.selectedPageLayout,
         uiState.settings?.selectedHtmlStyle,
         uiState.settings?.selectedCanvasTemplate,
+        uiState.settings?.selectedColorScheme,     // ✨ FIX: was missing — color scheme changes now trigger recomposition
+        uiState.settings?.selectedSpacingProfile,  // ✨ FIX: was missing — spacing changes now trigger recomposition
+        uiState.settings?.selectedTypography,
         uiState.settings?.primaryColor,
         uiState.settings?.accentColor,
         uiState.settings?.enableGradientHeader,
         uiState.settings?.enableRoundedCorners,
         uiState.settings?.enableAlternatingRowColors,
+        uiState.settings?.alternateRowColor,
         uiState.settings?.enableDividers,
         uiState.settings?.dividerStyle,
+        uiState.settings?.dividerColor,
         uiState.settings?.highlightTotals,
         uiState.settings?.enableStatusBadges,
         uiState.settings?.enableBackgroundPattern,
@@ -72,7 +78,7 @@ fun InvoiceSettingsScreen(
 
     // ✅ UX IMPROVEMENT: Tab state for intuitive navigation
     var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("Quick Setup", "Design", "Advanced")
+    val tabs = listOf("Quick Setup", "Design", "Appearance", "Advanced")
 
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess) {
@@ -119,7 +125,8 @@ fun InvoiceSettingsScreen(
                     when (tabIndex) {
                         0 -> QuickSetupTab(viewModel = viewModel, uiState = uiState)
                         1 -> DesignTab(viewModel = viewModel, uiState = uiState, previewHtml = previewHtml, previewStateKey = previewStateKey)
-                        2 -> AdvancedTab(viewModel = viewModel, uiState = uiState)
+                        2 -> AppearanceTab(viewModel = viewModel, uiState = uiState)
+                        3 -> AdvancedTab(viewModel = viewModel, uiState = uiState)
                     }
                 }
             }
@@ -153,7 +160,7 @@ private fun QuickSetupTab(
                 Text(
                     "Choose how you want your invoices to look",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -370,6 +377,20 @@ private fun DesignTab(
 }
 
 /**
+ * ✅ APPEARANCE TAB: Color schemes, visual effects, borders, backgrounds
+ */
+@Composable
+private fun AppearanceTab(
+    viewModel: InvoiceSettingsViewModel,
+    uiState: InvoiceSettingsUiState
+) {
+    com.emul8r.bizap.ui.settings.sections.AppearanceSettingsSection(
+        viewModel = viewModel,
+        settings = uiState.settings
+    )
+}
+
+/**
  * ✅ ADVANCED TAB: For power users who need fine-tuning
  */
 @Composable
@@ -558,7 +579,7 @@ private fun AdvancedTab(
             Text(
                 "Customize logos, colors, payment methods, QR codes, and more",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -736,7 +757,7 @@ fun TemplateSelectionSection(
         Text(
             descriptionText,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -769,6 +790,9 @@ fun TemplateSelectionSection(
         } else {
             // 2×2 grid of HTML templates
             val styles = HtmlInvoiceStyle.values()
+            // Dialog state: which style is being previewed (null = no dialog)
+            var previewingStyle by remember { mutableStateOf<HtmlInvoiceStyle?>(null) }
+
             for (i in styles.indices step 2) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -778,6 +802,7 @@ fun TemplateSelectionSection(
                         style = styles[i],
                         isSelected = selectedHtmlStyle == styles[i],
                         modifier = Modifier.weight(1f),
+                        onPreviewClick = { previewingStyle = styles[i] },
                         onClick = { onHtmlStyleSelected(styles[i]) }
                     )
                     if (i + 1 < styles.size) {
@@ -785,12 +810,21 @@ fun TemplateSelectionSection(
                             style = styles[i + 1],
                             isSelected = selectedHtmlStyle == styles[i + 1],
                             modifier = Modifier.weight(1f),
+                            onPreviewClick = { previewingStyle = styles[i + 1] },
                             onClick = { onHtmlStyleSelected(styles[i + 1]) }
                         )
                     } else {
                         Spacer(modifier = Modifier.weight(1f))
                     }
                 }
+            }
+
+            // Preview dialog — shown when user taps the eye icon on any style card
+            previewingStyle?.let { style ->
+                InvoiceStylePreview(
+                    style = style,
+                    onDismiss = { previewingStyle = null }
+                )
             }
         }
     }
@@ -861,8 +895,8 @@ private fun CanvasTemplateCard(
             )
             Text(
                 template.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2
             )
         }
@@ -874,6 +908,7 @@ private fun HtmlStyleCard(
     style: HtmlInvoiceStyle,
     isSelected: Boolean,
     modifier: Modifier = Modifier,
+    onPreviewClick: () -> Unit = {},
     onClick: () -> Unit
 ) {
     val accentColor = when (style) {
@@ -884,14 +919,15 @@ private fun HtmlStyleCard(
         HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> Color(0xFF2563EB)
         HtmlInvoiceStyle.WARM_APPROACHABLE     -> Color(0xFFF59E0B)
         HtmlInvoiceStyle.SASS_PROFESSIONAL     -> Color(0xFF0A2540)
-        HtmlInvoiceStyle.REFINED               -> Color(0xFF6B4C9A)  // Purple from REFINED template
-        HtmlInvoiceStyle.PROFESSIONAL_PLUS     -> Color(0xFF1A1A2E)  // Charcoal from PROFESSIONAL_PLUS
+        HtmlInvoiceStyle.REFINED               -> Color(0xFF6B4C9A)
+        HtmlInvoiceStyle.PROFESSIONAL_PLUS     -> Color(0xFF1A1A2E)
+        HtmlInvoiceStyle.CLEAN_PROFESSIONAL    -> Color(0xFF003366)
     }
     val secondaryColor = when (style) {
         HtmlInvoiceStyle.PREMIUM_PROFESSIONAL  -> Color(0xFF1C1C2E)
         HtmlInvoiceStyle.WARM_APPROACHABLE     -> Color(0xFF1F2937)
         HtmlInvoiceStyle.SASS_PROFESSIONAL     -> Color(0xFFF7F9FC)
-        HtmlInvoiceStyle.PROFESSIONAL_PLUS     -> Color(0xFF00C9A7)  // Teal accent
+        HtmlInvoiceStyle.PROFESSIONAL_PLUS     -> Color(0xFF00C9A7)
         else                                   -> null
     }
 
@@ -905,28 +941,46 @@ private fun HtmlStyleCard(
         )
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(accentColor)
-                )
-                if (secondaryColor != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Color swatches + checkmark
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
                             .size(20.dp)
                             .clip(RoundedCornerShape(4.dp))
-                            .background(secondaryColor)
+                            .background(accentColor)
                     )
+                    if (secondaryColor != null) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(secondaryColor)
+                        )
+                    }
+                    if (isSelected) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = "Selected",
+                            tint = accentColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
-                if (isSelected) {
-                    Spacer(modifier = Modifier.weight(1f))
+                // Preview eye button
+                IconButton(
+                    onClick = onPreviewClick,
+                    modifier = Modifier.size(28.dp)
+                ) {
                     Icon(
-                        Icons.Default.Check,
-                        contentDescription = "Selected",
-                        tint = accentColor,
-                        modifier = Modifier.size(16.dp)
+                        Icons.Default.Visibility,
+                        contentDescription = "Preview ${style.displayName}",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -937,8 +991,8 @@ private fun HtmlStyleCard(
             )
             Text(
                 style.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2
             )
         }
@@ -1007,7 +1061,7 @@ fun PdfEngineSection(
         Text(
             "Select how your PDF invoices are generated (3 professional options)",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -1073,8 +1127,8 @@ private fun EngineOptionCard(
             Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             Text(
                 description,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
             )
             if (isSelected) {
                 Icon(
@@ -1105,7 +1159,7 @@ fun PageLayoutSection(
         Text(
             "Choose how invoice content is organized (8 professional layouts)",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -1199,10 +1253,9 @@ private fun LayoutOptionCard(
             Text(layout.displayName, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
             Text(
                 layout.description,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                fontSize = 8.sp
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2
             )
             if (isSelected) {
                 Icon(
@@ -1560,7 +1613,7 @@ fun TypographySection(
         Text(
             "Choose your font style for invoices",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -1615,8 +1668,8 @@ private fun TypographyOptionCard(
             Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             Text(
                 description,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
             )
             if (isSelected) {
                 Icon(
@@ -1650,8 +1703,8 @@ fun VisibilityTogglesSection(
             )
             Text(
                 "Choose what information to display on invoices",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             VisibilityToggleItem(
@@ -1716,8 +1769,8 @@ fun LocaleSelectionSection(
             )
             Text(
                 "Select your region for currency symbols and date formats",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             // Dropdown-style locale selector
@@ -1881,14 +1934,23 @@ private fun ColorSchemeCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val border = if (isSelected) BorderStroke(2.dp, primaryColor) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+    val appPrimary = MaterialTheme.colorScheme.primary
+    val border = if (isSelected) BorderStroke(2.dp, appPrimary) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+
+    val schemePrimary = remember(scheme) {
+        try { Color(android.graphics.Color.parseColor(scheme.primaryHex)) }
+        catch (_: Exception) { Color.Gray }
+    }
+    val schemeAccent = remember(scheme) {
+        try { Color(android.graphics.Color.parseColor(scheme.accentHex)) }
+        catch (_: Exception) { Color.LightGray }
+    }
 
     Card(
         modifier = modifier.clickable(onClick = onClick),
         border = border,
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) primaryColor.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+            containerColor = if (isSelected) appPrimary.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
@@ -1896,20 +1958,35 @@ private fun ColorSchemeCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // Color preview box
-            Box(
+            // Split colour swatch — primary (left 60%) + accent (right 40%)
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(24.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .background(Color(android.graphics.Color.parseColor(scheme.primaryHex)))
+            ) {
+                Box(modifier = Modifier.weight(0.6f).fillMaxHeight().background(schemePrimary))
+                Box(modifier = Modifier.weight(0.4f).fillMaxHeight().background(schemeAccent))
+            }
+            // Emoji + name
+            Text(
+                "${scheme.emoji} ${scheme.displayName}",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
             )
-            Text(scheme.displayName, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            // Hex labels so the user can see exact colours
+            Text(
+                "${scheme.primaryHex} · ${scheme.accentHex}",
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
             if (isSelected) {
                 Icon(
                     Icons.Default.Check,
                     contentDescription = "Selected",
-                    tint = primaryColor,
+                    tint = appPrimary,
                     modifier = Modifier.size(14.dp)
                 )
             }

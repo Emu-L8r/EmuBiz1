@@ -55,57 +55,45 @@ object InvoiceSpacingConfig {
     const val MARGIN_BOTTOM = MARGIN_BOTTOM_MM * MM_TO_PX
 
     // ==================== VERTICAL SPACING ====================
-    /** Gap between major sections (max 12px) */
-    const val SECTION_GAP = 12f
+    /** Gap between major sections — reduced for single-page density */
+    const val SECTION_GAP = 8f
 
-    /** Gap between minor sections (8px) */
-    const val SUBSECTION_GAP = 8f
+    /** Gap between minor sections */
+    const val SUBSECTION_GAP = 6f
 
-    /** Gap between individual lines (4px) */
+    /** Gap between individual lines */
     const val LINE_SPACING = 4f
 
     // ==================== COMPONENT HEIGHTS ====================
     /**
-     * HEADER SECTION: 60px (compressed from 100px)
-     * Contains: Business name + INVOICE label + ABN/phone/email
-     * Integrated visual design with accent bar
+     * HEADER SECTION: 52px (was 60px — saves 8px, all text still fits at their Y offsets)
      */
-    const val HEADER_HEIGHT = 60f
+    const val HEADER_HEIGHT = 52f
 
-    /**
-     * SUBHEADER SECTION: 20px
-     * Contains: Business details (ABN, phone, email)
-     * Integrated with header for visual continuity
-     */
+    /** SUBHEADER SECTION: 20px */
     const val SUBHEADER_HEIGHT = 20f
 
     /**
-     * BILL TO SECTION: 80px (compact, was scattered before)
-     * Contains: Customer name, address, email, phone
-     * Side-by-side with Invoice Details in HIGH DENSITY zone
+     * BILL TO SECTION: 70px (was 80px — saves 10px, deepest text is at +63 which fits)
      */
-    const val BILL_TO_HEIGHT = 80f
+    const val BILL_TO_HEIGHT = 70f
 
     /**
-     * INVOICE DETAILS SECTION: 80px (was separate, now integrated)
-     * Contains: Invoice number, date, due date, status
-     * Side-by-side with Bill To for dense layout
+     * INVOICE DETAILS SECTION: 70px (was 80px — saves 10px)
      */
-    const val INVOICE_DETAILS_HEIGHT = 80f
+    const val INVOICE_DETAILS_HEIGHT = 70f
 
     /**
-     * ITEMS TABLE ROW HEIGHT: 28px
-     * Ensures readable but compact table layout
-     * With 1px borders = 29px effective row height
+     * ITEMS TABLE ROW HEIGHT: 20px
+     * Aligned with PdfTableRenderer's actual output after padding reduction.
+     * maxOf(minRowHeight=16, singleLineTextHeight≈12 + padding*2=8) = 20px ✅
      */
-    const val TABLE_ROW_HEIGHT = 28f
+    const val TABLE_ROW_HEIGHT = 20f
 
     /**
-     * TABLE HEADER HEIGHT: 32px
-     * Bold typography, colored background
-     * WCAG AA contrast compliance
+     * TABLE HEADER HEIGHT: 22px — matches PdfTableRenderer's reduced-padding output
      */
-    const val TABLE_HEADER_HEIGHT = 32f
+    const val TABLE_HEADER_HEIGHT = 22f
 
     /**
      * TOTALS SECTION: 40px (integrated, no floating box)
@@ -120,7 +108,7 @@ object InvoiceSpacingConfig {
      * Contains: Payment terms, bank info, payment reference
      * Only shown if configured
      */
-    const val PAYMENT_SECTION_ROW_HEIGHT = 16f
+    const val PAYMENT_SECTION_ROW_HEIGHT = 14f
 
     /**
      * FOOTER SECTION: 40px
@@ -157,7 +145,7 @@ object InvoiceSpacingConfig {
     const val TEXT_SIZE_SECTION_HEADER = 11f
 
     /** Body text: Customer details, item descriptions */
-    const val TEXT_SIZE_BODY = 10f
+    const val TEXT_SIZE_BODY = 10.5f
 
     /** Table header and items */
     const val TEXT_SIZE_TABLE = 10f
@@ -166,7 +154,7 @@ object InvoiceSpacingConfig {
     const val TEXT_SIZE_SMALL = 9f
 
     /** Totals amount (LARGE and BOLD for prominence) */
-    const val TEXT_SIZE_TOTAL_AMOUNT = 16f
+    const val TEXT_SIZE_TOTAL_AMOUNT = 18f
 
     /** Total label */
     const val TEXT_SIZE_TOTAL_LABEL = 11f
@@ -252,5 +240,3 @@ object InvoiceSpacingConfig {
     fun getAvailableHeight(currentY: Float): Float =
         PAGE_HEIGHT - MARGIN_BOTTOM - currentY
 }
-
-

@@ -130,8 +130,3 @@ sealed class InvoicePreset(
         fun default(): InvoicePreset = Professional
     }
 }
-
-
-
-
-

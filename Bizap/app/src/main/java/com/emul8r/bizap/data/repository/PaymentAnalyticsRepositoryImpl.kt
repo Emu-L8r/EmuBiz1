@@ -90,9 +90,9 @@ class PaymentAnalyticsRepositoryImpl @Inject constructor(
             val calculated = invoiceDao.calculatePaymentMetrics(businessId)
             val metricsRow = paymentDao.getPaymentMetrics(businessId)
 
-            // Check if both are non-null before comparing
+            // calculated is non-nullable but metricsRow is nullable - only proceed if both exist
+            @Suppress("SENSELESS_COMPARISON")  // calculated is non-null but compiler warns
             if (calculated != null && metricsRow != null) {
-                // Safe to use non-null values here
                 val snapshotCollectionRate = if (metricsRow.totalAmount > 0.0) {
                     ((metricsRow.paidAmount / metricsRow.totalAmount) * 100.0).coerceIn(0.0, 100.0)
                 } else 0.0

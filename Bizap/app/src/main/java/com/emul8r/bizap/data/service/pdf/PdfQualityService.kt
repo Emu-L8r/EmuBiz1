@@ -289,19 +289,21 @@ class PdfQualityService @Inject constructor() {
         if (settings.visualAccents.showShadows) count++
         if (settings.businessLogo != null) count++
         if (settings.visualAccents.showBorders) count++
-        if (settings.visualAccents.showWatermark) count++
+        // if (settings.visualAccents.showWatermark) count++  // TODO: Fix VisualAccents class
         return count
     }
 
     private fun getMaxItemsPerPage(layout: PageLayout): Int {
         return when (layout) {
-            PageLayout.COMPACT -> 20
-            PageLayout.MODERN -> 12
-            PageLayout.MINIMAL -> 15
-            PageLayout.CLASSIC -> 10
+            PageLayout.COMPACT -> 25
+            PageLayout.MODERN -> 15
+            PageLayout.MINIMAL_TABLES -> 20
+            PageLayout.CLASSIC -> 20
             PageLayout.ADVANCED_PAGINATED -> 15
-            PageLayout.SIDEBAR -> 8
-            else -> 12
+            PageLayout.SIDEBAR -> 18
+            PageLayout.CARDS -> 8
+            PageLayout.SPACIOUS -> 12
+            PageLayout.FOCUSED -> 10
         }
     }
 }

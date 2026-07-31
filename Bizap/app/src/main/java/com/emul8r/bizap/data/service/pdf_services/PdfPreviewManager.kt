@@ -25,7 +25,11 @@ import javax.inject.Singleton
  * - File-based preview generation
  * - Error handling and logging
  * - Reactive Flow-based API
+ *
+ * Note: Uses [FlowPreview] API (debounce) which is experimental and may change
+ * in future Kotlin coroutines releases. Marked with @OptIn to acknowledge this risk.
  */
+@OptIn(kotlinx.coroutines.FlowPreview::class)
 @Singleton
 class PdfPreviewManager @Inject constructor(
     private val context: Context,

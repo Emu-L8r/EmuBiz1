@@ -91,7 +91,6 @@ td, th { word-wrap: break-word; }
   <td style="padding:24px 24px;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:20pt;font-weight:bold;color:#ffffff;margin-top:6px;line-height:1.3;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:13pt;font-weight:500;color:#e0d8f0;margin-top:6px;line-height:1.4;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:10px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:9pt;color:#e0d8f0;margin-top:4px;line-height:1.8;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:9pt;color:#e0d8f0;margin-top:4px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -129,7 +128,16 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:16px;font-style:italic;color:#555555;line-height:1.8;">${escapeHtml(snapshot.header)}</p>""" else ""}
+<!-- ADDITIONAL INFO SECTION (Header/Subheader from form) -->
+${if (snapshot.header.isNotBlank() || snapshot.subheader.isNotBlank()) """
+<table width="100%" style="border-collapse:collapse;margin:20px 0 20px 0;padding:0;page-break-inside:avoid;">
+    <tr>
+        <td style="background-color:#f9f9f9;padding:14px 16px;font-weight:bold;font-size:11pt;color:$primary;border-left:5px solid $primary;letter-spacing:0.5px;text-transform:uppercase;width:100%;">📋 Additional Information</td>
+    </tr>
+    ${if (snapshot.header.isNotBlank()) """<tr><td style="padding:12px 16px;font-size:10pt;line-height:1.8;word-wrap:break-word;color:#444444;background-color:white;border-bottom:1px solid #e8e8e8;">${escapeHtml(snapshot.header)}</td></tr>""" else ""}
+    ${if (snapshot.subheader.isNotBlank()) """<tr><td style="padding:12px 16px;font-size:10pt;line-height:1.8;word-wrap:break-word;color:#444444;background-color:white;">${escapeHtml(snapshot.subheader)}</td></tr>""" else ""}
+</table>
+""" else ""}
 
 <!-- LINE ITEMS TABLE with fixed column widths -->
 <table width="100%" style="border-collapse:collapse;table-layout:fixed;margin-bottom:4px;">

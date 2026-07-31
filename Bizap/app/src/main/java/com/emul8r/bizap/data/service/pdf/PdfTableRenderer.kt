@@ -25,12 +25,13 @@ class PdfTableRenderer(
     private val pageWidth: Float,
     private val columnWeights: List<Float>, // e.g., listOf(0.5f, 0.15f, 0.15f, 0.2f)
     private val headerBackgroundColor: Int = Color.parseColor("#E8E8E8"),  // Light gray
-    private val alternateRowColor: Int = Color.parseColor("#F9F9F9")      // Very light gray
+    private val alternateRowColor: Int = Color.parseColor("#F9F9F9"),      // Very light gray
+    private val showRowLines: Boolean = false  // Off by default — avoids grid appearance
 ) {
     private val margin = 40f
-    private val padding = 10f
+    private val padding = 4f          // was 10f — reduces row height from ~32px to ~20px
     private val tableWidth = pageWidth - (margin * 2)
-    private val minRowHeight = 25f
+    private val minRowHeight = 16f    // was 25f
     private var rowCount = 0
 
     fun drawRow(
@@ -40,8 +41,7 @@ class PdfTableRenderer(
         headerTextColor: Int? = null
     ): Float {
         val textPaint = TextPaint(basePaint)
-        
-        // ...existing code...
+
         val layouts = values.mapIndexed { index, text ->
             val colWidth = columnWeights[index] * tableWidth
             StaticLayout.Builder.obtain(text, 0, text.length, textPaint, (colWidth - padding * 2).toInt())
@@ -86,11 +86,14 @@ class PdfTableRenderer(
             xOffset += colWidth
         }
 
-        val linePaint = Paint().apply {
-            color = Color.LTGRAY
-            strokeWidth = 0.5f
+        // Subtle row separator line — only drawn when showRowLines is enabled
+        if (showRowLines) {
+            val linePaint = Paint().apply {
+                color = Color.parseColor("#EFEFEF")  // Near-invisible, softer than LTGRAY
+                strokeWidth = 0.3f
+            }
+            canvas.drawLine(startX, currentY + rowHeight, startX + tableWidth, currentY + rowHeight, linePaint)
         }
-        canvas.drawLine(startX, currentY + rowHeight, startX + tableWidth, currentY + rowHeight, linePaint)
 
         val heightOccupied = rowHeight
         currentY += heightOccupied

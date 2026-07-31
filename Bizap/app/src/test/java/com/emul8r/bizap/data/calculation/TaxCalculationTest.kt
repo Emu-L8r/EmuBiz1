@@ -15,56 +15,56 @@ class TaxCalculationTest {
     // ── calculateTax_10Percent_Correct ────────────────────────────────────────
 
     @Test
-    fun `calculateTax_10Percent_Correct - 10% tax on 100000 cents is 10000 cents`() {
+    fun `calculateTax_10Percent_Correct - tax on 100000 cents is 10000 cents`() {
         val subtotal = 100000L  // $1000.00
         val taxRate = 0.10
         val tax = calculateTax(subtotal, taxRate)
-        assertEquals(10000L, tax, "10% tax on $1000 should be $100")
+        assertEquals(10000L, tax, "Tax on 1000 should be 100")
     }
 
     @Test
-    fun `calculateTax_10Percent_Correct - total with 10% tax is correct`() {
+    fun `calculateTax_10Percent_Correct - total with tax is correct`() {
         val subtotal = 100000L
         val taxRate = 0.10
         val tax = calculateTax(subtotal, taxRate)
         val total = subtotal + tax
-        assertEquals(110000L, total, "Total with 10% GST should be $1100")
+        assertEquals(110000L, total, "Total with GST should be 1100")
     }
 
     @Test
-    fun `calculateTax_10Percent_Correct - 10% tax on 50000 cents is 5000 cents`() {
+    fun `calculateTax_10Percent_Correct - tax on 50000 cents is 5000 cents`() {
         val subtotal = 50000L  // $500.00
         val taxRate = 0.10
         val tax = calculateTax(subtotal, taxRate)
-        assertEquals(5000L, tax, "10% tax on $500 should be $50")
+        assertEquals(5000L, tax, "Tax on 500 should be 50")
     }
 
     @Test
-    fun `calculateTax_10Percent_Correct - 10% tax on 1 cent results in 0 cents (floor rounding)`() {
+    fun `calculateTax_10Percent_Correct - tax on 1 cent results in 0 cents (floor rounding)`() {
         val subtotal = 1L  // 1 cent
         val taxRate = 0.10
         val tax = calculateTax(subtotal, taxRate)
         // 0.1 cents rounds to 0
-        assertEquals(0L, tax, "10% tax on 1 cent should be 0 cents (floor rounding)")
+        assertEquals(0L, tax, "Tax on 1 cent should be 0 cents (floor rounding)")
     }
 
     // ── calculateTax_ZeroPercent ──────────────────────────────────────────────
 
     @Test
-    fun `calculateTax_ZeroPercent - 0% tax results in zero tax amount`() {
+    fun `calculateTax_ZeroPercent - zero tax results in zero tax amount`() {
         val subtotal = 100000L
         val taxRate = 0.0
         val tax = calculateTax(subtotal, taxRate)
-        assertEquals(0L, tax, "0% tax should result in zero")
+        assertEquals(0L, tax, "Zero tax should result in zero")
     }
 
     @Test
-    fun `calculateTax_ZeroPercent - total equals subtotal when tax is 0%`() {
+    fun `calculateTax_ZeroPercent - total equals subtotal when tax is zero`() {
         val subtotal = 50000L
         val taxRate = 0.0
         val tax = calculateTax(subtotal, taxRate)
         val total = subtotal + tax
-        assertEquals(subtotal, total, "Total should equal subtotal when tax rate is 0")
+        assertEquals(subtotal, total, "Total should equal subtotal when tax rate is zero")
     }
 
     // ── calculateTax_EdgeCases ────────────────────────────────────────────────

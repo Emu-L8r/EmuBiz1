@@ -185,6 +185,9 @@ class InvoicePdfService @Inject constructor(
         val file = File(context.filesDir, "documents/$fileName")
         file.parentFile?.mkdirs()
 
+        // Ensure snapshot reflects the isQuote flag so rendering uses correct labels/watermark
+        val snapshot = if (isQuote != snapshot.isQuote) snapshot.copy(isQuote = isQuote) else snapshot
+
         val templateSnapshot = snapshotManager.restoreSnapshot(templateSnapshotJson)
         val customFieldValues = snapshotManager.restoreCustomFieldValues(customFieldValuesJson)
 
@@ -218,7 +221,13 @@ class InvoicePdfService @Inject constructor(
         // PHASE 2: Initialize grid layout manager for systematic positioning
         val layoutManager = GridLayoutManager()
 
-        // ✅ PHASE 3 COMPLEX: BACKGROUND PATTERNS — Draw before any content
+        // ✅ BACKGROUND LAYER 1: Brand watermark — drawn first, below all content
+        // Gated by snapshot.enableBrandWatermark (user toggle in Customization Settings)
+        if (snapshot.enableBrandWatermark) {
+            drawBrandWatermark(canvas, context, colors.primary)
+        }
+
+        // ✅ PHASE 3 COMPLEX: BACKGROUND PATTERNS — Draw before any content (layer 2, above watermark)
         if (snapshot.enableBackgroundPattern) {
             drawBackgroundPattern(canvas, snapshot.backgroundPatternType, snapshot.patternOpacity)
         }
@@ -311,7 +320,7 @@ class InvoicePdfService @Inject constructor(
         val diagonalPath = Path().apply {
             moveTo(420f, headerY)
             lineTo(595f, headerY)
-            lineTo(595f, headerY + 50f)
+            lineTo(595f, headerBottom)   // was headerY + 50f — now uses dynamic height
             lineTo(470f, headerBottom)
             close()
         }
@@ -360,7 +369,7 @@ class InvoicePdfService @Inject constructor(
         val invoiceLabelPaint = Paint().apply {
             typeface = boldTypeface
             textSize = 11f
-            color = Color.parseColor("#C0C0C0")
+            color = Color.WHITE  // White on coloured banner — full contrast
             isAntiAlias = true
             textAlign = Paint.Align.RIGHT
         }
@@ -368,7 +377,10 @@ class InvoicePdfService @Inject constructor(
         canvas.drawText(snapshot.invoiceNumber, layoutManager.getContentRight() - 10f, headerY + 24f, invoiceLabelPaint)
 
         // ✅ PHASE 3: Status Badge — drawn in header top-right corner when enabled
-        if (snapshot.enableStatusBadges && snapshot.invoiceStatus.isNotBlank()) {
+        // DRAFT is the internal default state — never show it to clients on the PDF
+        if (snapshot.enableStatusBadges
+            && snapshot.invoiceStatus.isNotBlank()
+            && snapshot.invoiceStatus.uppercase() != "DRAFT") {
             val badgeText = snapshot.invoiceStatus.uppercase()
             val badgeColor = when (snapshot.invoiceStatus.uppercase()) {
                 "PAID" -> Color.parseColor("#27AE60")
@@ -473,9 +485,14 @@ class InvoicePdfService @Inject constructor(
         // Draw border
         canvas.drawRoundRect(billToLeft, billToY, billToRight, billToBottom, cornerRadius, cornerRadius, cardBorderPaint)
 
-        // Add accent color left-side bar (modern design element)
+        // Add accent color left-side bar (modern design element) — uses primary for consistency
         val accentBarPaint = Paint().apply {
-            color = colors.secondary
+            color = Color.argb(
+                180,
+                Color.red(colors.primary),
+                Color.green(colors.primary),
+                Color.blue(colors.primary)
+            )
             style = Paint.Style.FILL
         }
         canvas.drawRect(billToLeft, billToY, billToLeft + InvoiceSpacingConfig.ACCENT_BAR_WIDTH, billToBottom, accentBarPaint)
@@ -557,7 +574,6 @@ class InvoicePdfService @Inject constructor(
         // ✅ QUICK WIN #4: Show "Valid until:" for quotes, "Due:" for invoices
         val dueOrValidLabel = if (snapshot.isQuote) "Valid until:" else "Due:"
         canvas.drawText("$dueOrValidLabel ${formatDate(snapshot.dueDate)}", invoiceDetailsLeft + InvoiceSpacingConfig.PADDING_H, invoiceDetailsY + 63f, invoiceDatePaint)
-        canvas.drawText("Status: ${snapshot.invoiceStatus}", invoiceDetailsLeft + InvoiceSpacingConfig.PADDING_H, invoiceDetailsY + 76f, invoiceDatePaint)
 
         // ===== WATERMARK (appears on first page) =====
         // ✅ PHASE 3 FEATURE #1: Quote Differentiation - Special watermark for quotes
@@ -631,10 +647,13 @@ class InvoicePdfService @Inject constructor(
             // Set page manager to table position
             pageManager.setY(itemsTableY)
 
-            // Draw table border top
+            // Draw table border top — brand-tinted accent line above the header
             val tableBorderPaint = Paint().apply {
-                color = colors.primary
-                strokeWidth = 2f
+                // Always show a subtle brand-tinted top rule — it's part of the design, not a "grid"
+                color = android.graphics.Color.argb(
+                    if (visualAccents.showBorders) 180 else 90,
+                    Color.red(colors.primary), Color.green(colors.primary), Color.blue(colors.primary))
+                strokeWidth = 1.5f
                 style = Paint.Style.STROKE
             }
             canvas.drawLine(layoutManager.getItemsTableLeft(), itemsTableY, layoutManager.getItemsTableRight(), itemsTableY, tableBorderPaint)
@@ -652,7 +671,8 @@ class InvoicePdfService @Inject constructor(
                     Color.parseColor(snapshot.alternateRowColor)
                 } else {
                     Color.WHITE  // Disable zebra striping if setting is false
-                }
+                },
+                showRowLines = snapshot.enableDividers  // Row lines follow the same toggle as column dividers
             )
 
             // ✅ PHASE 3 FEATURE #4: Item Numbering - Add # column header
@@ -678,9 +698,10 @@ class InvoicePdfService @Inject constructor(
                     com.emul8r.bizap.domain.model.DividerStyle.SOLID -> { /* no path effect */ }
                 }
             }
-            // ✅ POLISH P4: Start separators at table header (actualTableY) instead of hardcoded top-of-page (20f)
+            // ✅ FIX: Correct argument order — height = drawn table extent, startY = table top
             if (snapshot.enableDividers) {
-                tableRenderer.drawColumnSeparators(canvas, itemsTableY, tableRenderer.getPosition() - 20f, columnSeparatorPaint)
+                val tableDrawnHeight = tableRenderer.getPosition() - itemsTableY
+                tableRenderer.drawColumnSeparators(canvas, tableDrawnHeight, itemsTableY, columnSeparatorPaint)
             }
 
             // Draw table rows using grid-based row height
@@ -742,7 +763,8 @@ class InvoicePdfService @Inject constructor(
         val itemCount = snapshot.items.size
         val totalsY = layoutManager.getTotalsY(itemCount)
         val totalsHeight = InvoiceSpacingConfig.TOTALS_HEIGHT
-        val totalsLeft = layoutManager.getTotalsLeft()
+        // Right-align totals block to right 50% — professional invoice standard
+        val totalsLeft = layoutManager.getContentLeft() + layoutManager.getContentWidth() * 0.5f
         val totalsRight = layoutManager.getTotalsRight()
 
         // Ensure space for totals section
@@ -753,11 +775,15 @@ class InvoicePdfService @Inject constructor(
 
         // ✅ BUG FIX P3: Add thin separator line above subtotal row for visual transition
         val preTotalsSeparatorPaint = Paint().apply {
-            color = Color.parseColor("#E0E0E0")
+            // Brand-tinted separator instead of plain grey — feels intentional, not accidental
+            color = android.graphics.Color.argb(60,
+                Color.red(colors.primary), Color.green(colors.primary), Color.blue(colors.primary))
             strokeWidth = 0.5f
             style = Paint.Style.STROKE
         }
-        canvas.drawLine(totalsLeft + 10f, totalsY + 2f, totalsRight - 10f, totalsY + 2f, preTotalsSeparatorPaint)
+        // ✅ FIX #4: Narrow separator — only spans the totals/amount columns (right-half), not full page width
+        // ✅ FIX #5: Increased top padding (was +2f) to +8f for better visual separation from last table row
+        canvas.drawLine(totalsLeft + 10f, totalsY + 8f, totalsRight - 10f, totalsY + 8f, preTotalsSeparatorPaint)
 
         // ✅ BUG FIX #1: Split subtotal label and value into separate paints with correct alignment
         // Label: LEFT-aligned at totalsLeft + 10f
@@ -784,8 +810,9 @@ class InvoicePdfService @Inject constructor(
         } else {
             "Subtotal (incl. ${snapshot.taxName}):"
         }
-        canvas.drawText(subtotalLabel, totalsLeft + 10f, subtotalY + 12f, subtotalLabelPaint)
-        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal / 100.0), totalsRight - 10f, subtotalY + 12f, subtotalValuePaint)
+        // ✅ FIX #5: Increased text offset from +12f to +18f to provide breathing room from separator line
+        canvas.drawText(subtotalLabel, totalsLeft + 10f, subtotalY + 18f, subtotalLabelPaint)
+        canvas.drawText(String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.subtotal / 100.0), totalsRight - 10f, subtotalY + 18f, subtotalValuePaint)
 
         // Tax line (if present) — also split label and value
         if (snapshot.taxAmount > 0) {
@@ -805,23 +832,25 @@ class InvoicePdfService @Inject constructor(
             }
             val taxY = subtotalY + 16f
             // ✅ ROUND 3: Use taxName from snapshot instead of hardcoded "Tax"
+            // ✅ FIX #5: Updated text offset from +12f to +16f to match new subtotal spacing
             canvas.drawText(
                 "${snapshot.taxName} (${(snapshot.taxRate * 100).toInt()}%):",
-                totalsLeft + 10f, taxY + 12f, taxLabelPaint
+                totalsLeft + 10f, taxY + 16f, taxLabelPaint
             )
             canvas.drawText(
                 String.format(Locale.getDefault(), "%s%.2f", symbol, snapshot.taxAmount / 100.0),
-                totalsRight - 10f, taxY + 12f, taxValuePaint
+                totalsRight - 10f, taxY + 16f, taxValuePaint
             )
         }
 
-        // Divider line (visual separation)
+        // Divider line (visual separation) — subtle gray, respects showDividers toggle
         val dividerPaint = Paint().apply {
-            color = colors.secondary
+            color = if (visualAccents.showDividers) Color.parseColor("#E0E0E0") else Color.TRANSPARENT
             strokeWidth = 1f
             style = Paint.Style.STROKE
         }
-        val dividerY = totalsY + 30f
+        // ✅ FIX #5: Updated divider position from +30f to +36f to account for new subtotal spacing
+        val dividerY = totalsY + 36f
         canvas.drawLine(totalsLeft + 10f, dividerY, totalsRight - 10f, dividerY, dividerPaint)
 
         // ✅ QUICK WIN #1: HIGHLIGHT TOTALS BOX (Phase 2 Implementation)
@@ -830,7 +859,13 @@ class InvoicePdfService @Inject constructor(
         if (snapshot.highlightTotals) {
             val highlightBoxPaint = when (snapshot.totalBoxStyle) {
                 TotalBoxStyle.SUBTLE_BACKGROUND -> Paint().apply {
-                    color = Color.parseColor("#F0F7FF")  // Very light blue background
+                    // Brand-tinted highlight — matches primary, not hardcoded blue
+                    color = Color.argb(
+                        18,
+                        Color.red(colors.primary),
+                        Color.green(colors.primary),
+                        Color.blue(colors.primary)
+                    )
                     style = Paint.Style.FILL
                 }
                 TotalBoxStyle.PROMINENT_BORDER -> Paint().apply {
@@ -853,9 +888,10 @@ class InvoicePdfService @Inject constructor(
                 }
             }
 
-            // Draw the highlight box
-            canvas.drawRect(
+            // Draw rounded highlight box (was plain rect — now matches card style)
+            canvas.drawRoundRect(
                 totalsLeft + 5f, totalDueY, totalsRight - 5f, totalDueY + 45f,
+                snapshot.cornerRadiusDp, snapshot.cornerRadiusDp,
                 highlightBoxPaint
             )
 
@@ -906,15 +942,18 @@ class InvoicePdfService @Inject constructor(
         pageManager.setY(actualTotalsBottom + InvoiceSpacingConfig.SECTION_GAP)
 
         // ===== SPACING CONSTANTS FOR PROPER LAYOUT =====
-        val SECTION_MARGIN_TOP = 24f      // Gap before section
-        val SECTION_HEADER_HEIGHT = 28f   // Height of colored header bar
-        val SECTION_PADDING_TOP = 16f     // Padding inside section (top)
-        val SECTION_PADDING_HORIZ = 16f   // Horizontal padding inside section
-        val SECTION_PADDING_BOTTOM = 16f  // Padding inside section (bottom)
-        val LINE_HEIGHT = 18f             // Height for each text line
-        val LABEL_VALUE_GAP = 6f          // Gap between label and value
-        val ROW_SPACING = 12f             // Gap between rows
-        val CONTENT_BG_COLOR = Color.parseColor("#F8F9FA")  // Light gray
+        val SECTION_MARGIN_TOP = 10f      // was 24f — saves 14px per section
+        val SECTION_HEADER_HEIGHT = 20f   // was 28f — saves 8px per section
+        val SECTION_PADDING_TOP = 8f      // was 16f — saves 8px per section
+        val SECTION_PADDING_HORIZ = 12f   // was 16f
+        val SECTION_PADDING_BOTTOM = 8f   // was 16f — saves 8px per section
+        val LINE_HEIGHT = 13f             // was 18f — saves 5px per label-value pair
+        val LABEL_VALUE_GAP = 3f          // was 6f
+        val ROW_SPACING = 6f              // was 12f — saves 6px between bank detail rows
+        // ✅ AESTHETIC UPDATE: Slightly lighter background (#FAFBFC) for Payment Information card
+        val CONTENT_BG_COLOR = Color.parseColor("#FAFBFC")  // Slightly lighter than before (#F8F9FA)
+        val COLUMN_BOX_BG_COLOR = Color.parseColor("#FFFFFF")  // Pure white for nested column boxes
+        val COLUMN_BOX_BORDER_COLOR = Color.parseColor("#E8ECF0")  // Subtle cool-toned border
 
         // Paints for sections
         val layoutFixSectionHeaderPaint = Paint().apply {
@@ -928,12 +967,30 @@ class InvoicePdfService @Inject constructor(
             style = Paint.Style.FILL
         }
         val leftAccentBarPaint = Paint().apply {
-            color = colors.secondary
+            color = colors.primary
             style = Paint.Style.FILL
         }
         val contentBgPaint = Paint().apply {
             color = CONTENT_BG_COLOR
             style = Paint.Style.FILL
+        }
+        // ✅ AESTHETIC UPDATE: White nested column box paints (like BILL TO / INVOICE boxes)
+        val colBoxBgPaint = Paint().apply {
+            color = COLUMN_BOX_BG_COLOR
+            style = Paint.Style.FILL
+        }
+        val colBoxBorderPaint = Paint().apply {
+            color = COLUMN_BOX_BORDER_COLOR
+            strokeWidth = 0.8f
+            style = Paint.Style.STROKE
+        }
+        // ✅ AESTHETIC UPDATE: Subtle column sub-label paint (uppercase, smaller, muted)
+        val colSubLabelPaint = Paint().apply {
+            typeface = boldTypeface
+            textSize = 9f  // Small uppercase sub-heading inside column box
+            color = colors.primary  // ✅ Brand blue (was muted grey #8A96A3)
+            isAntiAlias = true
+            letterSpacing = 0.08f  // Slight tracking for uppercase
         }
         val fieldLabelPaint = Paint().apply {
             typeface = boldTypeface
@@ -943,101 +1000,147 @@ class InvoicePdfService @Inject constructor(
         }
         val fieldValuePaint = Paint().apply {
             typeface = regularTypeface
-            textSize = 11f
+            textSize = 11f  // ✅ Upgraded from 10f → 11f to match body text weight
             color = Color.parseColor("#555555")
             isAntiAlias = true
         }
 
-        // ===== PAYMENT DETAILS SECTION - PROPER LAYOUT =====
-        // ✅ QUOTE DIFFERENTIATION: Hide payment section for quotes (they don't request payment)
-        var currentSectionY = 0f
-        if (!snapshot.isQuote) {
-            canvas = pageManager.ensureSpace(200f)
-            currentSectionY = pageManager.currentY + SECTION_MARGIN_TOP
-
-            // Payment Terms label
-            canvas.drawText("Payment Terms:", 55f, currentSectionY, fieldLabelPaint)
-            currentSectionY += LINE_HEIGHT + LABEL_VALUE_GAP
-
-            // Payment Terms value
-            canvas.drawText("Due within ${snapshot.paymentTermsDays} days of invoice date", 71f, currentSectionY, fieldValuePaint)
-            currentSectionY += LINE_HEIGHT + ROW_SPACING
-
-            // Reference label
-            canvas.drawText("Reference:", 55f, currentSectionY, fieldLabelPaint)
-            currentSectionY += LINE_HEIGHT + LABEL_VALUE_GAP
-
-            // Reference value
-            val refValue = if (snapshot.invoiceNumber.isNotBlank()) snapshot.invoiceNumber else "Not provided"
-            canvas.drawText(refValue, 71f, currentSectionY, fieldValuePaint)
-
-            pageManager.setY(currentSectionY + 20f)
-        }
-
-        // ===== EFT / BANK TRANSFER SECTION - PROPER LAYOUT =====
-        // ✅ QUOTE DIFFERENTIATION: Hide bank section for quotes (they don't request payment)
+        // ===== UNIFIED PAYMENT INFORMATION SECTION (Option A: Nested boxes like BILL TO / INVOICE) =====
+        val hasPaymentTerms = !snapshot.isQuote && snapshot.paymentTermsDays > 0
         val hasBankDetails = snapshot.bankAccountNumber.isNotBlank() || snapshot.bankBsb.isNotBlank()
             || snapshot.bankName.isNotBlank() || snapshot.bankAccountName.isNotBlank()
+        val hasPaymentInfo = hasPaymentTerms || (hasBankDetails && !snapshot.isQuote)
 
-        if (hasBankDetails && !snapshot.isQuote) {
-            // ✅ BUG FIX #3A: Calculate ACTUAL bank section height FIRST, then check for space
-            // This prevents oversizing the ensureSpace call and forcing unnecessary page breaks
-            val bankContentLines = 8  // 4 fields × 2 lines each (label + value)
-            val bankSectionHeight = SECTION_HEADER_HEIGHT + SECTION_PADDING_TOP + (bankContentLines * LINE_HEIGHT) + (3 * ROW_SPACING) + SECTION_PADDING_BOTTOM
+        if (hasPaymentInfo) {
+            // Calculate bank detail lines (compact: BSB + Acct on same line)
+            val bankLineCount = if (hasBankDetails) {
+                var count = 0
+                if (snapshot.bankName.isNotBlank()) count++
+                if (snapshot.bankAccountName.isNotBlank()) count++
+                if (snapshot.bankBsb.isNotBlank() || snapshot.bankAccountNumber.isNotBlank()) count++ // combined line
+                count
+            } else 0
 
-            // Now use the REAL height (not a guess of 250f)
-            canvas = pageManager.ensureSpace(bankSectionHeight + SECTION_MARGIN_TOP)
-            val bankSectionY = pageManager.currentY + SECTION_MARGIN_TOP
+            // Column box internal constants
+            val COL_BOX_PADDING_H = 10f    // Horizontal padding inside each box
+            val COL_BOX_PADDING_V = 8f     // Vertical padding inside each box
+            val COL_SUB_LABEL_H = 11f      // Sub-label height (e.g. "TERMS", "BANK DETAILS")
+            val COL_FIELD_SIZE = 11f        // Field text size
 
-            // Draw background
-            canvas.drawRect(40f, bankSectionY, 555f, bankSectionY + bankSectionHeight, contentBgPaint)
+            // Calculate height of each column's content
+            val termsContentH = if (hasPaymentTerms) COL_SUB_LABEL_H + 4f + COL_FIELD_SIZE else 0f
+            val bankContentH = if (hasBankDetails) COL_SUB_LABEL_H + 4f + (bankLineCount * (COL_FIELD_SIZE + 4f)) else 0f
+            val colBoxContentH = maxOf(termsContentH, bankContentH)
+            val colBoxHeight = COL_BOX_PADDING_V + colBoxContentH + COL_BOX_PADDING_V
 
-            // Draw header bar
-            canvas.drawRect(40f, bankSectionY, 555f, bankSectionY + SECTION_HEADER_HEIGHT, sectionHeaderBgPaint)
+            // Total outer section height: header + padding + column boxes + padding
+            val outerPaddingV = 10f   // Outer padding top/bottom within card
+            val sectionHeight = SECTION_HEADER_HEIGHT + outerPaddingV + colBoxHeight + outerPaddingV
 
-            // Draw left accent bar
-            canvas.drawRect(40f, bankSectionY, 45f, bankSectionY + bankSectionHeight, leftAccentBarPaint)
+            canvas = pageManager.ensureSpace(sectionHeight + SECTION_MARGIN_TOP)
+            val sectionY = pageManager.currentY + SECTION_MARGIN_TOP
 
-            // Draw header text
-            canvas.drawText("EFT / BANK TRANSFER", 55f, bankSectionY + SECTION_HEADER_HEIGHT - 8f, layoutFixSectionHeaderPaint)
+            // ── Outer card background (slightly lighter #FAFBFC) ──
+            canvas.drawRoundRect(40f, sectionY, 555f, sectionY + sectionHeight, cornerRadius, cornerRadius, contentBgPaint)
 
-            // Start content below header
-            var bankContentY = bankSectionY + SECTION_HEADER_HEIGHT + SECTION_PADDING_TOP
+            // ── Navy header bar (rounded top only) ──
+            val headerPath = android.graphics.Path().apply {
+                addRoundRect(android.graphics.RectF(40f, sectionY, 555f, sectionY + SECTION_HEADER_HEIGHT),
+                    floatArrayOf(cornerRadius, cornerRadius, cornerRadius, cornerRadius, 0f, 0f, 0f, 0f),
+                    android.graphics.Path.Direction.CW)
+            }
+            canvas.drawPath(headerPath, sectionHeaderBgPaint)
 
-            // Bank Name
-            if (snapshot.bankName.isNotBlank()) {
-                canvas.drawText("Bank Name:", 55f, bankContentY, fieldLabelPaint)
-                bankContentY += LINE_HEIGHT + LABEL_VALUE_GAP
-                canvas.drawText(snapshot.bankName, 71f, bankContentY, fieldValuePaint)
-                bankContentY += LINE_HEIGHT + ROW_SPACING
+            // ── Left accent bar (full height) ──
+            canvas.drawRect(40f, sectionY, 45f, sectionY + sectionHeight, leftAccentBarPaint)
+
+            // ── Header text ──
+            canvas.drawText("PAYMENT INFORMATION", 55f, sectionY + SECTION_HEADER_HEIGHT - 8f, layoutFixSectionHeaderPaint)
+
+            // ── Column box geometry ──
+            val colBoxTop = sectionY + SECTION_HEADER_HEIGHT + outerPaddingV
+            val colBoxBottom = colBoxTop + colBoxHeight
+            val cardLeft = 50f   // Left edge (offset from accent bar)
+            val cardRight = 548f // Right edge (inset from outer card)
+            val midGap = 12f     // Gap between the two column boxes
+            val colMidX = cardLeft + (cardRight - cardLeft) / 2f
+            val leftBoxRight = colMidX - midGap / 2f
+            val rightBoxLeft = colMidX + midGap / 2f
+
+            // ── LEFT COLUMN BOX: Payment Terms ──
+            if (hasPaymentTerms) {
+                // Draw white box
+                canvas.drawRoundRect(cardLeft, colBoxTop, leftBoxRight, colBoxBottom, cornerRadius, cornerRadius, colBoxBgPaint)
+                canvas.drawRoundRect(cardLeft, colBoxTop, leftBoxRight, colBoxBottom, cornerRadius, cornerRadius, colBoxBorderPaint)
+
+                // Sub-label "TERMS" (muted uppercase)
+                var boxY = colBoxTop + COL_BOX_PADDING_V + COL_SUB_LABEL_H
+                canvas.drawText("TERMS", cardLeft + COL_BOX_PADDING_H, boxY, colSubLabelPaint)
+
+                // Value: "Due in X days"
+                boxY += 4f + COL_FIELD_SIZE
+                canvas.drawText("Due in ${snapshot.paymentTermsDays} days", cardLeft + COL_BOX_PADDING_H, boxY, fieldValuePaint)
             }
 
-            // Account Name
-            if (snapshot.bankAccountName.isNotBlank()) {
-                canvas.drawText("Account Name:", 55f, bankContentY, fieldLabelPaint)
-                bankContentY += LINE_HEIGHT + LABEL_VALUE_GAP
-                canvas.drawText(snapshot.bankAccountName, 71f, bankContentY, fieldValuePaint)
-                bankContentY += LINE_HEIGHT + ROW_SPACING
+            // ── RIGHT COLUMN BOX: Bank Transfer ──
+            if (hasBankDetails) {
+                // Draw white box
+                canvas.drawRoundRect(rightBoxLeft, colBoxTop, cardRight, colBoxBottom, cornerRadius, cornerRadius, colBoxBgPaint)
+                canvas.drawRoundRect(rightBoxLeft, colBoxTop, cardRight, colBoxBottom, cornerRadius, cornerRadius, colBoxBorderPaint)
+
+                val bankFieldPaint = Paint().apply {
+                    typeface = regularTypeface
+                    textSize = 11f
+                    color = Color.parseColor("#555555")
+                    isAntiAlias = true
+                }
+
+                // Sub-label "BANK DETAILS" (brand blue uppercase)
+                var boxY = colBoxTop + COL_BOX_PADDING_V + COL_SUB_LABEL_H
+                canvas.drawText("BANK DETAILS", rightBoxLeft + COL_BOX_PADDING_H, boxY, colSubLabelPaint)
+
+                // Alternating row shading paint (matches table zebra style)
+                val rowShadePaint = Paint().apply {
+                    color = Color.parseColor("#F5F7FA")  // Same subtle tint as table alternate rows
+                    style = Paint.Style.FILL
+                }
+
+                // Bank fields (inline format) with alternating row shading
+                boxY += 4f + COL_FIELD_SIZE
+                var rowIndex = 0
+
+                if (snapshot.bankName.isNotBlank()) {
+                    // Shaded row (odd)
+                    if (rowIndex % 2 == 0) canvas.drawRect(rightBoxLeft + 1f, boxY - COL_FIELD_SIZE, cardRight - 1f, boxY + 4f, rowShadePaint)
+                    canvas.drawText("Bank: ${snapshot.bankName}", rightBoxLeft + COL_BOX_PADDING_H, boxY, bankFieldPaint)
+                    boxY += COL_FIELD_SIZE + 4f
+                    rowIndex++
+                }
+
+                if (snapshot.bankAccountName.isNotBlank()) {
+                    if (rowIndex % 2 == 0) canvas.drawRect(rightBoxLeft + 1f, boxY - COL_FIELD_SIZE, cardRight - 1f, boxY + 4f, rowShadePaint)
+                    canvas.drawText("Account: ${snapshot.bankAccountName}", rightBoxLeft + COL_BOX_PADDING_H, boxY, bankFieldPaint)
+                    boxY += COL_FIELD_SIZE + 4f
+                    rowIndex++
+                }
+
+                // BSB + Account Number on same line (compact)
+                if (snapshot.bankBsb.isNotBlank() || snapshot.bankAccountNumber.isNotBlank()) {
+                    if (rowIndex % 2 == 0) canvas.drawRect(rightBoxLeft + 1f, boxY - COL_FIELD_SIZE, cardRight - 1f, boxY + 4f, rowShadePaint)
+                    val bsbText = if (snapshot.bankBsb.isNotBlank()) "BSB: ${snapshot.bankBsb}" else ""
+                    val acctText = if (snapshot.bankAccountNumber.isNotBlank()) "Acct: ${snapshot.bankAccountNumber}" else ""
+                    val combined = if (bsbText.isNotEmpty() && acctText.isNotEmpty())
+                        "$bsbText  |  $acctText"
+                    else
+                        bsbText.ifEmpty { acctText }
+                    canvas.drawText(combined, rightBoxLeft + COL_BOX_PADDING_H, boxY, bankFieldPaint)
+                }
             }
 
-            // BSB
-            if (snapshot.bankBsb.isNotBlank()) {
-                canvas.drawText("BSB:", 55f, bankContentY, fieldLabelPaint)
-                bankContentY += LINE_HEIGHT + LABEL_VALUE_GAP
-                canvas.drawText(snapshot.bankBsb, 71f, bankContentY, fieldValuePaint)
-                bankContentY += LINE_HEIGHT + ROW_SPACING
-            }
+            // ── Single-column fallback: if only one section is present, span full width ──
+            // (Handled by box geometry already — one box renders at half width, still fine)
 
-            // Account Number
-            if (snapshot.bankAccountNumber.isNotBlank()) {
-                canvas.drawText("Account Number:", 55f, bankContentY, fieldLabelPaint)
-                bankContentY += LINE_HEIGHT + LABEL_VALUE_GAP
-                canvas.drawText(snapshot.bankAccountNumber, 71f, bankContentY, fieldValuePaint)
-            }
-
-            pageManager.setY(bankSectionY + bankSectionHeight)
-            // Note: removed the extra + SECTION_MARGIN_TOP at the END
-            // (it's added at the START of the next section instead)
+            pageManager.setY(sectionY + sectionHeight)
         }
 
         pageManager.advanceY(8f)  // Small spacing after sections
@@ -1049,11 +1152,15 @@ class InvoicePdfService @Inject constructor(
             pageManager.advanceY(20f)
 
             val notesBoxPaint = Paint().apply { color = Color.parseColor("#FAFAFA"); style = Paint.Style.FILL }
-            val notesBoxBorderPaint = Paint().apply { color = colors.secondary; strokeWidth = 1f; style = Paint.Style.STROKE }
+            val notesBoxBorderPaint = Paint().apply {
+                color = if (visualAccents.showBorders) Color.parseColor("#E0E0E0") else Color.TRANSPARENT
+                strokeWidth = 1f
+                style = Paint.Style.STROKE
+            }
 
             val notesBoxTop = pageManager.currentY
-            canvas.drawRect(layoutManager.getContentLeft(), notesBoxTop, layoutManager.getContentRight(), notesBoxTop + 55f, notesBoxPaint)
-            canvas.drawRect(layoutManager.getContentLeft(), notesBoxTop, layoutManager.getContentRight(), notesBoxTop + 55f, notesBoxBorderPaint)
+            canvas.drawRoundRect(layoutManager.getContentLeft(), notesBoxTop, layoutManager.getContentRight(), notesBoxTop + 55f, cornerRadius, cornerRadius, notesBoxPaint)
+            canvas.drawRoundRect(layoutManager.getContentLeft(), notesBoxTop, layoutManager.getContentRight(), notesBoxTop + 55f, cornerRadius, cornerRadius, notesBoxBorderPaint)
 
             canvas.drawText("NOTES", layoutManager.getContentLeft() + InvoiceSpacingConfig.PADDING_H, pageManager.currentY + 12f, labelPaint)
             pageManager.advanceY(18f)
@@ -1065,11 +1172,15 @@ class InvoicePdfService @Inject constructor(
             pageManager.advanceY(20f)
 
             val footerBoxPaint = Paint().apply { color = Color.parseColor("#F5F5F5"); style = Paint.Style.FILL }
-            val footerBoxBorderPaint = Paint().apply { color = colors.secondary; strokeWidth = 1f; style = Paint.Style.STROKE }
+            val footerBoxBorderPaint = Paint().apply {
+                color = if (visualAccents.showBorders) Color.parseColor("#E0E0E0") else Color.TRANSPARENT
+                strokeWidth = 1f
+                style = Paint.Style.STROKE
+            }
 
             val footerBoxTop = pageManager.currentY
-            canvas.drawRect(layoutManager.getContentLeft(), footerBoxTop, layoutManager.getContentRight(), footerBoxTop + 55f, footerBoxPaint)
-            canvas.drawRect(layoutManager.getContentLeft(), footerBoxTop, layoutManager.getContentRight(), footerBoxTop + 55f, footerBoxBorderPaint)
+            canvas.drawRoundRect(layoutManager.getContentLeft(), footerBoxTop, layoutManager.getContentRight(), footerBoxTop + 55f, cornerRadius, cornerRadius, footerBoxPaint)
+            canvas.drawRoundRect(layoutManager.getContentLeft(), footerBoxTop, layoutManager.getContentRight(), footerBoxTop + 55f, cornerRadius, cornerRadius, footerBoxBorderPaint)
 
             canvas.drawText("FOOTER", layoutManager.getContentLeft() + InvoiceSpacingConfig.PADDING_H, pageManager.currentY + 12f, labelPaint)
             pageManager.advanceY(18f)
@@ -1089,22 +1200,58 @@ class InvoicePdfService @Inject constructor(
         if (pageManager.currentY > footerY - 20f) {
             canvas = pageManager.startNewPage()
         }
-        // Don't use pageManager.setY(footerY) — footer is drawn at fixed coordinate regardless of current position
 
-        // Footer background (primary color)
+        // ===== CONTENT-CLOSING DIVIDER =====
+        // When there's whitespace above the footer, draw a thin branded rule to visually
+        // "close" the content area and give the blank space intentional structure.
+        val contentCloseY = pageManager.currentY + 12f
+        if (contentCloseY < footerY - 30f) {
+            val contentClosePaint = Paint().apply {
+                color = android.graphics.Color.argb(60,
+                    Color.red(colors.primary), Color.green(colors.primary), Color.blue(colors.primary))
+                strokeWidth = 0.8f
+                style = Paint.Style.STROKE
+            }
+            canvas.drawLine(layoutManager.getContentLeft(), contentCloseY,
+                layoutManager.getContentRight(), contentCloseY, contentClosePaint)
+        }
+
+        // Footer background — ✅ FIX #5: reversed gradient (right→left) mirrors the header
+        val gradientEnd = try {
+            Color.parseColor(snapshot.headerGradientEndColor)
+        } catch (e: Exception) { colors.secondary }
+
         val artFooterBackgroundPaint = Paint().apply {
-            color = colors.primary
             style = Paint.Style.FILL
+            shader = if (snapshot.enableGradientHeader) {
+                // Reversed direction: right (primary) → left (gradientEnd) — mirrors header
+                android.graphics.LinearGradient(
+                    595f, footerY,
+                    0f, footerY,
+                    colors.primary,
+                    gradientEnd,
+                    android.graphics.Shader.TileMode.CLAMP
+                )
+            } else {
+                null.also { color = colors.primary }
+            }
         }
 
         canvas.drawRect(0f, footerY, 595f, footerY + footerHeight, artFooterBackgroundPaint)
 
-        // Subtle accent top line (elegance)
-        val footerAccentPaint = Paint().apply {
-            color = android.graphics.Color.argb(30, 255, 255, 255)
+        // Diagonal accent on the bottom-left — mirrors the top-right accent in the header
+        val footerDiagonalPaint = Paint().apply {
+            color = android.graphics.Color.argb(25, 255, 255, 255)
             style = Paint.Style.FILL
         }
-        canvas.drawRect(0f, footerY, 595f, footerY + 2f, footerAccentPaint)
+        val footerDiagonalPath = android.graphics.Path().apply {
+            moveTo(0f, footerY + footerHeight)       // bottom-left
+            lineTo(175f, footerY + footerHeight)     // bottom, partway across
+            lineTo(125f, footerY)                    // top, inset from left
+            lineTo(0f, footerY)                      // top-left
+            close()
+        }
+        canvas.drawPath(footerDiagonalPath, footerDiagonalPaint)
 
         // Footer styling - elegant and premium
         val artFooterMainPaint = Paint().apply {
@@ -1291,6 +1438,70 @@ class InvoicePdfService @Inject constructor(
         )
 
         return file
+    }
+
+    /**
+     * Draws the brand logo (thswalogo.jpg) as a centred background watermark.
+     *
+     * - Renders at 75% page size (max ~446×631px on A4) — centred on page
+     * - Alpha = 18 (~7% opacity) — subtle, never competes with content
+     * - Maintains aspect ratio (contain strategy, not cover)
+     * - Soft brand-primary tint for visual cohesion with invoice colours
+     * - Silent-fails: watermark is decorative, PDF generation never blocked
+     */
+    private fun drawBrandWatermark(canvas: Canvas, context: android.content.Context, primaryColor: Int) {
+        try {
+            val bitmap = android.graphics.BitmapFactory.decodeResource(
+                context.resources,
+                com.emul8r.bizap.R.drawable.thswalogo
+            ) ?: return
+
+            val pageW = 595f
+            val pageH = 842f
+
+            // Three-quarter-page max dimensions (contain strategy — preserves aspect, no cropping)
+            val maxW = pageW * 0.75f   // ~446px
+            val maxH = pageH * 0.75f   // ~631px
+
+            val bitmapAspect = bitmap.width.toFloat() / bitmap.height.toFloat()
+            val scaledW: Float
+            val scaledH: Float
+            if (bitmapAspect > (maxW / maxH)) {
+                // Image wider than half-page box — constrain by width
+                scaledW = maxW
+                scaledH = maxW / bitmapAspect
+            } else {
+                // Image taller than half-page box — constrain by height
+                scaledH = maxH
+                scaledW = maxH * bitmapAspect
+            }
+
+            // Centre on page
+            val left = (pageW - scaledW) / 2f
+            val top = (pageH - scaledH) / 2f
+            val destRect = android.graphics.RectF(left, top, left + scaledW, top + scaledH)
+
+            val watermarkPaint = Paint().apply {
+                alpha = 38  // ~15% opacity — more visible (was 18/~7%)
+                isAntiAlias = true
+                isFilterBitmap = true
+                colorFilter = android.graphics.PorterDuffColorFilter(
+                    android.graphics.Color.argb(
+                        30,
+                        android.graphics.Color.red(primaryColor),
+                        android.graphics.Color.green(primaryColor),
+                        android.graphics.Color.blue(primaryColor)
+                    ),
+                    android.graphics.PorterDuff.Mode.SRC_ATOP
+                )
+            }
+
+            canvas.drawBitmap(bitmap, null, destRect, watermarkPaint)
+            bitmap.recycle()
+
+        } catch (e: Exception) {
+            timber.log.Timber.w(e, "Brand watermark could not be rendered, continuing without it")
+        }
     }
 
     private fun drawBackgroundPattern(canvas: Canvas, patternType: com.emul8r.bizap.domain.model.BackgroundPattern, opacity: Float) {

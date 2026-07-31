@@ -59,6 +59,7 @@ fun InvoiceSettings.toSnapshot(
         customerName = invoice.customerName,
         customerAddress = invoice.customerAddress,
         customerEmail = invoice.customerEmail ?: "",
+        customerPhone = invoice.customerPhone,
         date = invoice.dateCreated.toEpochMillis(),
         dueDate = invoice.dueDate.toEpochMillis(),
         items = invoice.items.map {
@@ -185,6 +186,7 @@ fun InvoiceSettings.toSnapshot(
         enableBackgroundPattern = this.enableBackgroundPattern,
         backgroundPatternType = this.backgroundPatternType,
         patternOpacity = this.patternOpacity,
+        enableBrandWatermark = this.enableBrandWatermark,
 
         // Status (typically set by caller, default to DRAFT for new invoices)
         invoiceStatus = "DRAFT"

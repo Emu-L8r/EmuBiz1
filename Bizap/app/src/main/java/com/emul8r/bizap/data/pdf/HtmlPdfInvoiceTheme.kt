@@ -107,16 +107,25 @@ class HtmlPdfInvoiceTheme @Inject constructor(
 
             // Step 5: Embed CSS from assets into HTML (CRITICAL FIX)
             // iText7 doesn't load external CSS files, so we embed CSS as inline <style> tag
-            // Use the selected HTML style to determine which CSS file to load
-            val selectedStyleFile = settings.selectedHtmlStyle.styleFile
-            Timber.d("🎨 Selected HTML Style: ${settings.selectedHtmlStyle.displayName}")
-            Timber.d("🎨 CSS File: $selectedStyleFile")
+            // Use the selected HTML style to determine which CSS file to load.
+            // If the primary CSS file is missing (styles without dedicated CSS yet),
+            // fall back to fallbackStyleFile defined on the enum entry.
+            val selectedStyle = settings.selectedHtmlStyle
+            val primaryCssFile  = selectedStyle.styleFile
+            val fallbackCssFile = selectedStyle.fallbackStyleFile
+            Timber.d("🎨 Selected HTML Style: ${selectedStyle.displayName}")
+            Timber.d("🎨 CSS File: $primaryCssFile  (fallback: $fallbackCssFile)")
 
             val htmlWithEmbeddedCss = try {
-                pdfConverter.embedCssFromAssets(context, htmlContent, selectedStyleFile)
+                pdfConverter.embedCssFromAssets(context, htmlContent, primaryCssFile)
             } catch (e: Exception) {
-                Timber.w(e, "CSS embedding failed, continuing with HTML-only")
-                htmlContent  // Fallback to original HTML without styling
+                Timber.w("Primary CSS '$primaryCssFile' not found — trying fallback '$fallbackCssFile'")
+                try {
+                    pdfConverter.embedCssFromAssets(context, htmlContent, fallbackCssFile)
+                } catch (e2: Exception) {
+                    Timber.e(e2, "Fallback CSS '$fallbackCssFile' also failed — continuing without styling")
+                    htmlContent  // Last resort: unstyled HTML
+                }
             }
 
             // Step 6: Inject brand colors from InvoiceSettings into CSS variables

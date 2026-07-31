@@ -1,11 +1,13 @@
 package com.emul8r.bizap.ui.settings.sections
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -171,7 +173,7 @@ private fun ColorSchemeSelector(
                         name = "Professional",
                         isSelected = selectedScheme == it,
                         onClick = { onSchemeSelected(it) },
-                        colors = Pair(Color(0xFF0066CC), Color(0xFF333333)),
+                        colors = Pair(Color(0xFF003366), Color(0xFFFFC107)), // actual: navy + gold
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -180,7 +182,7 @@ private fun ColorSchemeSelector(
                         name = "Vibrant",
                         isSelected = selectedScheme == it,
                         onClick = { onSchemeSelected(it) },
-                        colors = Pair(Color(0xFFE63946), Color(0xFFFFA500)),
+                        colors = Pair(Color(0xFF6B4C9A), Color(0xFFFF9F43)), // actual: purple + orange
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -189,7 +191,7 @@ private fun ColorSchemeSelector(
                         name = "Minimal",
                         isSelected = selectedScheme == it,
                         onClick = { onSchemeSelected(it) },
-                        colors = Pair(Color(0xFF000000), Color(0xFFFFFFFF)),
+                        colors = Pair(Color(0xFF1A1A1A), Color(0xFF666666)), // actual: dark + mid grey
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -205,7 +207,7 @@ private fun ColorSchemeSelector(
                         name = "Warm",
                         isSelected = selectedScheme == it,
                         onClick = { onSchemeSelected(it) },
-                        colors = Pair(Color(0xFFB8860B), Color(0xFF8B4513)),
+                        colors = Pair(Color(0xFFD97706), Color(0xFF78350F)), // actual: amber + dark brown
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -214,7 +216,7 @@ private fun ColorSchemeSelector(
                         name = "Tech",
                         isSelected = selectedScheme == it,
                         onClick = { onSchemeSelected(it) },
-                        colors = Pair(Color(0xFF00D9FF), Color(0xFF0055FF)),
+                        colors = Pair(Color(0xFF0F172A), Color(0xFF06B6D4)), // actual: deep navy + cyan
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -223,7 +225,7 @@ private fun ColorSchemeSelector(
                         name = "Nature",
                         isSelected = selectedScheme == it,
                         onClick = { onSchemeSelected(it) },
-                        colors = Pair(Color(0xFF2D6A4F), Color(0xFF95B8A1)),
+                        colors = Pair(Color(0xFF15803D), Color(0xFF92400E)), // actual: green + earth brown
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -418,22 +420,22 @@ private fun BackgroundPatternControls(
     viewModel: InvoiceSettingsViewModel
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                "Background Accent",
-                style = MaterialTheme.typography.labelMedium
-            )
-            Switch(
-                checked = settings?.enableBackgroundAccent ?: true,
-                onCheckedChange = { viewModel.updateBackgroundAccent(it) }
-            )
-        }
+         Row(
+             modifier = Modifier
+                 .fillMaxWidth()
+                 .padding(vertical = 8.dp),
+             verticalAlignment = Alignment.CenterVertically,
+             horizontalArrangement = Arrangement.SpaceBetween
+         ) {
+             Text(
+                 "Background Pattern",
+                 style = MaterialTheme.typography.labelMedium
+             )
+             Switch(
+                 checked = settings?.enableBackgroundPattern ?: false,
+                 onCheckedChange = { viewModel.toggleBackgroundPattern(it) }
+             )
+         }
     }
 }
 
