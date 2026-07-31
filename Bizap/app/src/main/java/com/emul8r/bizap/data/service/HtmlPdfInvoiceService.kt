@@ -77,6 +77,7 @@ class HtmlPdfInvoiceService(
         private val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
         /** Common placeholder / keyboard-mash pattern used in test data. */
         private const val GARBAGE_PATTERN = "asdasd"
+        private val REJECTED_PLACEHOLDER_TEXT = setOf("n/a", "na", "tbd", "asdasd", "asdasdasd")
     }
 
     /**
@@ -84,19 +85,25 @@ class HtmlPdfInvoiceService(
      * Removes placeholder/garbage data and ensures professional appearance.
      */
     private fun validateAndCleanInvoiceData(snapshot: InvoiceSnapshot): InvoiceSnapshot {
-         return snapshot.copy(
-             businessName    = validateBusinessName(snapshot.businessName),
-             businessAbn     = validateAndFormatAbn(snapshot.businessAbn),
-             businessEmail   = validateEmail(snapshot.businessEmail),
-             businessPhone   = validatePhone(snapshot.businessPhone),
-             customerName    = validateCustomerName(snapshot.customerName),
-             customerAddress = validateAddress(snapshot.customerAddress),
-             header      = validateHeaderText(snapshot.header),
-             subheader   = validateHeaderText(snapshot.subheader),
-             notes           = validateNotes(snapshot.notes),
-             footerText      = validateFooterText(snapshot.footerText)
-         )
-     }
+        logHeaderSubheaderTrace(
+            invoiceId = snapshot.invoiceId,
+            stage = "validateAndCleanInvoiceData(before)",
+            header = snapshot.header,
+            subheader = snapshot.subheader
+        )
+        return snapshot.copy(
+            businessName    = validateBusinessName(snapshot.businessName),
+            businessAbn     = validateAndFormatAbn(snapshot.businessAbn),
+            businessEmail   = validateEmail(snapshot.businessEmail),
+            businessPhone   = validatePhone(snapshot.businessPhone),
+            customerName    = validateCustomerName(snapshot.customerName),
+            customerAddress = validateAddress(snapshot.customerAddress),
+            header          = validateHeaderText(snapshot.header),
+            subheader       = validateHeaderText(snapshot.subheader),
+            notes           = validateNotes(snapshot.notes),
+            footerText      = validateFooterText(snapshot.footerText)
+        )
+    }
 
     private fun validateBusinessName(name: String): String = when {
         name.isEmpty() -> ""
@@ -147,11 +154,16 @@ class HtmlPdfInvoiceService(
         else -> address.trim()
     }
 
-    private fun validateHeaderText(text: String): String =
-        if (text.isEmpty() || text.contains(GARBAGE_PATTERN, ignoreCase = true)) "" else text.trim()
+    private fun sanitizeOptionalFreeText(text: String): String {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return ""
+        // Reject only explicit placeholder values; do not substring-match normal user input.
+        return if (trimmed.lowercase(Locale.ROOT) in REJECTED_PLACEHOLDER_TEXT) "" else trimmed
+    }
 
-    private fun validateNotes(text: String): String =
-        if (text.isEmpty() || text.contains(GARBAGE_PATTERN, ignoreCase = true)) "" else text.trim()
+    private fun validateHeaderText(text: String): String = sanitizeOptionalFreeText(text)
+
+    private fun validateNotes(text: String): String = sanitizeOptionalFreeText(text)
 
     private fun validateFooterText(text: String): String =
         if (text.isEmpty()) "Thank you for your business." else text.trim()
@@ -170,6 +182,12 @@ class HtmlPdfInvoiceService(
 
     private fun generateHtmlContent(snapshot: InvoiceSnapshot, isQuote: Boolean): String {
         val clean = validateAndCleanInvoiceData(snapshot)
+        logHeaderSubheaderTrace(
+            invoiceId = clean.invoiceId,
+            stage = "generateHtmlContent(after-sanitize)",
+            header = clean.header,
+            subheader = clean.subheader
+        )
         val layout = settings?.selectedPageLayout
         val style = settings?.selectedHtmlStyle ?: HtmlInvoiceStyle.MODERN
 
@@ -1375,14 +1393,23 @@ $footer
         return file
     }
 
-     private fun buildHeaderSubheaderSection(snapshot: InvoiceSnapshot, backgroundColor: String, borderColor: String): String {
-         Timber.d("📋 buildHeaderSubheaderSection called: header='${snapshot.header}' (len=${snapshot.header.length}), subheader='${snapshot.subheader}' (len=${snapshot.subheader.length})")
-         if (snapshot.header.isBlank() && snapshot.subheader.isBlank()) {
-             Timber.d("📋 Both header and subheader are blank, returning empty section")
-             return ""
-         }
-         Timber.d("📋 Rendering Additional Information section")
-         return """
+    private fun logHeaderSubheaderTrace(
+        invoiceId: Long,
+        stage: String,
+        header: String,
+        subheader: String
+    ) {
+        Timber.d("🔍 TRACE [Invoice #$invoiceId] Stage: $stage → header='$header' subheader='$subheader'")
+    }
+
+    private fun buildHeaderSubheaderSection(snapshot: InvoiceSnapshot, backgroundColor: String, borderColor: String): String {
+        Timber.d("📋 buildHeaderSubheaderSection called: header='${snapshot.header}' (len=${snapshot.header.length}), subheader='${snapshot.subheader}' (len=${snapshot.subheader.length})")
+        if (snapshot.header.isBlank() && snapshot.subheader.isBlank()) {
+            Timber.d("📋 Both header and subheader are blank, returning empty section")
+            return ""
+        }
+        Timber.d("📋 Rendering Additional Information section")
+        return """
              <table width="100%" style="border-collapse:collapse;margin:20px 0 20px 0;padding:0;page-break-inside:avoid;">
                  <tr>
                      <td style="background-color:$backgroundColor;padding:14px 16px;font-weight:bold;font-size:11pt;color:$borderColor;border-left:5px solid $borderColor;letter-spacing:0.5px;text-transform:uppercase;width:100%;">📋 Additional Information</td>
@@ -1390,14 +1417,9 @@ $footer
                  ${if (snapshot.header.isNotBlank()) """<tr><td style="padding:12px 16px;font-size:10pt;line-height:1.8;word-wrap:break-word;color:#444444;background-color:white;border-bottom:1px solid #e8e8e8;">${escapeHtml(snapshot.header)}</td></tr>""" else ""}
                  ${if (snapshot.subheader.isNotBlank()) """<tr><td style="padding:12px 16px;font-size:10pt;line-height:1.8;word-wrap:break-word;color:#444444;background-color:white;">${escapeHtml(snapshot.subheader)}</td></tr>""" else ""}
              </table>
-         """.trimIndent()
-     }
+       """.trimIndent()
+    }
 }
-
-
-
-
-
 
 
 

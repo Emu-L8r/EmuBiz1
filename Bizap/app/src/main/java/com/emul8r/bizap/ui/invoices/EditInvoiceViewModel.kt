@@ -12,10 +12,10 @@ import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.domain.model.Currency
 import com.emul8r.bizap.domain.model.Customer
 import com.emul8r.bizap.domain.model.Invoice
-import com.emul8r.bizap.domain.model.calculateTotal
 import com.emul8r.bizap.domain.repository.CurrencyRepository
 import com.emul8r.bizap.domain.repository.CustomerRepository
 import com.emul8r.bizap.domain.repository.InvoiceRepository
+import com.emul8r.bizap.domain.util.createDefaultSnapshot
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -157,19 +157,6 @@ class EditInvoiceViewModel @Inject constructor(
          }
      }
 
-    /**
-     * Convert ISO-8601 date string to epoch milliseconds.
-     */
-    private fun String?.toEpochMillis(): Long {
-        return try {
-            if (this.isNullOrBlank()) 0L
-            else java.time.Instant.parse(this).toEpochMilli()
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to parse date string: $this")
-            0L
-        }
-    }
-
     fun onHeaderChange(header: String) = _editState.update { it?.copy(header = header) }
     fun onSubheaderChange(subheader: String) = _editState.update { it?.copy(subheader = subheader) }
     fun onNotesChange(notes: String) = _editState.update { it?.copy(notes = notes) }
@@ -212,43 +199,7 @@ class EditInvoiceViewModel @Inject constructor(
                     val businessProfile = businessProfileRepository.activeProfile.first()
                     val invoice = state.invoice
 
-                    // Build snapshot for PDF generation
-                    val snapshot = com.emul8r.bizap.domain.model.InvoiceSnapshot(
-                        invoiceId = invoice.id,
-                        invoiceNumber = invoice.invoiceNumber,
-                        customerName = invoice.customerName,
-                        customerAddress = invoice.customerAddress,
-                        customerEmail = invoice.customerEmail ?: "",
-                        date = invoice.dateCreated.toEpochMillis(),
-                        dueDate = invoice.dueDate.toEpochMillis(),
-                        items = invoice.items.map {
-                            val itemTotal = it.calculateTotal()
-                            com.emul8r.bizap.domain.model.LineItemSnapshot(
-                                it.description,
-                                it.quantity,
-                                it.unitPrice,
-                                itemTotal
-                            )
-                        },
-                        subtotal = invoice.totalAmount - invoice.taxAmount,
-                        taxRate = invoice.taxRate,
-                        taxAmount = invoice.taxAmount,
-                        totalAmount = invoice.totalAmount,
-                        businessName = businessProfile.businessName,
-                        businessAbn = businessProfile.abn,
-                        businessEmail = businessProfile.email,
-                        businessPhone = businessProfile.phone,
-                        businessAddress = businessProfile.address,
-                        logoBase64 = businessProfile.logoBase64,
-                        header = invoice.header ?: "",
-                        subheader = invoice.subheader ?: "",
-                        notes = invoice.notes ?: "",
-                        footerText = invoice.footer ?: "",
-                        bankAccountName = businessProfile.accountName ?: "",
-                        bankAccountNumber = businessProfile.accountNumber ?: "",
-                        bankBsb = businessProfile.bsbNumber ?: "",
-                        bankName = businessProfile.bankName ?: ""
-                    )
+                    val snapshot = createDefaultSnapshot(invoice, businessProfile)
 
                     val pdfFile = invoicePdfService.generateInvoice(snapshot, isQuote = false)
                     val uri = FileProvider.getUriForFile(context, "com.emul8r.bizap.fileprovider", pdfFile)

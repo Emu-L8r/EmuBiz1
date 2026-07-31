@@ -14,11 +14,11 @@ import com.emul8r.bizap.data.service.CsvExportService
 import com.emul8r.bizap.data.service.InvoicePdfService
 import com.emul8r.bizap.data.service.PrintService
 import com.emul8r.bizap.domain.model.Invoice
-import com.emul8r.bizap.domain.model.InvoiceSnapshot
-import com.emul8r.bizap.domain.model.LineItemSnapshot
 import com.emul8r.bizap.domain.model.InvoiceStatus
 import com.emul8r.bizap.domain.repository.InvoiceRepository
 import com.emul8r.bizap.domain.usecase.GenerateAndSaveInvoiceUseCase
+import com.emul8r.bizap.domain.util.createDefaultSnapshot
+import com.emul8r.bizap.domain.util.toSnapshot
 import com.emul8r.bizap.utils.CentsFormatter
 import com.emul8r.bizap.utils.DocumentNamingUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -300,8 +300,8 @@ class InvoiceDetailViewModel @Inject constructor(
                 Timber.d("📄 Loaded theme for PDF generation: ${selectedTheme?.name ?: "NULL (will use default)"}")
                 Timber.d("✅ PHASE 2: Loaded customization settings - color: ${invoiceSettings?.selectedColorScheme?.name}, spacing: ${invoiceSettings?.selectedSpacingProfile?.name}")
 
-                // ✅ PHASE 2: Pass settings to buildSnapshot to include customization fields
-                val snapshot = buildSnapshot(invoiceData, businessProfile, invoiceSettings)
+                val snapshot = invoiceSettings?.toSnapshot(invoiceData, businessProfile)
+                    ?: createDefaultSnapshot(invoiceData, businessProfile)
 
                 val quoteResult = generateAndSaveInvoiceUseCase(
                     invoice = invoiceData,
@@ -398,106 +398,6 @@ class InvoiceDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Convert ISO-8601 date string to epoch milliseconds.
-     */
-    private fun String?.toEpochMillis(): Long {
-        return try {
-            if (this.isNullOrBlank()) 0L
-            else java.time.Instant.parse(this).toEpochMilli()
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to parse date string: $this")
-            0L
-        }
-    }
-
-    private fun buildSnapshot(
-        invoice: Invoice,
-        business: com.emul8r.bizap.domain.model.BusinessProfile,
-        invoiceSettings: com.emul8r.bizap.domain.model.InvoiceSettings?
-    ): InvoiceSnapshot {
-        return InvoiceSnapshot(
-            invoiceId = invoice.id,
-            invoiceNumber = invoice.invoiceNumber,
-            displayName = invoice.displayName,
-            customerName = invoice.customerName,
-            customerAddress = invoice.customerAddress,
-            customerEmail = invoice.customerEmail ?: "",
-            date = invoice.dateCreated.toEpochMillis(),
-            dueDate = invoice.dueDate.toEpochMillis(),
-            items = invoice.items.map {
-                val itemTotal = (it.unitPrice * it.quantity).toLong()
-                LineItemSnapshot(it.description, it.quantity, it.unitPrice, itemTotal)
-            },
-            subtotal = invoice.totalAmount - invoice.taxAmount,
-            taxRate = invoice.taxRate,
-            taxAmount = invoice.taxAmount,
-            totalAmount = invoice.totalAmount,
-            businessName = business.businessName,
-            businessAbn = business.abn,
-            businessEmail = business.email,
-            businessPhone = business.phone,
-            businessAddress = business.address,
-            logoBase64 = business.logoBase64,
-            // Standardized naming (Phase 2.0.3)
-            header = invoice.header ?: "",
-            subheader = invoice.subheader ?: "",
-            notes = invoice.notes ?: "",
-            footerText = invoice.footer ?: "",
-            bankAccountName = business.accountName ?: "",
-            bankAccountNumber = business.accountNumber ?: "",
-            bankBsb = business.bsbNumber ?: "",
-            bankName = business.bankName ?: "",
-            // ✅ PHASE 2: Customization settings from InvoiceSettings
-            selectedColorScheme = invoiceSettings?.selectedColorScheme ?: com.emul8r.bizap.domain.model.ColorScheme.PROFESSIONAL,
-            selectedSpacingProfile = invoiceSettings?.selectedSpacingProfile ?: com.emul8r.bizap.domain.model.SpacingProfile.NORMAL,
-            selectedTypography = invoiceSettings?.selectedTypography ?: com.emul8r.bizap.domain.model.Typography.MODERN,
-            selectedLocale = invoiceSettings?.selectedLocale ?: com.emul8r.bizap.domain.model.InvoiceLocale.AUSTRALIAN,
-            highlightTotals = invoiceSettings?.highlightTotals ?: true,
-            totalBoxStyle = invoiceSettings?.totalBoxStyle ?: com.emul8r.bizap.domain.model.TotalBoxStyle.SUBTLE_BACKGROUND,
-            enableAlternatingRowColors = invoiceSettings?.enableAlternatingRowColors ?: true,
-            enableDividers = invoiceSettings?.enableDividers ?: true,
-            dividerStyle = invoiceSettings?.dividerStyle ?: com.emul8r.bizap.domain.model.DividerStyle.SOLID,
-            enableGradientHeader = invoiceSettings?.enableGradientHeader ?: true,
-            headerGradientEndColor = invoiceSettings?.headerGradientEndColor ?: "#FF9F43",
-            enableStatusBadges = invoiceSettings?.enableStatusBadges ?: true,
-            badgeStyle = invoiceSettings?.badgeStyle ?: com.emul8r.bizap.domain.model.BadgeStyle.ROUNDED_FILLED,
-            enableBackgroundPattern = invoiceSettings?.enableBackgroundPattern ?: false,
-            backgroundPatternType = invoiceSettings?.backgroundPatternType ?: com.emul8r.bizap.domain.model.BackgroundPattern.WAVES,
-            patternOpacity = invoiceSettings?.patternOpacity ?: 0.08f,
-            enableWatermarkText = invoiceSettings?.enableWatermarkText ?: false,
-            watermarkText = invoiceSettings?.watermarkText ?: "",
-            watermarkOpacity = invoiceSettings?.watermarkOpacity ?: 0.1f,
-            enableMotto = invoiceSettings?.enableMotto ?: false,
-            mottoText = invoiceSettings?.mottoText ?: "",
-            mottoFontSize = invoiceSettings?.mottoFontSize ?: 10f,
-            mottoColor = invoiceSettings?.mottoColor ?: "#666666",
-            enableSignatureArea = invoiceSettings?.enableSignatureArea ?: false,
-            signatureLabel = invoiceSettings?.signatureLabel ?: "Authorized By:",
-            signatureLineLengthMm = invoiceSettings?.signatureLineLengthMm ?: 40f,
-            enableQrCode = invoiceSettings?.enableQrCode ?: false,
-            qrCodeContent = invoiceSettings?.qrCodeContent ?: "",
-            qrCodeSizeMm = invoiceSettings?.qrCodeSizeMm ?: 20f,
-            qrCodePosition = invoiceSettings?.qrCodePosition ?: com.emul8r.bizap.domain.model.QrCodePosition.BOTTOM_RIGHT,
-            enablePaymentIcons = invoiceSettings?.enablePaymentIcons ?: false,
-            acceptedPaymentMethodsJson = invoiceSettings?.acceptedPaymentMethodsJson ?: "[]",
-            paymentIconsSize = invoiceSettings?.paymentIconsSize ?: 16f,
-            enableLogo = invoiceSettings?.enableLogo ?: false,
-            logoUri = invoiceSettings?.logoUri ?: "",
-            logoWidthMm = invoiceSettings?.logoWidthMm ?: 30f,
-            logoHeightMm = invoiceSettings?.logoHeightMm ?: 30f,
-            logoPosition = invoiceSettings?.logoPosition ?: com.emul8r.bizap.domain.model.LogoPosition.TOP_LEFT,
-            visualAccentsJson = invoiceSettings?.visualAccentsJson ?: "",
-            alternateRowColor = invoiceSettings?.alternateRowColor ?: "#F5F5F5",
-            dividerColor = invoiceSettings?.dividerColor ?: "#CCCCCC",
-            dividerThicknessPx = invoiceSettings?.dividerThicknessPx ?: 1f,
-            cornerRadiusDp = invoiceSettings?.cornerRadiusDp ?: 8f,
-            shadowIntensity = invoiceSettings?.shadowIntensity ?: 0.15f,
-            primaryColor = invoiceSettings?.primaryColor ?: "#6B4C9A",
-            secondaryColor = invoiceSettings?.secondaryColor ?: "#f5f5f5"
-        )
-    }
-
     fun launchSystemPrint() {
         val invoiceData = (uiState.value as? InvoiceDetailUiState.Success)?.data ?: return
 
@@ -513,7 +413,8 @@ class InvoiceDetailViewModel @Inject constructor(
                     null
                 }
 
-                val snapshot = buildSnapshot(invoiceData, businessProfile, invoiceSettings)
+                val snapshot = invoiceSettings?.toSnapshot(invoiceData, businessProfile)
+                    ?: createDefaultSnapshot(invoiceData, businessProfile)
 
                 val result = generateAndSaveInvoiceUseCase(
                     invoice = invoiceData,
