@@ -123,6 +123,8 @@ data class InvoiceSettings(
     // BRAND WATERMARK (centred half-size background logo image)
     @ColumnInfo(name = "enable_brand_watermark")
     val enableBrandWatermark: Boolean = true,
+    @ColumnInfo(name = "watermark_image")
+    val watermarkImage: WatermarkImageOption = WatermarkImageOption.THSWA_LOGO,
 
     // WATERMARK OPTIONS
     @ColumnInfo(name = "enable_watermark_text")
@@ -697,3 +699,25 @@ enum class BadgeStyle {
 enum class BackgroundPattern {
     WAVES, DOTS, GRID, STRIPES, NONE
 }
+
+/**
+ * Enum for selectable brand watermark images (centred background image on generated PDFs).
+ *
+ * Each option maps to a bundled drawable resource. Users can pick which image is used
+ * as the faint background watermark, independent of the enable/disable toggle
+ * ([InvoiceSettings.enableBrandWatermark]).
+ *
+ * THSWA_LOGO: Default bundled brand logo (thswalogo.jpg)
+ * COMPANY_LOGO: Alternate bundled company logo (company_logo.jpg)
+ * CUSTOM: Uses the user-uploaded logo ([InvoiceSettings.logoUri]) as the watermark image
+ */
+enum class WatermarkImageOption(val displayName: String, val description: String) {
+    THSWA_LOGO("Default Brand Logo", "Bundled brand watermark image"),
+    COMPANY_LOGO("Company Logo", "Alternate bundled company logo watermark"),
+    CUSTOM("Custom Logo", "Uses your uploaded business logo as the watermark");
+
+    companion object {
+        fun getDefault() = THSWA_LOGO
+    }
+}
+

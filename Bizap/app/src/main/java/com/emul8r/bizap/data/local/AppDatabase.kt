@@ -14,6 +14,7 @@ import com.emul8r.bizap.data.local.migrations.MIGRATION_44_45
 import com.emul8r.bizap.data.local.migrations.Migration_45_46
 import com.emul8r.bizap.data.local.database.MIGRATION_46_47
 import com.emul8r.bizap.data.local.database.MIGRATION_47_48
+import com.emul8r.bizap.data.local.database.MIGRATION_48_49
 import com.emul8r.bizap.data.local.typeconverters.DocumentStatusConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTypeConverter
 import com.emul8r.bizap.data.local.typeconverters.LocalDateTimeTypeConverter
@@ -116,7 +117,7 @@ import com.emul8r.bizap.data.local.typeconverters.UUIDTypeConverter
         com.emul8r.bizap.domain.model.InvoiceSettings::class,
         DashboardPreferencesEntity::class
     ],
-    version = 48,  // v47→48: Finalize invoice_settings schema (Phase 3F)
+    version = 49,  // v48→49: Add watermark_image column + enable_brand_watermark safety net
     exportSchema = true
 )
 @TypeConverters(

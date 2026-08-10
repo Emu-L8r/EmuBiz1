@@ -22,6 +22,7 @@ import com.emul8r.bizap.data.local.migrations.MIGRATION_44_45
 import com.emul8r.bizap.data.local.migrations.Migration_45_46
 import com.emul8r.bizap.data.local.database.MIGRATION_46_47
 import com.emul8r.bizap.data.local.database.MIGRATION_47_48
+import com.emul8r.bizap.data.local.database.MIGRATION_48_49
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -82,7 +83,8 @@ object DatabaseModule {
             MIGRATION_44_45,                   // Add invoice numbering columns (dailySequence, invoiceYear, invoiceNumber)
             Migration_45_46,                   // Add payment media attachments for proof-of-payment feature
             MIGRATION_46_47,                   // Add query optimization indices (Phase 2B)
-            MIGRATION_47_48                    // Finalize invoice_settings schema (Phase 3F)
+            MIGRATION_47_48,                    // Finalize invoice_settings schema (Phase 3F)
+            MIGRATION_48_49                     // Add watermark_image column + enable_brand_watermark safety net
         )
 
         // ✅ PRODUCTION SAFE: Only allow destructive fallback in DEBUG builds

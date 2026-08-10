@@ -374,6 +374,12 @@ class InvoiceCustomizationViewModel @Inject constructor(
         intelligentDebounce(SettingChangeType.TOGGLE_DIVIDERS)  // Reuse closest type
     }
 
+    fun updateWatermarkImage(option: WatermarkImageOption) {
+        _invoiceSettings.value = _invoiceSettings.value?.copy(watermarkImage = option)
+        updateChangeTracker()
+        intelligentDebounce(SettingChangeType.TOGGLE_DIVIDERS)  // Reuse closest type
+    }
+
     fun updateFooterText(text: String) {
         _invoiceSettings.value = _invoiceSettings.value?.copy(footerMessage = text)
         updateChangeTracker()

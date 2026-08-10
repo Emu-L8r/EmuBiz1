@@ -47,10 +47,26 @@ class GenerateAndSaveInvoiceUseCase @Inject constructor(
     ): Result<File> {
         var generatedFile: File? = null
         return try {
+            // OPTION 3 SAFETY NET (Aug 3 2026):
+            // The invoice domain model is the ground truth for header/subheader — it was persisted
+            // to the database just before this use case was called. If the snapshot somehow arrived
+            // with blank header/subheader (due to a timing or state-capture issue in the ViewModel),
+            // recover them from the saved invoice here. This is a last-resort guarantee.
+            val hardenedSnapshot = snapshot.copy(
+                header    = snapshot.header.ifBlank { invoice.header.orEmpty() },
+                subheader = snapshot.subheader.ifBlank { invoice.subheader.orEmpty() }
+            ).also { h ->
+                if (h.header != snapshot.header || h.subheader != snapshot.subheader) {
+                    Timber.w("⚠️ OPTION-3 safety net: header '${snapshot.header}'→'${h.header}', subheader '${snapshot.subheader}'→'${h.subheader}'")
+                } else {
+                    Timber.d("✅ OPTION-3: snapshot header/subheader already correct — no recovery needed (header='${h.header}')")
+                }
+            }
+
             // Step 1: Generate PDF via PdfGenerationService (domain interface)
             Timber.d("📄 Generating ${if (isQuote) "Quote" else "Invoice"} PDF for invoice #${invoice.id} with theme: ${theme?.name ?: "DEFAULT"}")
             generatedFile = pdfService.generatePdf(
-                snapshot = snapshot,
+                snapshot = hardenedSnapshot,
                 isQuote = isQuote,
                 overwriteExisting = overwriteExisting,
                 theme = theme  // FIX: Pass theme parameter!

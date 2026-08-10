@@ -11,7 +11,7 @@ data class InvoiceSnapshot(
     val customerAddress: String,
     val customerEmail: String?,
     val customerPhone: String? = null,
-    val date: Long,
+    val date: Long,  // ✅ ADDED: Invoice date in epoch milliseconds (used for PDF file naming and rendering)
     val dueDate: Long,
     val items: List<LineItemSnapshot>,
     val subtotal: Long,
@@ -87,7 +87,8 @@ data class InvoiceSnapshot(
     val backgroundPatternType: BackgroundPattern = BackgroundPattern.WAVES,
     val patternOpacity: Float = 0.08f,
     // BRAND WATERMARK (background logo image, centred at half-page size)
-    val enableBrandWatermark: Boolean = true
+    val enableBrandWatermark: Boolean = true,
+    val watermarkImage: WatermarkImageOption = WatermarkImageOption.THSWA_LOGO
 )
 data class LineItemSnapshot(
     val description: String,

@@ -96,8 +96,8 @@ object PlaceholderInvoiceGenerator {
             customerName = "Test Customer",
             customerAddress = "Test Address",
             customerEmail = "test@example.com",
-            customerPhone = null,
             date = now,
+            customerPhone = null,
             dueDate = thirtyDaysLater,
             items = listOf(
                 LineItemSnapshot(

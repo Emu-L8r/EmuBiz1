@@ -60,8 +60,8 @@ fun InvoiceSettings.toSnapshot(
         customerAddress = invoice.customerAddress,
         customerEmail = invoice.customerEmail ?: "",
         customerPhone = invoice.customerPhone,
-        date = invoice.dateCreated.toEpochMillis(),
-        dueDate = invoice.dueDate.toEpochMillis(),
+        date = invoice.dateCreated.toEpochMillis(),  // ✅ ADDED: Invoice creation date for PDF naming and rendering
+        dueDate = invoice.dueDate.toEpochMillis(),   // ✅ FIXED: Due date for PDF rendering
         items = invoice.items.map {
             val itemTotal = (it.unitPrice * it.quantity).toLong()
             LineItemSnapshot(
@@ -187,6 +187,7 @@ fun InvoiceSettings.toSnapshot(
         backgroundPatternType = this.backgroundPatternType,
         patternOpacity = this.patternOpacity,
         enableBrandWatermark = this.enableBrandWatermark,
+        watermarkImage = this.watermarkImage,
 
         // Status (typically set by caller, default to DRAFT for new invoices)
         invoiceStatus = "DRAFT"

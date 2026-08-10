@@ -1,6 +1,7 @@
 ﻿package com.emul8r.bizap.ui.gui2.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -385,6 +386,37 @@ fun InvoiceCustomizationSettingsScreenV2(
                     modifier = Modifier.padding(top = 8.dp)
                 )
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+                // ═══════════════════════════════════════════════════════════
+                // WATERMARK IMAGE SECTION
+                // Enable/disable the brand watermark image and pick which
+                // bundled (or custom) image is used as the PDF background watermark.
+                // ═══════════════════════════════════════════════════════════
+                Text(
+                    "Watermark Image",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+
+                val enableBrandWatermark = invoiceSettings?.enableBrandWatermark ?: true
+                val selectedWatermarkImage = invoiceSettings?.watermarkImage ?: WatermarkImageOption.THSWA_LOGO
+
+                SettingToggleRow(
+                    title = "Enable Watermark Image",
+                    description = "Show a faint background brand image on generated PDFs",
+                    checked = enableBrandWatermark,
+                    onCheckedChange = { viewModel.toggleBrandWatermark(it) }
+                )
+
+                if (enableBrandWatermark) {
+                    WatermarkImageSelector(
+                        current = selectedWatermarkImage,
+                        onSelect = { viewModel.updateWatermarkImage(it) },
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Save Button
@@ -457,6 +489,45 @@ private fun SettingToggleRow(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange
+        )
+    }
+}
+
+/**
+ * Selector for which bundled/custom image is used as the PDF background watermark.
+ * Displayed as a row of selectable filter chips (one per [WatermarkImageOption]).
+ */
+@Composable
+private fun WatermarkImageSelector(
+    current: WatermarkImageOption,
+    onSelect: (WatermarkImageOption) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            "Watermark Image Style",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            WatermarkImageOption.entries.forEach { option ->
+                FilterChip(
+                    selected = current == option,
+                    onClick = { onSelect(option) },
+                    label = { Text(option.displayName) }
+                )
+            }
+        }
+        Text(
+            current.description,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp)
         )
     }
 }

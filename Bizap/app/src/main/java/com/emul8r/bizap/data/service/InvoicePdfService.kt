@@ -224,7 +224,7 @@ class InvoicePdfService @Inject constructor(
         // ✅ BACKGROUND LAYER 1: Brand watermark — drawn first, below all content
         // Gated by snapshot.enableBrandWatermark (user toggle in Customization Settings)
         if (snapshot.enableBrandWatermark) {
-            drawBrandWatermark(canvas, context, colors.primary)
+            drawBrandWatermark(canvas, context, colors.primary, snapshot.watermarkImage, snapshot.logoUri)
         }
 
         // ✅ PHASE 3 COMPLEX: BACKGROUND PATTERNS — Draw before any content (layer 2, above watermark)
@@ -599,33 +599,101 @@ class InvoicePdfService @Inject constructor(
 
 
         // ===== HEADER AND SUBHEADER TEXT (Optional, appears before line items) =====
+        // ===== ADDITIONAL INFORMATION SECTION (header / subheader from invoice form) =====
+        // ROOT-CAUSE FIX (Aug 3 2026): Previously this section used bare canvas.drawText()
+        // at pageManager.currentY, then line 648 reset pageManager to layoutManager.getItemsTableY()
+        // (same Y), causing the table header background rectangle to paint over the text → invisible.
+        //
+        // Fix 1: Render as a proper styled box (matching NOTES/FOOTER design) so the section
+        //        has a visible background that itself sits above the table.
+        // Fix 2: itemsTableY now uses maxOf(fixed, dynamic) — see below.
         if (snapshot.header.isNotBlank() || snapshot.subheader.isNotBlank()) {
-            canvas = pageManager.ensureSpace(50f)
 
-            // ✅ FIX: Header/Subheader rendering with proper spacing to prevent overlap
-            if (snapshot.header.isNotBlank()) {
-                val headerPaint = Paint().apply {
-                    typeface = boldTypeface
-                    textSize = 14f  // Prominent header
-                    color = colors.primary
-                    isAntiAlias = true
-                }
-                canvas.drawText(snapshot.header, 40f, pageManager.currentY + 12f, headerPaint)
-                pageManager.advanceY(20f)  // Increased spacing for large header
+            // Estimate required height: label row (20) + header text (~18 per line) + subheader (~16) + padding
+            val headerLineCount   = if (snapshot.header.isNotBlank()) 1 else 0
+            val subheaderLineCount = if (snapshot.subheader.isNotBlank()) 1 else 0
+            val sectionHeight = 14f + (headerLineCount * 18f) + (subheaderLineCount * 16f) + 20f
+            canvas = pageManager.ensureSpace(sectionHeight + 12f)
+            pageManager.advanceY(8f)
+
+            // ── Background box (matches NOTES box style: #FAFAFA fill + subtle border) ──
+            val addlInfoBgPaint = Paint().apply {
+                color = Color.parseColor("#FAFAFA")
+                style = Paint.Style.FILL
+            }
+            val addlInfoBorderPaint = Paint().apply {
+                color = if (visualAccents.showBorders) Color.parseColor("#E0E0E0") else Color.TRANSPARENT
+                strokeWidth = 1f
+                style = Paint.Style.STROKE
+            }
+            // Left accent bar — matches the primary-color left rule used on BILL TO / INVOICE DETAILS
+            val addlInfoAccentPaint = Paint().apply {
+                color = colors.primary
+                style = Paint.Style.FILL
             }
 
+            val boxTop   = pageManager.currentY
+            val boxLeft  = layoutManager.getContentLeft()
+            val boxRight = layoutManager.getContentRight()
+            val boxBottom = boxTop + sectionHeight
+
+            // Draw background + border
+            canvas.drawRoundRect(boxLeft, boxTop, boxRight, boxBottom, cornerRadius, cornerRadius, addlInfoBgPaint)
+            canvas.drawRoundRect(boxLeft, boxTop, boxRight, boxBottom, cornerRadius, cornerRadius, addlInfoBorderPaint)
+            // Draw 4px left accent bar (clipped by rounding on top-left/bottom-left)
+            canvas.drawRect(boxLeft, boxTop + cornerRadius, boxLeft + 4f, boxBottom - cornerRadius, addlInfoAccentPaint)
+
+            // ── Section label ("ADDITIONAL INFORMATION") — same style as "NOTES" / "FOOTER" ──
+            canvas.drawText(
+                "ADDITIONAL INFORMATION",
+                boxLeft + InvoiceSpacingConfig.PADDING_H + 6f,   // indent past accent bar
+                pageManager.currentY + 13f,
+                labelPaint   // bold, primary color, 9f — same paint as NOTES/FOOTER labels
+            )
+            pageManager.advanceY(20f)
+
+            // ── Header text (bold, primary color) ──
+            if (snapshot.header.isNotBlank()) {
+                val addlHeaderPaint = Paint().apply {
+                    typeface = boldTypeface
+                    textSize = 10f
+                    color = colors.text   // was colors.textDark — PdfColors field is .text
+                    isAntiAlias = true
+                }
+                pageManager.setY(
+                    drawWrappedText(
+                        canvas,
+                        snapshot.header,
+                        boxLeft + InvoiceSpacingConfig.PADDING_H + 6f,
+                        pageManager.currentY,
+                        layoutManager.getContentWidth() - InvoiceSpacingConfig.PADDING_H * 2 - 10f,
+                        addlHeaderPaint
+                    )
+                )
+                pageManager.advanceY(4f)
+            }
+
+            // ── Subheader text (regular, lighter colour — same weight as body notes) ──
             if (snapshot.subheader.isNotBlank()) {
-                val subheaderPaint = Paint().apply {
+                val addlSubheaderPaint = Paint().apply {
                     typeface = regularTypeface
-                    textSize = 11f  // Slightly smaller
+                    textSize = 10f
                     color = colors.textLight
                     isAntiAlias = true
                 }
-                canvas.drawText(snapshot.subheader, 40f, pageManager.currentY + 10f, subheaderPaint)
-                pageManager.advanceY(16f)  // Good spacing after subheader
+                pageManager.setY(
+                    drawWrappedText(
+                        canvas,
+                        snapshot.subheader,
+                        boxLeft + InvoiceSpacingConfig.PADDING_H + 6f,
+                        pageManager.currentY,
+                        layoutManager.getContentWidth() - InvoiceSpacingConfig.PADDING_H * 2 - 10f,
+                        addlSubheaderPaint
+                    )
+                )
             }
 
-            pageManager.advanceY(12f)  // Extra spacing before items table
+            pageManager.advanceY(14f)   // breathing room before the items table
         }
 
         if (!hideLineItems) {
@@ -637,12 +705,17 @@ class InvoicePdfService @Inject constructor(
                 typeface = boldTypeface
             }
 
-            // Get table position from grid manager
-            val itemsTableY = layoutManager.getItemsTableY()
-            val tableHeaderHeight = InvoiceSpacingConfig.TABLE_HEADER_HEIGHT
+            // Get table position from grid manager.
+            // ✅ ROOT-CAUSE FIX (Aug 3 2026): Use maxOf(fixed, dynamic).
+            // When the Additional Information section has been rendered above (see block above),
+            // pageManager.currentY will be BELOW layoutManager.getItemsTableY().  Using maxOf()
+            // ensures the table always starts AFTER any content already on the page — previously
+            // pageManager.setY(itemsTableY) reset back to the fixed value, causing the table
+            // header background to paint directly over the Additional Information text.
+            val itemsTableY = maxOf(layoutManager.getItemsTableY(), pageManager.currentY)
 
             // Ensure space for header row
-            canvas = pageManager.ensureSpace(tableHeaderHeight + (snapshot.items.size * InvoiceSpacingConfig.TABLE_ROW_HEIGHT))
+            canvas = pageManager.ensureSpace(itemsTableY + (snapshot.items.size * InvoiceSpacingConfig.TABLE_ROW_HEIGHT))
 
             // Set page manager to table position
             pageManager.setY(itemsTableY)
@@ -760,8 +833,20 @@ class InvoicePdfService @Inject constructor(
 
         // ===== PHASE 2: INTEGRATED TOTALS SECTION (Typography-Driven) =====
         // Get totals position from grid manager (depends on items count)
+        // ✅ ROOT-CAUSE FIX (Aug 10 2026): layoutManager.getTotalsY(itemCount) is a purely
+        // theoretical/static calculation based on the FIXED getItemsTableY() formula. It has
+        // no knowledge of dynamic content drawn above the table (e.g. the "Additional
+        // Information" header/subheader box, wrapped multi-line text, or hideLineItems mode).
+        // Meanwhile `currentY` (tracked via pageManager) reflects the REAL position after
+        // everything that has actually been drawn so far. Using the static value alone caused
+        // the Totals/TOTAL DUE box to render too high, overlapping the items table whenever any
+        // dynamic content pushed the table down. maxOf() guarantees Totals never renders above
+        // the real content — mirrors the same fix already applied to itemsTableY above.
+        // NOTE: use pageManager.currentY (always accurate) rather than the local `currentY`
+        // variable, which is NOT reassigned when hideLineItems == true (would go stale and
+        // ignore the Additional Information section entirely).
         val itemCount = snapshot.items.size
-        val totalsY = layoutManager.getTotalsY(itemCount)
+        val totalsY = maxOf(layoutManager.getTotalsY(itemCount), pageManager.currentY)
         val totalsHeight = InvoiceSpacingConfig.TOTALS_HEIGHT
         // Right-align totals block to right 50% — professional invoice standard
         val totalsLeft = layoutManager.getContentLeft() + layoutManager.getContentWidth() * 0.5f
@@ -1441,20 +1526,53 @@ class InvoicePdfService @Inject constructor(
     }
 
     /**
-     * Draws the brand logo (thswalogo.jpg) as a centred background watermark.
+     * Draws the selected brand watermark image as a centred background watermark.
      *
+     * - Image source depends on [watermarkImage]:
+     *   - THSWA_LOGO → bundled `thswalogo.jpg`
+     *   - COMPANY_LOGO → bundled `company_logo.jpg`
+     *   - CUSTOM → user-uploaded logo at [customLogoUri] (falls back to THSWA_LOGO if unavailable)
      * - Renders at 75% page size (max ~446×631px on A4) — centred on page
-     * - Alpha = 18 (~7% opacity) — subtle, never competes with content
+     * - Alpha = 38 (~15% opacity) — subtle, never competes with content
      * - Maintains aspect ratio (contain strategy, not cover)
      * - Soft brand-primary tint for visual cohesion with invoice colours
      * - Silent-fails: watermark is decorative, PDF generation never blocked
      */
-    private fun drawBrandWatermark(canvas: Canvas, context: android.content.Context, primaryColor: Int) {
+    private fun drawBrandWatermark(
+        canvas: Canvas,
+        context: android.content.Context,
+        primaryColor: Int,
+        watermarkImage: com.emul8r.bizap.domain.model.WatermarkImageOption = com.emul8r.bizap.domain.model.WatermarkImageOption.THSWA_LOGO,
+        customLogoUri: String = ""
+    ) {
         try {
-            val bitmap = android.graphics.BitmapFactory.decodeResource(
-                context.resources,
-                com.emul8r.bizap.R.drawable.thswalogo
-            ) ?: return
+            val bitmap = when (watermarkImage) {
+                com.emul8r.bizap.domain.model.WatermarkImageOption.COMPANY_LOGO ->
+                    android.graphics.BitmapFactory.decodeResource(
+                        context.resources,
+                        com.emul8r.bizap.R.drawable.company_logo
+                    )
+                com.emul8r.bizap.domain.model.WatermarkImageOption.CUSTOM -> {
+                    val fromUri = if (customLogoUri.isNotBlank()) {
+                        try {
+                            context.contentResolver.openInputStream(android.net.Uri.parse(customLogoUri))
+                                ?.use { android.graphics.BitmapFactory.decodeStream(it) }
+                        } catch (e: Exception) {
+                            timber.log.Timber.w(e, "Custom watermark logo could not be loaded from $customLogoUri, falling back to default")
+                            null
+                        }
+                    } else null
+                    fromUri ?: android.graphics.BitmapFactory.decodeResource(
+                        context.resources,
+                        com.emul8r.bizap.R.drawable.thswalogo
+                    )
+                }
+                com.emul8r.bizap.domain.model.WatermarkImageOption.THSWA_LOGO ->
+                    android.graphics.BitmapFactory.decodeResource(
+                        context.resources,
+                        com.emul8r.bizap.R.drawable.thswalogo
+                    )
+            } ?: return
 
             val pageW = 595f
             val pageH = 842f

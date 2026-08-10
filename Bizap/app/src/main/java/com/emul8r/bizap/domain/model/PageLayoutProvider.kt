@@ -26,6 +26,42 @@ interface PageLayoutProvider {
      * Get the layout name for logging/debugging.
      */
     fun getLayoutName(): String
+
+    // ─── APPROACH B: Shared helper — single source of truth for all layouts ───
+    /**
+     * Builds the "Additional Information" section HTML from snapshot.header / snapshot.subheader.
+     * Returns an empty string when both fields are blank (section is omitted).
+     *
+     * All layout implementations should call this after the invoice meta / bill-to block
+     * and before the line items table so users always see their custom text in the same
+     * predictable position regardless of which page layout they choose.
+     */
+    fun buildAdditionalInfoSection(snapshot: InvoiceSnapshot, primary: String): String {
+        if (snapshot.header.isBlank() && snapshot.subheader.isBlank()) return ""
+        val headerRow = if (snapshot.header.isNotBlank())
+            """<tr><td style="padding:12px 16px;font-size:10pt;line-height:1.8;word-wrap:break-word;color:#444444;background-color:white;border-bottom:1px solid #e8e8e8;">${escapeHtmlShared(snapshot.header)}</td></tr>"""
+        else ""
+        val subheaderRow = if (snapshot.subheader.isNotBlank())
+            """<tr><td style="padding:12px 16px;font-size:10pt;line-height:1.8;word-wrap:break-word;color:#666666;background-color:white;font-style:italic;">${escapeHtmlShared(snapshot.subheader)}</td></tr>"""
+        else ""
+        return """
+<!-- ADDITIONAL INFORMATION (header / subheader from invoice form) -->
+<table width="100%" style="border-collapse:collapse;margin:20px 0 20px 0;padding:0;page-break-inside:avoid;">
+    <tr>
+        <td style="background-color:#f9f9f9;padding:14px 16px;font-weight:bold;font-size:11pt;color:$primary;border-left:5px solid $primary;letter-spacing:0.5px;text-transform:uppercase;width:100%;">Additional Information</td>
+    </tr>
+    $headerRow
+    $subheaderRow
+</table>
+"""
+    }
+
+    /** HTML-escapes text — mirrors the private helper in each layout class. */
+    fun escapeHtmlShared(text: String): String = text
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
 }
 
 /**
@@ -338,7 +374,7 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:12px;font-style:italic;color:#555555;line-height:1.6;font-size:9pt;">${escapeHtml(snapshot.header)}</p>""" else ""}
+${buildAdditionalInfoSection(snapshot, primary)}
 
 <!-- LINE ITEMS TABLE (COMPACT) with fixed column widths -->
 <table width="100%" style="border-collapse:collapse;table-layout:fixed;margin-bottom:4px;">
@@ -497,7 +533,6 @@ td, th { word-wrap: break-word; }
   <td style="padding:30px 30px 10px 30px;vertical-align:top;">
     $logoHtml
     ${if (snapshot.businessName.isNotBlank()) """<div style="font-size:24pt;font-weight:bold;color:#ffffff;margin-top:10px;line-height:1.4;">${escapeHtml(snapshot.businessName)}</div>""" else ""}
-    ${if (snapshot.subheader.isNotBlank()) """<div style="font-size:14pt;color:#ddd8f8;margin-top:8px;line-height:1.6;">${escapeHtml(snapshot.subheader)}</div>""" else ""}
     <div style="margin-top:12px;">
     ${if (snapshot.businessAddress.isNotBlank()) """<div style="font-size:10pt;color:#e0d8f0;margin-top:6px;line-height:2.0;">${addressLines(snapshot.businessAddress)}</div>""" else ""}
     ${if (snapshot.businessEmail.isNotBlank()) """<div style="font-size:10pt;color:#e0d8f0;margin-top:6px;">${escapeHtml(snapshot.businessEmail)}</div>""" else ""}
@@ -536,7 +571,7 @@ td, th { word-wrap: break-word; }
 </tr>
 </table>
 
-${if (snapshot.header.isNotBlank()) """<p style="margin-bottom:24px;font-style:italic;color:#555555;line-height:2.0;">${escapeHtml(snapshot.header)}</p>""" else ""}
+${buildAdditionalInfoSection(snapshot, primary)}
 
 <!-- SPACIOUS LINE ITEMS TABLE: 16px row padding, 12pt font with fixed column widths -->
 <table width="100%" style="border-collapse:collapse;table-layout:fixed;margin-bottom:4px;">
@@ -729,6 +764,8 @@ td, th { word-wrap: break-word; }
   <td style="padding:3px;font-size:8pt;"><strong>${escapeHtml(snapshot.customerName)}</strong></td>
 </tr>
 </table>
+
+${buildAdditionalInfoSection(snapshot, primary)}
 
 <!-- LINE ITEMS TABLE (COMPACT) -->
 <table width="100%" style="border-collapse:collapse;margin-bottom:2px;">

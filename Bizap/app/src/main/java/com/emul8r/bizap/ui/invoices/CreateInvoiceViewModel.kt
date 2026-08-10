@@ -572,17 +572,27 @@ class CreateInvoiceViewModel @Inject constructor(
 
                 // ✅ FIX: Use unified settings-to-snapshot mapper (SnapshotMappers.kt)
                 // This ensures ALL 60+ settings fields are properly mapped with correct defaults
+                //
+                // OPTION 2 FIX (Aug 3 2026): header/subheader are now ALWAYS taken from the
+                // saved invoice entity (invoiceWithId) first, then fall back to form state.
+                // This eliminates a silent blank-overwrite when state.header hasn't committed yet.
+                val invoiceHeader    = invoiceWithId.header.orEmpty().ifBlank { state.header }
+                val invoiceSubheader = invoiceWithId.subheader.orEmpty().ifBlank { state.subheader }
+                Timber.d("📌 OPTION-2: header decision → invoice='${invoiceWithId.header}' state='${state.header}' → resolved='$invoiceHeader'")
+                Timber.d("📌 OPTION-2: subheader decision → invoice='${invoiceWithId.subheader}' state='${state.subheader}' → resolved='$invoiceSubheader'")
+
                 val snapshot = invoiceSettings?.toSnapshot(invoiceWithId, businessProfile)
                     ?.let { baseSnapshot ->
                         Timber.d("📋 DEBUG - Base snapshot from settings:")
                         Timber.d("   header='${baseSnapshot.header}' (length=${baseSnapshot.header.length})")
                         Timber.d("   subheader='${baseSnapshot.subheader}' (length=${baseSnapshot.subheader.length})")
-                        // Apply invoice-specific customizations (from form UI, not settings)
+                        // Apply invoice-specific customizations (from saved entity + form UI).
+                        // Prefer resolved invoice values; fall back to base snapshot (from persistent settings).
                         baseSnapshot.copy(
-                            header = state.header.ifBlank { baseSnapshot.header },
-                            subheader = state.subheader.ifBlank { baseSnapshot.subheader },
+                            header     = invoiceHeader.ifBlank { baseSnapshot.header },
+                            subheader  = invoiceSubheader.ifBlank { baseSnapshot.subheader },
                             footerText = state.footer.ifBlank { baseSnapshot.footerText },
-                            notes = state.notes.ifBlank { baseSnapshot.notes },
+                            notes      = state.notes.ifBlank { baseSnapshot.notes },
                             currencyCode = state.selectedCurrencyCode
                         ).also { finalSnapshot ->
                             Timber.d("📋 DEBUG - Final snapshot AFTER applying customizations:")
@@ -594,10 +604,10 @@ class CreateInvoiceViewModel @Inject constructor(
                         Timber.w("⚠️ Invoice settings not loaded, using default snapshot")
                         com.emul8r.bizap.domain.util.createDefaultSnapshot(invoiceWithId, businessProfile)
                             .copy(
-                                header = state.header,
-                                subheader = state.subheader,
+                                header     = invoiceHeader,
+                                subheader  = invoiceSubheader,
                                 footerText = state.footer,
-                                notes = state.notes,
+                                notes      = state.notes,
                                 currencyCode = state.selectedCurrencyCode
                             ).also { finalSnapshot ->
                                 Timber.d("📋 DEBUG - Default snapshot AFTER customizations:")
